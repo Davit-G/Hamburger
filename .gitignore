@@ -1,0 +1,7 @@
+build
+cmake-build
+cmake-build-debug
+.vscode
+.idea
+
+JUCE
