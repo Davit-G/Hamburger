@@ -33,23 +33,26 @@ void Sizzle::prepareToPlay(double sampleRate, int samplesPerBlock) {
 	smoothedInput.setCurrentAndTargetValue(0.0);
 
 	envelopeDetector.prepareToPlay(sampleRate, samplesPerBlock);
-	envelopeDetector.setAttackTime(10.f);
-	envelopeDetector.setReleaseTime(10.f);
+	envelopeDetector.setAttackTime(10);
+	envelopeDetector.setReleaseTime(10);
 }
 
 void Sizzle::processBlock(AudioBuffer<float>& dryBuffer) {
-	smoothedInput.setTargetValue(knobValue->get() * 0.01f);
+	if (knobValue == nullptr) return;
+	smoothedInput.setTargetValue(knobValue->get()*0.01f);
+	
+	if (knobValue->get() == 0) return;
+
 	auto rightDryData = dryBuffer.getWritePointer(1);
 	auto leftDryData = dryBuffer.getWritePointer(0);
 
 	for (int sample = 0; sample < dryBuffer.getNumSamples(); sample++) {
 		float nextSizzle = smoothedInput.getNextValue();
 
-		
-		rightDryData[sample] = newSizzleFunction(rightDryData[sample], nextSizzle, true);
+		float envelope = envelopeDetector.processSampleStereo(leftDryData[sample], rightDryData[sample]);
 
-		//the new envelope thing
-		leftDryData[sample] = newSizzleFunction(leftDryData[sample], nextSizzle, false);
+		rightDryData[sample] = newSizzleFunction(rightDryData[sample], nextSizzle, envelope);
+		leftDryData[sample] = newSizzleFunction(leftDryData[sample], nextSizzle, envelope);
 
 	}
 }

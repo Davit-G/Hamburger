@@ -10,7 +10,9 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor(AudioPluginAudi
     juce::ignoreUnused(processorRef);
     // Make sure that before the constructor has finished, you've set the
     // editor's size to whatever you need it to be.
-    setSize(778, 600);
+    
+
+    
 
     juce::Image smallKnobImage = juce::ImageCache::getFromMemory(BinaryData::ingain_min_png, BinaryData::ingain_min_pngSize);
     juce::Image knobImage = juce::ImageCache::getFromMemory(BinaryData::knob_min_png, BinaryData::knob_min_pngSize);
@@ -48,7 +50,7 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor(AudioPluginAudi
     addAndMakeVisible(compThresholdKnob.get());
     compRatioKnob = std::make_unique<FilmStripKnob>(p, "compRatio", "Compander Ratio", 1.0f, 10.f, knobImage, 54);
     addAndMakeVisible(compRatioKnob.get());
-    compOutKnob = std::make_unique<FilmStripKnob>(p, "compOut", "Compander Compressor Out", -12.0f, 12.0f, knobImage, 54);
+    compOutKnob = std::make_unique<FilmStripKnob>(p, "compOut", "Compander Compressor Out", 0.0f, 24.0f, knobImage, 54);
     addAndMakeVisible(compOutKnob.get());
 
     // attach button to parameter
@@ -60,10 +62,14 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor(AudioPluginAudi
     emphasisValue = std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment>(processorRef.treeState, "emphasisOn", emphasisButton);
     // button.setButtonText("Enable Compander");
     addAndMakeVisible(emphasisButton);
+
+    background = juce::ImageCache::getFromMemory(BinaryData::hamburgernew6_png, BinaryData::hamburgernew6_pngSize);
+    setSize(778, 600);
 }
 
 AudioPluginAudioProcessorEditor::~AudioPluginAudioProcessorEditor()
 {
+
 }
 
 //==============================================================================
@@ -73,7 +79,7 @@ void AudioPluginAudioProcessorEditor::paint(juce::Graphics &g)
     // g.fillAll (getLookAndFeel().findColour (juce::ResizableWindow::backgroundColourId));
 
     // (Our component is opaque, so we must completely fill the background with a solid colour)
-    juce::Image background = juce::ImageCache::getFromMemory(BinaryData::hamburgernew6_png, BinaryData::hamburgernew6_pngSize);
+    
     g.drawImageAt(background, 0, 0);
 }
 

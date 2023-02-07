@@ -49,5 +49,8 @@ private:
     juce::ToggleButton companderButton;
     juce::ToggleButton emphasisButton;
 
+
+    juce::Image background;
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AudioPluginAudioProcessorEditor)
 };

@@ -2,10 +2,11 @@
 
 #include <JuceHeader.h>
 
-#include "dsp/Compressor.h"
+#include "dsp/Compander.h"
 #include "dsp/Distortions/Patty.h"
 #include "dsp/Distortions/Sizzle.h"
 #include "dsp/Distortions/Cooked.h"
+#include "dsp/Gain.h"
 // #include "Distortions/naivetube/NaiveTubeDistortion.h"
 
 //==============================================================================
@@ -64,12 +65,11 @@ private:
 
     // array of emphasisLow, emphasisMid, emphasisHigh
     juce::AudioParameterFloat* emphasis[3];
+    float prevEmphasis[3] = {0.f, 0.f, 0.f};
 
     juce::AudioParameterFloat* saturation = nullptr;
 
-    Dynamics compressor;
-    Dynamics compressorEnd;
-    Dynamics expander;
+    Compander compander;
 
     // NaiveTubeDistortion tubeDistortion;
 
@@ -81,13 +81,12 @@ private:
     dsp::ProcessorDuplicator<dsp::IIR::Filter<float>, dsp::IIR::Coefficients<float>> peakFilterBefore[3];
     dsp::ProcessorDuplicator<dsp::IIR::Filter<float>, dsp::IIR::Coefficients<float>> peakFilterAfter[3];
 
-    float filterFrequencies[3] = { 62.0f, 1220.0f, 6000.0f };
-
-
-
+    float filterFrequencies[3] = { 62.0f, 1220.0f, 9000.0f };
 
     double cachedSampleRate;
 
+    dsp::Gain<float> inputGain;
+    dsp::Gain<float> emphasisCompensationGain;
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioPluginAudioProcessor)
 };

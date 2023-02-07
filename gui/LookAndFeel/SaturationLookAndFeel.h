@@ -29,7 +29,7 @@ public:
         int imageIndex = (int) (sliderPos * 128.f);
 
         // get the image from the array
-        juce::Image imageSlice = image.getClippedImage (juce::Rectangle<int> (imageIndex * size, 0, size, size));
+        imageSlice = image.getClippedImage (juce::Rectangle<int> (imageIndex * size, 0, size, size));
 
         // preserve alpha
         g.setColour (juce::Colours::white.withAlpha (1.0f));
@@ -41,4 +41,5 @@ private:
     int size;
 
     juce::Image image;
+    juce::Image imageSlice;
 };

@@ -3,54 +3,52 @@
 
 #include <JuceHeader.h>
 
-
-
 using namespace juce;
+
+#include <chrono>
+#include <ctime>
 
 //==============================================================================
 AudioPluginAudioProcessor::AudioPluginAudioProcessor()
-     : AudioProcessor (BusesProperties()
-                     #if ! JucePlugin_IsMidiEffect
-                      #if ! JucePlugin_IsSynth
-                       .withInput  ("Input",  juce::AudioChannelSet::stereo(), true)
-                      #endif
-                       .withOutput ("Output", juce::AudioChannelSet::stereo(), true)
-                     #endif
-                       ), treeState(*this, nullptr, "PARAMETER", createParameterLayout()), 
-                       compressor(treeState, CompressionType::Compression, 2.5f, -30.f, 0.f, 25.f), // 3.5f, -20f, 0.3f
-                       expander(treeState, CompressionType::Expansion, 3.5f, 0.f, 0.f, 0.f), // 3.5f, -20f, 0.3f
-                       pattyDistortion(treeState),
-                       sizzleNoise(treeState),
-                       cookedDistortion(treeState),
-                       compressorEnd(treeState, CompressionType::Compression, 200.f, -4.f, 3.f)
-                    //    tubeDistortion(treeState)
+    : AudioProcessor(BusesProperties()
+#if !JucePlugin_IsMidiEffect
+#if !JucePlugin_IsSynth
+                         .withInput("Input", juce::AudioChannelSet::stereo(), true)
+#endif
+                         .withOutput("Output", juce::AudioChannelSet::stereo(), true)
+#endif
+                         ),
+      treeState(*this, nullptr, "PARAMETER", createParameterLayout()),
+      compander(treeState),
+      pattyDistortion(treeState),
+      sizzleNoise(treeState),
+      cookedDistortion(treeState)
+//    tubeDistortion(treeState)
 {
     treeState.state = ValueTree("savedParams");
 
-    inputGainKnob = dynamic_cast<juce::AudioParameterFloat*>(treeState.getParameter("inputGain"));
+    inputGainKnob = dynamic_cast<juce::AudioParameterFloat *>(treeState.getParameter("inputGain"));
     jassert(inputGainKnob); // heads up if the parameter doesn't exist
 
-    emphasisLow = dynamic_cast<juce::AudioParameterFloat*>(treeState.getParameter("emphasisLowGain"));
+    emphasisLow = dynamic_cast<juce::AudioParameterFloat *>(treeState.getParameter("emphasisLowGain"));
     emphasis[0] = emphasisLow;
     jassert(emphasisLow); // heads up if the parameter doesn't exist
 
-    emphasisMid = dynamic_cast<juce::AudioParameterFloat*>(treeState.getParameter("emphasisMidGain"));
+    emphasisMid = dynamic_cast<juce::AudioParameterFloat *>(treeState.getParameter("emphasisMidGain"));
     emphasis[1] = emphasisMid;
     jassert(emphasisMid); // heads up if the parameter doesn't exist
 
-    emphasisHigh = dynamic_cast<juce::AudioParameterFloat*>(treeState.getParameter("emphasisHighGain"));
+    emphasisHigh = dynamic_cast<juce::AudioParameterFloat *>(treeState.getParameter("emphasisHighGain"));
     emphasis[2] = emphasisHigh;
     jassert(emphasisHigh); // heads up if the parameter doesn't exist
 
-
-
-    saturation = dynamic_cast<juce::AudioParameterFloat*>(treeState.getParameter("saturation"));
+    saturation = dynamic_cast<juce::AudioParameterFloat *>(treeState.getParameter("saturation"));
     jassert(saturation); // heads up if the parameter doesn't exist
 
-    enableCompander = dynamic_cast<juce::AudioParameterBool*>(treeState.getParameter("compOn"));
+    enableCompander = dynamic_cast<juce::AudioParameterBool *>(treeState.getParameter("compOn"));
     jassert(enableCompander); // heads up if the parameter doesn't exist
 
-    enableEmphasis = dynamic_cast<juce::AudioParameterBool*>(treeState.getParameter("emphasisOn"));
+    enableEmphasis = dynamic_cast<juce::AudioParameterBool *>(treeState.getParameter("emphasisOn"));
     jassert(enableEmphasis); // heads up if the parameter doesn't exist
 }
 
@@ -58,9 +56,10 @@ AudioPluginAudioProcessor::~AudioPluginAudioProcessor()
 {
 }
 
-AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::createParameterLayout() {
-	AudioProcessorValueTreeState::ParameterLayout params;
-	
+AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::createParameterLayout()
+{
+    AudioProcessorValueTreeState::ParameterLayout params;
+
     params.add(std::make_unique<AudioParameterFloat>("inputGain", "Input Gain", -24.0f, 24.0f, 0.f));
     params.add(std::make_unique<AudioParameterFloat>("outputGain", "Out Gain", -24.0f, 24.0f, 0.f));
     params.add(std::make_unique<AudioParameterFloat>("mix", "Mix", 0.0f, 100.0f, 100.f));
@@ -82,9 +81,17 @@ AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::createP
     params.add(std::make_unique<AudioParameterFloat>("sizzle", "Sizzle", 0.0f, 100.0f, 0.0f));
     params.add(std::make_unique<AudioParameterFloat>("fold", "Fold", 0.0f, 100.0f, 0.0f));
     params.add(std::make_unique<AudioParameterFloat>("saturation", "Saturation", 0.0f, 100.0f, 0.f));
-    
+
     return params;
 }
+
+template <typename T>
+int sgn(T val)
+{
+    return (T(0) < val) - (val < T(0));
+}
+
+
 
 //==============================================================================
 const juce::String AudioPluginAudioProcessor::getName() const
@@ -94,29 +101,29 @@ const juce::String AudioPluginAudioProcessor::getName() const
 
 bool AudioPluginAudioProcessor::acceptsMidi() const
 {
-   #if JucePlugin_WantsMidiInput
+#if JucePlugin_WantsMidiInput
     return true;
-   #else
+#else
     return false;
-   #endif
+#endif
 }
 
 bool AudioPluginAudioProcessor::producesMidi() const
 {
-   #if JucePlugin_ProducesMidiOutput
+#if JucePlugin_ProducesMidiOutput
     return true;
-   #else
+#else
     return false;
-   #endif
+#endif
 }
 
 bool AudioPluginAudioProcessor::isMidiEffect() const
 {
-   #if JucePlugin_IsMidiEffect
+#if JucePlugin_IsMidiEffect
     return true;
-   #else
+#else
     return false;
-   #endif
+#endif
 }
 
 double AudioPluginAudioProcessor::getTailLengthSeconds() const
@@ -126,8 +133,8 @@ double AudioPluginAudioProcessor::getTailLengthSeconds() const
 
 int AudioPluginAudioProcessor::getNumPrograms()
 {
-    return 1;   // NB: some hosts don't cope very well if you tell them there are 0 programs,
-                // so this should be at least 1, even if you're not really implementing programs.
+    return 1; // NB: some hosts don't cope very well if you tell them there are 0 programs,
+              // so this should be at least 1, even if you're not really implementing programs.
 }
 
 int AudioPluginAudioProcessor::getCurrentProgram()
@@ -135,35 +142,33 @@ int AudioPluginAudioProcessor::getCurrentProgram()
     return 0;
 }
 
-void AudioPluginAudioProcessor::setCurrentProgram (int index)
+void AudioPluginAudioProcessor::setCurrentProgram(int index)
 {
-    juce::ignoreUnused (index);
+    juce::ignoreUnused(index);
 }
 
-const juce::String AudioPluginAudioProcessor::getProgramName (int index)
+const juce::String AudioPluginAudioProcessor::getProgramName(int index)
 {
-    juce::ignoreUnused (index);
+    juce::ignoreUnused(index);
     return {};
 }
 
-void AudioPluginAudioProcessor::changeProgramName (int index, const juce::String& newName)
+void AudioPluginAudioProcessor::changeProgramName(int index, const juce::String &newName)
 {
-    juce::ignoreUnused (index, newName);
+    juce::ignoreUnused(index, newName);
 }
 
 //==============================================================================
-void AudioPluginAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
+void AudioPluginAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
 {
     // Use this method as the place to do any pre-playback
     // initialisation that you need..
-    juce::ignoreUnused (sampleRate, samplesPerBlock);
+    juce::ignoreUnused(sampleRate, samplesPerBlock);
 
-    compressor.prepareToPlay(sampleRate, samplesPerBlock);
-    expander.prepareToPlay(sampleRate, samplesPerBlock);
+    compander.prepareToPlay(sampleRate, samplesPerBlock);
     pattyDistortion.prepareToPlay(sampleRate, samplesPerBlock);
     sizzleNoise.prepareToPlay(sampleRate, samplesPerBlock);
     cookedDistortion.prepareToPlay(sampleRate, samplesPerBlock);
-    compressorEnd.prepareToPlay(sampleRate, samplesPerBlock);
     // tubeDistortion.prepareToPlay(sampleRate, samplesPerBlock);
 
     dsp::ProcessSpec spec;
@@ -171,16 +176,29 @@ void AudioPluginAudioProcessor::prepareToPlay (double sampleRate, int samplesPer
     spec.maximumBlockSize = samplesPerBlock;
     spec.numChannels = getTotalNumOutputChannels();
 
+    inputGain.prepare(spec);
+    emphasisCompensationGain.prepare(spec);
+
     // Initialize the filter
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < 3; i++)
+    {
         peakFilterBefore[i].prepare(spec);
         peakFilterAfter[i].prepare(spec);
     }
 
+    // update coeffs IF WE NEED TO
+    for (int i = 0; i < 3; i++)
+    {
+        // DBG("EQ GAIN VALUE: " << eqGainValue);
+
+        // if (eqGainValue != prevEmphasis[i]) {    // TODOOOOOOOO
+        *peakFilterBefore[i].state = *dsp::IIR::Coefficients<float>::makePeakFilter(cachedSampleRate, filterFrequencies[i], 0.5f, 0);
+        *peakFilterAfter[i].state = *dsp::IIR::Coefficients<float>::makePeakFilter(cachedSampleRate, filterFrequencies[i], 0.5f, 0);
+        // }
+        prevEmphasis[i] = 0;
+    }
+
     cachedSampleRate = sampleRate;
-
-
-    
 }
 
 void AudioPluginAudioProcessor::releaseResources()
@@ -189,37 +207,36 @@ void AudioPluginAudioProcessor::releaseResources()
     // spare memory, etc.
 }
 
-bool AudioPluginAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts) const
+bool AudioPluginAudioProcessor::isBusesLayoutSupported(const BusesLayout &layouts) const
 {
-  #if JucePlugin_IsMidiEffect
-    juce::ignoreUnused (layouts);
+#if JucePlugin_IsMidiEffect
+    juce::ignoreUnused(layouts);
     return true;
-  #else
+#else
     // This is the place where you check if the layout is supported.
     // In this template code we only support mono or stereo.
     // Some plugin hosts, such as certain GarageBand versions, will only
     // load plugins that support stereo bus layouts.
-    if (layouts.getMainOutputChannelSet() != juce::AudioChannelSet::mono()
-     && layouts.getMainOutputChannelSet() != juce::AudioChannelSet::stereo())
+    if (layouts.getMainOutputChannelSet() != juce::AudioChannelSet::mono() && layouts.getMainOutputChannelSet() != juce::AudioChannelSet::stereo())
         return false;
 
-    // This checks if the input layout matches the output layout
-   #if ! JucePlugin_IsSynth
+        // This checks if the input layout matches the output layout
+#if !JucePlugin_IsSynth
     if (layouts.getMainOutputChannelSet() != layouts.getMainInputChannelSet())
         return false;
-   #endif
+#endif
 
     return true;
-  #endif
+#endif
 }
 
-void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
-                                              juce::MidiBuffer& midiMessages)
+void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
+                                             juce::MidiBuffer &midiMessages)
 {
-    juce::ignoreUnused (midiMessages);
+    juce::ignoreUnused(midiMessages);
 
     juce::ScopedNoDenormals noDenormals;
-    auto totalNumInputChannels  = getTotalNumInputChannels();
+    auto totalNumInputChannels = getTotalNumInputChannels();
     auto totalNumOutputChannels = getTotalNumOutputChannels();
 
     // In case we have more outputs than inputs, this code clears any output
@@ -229,7 +246,7 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     // when they first compile a plugin, but obviously you don't need to keep
     // this code if your algorithm always overwrites all the output channels.
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
-        buffer.clear (i, 0, buffer.getNumSamples());
+        buffer.clear(i, 0, buffer.getNumSamples());
 
     // This is the place where you'd normally do the guts of your plugin's
     // audio processing...
@@ -238,76 +255,86 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     // Alternatively, you can process the samples with the channels
     // interleaved by keeping the same state.
 
-    
-
-    // update coeffs
-    for (int i = 0; i < 3; i++) {
-        *peakFilterBefore[i].state = *dsp::IIR::Coefficients<float>::makePeakFilter(cachedSampleRate, filterFrequencies[i], 0.807f,  Decibels::decibelsToGain( -emphasis[i]->get()));
-        *peakFilterAfter[i].state = *dsp::IIR::Coefficients<float>::makePeakFilter(cachedSampleRate, filterFrequencies[i], 0.807f, Decibels::decibelsToGain( emphasis[i]->get()));
-    }
-    
-    
-    auto gainAmount = juce::Decibels::decibelsToGain(inputGainKnob->get());
-    for (int channel = 0; channel < totalNumInputChannels; ++channel)
-    {
-        auto* channelData = buffer.getWritePointer (channel);
-        for (int sample = 0; sample < buffer.getNumSamples(); sample++) {
-            channelData[sample] *= gainAmount;
-        }
-    }
-
-    // tone with filter
-    
     dsp::AudioBlock<float> block(buffer);
 
+    // input gain
+    // Some computation here
+    auto gainAmount = inputGainKnob->get();
+    inputGain.setGainDecibels(gainAmount);
+    inputGain.process(juce::dsp::ProcessContextReplacing<float>(block));
+
     bool emphasisOn = enableEmphasis->get();
-    if (emphasisOn) {
-        for (int i = 0; i < 3; i++) {
+    if (emphasisOn)
+    {
+        // update coeffs IF WE NEED TO
+        for (int i = 0; i < 3; i++)
+        {
+            float eqGainValue = emphasis[i]->get();
+
+            // DBG("EQ GAIN VALUE: " << eqGainValue);
+
+            // if (eqGainValue != prevEmphasis[i]) {    // TODOOOOOOOO
+            *peakFilterBefore[i].state = *dsp::IIR::Coefficients<float>::makePeakFilter(cachedSampleRate, filterFrequencies[i], 0.5f, Decibels::decibelsToGain(-eqGainValue));
+            *peakFilterAfter[i].state = *dsp::IIR::Coefficients<float>::makePeakFilter(cachedSampleRate, filterFrequencies[i], 0.5f, Decibels::decibelsToGain(eqGainValue));
+            // }
+            prevEmphasis[i] = eqGainValue;
+        }
+
+        for (int i = 0; i < 3; i++)
+        {
             peakFilterBefore[i].process(dsp::ProcessContextReplacing<float>(block));
         }
     }
 
+    // companding
     bool companderOn = enableCompander->get();
-    if (companderOn) compressor.processBlock(buffer);
+    if (companderOn)
+    {
+        compander.updateParameters();
+        compander.processCompressorBlock(buffer);
+    }
 
-    
-
+    std::chrono::system_clock::time_point start = std::chrono::system_clock::now();
     sizzleNoise.processBlock(buffer);
-
+    std::chrono::system_clock::time_point end = std::chrono::system_clock::now();
+    std::chrono::duration<double> elapsed_seconds = end - start;
+    DBG("Sizzle: " << elapsed_seconds.count());
     cookedDistortion.processBlock(buffer); // maybe before distortion could be interesting
     pattyDistortion.processBlock(buffer);
 
     // tubeDistortion.processBlock(buffer);
-    
-	for (int channel = 0; channel < totalNumInputChannels; ++channel)
+    // Some computation here
+    for (int channel = 0; channel < totalNumInputChannels; ++channel)
     {
-        auto* channelData = buffer.getWritePointer (channel);
-        
+        auto *channelData = buffer.getWritePointer(channel);
 
-        for (int sample = 0; sample < buffer.getNumSamples(); sample++) {
+        for (int sample = 0; sample < buffer.getNumSamples(); sample++)
+        {
             float xn = channelData[sample];
             // float saturation = 1.3;
-            channelData[sample] = ((xn > 0) - (xn < 0))*(1.0 - exp(-fabs((saturation->get()*0.1f + 1.f)*xn))); // multiply audio on both channels by gain
+            channelData[sample] = sgn(xn) * (1.0 - exp(-fabs((saturation->get() * 0.1f + 1.f) * xn))); // multiply audio on both channels by gain
         }
     }
-
-
 
     // tone with filter
-
-    dsp::AudioBlock<float> block2(buffer);
-    
-
-
-
     // here goes the second emphasis EQ before the expander
     if (emphasisOn) {
-        for (int i = 0; i < 3; i++) {
-            peakFilterAfter[i].process(dsp::ProcessContextReplacing<float>(block2));
+        for (int i = 0; i < 3; i++)
+        {
+            peakFilterAfter[i].process(dsp::ProcessContextReplacing<float>(block));
         }
     }
 
-    if (companderOn) expander.processBlock(buffer);
+    // emphasis compensated gain
+    float eqCompensation = (prevEmphasis[0] + prevEmphasis[1] + prevEmphasis[2]) * 0.3333333f * 0.4f;
+    emphasisCompensationGain.setGainDecibels(-eqCompensation);
+    emphasisCompensationGain.process(juce::dsp::ProcessContextReplacing<float>(block));
+
+    // expander at the end
+    if (companderOn)
+        compander.processExpanderBlock(buffer);
+
+    // TODO: output gain knob
 }
 
 //==============================================================================
@@ -316,35 +343,35 @@ bool AudioPluginAudioProcessor::hasEditor() const
     return true; // (change this to false if you choose to not supply an editor)
 }
 
-juce::AudioProcessorEditor* AudioPluginAudioProcessor::createEditor()
+juce::AudioProcessorEditor *AudioPluginAudioProcessor::createEditor()
 {
-    return new AudioPluginAudioProcessorEditor (*this);
+    return new AudioPluginAudioProcessorEditor(*this);
 }
 
 //==============================================================================
-void AudioPluginAudioProcessor::getStateInformation (juce::MemoryBlock& destData)
+void AudioPluginAudioProcessor::getStateInformation(juce::MemoryBlock &destData)
 {
     // You should use this method to store your parameters in the memory block.
     // You could do that either as raw data, or use the XML or ValueTree classes
     // as intermediaries to make it easy to save and load complex data.
     std::unique_ptr<juce::XmlElement> xml(treeState.copyState().createXml());
-	copyXmlToBinary(*xml, destData);
+    copyXmlToBinary(*xml, destData);
 }
 
-void AudioPluginAudioProcessor::setStateInformation (const void* data, int sizeInBytes)
+void AudioPluginAudioProcessor::setStateInformation(const void *data, int sizeInBytes)
 {
     // You should use this method to restore your parameters from this memory block,
     // whose contents will have been created by the getStateInformation() call.
     std::unique_ptr<juce::XmlElement> xmlState(getXmlFromBinary(data, sizeInBytes));
-	if (xmlState.get() != nullptr)
-		if (xmlState->hasTagName(treeState.state.getType()))
-			//treeState.replaceState(juce::ValueTree::fromXml(*xmlState));
-			treeState.state = ValueTree::fromXml(*xmlState);
+    if (xmlState.get() != nullptr)
+        if (xmlState->hasTagName(treeState.state.getType()))
+            // treeState.replaceState(juce::ValueTree::fromXml(*xmlState));
+            treeState.state = ValueTree::fromXml(*xmlState);
 }
 
 //==============================================================================
 // This creates new instances of the plugin..
-juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
+juce::AudioProcessor *JUCE_CALLTYPE createPluginFilter()
 {
     return new AudioPluginAudioProcessor();
 }
