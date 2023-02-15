@@ -14,6 +14,7 @@ cmake_minimum_required(VERSION 3.15)
 project(Hamburger VERSION 0.0.1)
 
 set(BaseTargetName Hamburger)
+set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 
 # If you've installed JUCE somehow (via a package manager, or directly using the CMake install
 # target), you'll need to tell this project that it depends on the installed copy of JUCE. If you've
@@ -42,19 +43,21 @@ juce_add_plugin("${BaseTargetName}"
     # VERSION ...                               # Set this if the plugin version is different to the project version
     # ICON_BIG ...                              # ICON_* arguments specify a path to an image file to use as an icon for the Standalone
     # ICON_SMALL ...
-    # COMPANY_NAME ...                          # Specify the name of the plugin's author
-    # IS_SYNTH TRUE/FALSE                       # Is this a synth or an effect?
-    # NEEDS_MIDI_INPUT TRUE/FALSE               # Does the plugin need midi input?
-    # NEEDS_MIDI_OUTPUT TRUE/FALSE              # Does the plugin need midi output?
-    # IS_MIDI_EFFECT TRUE/FALSE                 # Is this plugin a MIDI effect?
+    COMPANY_NAME AviaryAudio                          # Specify the name of the plugin's author
+    IS_SYNTH FALSE                       # Is this a synth or an effect?
+    NEEDS_MIDI_INPUT FALSE               # Does the plugin need midi input?
+    NEEDS_MIDI_OUTPUT FALSE              # Does the plugin need midi output?
+    IS_MIDI_EFFECT FALSE                 # Is this plugin a MIDI effect?
     # EDITOR_WANTS_KEYBOARD_FOCUS TRUE/FALSE    # Does the editor need keyboard focus?
     COPY_PLUGIN_AFTER_BUILD TRUE        # Should the plugin be installed to a default location after building?
     VST3_COPY_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../builds
     PLUGIN_MANUFACTURER_CODE Davy               # A four-character manufacturer id with at least one upper-case character
-    PLUGIN_CODE vscd                            # A unique four-character plugin id with exactly one upper-case character
+    PLUGIN_CODE Hmb2                            # A unique four-character plugin id with exactly one upper-case character
                                                 # GarageBand 10.3 requires the first letter to be upper-case, and the remaining letters to be lower-case
     FORMATS AU VST3 Standalone                  # The formats to build. Other valid formats are: AAX Unity VST AU AUv3
-    PRODUCT_NAME "VSCODE Plugin Test")        # The name of the final executable, which can differ from the target name
+    PRODUCT_NAME "HamburgerV2"  # The name of the final executable, which can differ from the target name
+    VST3_CATEGORIES Fx Distortion Fx Dynamics 
+)
 
 # `juce_generate_juce_header` will create a JuceHeader.h for a given target, which will be generated
 # into your build tree. This should be included with `#include <JuceHeader.h>`. The include path for
@@ -62,8 +65,7 @@ juce_add_plugin("${BaseTargetName}"
 # include all your JUCE module headers; if you're happy to include module headers directly, you
 # probably don't need to call this.
 
-juce_generate_juce_header("${BaseTargetName}")
-
+juce_generate_juce_header("${BaseTargetName}") 
 
 # `target_sources` adds source files to a target. We pass the target that needs the sources as the
 # first argument, then a visibility parameter for the sources which should normally be PRIVATE.
@@ -81,7 +83,7 @@ add_subdirectory(dsp)
 add_subdirectory(gui)
 
 
-target_compile_features("${BaseTargetName}" PRIVATE cxx_std_14)
+target_compile_features("${BaseTargetName}" PUBLIC cxx_std_17)
 
 
 # `target_compile_definitions` adds some preprocessor definitions to our target. In a Projucer
@@ -93,6 +95,7 @@ target_compile_features("${BaseTargetName}" PRIVATE cxx_std_14)
 
 target_compile_definitions("${BaseTargetName}" PUBLIC
 	JUCE_DISPLAY_SPLASH_SCREEN=0
+    JUCE_REPORT_APP_USAGE=0
 	JUCE_USE_FLAC=0
 	JUCE_USE_OGGVORBIS=0
 	JUCE_USE_MP3AUDIOFORMAT=0
@@ -115,13 +118,16 @@ target_compile_definitions("${BaseTargetName}" PUBLIC
 # Conversion to binary-data will happen when your target is built.
 
 juce_add_binary_data("${BaseTargetName}BinaryData" HEADER_NAME BinaryData.h NAMESPACE BinaryData SOURCES
-    Assets/hamburgernew6.png
+    Assets/hamburgernew8.png
     Assets/saturation_knob_min.png
     Assets/sizzleknob_min.png
     Assets/mix_min.png
     Assets/ingain_min.png
+    Assets/ingain2_min.png
     Assets/outgain_min.png
     Assets/knob_min.png
+    Assets/poweron.png
+    Assets/poweroff.png
 )
 set_target_properties("${BaseTargetName}BinaryData" PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
 

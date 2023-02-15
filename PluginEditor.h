@@ -4,6 +4,8 @@
 #include "gui/ParameterKnob.h"
 #include "gui/FilmStripKnob.h"
 
+#include "gui/LightButton.h"
+
 #include <JuceHeader.h>
 
 //==============================================================================
@@ -16,9 +18,6 @@ public:
     //==============================================================================
     void paint(juce::Graphics &) override;
     void resized() override;
-
-    std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> buttonValue = nullptr;
-    std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> emphasisValue = nullptr; // BAD PRACTICE AAAA
 
 private:
     // This reference is provided as a quick way for your editor to
@@ -43,12 +42,21 @@ private:
     std::unique_ptr<FilmStripKnob> emphasisLowKnob = nullptr;
     std::unique_ptr<FilmStripKnob> emphasisMidKnob = nullptr;
     std::unique_ptr<FilmStripKnob> emphasisHighKnob = nullptr;
-    
-    // juce::OwnedArray<ParameterKnob> knobs;
+    std::unique_ptr<FilmStripKnob> emphasisLowFreqKnob = nullptr;
+    std::unique_ptr<FilmStripKnob> emphasisMidFreqKnob = nullptr;
+    std::unique_ptr<FilmStripKnob> emphasisHighFreqKnob = nullptr;
 
-    juce::ToggleButton companderButton;
-    juce::ToggleButton emphasisButton;
+    std::unique_ptr<LightButton> companderButton = nullptr;
+    std::unique_ptr<LightButton> emphasisButton = nullptr;
+    std::unique_ptr<LightButton> compressorButton = nullptr;
+    std::unique_ptr<LightButton> expanderButton = nullptr;
 
+    std::unique_ptr<LightButton> bypassButton = nullptr;
+    std::unique_ptr<LightButton> autoGainButton = nullptr;
+
+
+    juce::ComboBox oversamplingComboBox;
+    std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment> oversamplingAttachment;
 
     juce::Image background;
 

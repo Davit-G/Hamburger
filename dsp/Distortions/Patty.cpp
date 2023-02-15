@@ -33,12 +33,14 @@ void Patty::prepareToPlay(double sampleRate, int samplesPerBlock) {
 	smoothedInput.setCurrentAndTargetValue(0.0);
 }
 
-void Patty::processBlock(AudioBuffer<float>& dryBuffer) {
+void Patty::processBlock(dsp::AudioBlock<float>& block) {
+	if (knobValue == nullptr) return;
 	smoothedInput.setTargetValue(knobValue->get() * 0.01f);
-	auto rightDryData = dryBuffer.getWritePointer(1);
-	auto leftDryData = dryBuffer.getWritePointer(0);
 
-	for (int sample = 0; sample < dryBuffer.getNumSamples(); sample++) {
+	auto rightDryData = block.getChannelPointer(1);
+	auto leftDryData = block.getChannelPointer(0);
+
+	for (int sample = 0; sample < block.getNumSamples(); sample++) {
 		float nextPatty = 1.f - smoothedInput.getNextValue();
 
 		

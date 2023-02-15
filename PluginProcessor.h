@@ -7,6 +7,8 @@
 #include "dsp/Distortions/Sizzle.h"
 #include "dsp/Distortions/Cooked.h"
 #include "dsp/Gain.h"
+#include "dsp/OversamplingStack.h"
+#include "dsp/Distortions/SoftClipper.h"
 // #include "Distortions/naivetube/NaiveTubeDistortion.h"
 
 //==============================================================================
@@ -53,19 +55,37 @@ public:
 
 	juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
 
+    juce::StringArray oversamplingFactorChoices = { "1x", "2x", "4x", "8x", "16x"};
+
+
 private:
+
     juce::AudioParameterFloat* knobValue = nullptr;
     juce::AudioParameterFloat* inputGainKnob = nullptr;
+    juce::AudioParameterFloat* mixKnob = nullptr;
+    juce::AudioParameterFloat* outputGainKnob = nullptr;
+
     juce::AudioParameterBool* enableCompander = nullptr;
     juce::AudioParameterBool* enableEmphasis = nullptr;
+    juce::AudioParameterBool* enableCompressor = nullptr;
+    juce::AudioParameterBool* enableExpander = nullptr;
+
+    juce::AudioParameterBool* hamburgerEnabledButton = nullptr; // acts as bypass
 
     juce::AudioParameterFloat* emphasisLow = nullptr;
     juce::AudioParameterFloat* emphasisMid = nullptr;
     juce::AudioParameterFloat* emphasisHigh = nullptr;
+    juce::AudioParameterFloat* emphasisLowFreq = nullptr;
+    juce::AudioParameterFloat* emphasisMidFreq = nullptr;
+    juce::AudioParameterFloat* emphasisHighFreq = nullptr;
+
+    juce::AudioParameterChoice* oversamplingFactor = nullptr;
 
     // array of emphasisLow, emphasisMid, emphasisHigh
     juce::AudioParameterFloat* emphasis[3];
+    juce::AudioParameterFloat* emphasisFreq[3];
     float prevEmphasis[3] = {0.f, 0.f, 0.f};
+    float prevEmphasisFreq[3] = {0.f, 0.f, 0.f};
 
     juce::AudioParameterFloat* saturation = nullptr;
 
@@ -76,6 +96,7 @@ private:
     Patty pattyDistortion;
     Sizzle sizzleNoise;
     Cooked cookedDistortion;
+    SoftClip softClipper;
 
 
     dsp::ProcessorDuplicator<dsp::IIR::Filter<float>, dsp::IIR::Coefficients<float>> peakFilterBefore[3];
@@ -83,10 +104,17 @@ private:
 
     float filterFrequencies[3] = { 62.0f, 1220.0f, 9000.0f };
 
-    double cachedSampleRate;
+    double oversampledSampleRate;
 
     dsp::Gain<float> inputGain;
+    dsp::Gain<float> outputGain;
     dsp::Gain<float> emphasisCompensationGain;
+
+    dsp::DryWetMixer<float> dryWetMixer;
+
+    dsp::Oversampling<float> oversampling;
+    
+    OversamplingStack oversamplingStack;
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioPluginAudioProcessor)
 };

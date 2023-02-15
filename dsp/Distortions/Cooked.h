@@ -22,7 +22,7 @@ public:
     Cooked(juce::AudioProcessorValueTreeState &state);
     ~Cooked();
 
-	void processBlock(AudioBuffer<float>& dryBuffer);
+	void processBlock(dsp::AudioBlock<float>& block);
 	void prepareToPlay(double sampleRate, int samplesPerBlock);
 
 private:

@@ -49,10 +49,12 @@ private:
 
     float ratio = 1.f;
     float threshold = 0.f;
-    float kneeWidth = 1.f;
+    float kneeWidth = 0.f;
     
     float makeup_dB = 0.f;
 
     EnvelopeFollower compressorEnv;
     EnvelopeFollower expanderEnv;
+
+    
 };

@@ -24,7 +24,7 @@ public:
 	Sizzle(juce::AudioProcessorValueTreeState &state);
 	~Sizzle();
 
-	void processBlock(AudioBuffer<float> &dryBuffer);
+	void processBlock(dsp::AudioBlock<float>& block);
 	void prepareToPlay(double sampleRate, int samplesPerBlock);
 
 	float whiteNoise()

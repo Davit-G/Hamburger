@@ -28,16 +28,16 @@ Cooked::~Cooked()
 
 
 void Cooked::prepareToPlay(double sampleRate, int samplesPerBlock) {
-	smoothedInput.reset(44100, 0.07);
+	smoothedInput.reset(sampleRate, 0.07);
 	smoothedInput.setCurrentAndTargetValue(0.0);
 }
 
-void Cooked::processBlock(AudioBuffer<float>& dryBuffer) {
+void Cooked::processBlock(dsp::AudioBlock<float>& block) {
 	smoothedInput.setTargetValue(knobValue->get() * 0.01f);
-	auto rightDryData = dryBuffer.getWritePointer(1);
-	auto leftDryData = dryBuffer.getWritePointer(0);
+	auto rightDryData = block.getChannelPointer(1);
+	auto leftDryData = block.getChannelPointer(0);
 
-	for (int sample = 0; sample < dryBuffer.getNumSamples(); sample++) {
+	for (int sample = 0; sample < block.getNumSamples(); sample++) {
 		float nextCooked = smoothedInput.getNextValue();
 
 		//the original waveshaping thing

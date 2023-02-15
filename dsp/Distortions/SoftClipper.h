@@ -1,8 +1,24 @@
-#include <cmath>
+#pragma once
 
-float softClipSample(float input)
+#include <JuceHeader.h>
+
+//==============================================================================
+/*
+ */
+class SoftClip
 {
-    // soft clipper using atan
+public:
+    SoftClip(juce::AudioProcessorValueTreeState &state);
+    ~SoftClip();
 
-    return std::atan(input) / (3.1415 / 2);
-}
+    void processBlock(dsp::AudioBlock<float>& block);
+    void prepareToPlay(double sampleRate, int samplesPerBlock);
+
+private:
+    juce::AudioProcessorValueTreeState &treeStateRef;
+
+    juce::AudioParameterFloat *saturationKnob = nullptr;
+
+    
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SoftClip)
+};

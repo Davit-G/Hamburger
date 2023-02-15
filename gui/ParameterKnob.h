@@ -6,19 +6,18 @@
 #include "PluginProcessor.h"
 #include "LookAndFeel/OtherLookAndFeel.h"
 
-class ParameterKnob : public juce::Component, private juce::Slider::Listener
+class ParameterKnob : public juce::Slider, private juce::Slider::Listener
 {
 public:
     ParameterKnob(AudioPluginAudioProcessor &p, juce::String knobIdParam, juce::String nameParam, float minRange, float maxRange) : processorRef(p)
     {
-        juce::ignoreUnused(p);
-
         knobValue = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(processorRef.treeState, knobIdParam, knob);
 
         knob.setLookAndFeel(&pluginLookAndFeel);
         knob.setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
         knob.setRange(minRange, maxRange, 0.00001f);
         knob.setTextBoxStyle(juce::Slider::NoTextBox, false, 90, 0);
+        knob.setTextValueSuffix(" " + nameParam);
         addAndMakeVisible(&knob);
         knob.addListener(this);
 
@@ -44,8 +43,6 @@ public:
         g.setGradientFill(juce::ColourGradient(juce::Colours::greenyellow, bounds.getWidth() / 2, bounds.getHeight() / 2, juce::Colours::cyan, bounds.getWidth(), bounds.getHeight(), false));
         g.setFont(15);
         g.drawFittedText(knobName, bounds, juce::Justification::centred, 1.5);
-
-        
     }
 
     void resized() override

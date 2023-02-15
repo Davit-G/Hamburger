@@ -6,19 +6,20 @@
 float Compander::computeExpanderGain(float input_db)
 {
     float output = -100.0;
+    float thres = 0.f;
 
-    if (2 * (input_db - threshold) > kneeWidth)
+    if (2 * (input_db - thres) > kneeWidth)
     {
         // below knee
         output = input_db;
     }
-    else if (2 * (input_db - threshold) <= -kneeWidth)
+    else if (2 * (input_db - thres) <= -kneeWidth)
     {
-        output = threshold + (input_db - threshold) * ratio;
+        output = thres + (input_db - thres) * ratio;
     }
     else
     {
-        output = input_db + ((1 / ratio) * pow((input_db - threshold + kneeWidth / 2), 2) / (2 * kneeWidth));
+        output = input_db + ((1 / ratio) * pow((input_db - thres + kneeWidth / 2), 2) / (2 * kneeWidth));
     }
 
     float gainReduction = 0.f;

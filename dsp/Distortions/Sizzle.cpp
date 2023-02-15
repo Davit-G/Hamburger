@@ -29,7 +29,7 @@ Sizzle::~Sizzle()
 
 
 void Sizzle::prepareToPlay(double sampleRate, int samplesPerBlock) {
-	smoothedInput.reset(44100, 0.07);
+	smoothedInput.reset(sampleRate, 0.07);
 	smoothedInput.setCurrentAndTargetValue(0.0);
 
 	envelopeDetector.prepareToPlay(sampleRate, samplesPerBlock);
@@ -37,16 +37,16 @@ void Sizzle::prepareToPlay(double sampleRate, int samplesPerBlock) {
 	envelopeDetector.setReleaseTime(10);
 }
 
-void Sizzle::processBlock(AudioBuffer<float>& dryBuffer) {
+void Sizzle::processBlock(dsp::AudioBlock<float>& block) {
 	if (knobValue == nullptr) return;
 	smoothedInput.setTargetValue(knobValue->get()*0.01f);
 	
 	if (knobValue->get() == 0) return;
 
-	auto rightDryData = dryBuffer.getWritePointer(1);
-	auto leftDryData = dryBuffer.getWritePointer(0);
+	auto rightDryData = block.getChannelPointer(1);
+	auto leftDryData = block.getChannelPointer(0);
 
-	for (int sample = 0; sample < dryBuffer.getNumSamples(); sample++) {
+	for (int sample = 0; sample < block.getNumSamples(); sample++) {
 		float nextSizzle = smoothedInput.getNextValue();
 
 		float envelope = envelopeDetector.processSampleStereo(leftDryData[sample], rightDryData[sample]);

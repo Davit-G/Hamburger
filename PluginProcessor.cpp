@@ -22,34 +22,50 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
       compander(treeState),
       pattyDistortion(treeState),
       sizzleNoise(treeState),
-      cookedDistortion(treeState)
+      cookedDistortion(treeState),
+      oversampling(getTotalNumOutputChannels(), 1, dsp::Oversampling<float>::filterHalfBandPolyphaseIIR, false, false),
+      softClipper(treeState),
+      dryWetMixer(30)
 //    tubeDistortion(treeState)
 {
     treeState.state = ValueTree("savedParams");
 
-    inputGainKnob = dynamic_cast<juce::AudioParameterFloat *>(treeState.getParameter("inputGain"));
-    jassert(inputGainKnob); // heads up if the parameter doesn't exist
+    inputGainKnob = dynamic_cast<juce::AudioParameterFloat *>(treeState.getParameter("inputGain")); jassert(inputGainKnob); 
+    outputGainKnob = dynamic_cast<juce::AudioParameterFloat *>(treeState.getParameter("outputGain")); jassert(outputGainKnob); 
+    mixKnob = dynamic_cast<juce::AudioParameterFloat *>(treeState.getParameter("mix")); jassert(mixKnob); 
+
+    hamburgerEnabledButton = dynamic_cast<juce::AudioParameterBool *>(treeState.getParameter("hamburgerEnabled")); jassert(hamburgerEnabledButton);
 
     emphasisLow = dynamic_cast<juce::AudioParameterFloat *>(treeState.getParameter("emphasisLowGain"));
-    emphasis[0] = emphasisLow;
-    jassert(emphasisLow); // heads up if the parameter doesn't exist
-
+    emphasis[0] = emphasisLow; 
+    jassert(emphasisLow); 
     emphasisMid = dynamic_cast<juce::AudioParameterFloat *>(treeState.getParameter("emphasisMidGain"));
     emphasis[1] = emphasisMid;
-    jassert(emphasisMid); // heads up if the parameter doesn't exist
-
+    jassert(emphasisMid); 
     emphasisHigh = dynamic_cast<juce::AudioParameterFloat *>(treeState.getParameter("emphasisHighGain"));
     emphasis[2] = emphasisHigh;
-    jassert(emphasisHigh); // heads up if the parameter doesn't exist
+    jassert(emphasisHigh); 
 
-    saturation = dynamic_cast<juce::AudioParameterFloat *>(treeState.getParameter("saturation"));
-    jassert(saturation); // heads up if the parameter doesn't exist
+    emphasisLowFreq = dynamic_cast<juce::AudioParameterFloat *>(treeState.getParameter("emphasisLowFreq"));
+    emphasisFreq[0] = emphasisLowFreq;
+    jassert(emphasisLowFreq);
+    emphasisMidFreq = dynamic_cast<juce::AudioParameterFloat *>(treeState.getParameter("emphasisMidFreq"));
+    emphasisFreq[1] = emphasisMidFreq;
+    jassert(emphasisMidFreq);
+    emphasisHighFreq = dynamic_cast<juce::AudioParameterFloat *>(treeState.getParameter("emphasisHighFreq"));
+    emphasisFreq[2] = emphasisHighFreq;
+    jassert(emphasisHighFreq);
 
-    enableCompander = dynamic_cast<juce::AudioParameterBool *>(treeState.getParameter("compOn"));
-    jassert(enableCompander); // heads up if the parameter doesn't exist
+    saturation = dynamic_cast<juce::AudioParameterFloat *>(treeState.getParameter("saturation")); jassert(saturation); 
 
-    enableEmphasis = dynamic_cast<juce::AudioParameterBool *>(treeState.getParameter("emphasisOn"));
-    jassert(enableEmphasis); // heads up if the parameter doesn't exist
+    oversamplingFactor = dynamic_cast<juce::AudioParameterChoice *>(treeState.getParameter("oversamplingFactor")); jassert(oversamplingFactor);
+
+    enableCompander = dynamic_cast<juce::AudioParameterBool *>(treeState.getParameter("compandingOn")); jassert(enableCompander); 
+    enableEmphasis = dynamic_cast<juce::AudioParameterBool *>(treeState.getParameter("emphasisOn")); jassert(enableEmphasis); 
+    enableCompressor = dynamic_cast<juce::AudioParameterBool *>(treeState.getParameter("compressionOn")); jassert(enableCompander); 
+    enableExpander = dynamic_cast<juce::AudioParameterBool *>(treeState.getParameter("expansionOn")); jassert(enableEmphasis);
+
+
 }
 
 AudioPluginAudioProcessor::~AudioPluginAudioProcessor()
@@ -67,9 +83,19 @@ AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::createP
     params.add(std::make_unique<AudioParameterFloat>("emphasisLowGain", "Emphasis Low Gain", -18.0f, 18.0f, 0.f));
     params.add(std::make_unique<AudioParameterFloat>("emphasisMidGain", "Emphasis Mid Gain", -18.0f, 18.0f, 0.f));
     params.add(std::make_unique<AudioParameterFloat>("emphasisHighGain", "Emphasis Hi Gain", -18.0f, 18.0f, 0.f));
+    params.add(std::make_unique<AudioParameterFloat>("emphasisLowFreq", "Emphasis Low Frequency", 30.0f, 200.0f, 62.f));
+    params.add(std::make_unique<AudioParameterFloat>("emphasisMidFreq", "Emphasis Mid Frequency", 500.0f, 3000.0f, 1220.f));
+    params.add(std::make_unique<AudioParameterFloat>("emphasisHighFreq", "Emphasis Hi Frequency", 6000.0f, 18000.0f, 9000.f));
 
-    params.add(std::make_unique<AudioParameterBool>("compOn", "Compander On", false));
-    params.add(std::make_unique<AudioParameterBool>("emphasisOn", "Emphasis EQ On", false));
+    params.add(std::make_unique<AudioParameterBool>("compandingOn", "Compander On", false));
+    params.add(std::make_unique<AudioParameterBool>("compressionOn", "Compressor On", true));
+    params.add(std::make_unique<AudioParameterBool>("expansionOn", "Expander On", false));
+    params.add(std::make_unique<AudioParameterBool>("emphasisOn", "Emphasis EQ On", true));
+
+    params.add(std::make_unique<AudioParameterBool>("hamburgerEnabled", "Enabled (Bypass)", true));
+    params.add(std::make_unique<AudioParameterBool>("autoGain", "Auto Gain", false));
+
+    params.add(std::make_unique<AudioParameterChoice>("oversamplingFactor", "Oversampling Factor", oversamplingFactorChoices, 2));
 
     params.add(std::make_unique<AudioParameterFloat>("compAttack", "Compander Attack", 3.0f, 200.0f, 150.f));
     params.add(std::make_unique<AudioParameterFloat>("compRelease", "Compander Release", 10.0f, 500.0f, 200.f));
@@ -84,14 +110,6 @@ AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::createP
 
     return params;
 }
-
-template <typename T>
-int sgn(T val)
-{
-    return (T(0) < val) - (val < T(0));
-}
-
-
 
 //==============================================================================
 const juce::String AudioPluginAudioProcessor::getName() const
@@ -165,18 +183,24 @@ void AudioPluginAudioProcessor::prepareToPlay(double sampleRate, int samplesPerB
     // initialisation that you need..
     juce::ignoreUnused(sampleRate, samplesPerBlock);
 
-    compander.prepareToPlay(sampleRate, samplesPerBlock);
-    pattyDistortion.prepareToPlay(sampleRate, samplesPerBlock);
-    sizzleNoise.prepareToPlay(sampleRate, samplesPerBlock);
-    cookedDistortion.prepareToPlay(sampleRate, samplesPerBlock);
-    // tubeDistortion.prepareToPlay(sampleRate, samplesPerBlock);
+    oversampling.initProcessing(samplesPerBlock);
+    oversampling.reset();
+
+    float totalLatency = oversampling.getLatencyInSamples();
+    DBG("Total Latency: " << totalLatency);
+    setLatencySamples(std::ceil(totalLatency));
 
     dsp::ProcessSpec spec;
     spec.sampleRate = sampleRate;
     spec.maximumBlockSize = samplesPerBlock;
     spec.numChannels = getTotalNumOutputChannels();
+    
+    dryWetMixer.reset();
+    dryWetMixer.prepare(spec);
+    dryWetMixer.setWetLatency(getLatencySamples());
 
-    inputGain.prepare(spec);
+    inputGain.prepare(spec); 
+    outputGain.prepare(spec);
     emphasisCompensationGain.prepare(spec);
 
     // Initialize the filter
@@ -192,13 +216,23 @@ void AudioPluginAudioProcessor::prepareToPlay(double sampleRate, int samplesPerB
         // DBG("EQ GAIN VALUE: " << eqGainValue);
 
         // if (eqGainValue != prevEmphasis[i]) {    // TODOOOOOOOO
-        *peakFilterBefore[i].state = *dsp::IIR::Coefficients<float>::makePeakFilter(cachedSampleRate, filterFrequencies[i], 0.5f, 0);
-        *peakFilterAfter[i].state = *dsp::IIR::Coefficients<float>::makePeakFilter(cachedSampleRate, filterFrequencies[i], 0.5f, 0);
+        *peakFilterBefore[i].state = *dsp::IIR::Coefficients<float>::makePeakFilter(sampleRate, filterFrequencies[i], 0.5f, 0);
+        *peakFilterAfter[i].state = *dsp::IIR::Coefficients<float>::makePeakFilter(sampleRate, filterFrequencies[i], 0.5f, 0);
         // }
         prevEmphasis[i] = 0;
     }
+    
+    oversampledSampleRate = sampleRate * pow(2, oversampling.getOversamplingFactor());
 
-    cachedSampleRate = sampleRate;
+    oversamplingStack.prepare(spec);
+
+    sizzleNoise.prepareToPlay(oversampledSampleRate, samplesPerBlock);
+
+    compander.prepareToPlay(oversampledSampleRate, samplesPerBlock);
+    pattyDistortion.prepareToPlay(oversampledSampleRate, samplesPerBlock);
+    cookedDistortion.prepareToPlay(oversampledSampleRate, samplesPerBlock);
+    softClipper.prepareToPlay(oversampledSampleRate, samplesPerBlock);
+    // tubeDistortion.prepareToPlay(sampleRate, samplesPerBlock);
 }
 
 void AudioPluginAudioProcessor::releaseResources()
@@ -255,7 +289,16 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
     // Alternatively, you can process the samples with the channels
     // interleaved by keeping the same state.
 
+    if (hamburgerEnabledButton->get() == false) {
+        // DBG("Hamburger is disabled");
+        return;
+    }
+
     dsp::AudioBlock<float> block(buffer);
+
+    // dry/wet
+    
+    dryWetMixer.pushDrySamples(block);
 
     // input gain
     // Some computation here
@@ -270,12 +313,13 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
         for (int i = 0; i < 3; i++)
         {
             float eqGainValue = emphasis[i]->get();
+            float eqFreqValue = emphasisFreq[i]->get();
 
             // DBG("EQ GAIN VALUE: " << eqGainValue);
-
-            // if (eqGainValue != prevEmphasis[i]) {    // TODOOOOOOOO
-            *peakFilterBefore[i].state = *dsp::IIR::Coefficients<float>::makePeakFilter(cachedSampleRate, filterFrequencies[i], 0.5f, Decibels::decibelsToGain(-eqGainValue));
-            *peakFilterAfter[i].state = *dsp::IIR::Coefficients<float>::makePeakFilter(cachedSampleRate, filterFrequencies[i], 0.5f, Decibels::decibelsToGain(eqGainValue));
+            double grabbedSampleRate = getSampleRate();
+            // if (eqGainValue != prevEmphasis[i]) {    // TODO: only update if changed
+            *peakFilterBefore[i].state = *dsp::IIR::Coefficients<float>::makePeakFilter(grabbedSampleRate, eqFreqValue, 0.5f, Decibels::decibelsToGain(-eqGainValue));
+            *peakFilterAfter[i].state = *dsp::IIR::Coefficients<float>::makePeakFilter(grabbedSampleRate, eqFreqValue, 0.5f, Decibels::decibelsToGain(eqGainValue));
             // }
             prevEmphasis[i] = eqGainValue;
         }
@@ -288,33 +332,26 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
 
     // companding
     bool companderOn = enableCompander->get();
-    if (companderOn)
-    {
-        compander.updateParameters();
-        compander.processCompressorBlock(buffer);
-    }
 
-    std::chrono::system_clock::time_point start = std::chrono::system_clock::now();
-    sizzleNoise.processBlock(buffer);
-    std::chrono::system_clock::time_point end = std::chrono::system_clock::now();
-    std::chrono::duration<double> elapsed_seconds = end - start;
-    DBG("Sizzle: " << elapsed_seconds.count());
-    cookedDistortion.processBlock(buffer); // maybe before distortion could be interesting
-    pattyDistortion.processBlock(buffer);
+    if (companderOn) compander.updateParameters();
+    if (companderOn && enableCompressor->get()) compander.processCompressorBlock(buffer);
 
-    // tubeDistortion.processBlock(buffer);
-    // Some computation here
-    for (int channel = 0; channel < totalNumInputChannels; ++channel)
-    {
-        auto *channelData = buffer.getWritePointer(channel);
 
-        for (int sample = 0; sample < buffer.getNumSamples(); sample++)
-        {
-            float xn = channelData[sample];
-            // float saturation = 1.3;
-            channelData[sample] = sgn(xn) * (1.0 - exp(-fabs((saturation->get() * 0.1f + 1.f) * xn))); // multiply audio on both channels by gain
-        }
-    }
+    // oversampling
+    // bool oversamplingOn = enableOversampling->get();
+    // i'd like to believe that changing the oversampling type mid-calculation will not affect it, 
+    // as long as it doesnt happen after this line and before the line where the oversampling is processed down again
+    dsp::AudioBlock<float> oversampledBlock = oversampling.processSamplesUp(block);
+
+    sizzleNoise.processBlock(oversampledBlock);
+    cookedDistortion.processBlock(oversampledBlock); // maybe before distortion could be interesting
+    pattyDistortion.processBlock(oversampledBlock);
+    softClipper.processBlock(oversampledBlock);
+    // tubeDistortion.processBlock(buffer);     // here goes the different distortion types stuff etc
+    
+
+    // oversampling
+    oversampling.processSamplesDown(block);
 
     // tone with filter
     // here goes the second emphasis EQ before the expander
@@ -324,17 +361,22 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
             peakFilterAfter[i].process(dsp::ProcessContextReplacing<float>(block));
         }
     }
-
     // emphasis compensated gain
     float eqCompensation = (prevEmphasis[0] + prevEmphasis[1] + prevEmphasis[2]) * 0.3333333f * 0.4f;
     emphasisCompensationGain.setGainDecibels(-eqCompensation);
     emphasisCompensationGain.process(juce::dsp::ProcessContextReplacing<float>(block));
 
     // expander at the end
-    if (companderOn)
-        compander.processExpanderBlock(buffer);
+    if (companderOn && enableExpander->get()) compander.processExpanderBlock(buffer);
 
-    // TODO: output gain knob
+    outputGain.setGainDecibels(outputGainKnob->get());
+    outputGain.process(juce::dsp::ProcessContextReplacing<float>(block));
+
+    dryWetMixer.setWetMixProportion(mixKnob->get() * 0.01f);
+
+    dryWetMixer.mixWetSamples(block);
+
+    // TODO: Limiter at the end to stop clipping 
 }
 
 //==============================================================================

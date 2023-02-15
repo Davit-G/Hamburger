@@ -14,15 +14,7 @@ public:
     FilmStripKnob(AudioPluginAudioProcessor &p, juce::String knobIdParam, juce::String nameParam, float minRange, float maxRange, juce::Image image, int knobSize) : processorRef(p), ParameterKnob(p, knobIdParam, nameParam, minRange, maxRange)
     , pluginLookAndFeel(knobSize, image)
     {
-        juce::ignoreUnused(p);
-
-        knobValue = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(processorRef.treeState, knobIdParam, knob);
-
         knob.setLookAndFeel(&pluginLookAndFeel);
-        knob.setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
-        knob.setRange(minRange, maxRange, 0.00001f);
-        knob.setTextBoxStyle(juce::Slider::NoTextBox, false, 90, 0);
-        addAndMakeVisible(&knob);
         
         this->knobSize = knobSize;
 
@@ -44,7 +36,6 @@ public:
     int getKnobSize() {
         return knobSize;
     }
-
     
 private:
     SaturationLookAndFeel pluginLookAndFeel;
