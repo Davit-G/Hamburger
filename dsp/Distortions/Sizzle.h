@@ -11,7 +11,6 @@
 #pragma once
 
 #include <JuceHeader.h>
-#include "pinknoise/pinknoise.h"
 
 #include "../EnvelopeFollower.h"
 
@@ -21,13 +20,15 @@
 class Sizzle
 {
 public:
-	Sizzle(juce::AudioProcessorValueTreeState &state);
+	Sizzle(juce::AudioParameterFloat* param);
 	~Sizzle();
 
 	void processBlock(dsp::AudioBlock<float>& block);
 	void prepareToPlay(double sampleRate, int samplesPerBlock);
 
-	float whiteNoise()
+	void setSampleRate(double sampleRate) { envelopeDetector.setSampleRate(sampleRate);}
+
+	static float whiteNoise()
 	{
 		return ((float)rand() / (RAND_MAX));
 	}
@@ -73,8 +74,7 @@ private:
 
 	EnvelopeFollower envelopeDetector;
 	juce::Random random;
-
-	juce::AudioProcessorValueTreeState &treeStateRef;
+	
 	juce::AudioParameterFloat *knobValue = nullptr;
 	SmoothedValue<float> smoothedInput;
 };

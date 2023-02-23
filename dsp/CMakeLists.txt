@@ -5,3 +5,5 @@ target_sources("${BaseTargetName}"
         EnvelopeFollower.cpp #here???
         Compander.cpp
         )
+
+add_subdirectory(FrequencyShifting)

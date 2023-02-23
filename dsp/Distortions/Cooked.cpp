@@ -12,14 +12,12 @@
 #include "Cooked.h"
 
 //==============================================================================
-Cooked::Cooked(juce::AudioProcessorValueTreeState &state) : treeStateRef(state)
+Cooked::Cooked(juce::AudioParameterFloat* param)
 {
 	// In your constructor, you should add any child components, and
 	// initialise any special settings that your component needs.
-
-	// initialise knob 
-	knobValue = dynamic_cast<juce::AudioParameterFloat *>(treeStateRef.getParameter("fold"));
-	jassert(knobValue); // makes sure it exists
+	knobValue = param;
+    jassert(knobValue);
 }
 
 Cooked::~Cooked()

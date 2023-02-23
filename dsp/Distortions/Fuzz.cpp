@@ -9,31 +9,28 @@
 */
 
 #include <JuceHeader.h>
-#include "Patty.h"
+#include "Fuzz.h"
 
 //==============================================================================
-Patty::Patty(juce::AudioProcessorValueTreeState &state) 
-	: treeStateRef(state)
+Fuzz::Fuzz(juce::AudioParameterFloat* param)
 {
 	// In your constructor, you should add any child components, and
 	// initialise any special settings that your component needs.
-
-	// initialise knob D
-	knobValue = dynamic_cast<juce::AudioParameterFloat *>(treeStateRef.getParameter("fuzz"));
-    jassert(knobValue); // makes sure it exists
+	knobValue = param;
+    jassert(knobValue);
 }
 
-Patty::~Patty()
+Fuzz::~Fuzz()
 {
 }
 
 
-void Patty::prepareToPlay(double sampleRate, int samplesPerBlock) {
+void Fuzz::prepareToPlay(double sampleRate, int samplesPerBlock) {
 	smoothedInput.reset(44100, 0.07);
 	smoothedInput.setCurrentAndTargetValue(0.0);
 }
 
-void Patty::processBlock(dsp::AudioBlock<float>& block) {
+void Fuzz::processBlock(dsp::AudioBlock<float>& block) {
 	if (knobValue == nullptr) return;
 	smoothedInput.setTargetValue(knobValue->get() * 0.01f);
 

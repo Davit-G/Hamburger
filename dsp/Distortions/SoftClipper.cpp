@@ -6,10 +6,10 @@ int sgn(T val)
     return (T(0) < val) - (val < T(0));
 }
 
-SoftClip::SoftClip(juce::AudioProcessorValueTreeState &state) : treeStateRef(state)
+SoftClip::SoftClip(juce::AudioParameterFloat* param)
 {
-    saturationKnob = dynamic_cast<juce::AudioParameterFloat *>(treeStateRef.getParameter("saturation"));
-    jassert(saturationKnob); // makes sure it exists
+    saturationKnob = param;
+    jassert(saturationKnob);
 }
 
 SoftClip::~SoftClip()

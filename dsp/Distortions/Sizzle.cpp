@@ -11,16 +11,15 @@
 #include "Sizzle.h"
 
 //==============================================================================
-Sizzle::Sizzle(juce::AudioProcessorValueTreeState &state)
+Sizzle::Sizzle(juce::AudioParameterFloat* param)
 :
-treeStateRef(state), envelopeDetector(false)
+envelopeDetector(false)
 {
 	// In your constructor, you should add any child components, and
 	// initialise any special settings that your component needs.
 
-	// initialise knob 
-	knobValue = dynamic_cast<juce::AudioParameterFloat *>(treeStateRef.getParameter("sizzle"));
-	jassert(knobValue); // makes sure it exists
+	knobValue = param;
+    jassert(knobValue);
 }
 
 Sizzle::~Sizzle()

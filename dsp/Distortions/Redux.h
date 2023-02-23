@@ -11,16 +11,18 @@
 #pragma once
 #include <JuceHeader.h>
 
-
 class Redux : public Component
 {
 public:
-	Redux();
-	~Redux();
+    Redux(juce::AudioParameterFloat *downsampling, juce::AudioParameterFloat *bitReduction);
+    ~Redux();
 
-	void processBlock(float bitReductionValue, float downSampleValue, float reduxStereoValue, AudioBuffer<float>& dryBuffer);
-	void prepareToPlay(double sampleRate, int samplesPerBlock);
+    void processBlock(dsp::AudioBlock<float>& block);
+    void prepareToPlay(double sampleRate, int samplesPerBlock);
 
 private:
-	JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Redux)
+    juce::AudioParameterFloat *downsampling;
+    juce::AudioParameterFloat *bitReduction;
+
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Redux)
 };

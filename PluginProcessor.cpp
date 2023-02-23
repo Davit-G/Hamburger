@@ -20,12 +20,10 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
                          ),
       treeState(*this, nullptr, "PARAMETER", createParameterLayout()),
       compander(treeState),
-      pattyDistortion(treeState),
-      sizzleNoise(treeState),
-      cookedDistortion(treeState),
-      oversampling(getTotalNumOutputChannels(), 1, dsp::Oversampling<float>::filterHalfBandPolyphaseIIR, false, false),
-      softClipper(treeState),
-      dryWetMixer(30)
+      dryWetMixer(30),
+      distortionTypeSelection(treeState),
+      noiseDistortionSelection(treeState),
+      preDistortionSelection(treeState)
 //    tubeDistortion(treeState)
 {
     treeState.state = ValueTree("savedParams");
@@ -56,7 +54,9 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
     emphasisFreq[2] = emphasisHighFreq;
     jassert(emphasisHighFreq);
 
-    saturation = dynamic_cast<juce::AudioParameterFloat *>(treeState.getParameter("saturation")); jassert(saturation); 
+    freqShiftFreq = dynamic_cast<juce::AudioParameterFloat *>(treeState.getParameter("frequencyShiftFreq")); jassert(freqShiftFreq); 
+
+    saturation = dynamic_cast<juce::AudioParameterFloat *>(treeState.getParameter("saturationAmount")); jassert(saturation); 
 
     oversamplingFactor = dynamic_cast<juce::AudioParameterChoice *>(treeState.getParameter("oversamplingFactor")); jassert(oversamplingFactor);
 
@@ -87,6 +87,9 @@ AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::createP
     params.add(std::make_unique<AudioParameterFloat>("emphasisMidFreq", "Emphasis Mid Frequency", 500.0f, 3000.0f, 1220.f));
     params.add(std::make_unique<AudioParameterFloat>("emphasisHighFreq", "Emphasis Hi Frequency", 6000.0f, 18000.0f, 9000.f));
 
+    params.add(std::make_unique<AudioParameterFloat>("frequencyShiftFreq", "Frequency Shift Amount", -5000.0f, 5000.0f, 0.0f));
+
+
     params.add(std::make_unique<AudioParameterBool>("compandingOn", "Compander On", false));
     params.add(std::make_unique<AudioParameterBool>("compressionOn", "Compressor On", true));
     params.add(std::make_unique<AudioParameterBool>("expansionOn", "Expander On", false));
@@ -95,7 +98,7 @@ AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::createP
     params.add(std::make_unique<AudioParameterBool>("hamburgerEnabled", "Enabled (Bypass)", true));
     params.add(std::make_unique<AudioParameterBool>("autoGain", "Auto Gain", false));
 
-    params.add(std::make_unique<AudioParameterChoice>("oversamplingFactor", "Oversampling Factor", oversamplingFactorChoices, 2));
+    params.add(std::make_unique<AudioParameterChoice>("oversamplingFactor", "Oversampling Factor", StringArray({ "1x", "2x", "4x", "8x", "16x"}), 0));
 
     params.add(std::make_unique<AudioParameterFloat>("compAttack", "Compander Attack", 3.0f, 200.0f, 150.f));
     params.add(std::make_unique<AudioParameterFloat>("compRelease", "Compander Release", 10.0f, 500.0f, 200.f));
@@ -103,10 +106,42 @@ AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::createP
     params.add(std::make_unique<AudioParameterFloat>("compRatio", "Compander Ratio", 1.0f, 10.0f, 3.5f));
     params.add(std::make_unique<AudioParameterFloat>("compOut", "Compander Makeup", 0.0f, 24.0f, 0.f));
 
+    params.add(std::make_unique<AudioParameterChoice>("primaryDistortionType", "Distortion Type", StringArray({ "Soft Clip", "Hard Clip", "Fold", "Fuzz", "Tube" }), 0));
+    params.add(std::make_unique<AudioParameterChoice>("preDistortionType", "Pre-Distortion Type", StringArray({ "AllPassChain", "Reverb", "Comb" }), 0));
+    params.add(std::make_unique<AudioParameterChoice>("noiseDistortionType", "Noise Type", StringArray({ "Sizzle", "Erosion", "Asperity", "Downsample / Bitreduction", "Jeff Thickness"}), 0));
+
     params.add(std::make_unique<AudioParameterFloat>("fuzz", "Fuzz", 0.0f, 100.0f, 0.0f));
     params.add(std::make_unique<AudioParameterFloat>("sizzle", "Sizzle", 0.0f, 100.0f, 0.0f));
     params.add(std::make_unique<AudioParameterFloat>("fold", "Fold", 0.0f, 100.0f, 0.0f));
-    params.add(std::make_unique<AudioParameterFloat>("saturation", "Saturation", 0.0f, 100.0f, 0.f));
+
+    // using new layout system
+
+
+    // primary distortions
+    params.add(std::make_unique<AudioParameterFloat>("saturationAmount", "Saturation", 0.0f, 100.0f, 0.f));
+
+    // noise distortions
+    params.add(std::make_unique<AudioParameterFloat>("noiseAmount", "Noise Amount", 0.0f, 100.0f, 0.f));
+    params.add(std::make_unique<AudioParameterFloat>("noiseFrequency", "Noise Frequency", 20.0f, 20000.0f, 4000.f));
+    params.add(std::make_unique<AudioParameterFloat>("noiseQ", "Noise Q", 0.1f, 3.0f, 0.7f));
+
+    params.add(std::make_unique<AudioParameterFloat>("downsampleAmount", "Downsample Amount", 0.0f, 20.0f, 0.f));
+    params.add(std::make_unique<AudioParameterFloat>("bitReduction", "Bit Reduction Amount", 1.0f, 32.0f, 32.f));
+
+    // pre-distortions
+    params.add(std::make_unique<AudioParameterFloat>("reverbMix", "Reverb Amount", 0.0f, 1.0f, 1.f));
+    params.add(std::make_unique<AudioParameterFloat>("reverbSize", "Reverb Size", 0.0f, 1.0f, 1.f));
+    params.add(std::make_unique<AudioParameterFloat>("reverbWidth", "Reverb Width", 0.0f, 1.0f, 1.f));
+    params.add(std::make_unique<AudioParameterFloat>("reverbDamping", "Reverb Damping", 0.0f, 1.0f, 0.3f));
+
+    params.add(std::make_unique<AudioParameterFloat>("combDelay", "Comb Delay", 0.0f, 2000.0f, 0.f));
+    params.add(std::make_unique<AudioParameterFloat>("combFeedback", "Comb Feedback", -1.0f, 1.0f, 0.f));
+    params.add(std::make_unique<AudioParameterFloat>("combMix", "Comb Mix", 0.0f, 1.0f, 1.0f));
+
+    params.add(std::make_unique<AudioParameterFloat>("allPassFreq", "AllPass Frequency", 20.0f, 20000.0f, 400.f));
+    params.add(std::make_unique<AudioParameterFloat>("allPassQ", "AllPass Q", 0.01f, 1.41f, 0.1f));
+    params.add(std::make_unique<AudioParameterFloat>("allPassAmount", "AllPass Number", 0.0f, 50.0f, 1.0f));
+
 
     return params;
 }
@@ -183,13 +218,6 @@ void AudioPluginAudioProcessor::prepareToPlay(double sampleRate, int samplesPerB
     // initialisation that you need..
     juce::ignoreUnused(sampleRate, samplesPerBlock);
 
-    oversampling.initProcessing(samplesPerBlock);
-    oversampling.reset();
-
-    float totalLatency = oversampling.getLatencyInSamples();
-    DBG("Total Latency: " << totalLatency);
-    setLatencySamples(std::ceil(totalLatency));
-
     dsp::ProcessSpec spec;
     spec.sampleRate = sampleRate;
     spec.maximumBlockSize = samplesPerBlock;
@@ -221,18 +249,26 @@ void AudioPluginAudioProcessor::prepareToPlay(double sampleRate, int samplesPerB
         // }
         prevEmphasis[i] = 0;
     }
-    
-    oversampledSampleRate = sampleRate * pow(2, oversampling.getOversamplingFactor());
 
     oversamplingStack.prepare(spec);
 
-    sizzleNoise.prepareToPlay(oversampledSampleRate, samplesPerBlock);
+    float totalLatency = oversamplingStack.getLatencySamples();
+    DBG("Total Latency: " << totalLatency);
+    setLatencySamples(std::ceil(totalLatency));
 
-    compander.prepareToPlay(oversampledSampleRate, samplesPerBlock);
-    pattyDistortion.prepareToPlay(oversampledSampleRate, samplesPerBlock);
-    cookedDistortion.prepareToPlay(oversampledSampleRate, samplesPerBlock);
-    softClipper.prepareToPlay(oversampledSampleRate, samplesPerBlock);
+    preDistortionSelection.prepareToPlay(sampleRate, samplesPerBlock);
+    distortionTypeSelection.prepareToPlay(sampleRate, samplesPerBlock);
+    noiseDistortionSelection.prepareToPlay(sampleRate, samplesPerBlock);
+
+    compander.prepareToPlay(sampleRate, samplesPerBlock);
+    // pattyDistortion.prepareToPlay(sampleRate, samplesPerBlock);
+    // cookedDistortion.prepareToPlay(sampleRate, samplesPerBlock);
+    // softClipper.prepareToPlay(sampleRate, samplesPerBlock);
     // tubeDistortion.prepareToPlay(sampleRate, samplesPerBlock);
+
+    distortionTypeSelection.prepareToPlay(sampleRate, samplesPerBlock);
+
+    shifter.prepareToPlay(sampleRate, samplesPerBlock);
 }
 
 void AudioPluginAudioProcessor::releaseResources()
@@ -298,7 +334,7 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
 
     // dry/wet
     
-    dryWetMixer.pushDrySamples(block);
+    // dryWetMixer.pushDrySamples(block);
 
     // input gain
     // Some computation here
@@ -306,6 +342,10 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
     inputGain.setGainDecibels(gainAmount);
     inputGain.process(juce::dsp::ProcessContextReplacing<float>(block));
 
+    shifter.setFrequencyShift(freqShiftFreq->get());
+    shifter.processBlock(block);
+    // return; 
+    
     bool emphasisOn = enableEmphasis->get();
     if (emphasisOn)
     {
@@ -341,17 +381,34 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
     // bool oversamplingOn = enableOversampling->get();
     // i'd like to believe that changing the oversampling type mid-calculation will not affect it, 
     // as long as it doesnt happen after this line and before the line where the oversampling is processed down again
-    dsp::AudioBlock<float> oversampledBlock = oversampling.processSamplesUp(block);
 
-    sizzleNoise.processBlock(oversampledBlock);
-    cookedDistortion.processBlock(oversampledBlock); // maybe before distortion could be interesting
-    pattyDistortion.processBlock(oversampledBlock);
-    softClipper.processBlock(oversampledBlock);
-    // tubeDistortion.processBlock(buffer);     // here goes the different distortion types stuff etc
+    int oversampleAmount = oversamplingFactor->getIndex();
+
+    int newSamplingRate = getSampleRate() * pow(2, oversampleAmount);
+
+    dryWetMixer.setWetLatency(oversamplingStack.getLatencySamples());
+
+    oversamplingStack.setOversamplingFactor(oversampleAmount);
+    if (oldOversamplingFactor != oversampleAmount) {
+        DBG("Oversampling changed to " << oversampleAmount);
+        oldOversamplingFactor = oversampleAmount;
+        setLatencySamples(oversamplingStack.getLatencySamples());
+    }
+
     
+    noiseDistortionSelection.setSampleRate(getSampleRate()); 
+    noiseDistortionSelection.processBlock(block); // TODO: make order changer thingy
+
+    dsp::AudioBlock<float> oversampledBlock = oversamplingStack.processSamplesUp(block);
+
+    preDistortionSelection.setSampleRate(newSamplingRate);
+    preDistortionSelection.processBlock(oversampledBlock);
+
+    distortionTypeSelection.setSampleRate(newSamplingRate);
+    distortionTypeSelection.processBlock(oversampledBlock);
 
     // oversampling
-    oversampling.processSamplesDown(block);
+    oversamplingStack.processSamplesDown(block);
 
     // tone with filter
     // here goes the second emphasis EQ before the expander

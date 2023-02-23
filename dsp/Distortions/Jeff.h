@@ -10,21 +10,23 @@
 
 #pragma once
 
-#include "../../JuceLibraryCode/JuceHeader.h"
+#include <JuceHeader.h>
 
 //==============================================================================
 /*
 */
-class Jeff : public Component
+class Jeff
 {
 public:
-	Jeff();
+	Jeff(juce::AudioParameterFloat* param);
 	~Jeff();
 
-	void processBlock(float input, AudioBuffer<float>& dryBuffer);
+	void processBlock(dsp::AudioBlock<float>& block);
 	void prepareToPlay(double sampleRate, int samplesPerBlock);
 
 private:
 	SmoothedValue<float> smoothedInput;
+
+	juce::AudioParameterFloat* saturationAmount;
 	JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Jeff)
 };

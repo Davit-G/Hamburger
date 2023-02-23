@@ -40,6 +40,9 @@ public:
 	
 	void setSampleRate(double sampleRateIn) {
 		sampleRate = sampleRateIn;
+		// recalc attack and release times
+		setAttackTime(attackTime_mSec);
+		setReleaseTime(releaseTime_mSec);
 	}
 
 private:

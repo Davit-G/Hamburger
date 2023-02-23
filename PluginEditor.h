@@ -1,12 +1,15 @@
 #pragma once
 
 #include "PluginProcessor.h"
-#include "gui/ParameterKnob.h"
+// #include "gui/ParameterKnob.h"
 #include "gui/FilmStripKnob.h"
 
 #include "gui/LightButton.h"
 
 #include <JuceHeader.h>
+
+#include "gui/EmphasisPanel.h"
+
 
 //==============================================================================
 class AudioPluginAudioProcessorEditor : public juce::AudioProcessorEditor
@@ -37,7 +40,22 @@ private:
     std::unique_ptr<FilmStripKnob> fuzzKnob = nullptr;
     std::unique_ptr<FilmStripKnob> sizzleKnob = nullptr;
     std::unique_ptr<FilmStripKnob> foldKnob = nullptr;
+
+    // using new layout system
+
+
+    // primary distortions
     std::unique_ptr<FilmStripKnob> saturationKnob = nullptr;
+
+    // noise distortions
+    std::unique_ptr<FilmStripKnob> noiseAmountKnob = nullptr;
+    std::unique_ptr<FilmStripKnob> noiseFrequencyKnob = nullptr;
+    std::unique_ptr<FilmStripKnob> noiseQKnob = nullptr;
+
+    
+
+
+
 
     std::unique_ptr<FilmStripKnob> emphasisLowKnob = nullptr;
     std::unique_ptr<FilmStripKnob> emphasisMidKnob = nullptr;
@@ -57,6 +75,9 @@ private:
 
     juce::ComboBox oversamplingComboBox;
     std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment> oversamplingAttachment;
+
+    juce::ComboBox distortionTypeComboBox;
+    std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment> distortionTypesAttachment;
 
     juce::Image background;
 

@@ -7,10 +7,9 @@
 AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor(AudioPluginAudioProcessor &p) : AudioProcessorEditor(&p),
                                                                                                  processorRef(p)
 {
-    
+
     juce::Image powerOffImage = juce::ImageCache::getFromMemory(BinaryData::poweroff_png, BinaryData::poweroff_pngSize);
     juce::Image powerOnImage = juce::ImageCache::getFromMemory(BinaryData::poweron_png, BinaryData::poweron_pngSize);
-
 
     companderButton = std::make_unique<LightButton>(p, "compandingOn", powerOffImage, powerOnImage);
     addAndMakeVisible(companderButton.get());
@@ -60,7 +59,7 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor(AudioPluginAudi
     addAndMakeVisible(sizzleKnob.get());
     foldKnob = std::make_unique<FilmStripKnob>(p, "fold", "Fold", 0.0f, 100.f, knobImage, 54);
     addAndMakeVisible(foldKnob.get());
-    saturationKnob = std::make_unique<FilmStripKnob>(p, "saturation", "Saturation", 0.0f, 100.f, juce::ImageCache::getFromMemory(BinaryData::saturation_knob_min_png, BinaryData::saturation_knob_min_pngSize), 128);
+    saturationKnob = std::make_unique<FilmStripKnob>(p, "saturationAmount", "SaturationAmount", 0.0f, 100.f, juce::ImageCache::getFromMemory(BinaryData::saturation_knob_min_png, BinaryData::saturation_knob_min_pngSize), 128);
     addAndMakeVisible(saturationKnob.get());
 
     compAttackKnob = std::make_unique<FilmStripKnob>(p, "compAttack", "Compander Attack", 3.0f, 200.f, knobImage, 54);
@@ -76,19 +75,21 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor(AudioPluginAudi
 
     background = juce::ImageCache::getFromMemory(BinaryData::hamburgernew8_png, BinaryData::hamburgernew8_pngSize);
 
-
-    oversamplingAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment>(p.treeState, "oversampling", oversamplingComboBox);
+    oversamplingAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment>(p.treeState, "oversamplingFactor", oversamplingComboBox);
     oversamplingComboBox.addItemList({"Off", "2x", "4x", "8x", "16x"}, 1);
-    oversamplingComboBox.setSelectedId(1);
-
+    oversamplingComboBox.setSelectedItemIndex(0);
     addAndMakeVisible(oversamplingComboBox);
+
+    distortionTypesAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment>(p.treeState, "primaryDistortionType", distortionTypeComboBox);
+    distortionTypeComboBox.addItemList({ "Soft Clip", "Hard Clip", "Fold", "Fuzz", "Tube" }, 1);
+    distortionTypeComboBox.setSelectedItemIndex(0);
+    addAndMakeVisible(distortionTypeComboBox);
 
     setSize(778, 600);
 }
 
 AudioPluginAudioProcessorEditor::~AudioPluginAudioProcessorEditor()
 {
-
 }
 
 //==============================================================================
@@ -98,7 +99,7 @@ void AudioPluginAudioProcessorEditor::paint(juce::Graphics &g)
     // g.fillAll (getLookAndFeel().findColour (juce::ResizableWindow::backgroundColourId));
 
     // (Our component is opaque, so we must completely fill the background with a solid colour)
-    
+
     g.drawImageAt(background, 0, 0);
 }
 
@@ -110,7 +111,7 @@ void AudioPluginAudioProcessorEditor::resized()
     companderButton->setBounds(40, 95, 18, 18);
     emphasisButton->setBounds(627, 96, 18, 18);
     compressorButton->setBounds(53, 383, 18, 18);
-    expanderButton->setBounds(53, 404, 18, 18); 
+    expanderButton->setBounds(53, 404, 18, 18);
 
     bypassButton->setBounds(641, 389, 18, 18);
     autoGainButton->setBounds(641, 410, 18, 18);
@@ -138,4 +139,5 @@ void AudioPluginAudioProcessorEditor::resized()
     compOutKnob->setBounds(69, 292, compOutKnob->getKnobSize(), compOutKnob->getKnobSize());
 
     oversamplingComboBox.setBounds(64, 473, 64, 38);
+    distortionTypeComboBox.setBounds(633, 473, 64, 38);
 }
