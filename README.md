@@ -1,4 +1,6 @@
-# HamburgerV2
+# Hamburger
+
+https://aviaryaudio.com/plugins/hamburgerv2
 
 ## Overview
 
