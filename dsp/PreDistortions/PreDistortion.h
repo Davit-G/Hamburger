@@ -21,6 +21,8 @@ public:
     PreDistortion(juce::AudioProcessorValueTreeState &state) : treeStateRef(state) {
         distoType = dynamic_cast<juce::AudioParameterChoice *>(state.getParameter("preDistortionType")); jassert(distoType);
 
+        preDistortionEnabled = dynamic_cast<juce::AudioParameterBool *>(state.getParameter("preDistortionEnabled")); jassert(preDistortionEnabled);
+
         reverbMix = dynamic_cast<juce::AudioParameterFloat *>(state.getParameter("reverbMix")); jassert(reverbMix);
         reverbSize = dynamic_cast<juce::AudioParameterFloat *>(state.getParameter("reverbSize")); jassert(reverbSize);
         reverbWidth = dynamic_cast<juce::AudioParameterFloat *>(state.getParameter("reverbWidth")); jassert(reverbWidth);
@@ -42,6 +44,8 @@ public:
 
     void processBlock(dsp::AudioBlock<float>& block) {
         int distoTypeIndex = distoType->getIndex();
+
+        if (preDistortionEnabled->get() == false) return;
 
         switch (distoTypeIndex)
         {
@@ -93,6 +97,7 @@ private:
     juce::AudioParameterFloat* allPassQ = nullptr;
     juce::AudioParameterFloat* allPassAmount = nullptr;
 
+    juce::AudioParameterBool* preDistortionEnabled = nullptr;
 
     double sampleRate;
 

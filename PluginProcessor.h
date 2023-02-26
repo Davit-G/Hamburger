@@ -12,7 +12,7 @@
 
 #include "dsp/PrimaryDistortion.h"
 #include "dsp/NoiseDistortions.h"
-#include "dsp/PreDistortion.h"
+#include "dsp/PreDistortions/PreDistortion.h"
 
 #include "dsp/FrequencyShifting/FrequencyShifterAlt.h"
 // #include "dsp/FrequencyShifting/FreqShiftBiquad.h"
@@ -106,6 +106,7 @@ private:
     Compander compander;
 
     FrequencyShifterAlt shifter;
+    FrequencyShifterAlt endShifter;
 
     // NaiveTubeDistortion tubeDistortion;
 

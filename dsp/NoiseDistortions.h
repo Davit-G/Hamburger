@@ -18,6 +18,9 @@ public:
         distoType = dynamic_cast<juce::AudioParameterChoice *>(state.getParameter("noiseDistortionType"));
         jassert(distoType);
 
+        noiseEnabled = dynamic_cast<juce::AudioParameterBool *>(state.getParameter("noiseDistortionEnabled"));
+        jassert(noiseEnabled);
+
         noiseAmount = dynamic_cast<juce::AudioParameterFloat *>(state.getParameter("noiseAmount"));
         noiseFrequency = dynamic_cast<juce::AudioParameterFloat *>(state.getParameter("noiseFrequency"));
         noiseQ = dynamic_cast<juce::AudioParameterFloat *>(state.getParameter("noiseQ"));
@@ -41,6 +44,8 @@ public:
     void processBlock(dsp::AudioBlock<float> &block)
     {
         int distoTypeIndex = distoType->getIndex();
+
+        if (noiseEnabled->get() != true) return;
 
         switch (distoTypeIndex)
         {
@@ -84,6 +89,8 @@ private:
     juce::AudioParameterFloat* noiseQ;
     juce::AudioParameterFloat* downsampleAmount;
     juce::AudioParameterFloat* bitReduction;
+
+    juce::AudioParameterBool* noiseEnabled;
 
     std::unique_ptr<Sizzle> sizzle = nullptr;
     std::unique_ptr<Erosion> erosion = nullptr;

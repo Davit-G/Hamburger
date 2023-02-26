@@ -8,7 +8,6 @@
 #include "Distortions/Cooked.h"
 #include "Distortions/Jeff.h"
 
-
 /*
 Primary distortion modes:
 
@@ -27,13 +26,25 @@ public:
         distoType = dynamic_cast<juce::AudioParameterChoice *>(state.getParameter("primaryDistortionType"));
         jassert(distoType);
 
+        distortionEnabled = dynamic_cast<juce::AudioParameterBool *>(state.getParameter("primaryDistortionEnabled"));
+        jassert(distortionEnabled);
+
         saturationAmount = dynamic_cast<juce::AudioParameterFloat *>(state.getParameter("saturationAmount"));
-        jassert(saturationAmount); 
+        jassert(saturationAmount);
+
+        fuzzParam = dynamic_cast<juce::AudioParameterFloat *>(state.getParameter("fuzz"));
+        jassert(fuzzParam);
+
+        foldParam = dynamic_cast<juce::AudioParameterFloat *>(state.getParameter("fold"));
+        jassert(foldParam);
+
+        bias = dynamic_cast<juce::AudioParameterFloat *>(state.getParameter("bias"));
+        jassert(bias);
 
         softClipper = std::make_unique<SoftClip>(saturationAmount);
         hardClipper = std::make_unique<HardClip>(saturationAmount);
-        fold = std::make_unique<Cooked>(saturationAmount);
-        fuzz = std::make_unique<Fuzz>(saturationAmount);
+        fold = std::make_unique<Cooked>(foldParam);
+        fuzz = std::make_unique<Fuzz>(fuzzParam);
     };
     ~PrimaryDistortion(){};
 
@@ -41,27 +52,32 @@ public:
     {
         int distoTypeIndex = distoType->getIndex();
 
+        if (distortionEnabled->get()  == false) return;
+
         switch (distoTypeIndex)
         {
-        case 0: // soft clipper
+        case 0: // classic
+            fold->processBlock(block);
+            fuzz->processBlock(block);
+            block.add(bias->get());
             softClipper->processBlock(block);
             break;
-        case 1: // hard clipper
+        case 1: // tube
             hardClipper->processBlock(block);
             break;
         case 2: // fold
-            fold->processBlock(block);
             break;
         case 3: // fuzz
-            fuzz->processBlock(block);
             break;
         case 4: // tube
             break;
-        case 5: 
+        case 5:
             break;
         default:
             break;
         }
+
+        iirFilter.process(dsp::ProcessContextReplacing<float>(block)); // hpf afterwards to remove bias
     };
     void prepareToPlay(double sampleRate, int samplesPerBlock)
     {
@@ -69,6 +85,16 @@ public:
         hardClipper->prepareToPlay(sampleRate, samplesPerBlock);
         fold->prepareToPlay(sampleRate, samplesPerBlock);
         fuzz->prepareToPlay(sampleRate, samplesPerBlock);
+
+        // init iir filter
+        *iirFilter.state = *dsp::IIR::Coefficients<float>::makeHighPass(sampleRate, 14.0f, 0.6);
+
+        dsp::ProcessSpec spec;
+        spec.sampleRate = sampleRate;
+        spec.maximumBlockSize = samplesPerBlock;
+        spec.numChannels = 2;
+
+        iirFilter.prepare(spec);
     };
 
     void setSampleRate(double newSampleRate)
@@ -80,13 +106,21 @@ private:
     juce::AudioProcessorValueTreeState &treeStateRef;
     juce::AudioParameterChoice *distoType = nullptr;
 
-    juce::AudioParameterFloat* saturationAmount;
+    juce::AudioParameterFloat *saturationAmount;
+    juce::AudioParameterFloat *fuzzParam;
+    juce::AudioParameterFloat *foldParam;
+
+    juce::AudioParameterBool *distortionEnabled;
+
 
     std::unique_ptr<SoftClip> softClipper = nullptr;
     std::unique_ptr<HardClip> hardClipper = nullptr;
     std::unique_ptr<Cooked> fold = nullptr;
     std::unique_ptr<Fuzz> fuzz = nullptr;
-    
+
+    juce::AudioParameterFloat *bias;
+
+    dsp::ProcessorDuplicator<dsp::IIR::Filter<float>, dsp::IIR::Coefficients<float>> iirFilter;
 
     double sampleRate;
 

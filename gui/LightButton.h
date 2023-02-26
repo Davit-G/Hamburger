@@ -1,4 +1,4 @@
-
+#pragma once
 #include <JuceHeader.h>
 
 class LightButton : public juce::Button {

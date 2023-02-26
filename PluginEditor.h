@@ -8,7 +8,12 @@
 
 #include <JuceHeader.h>
 
-#include "gui/EmphasisPanel.h"
+#include "gui/Emphasis/EmphasisPanel.h"
+#include "gui/PreDistortionPanels/PreDistortions.h"
+#include "gui/DistortionPanels/Distortions.h"
+#include "gui/NoisePanels/NoisePanel.h"
+
+#include "./gui/LookAndFeel/ComboBoxLookAndFeel.h"
 
 
 //==============================================================================
@@ -54,16 +59,6 @@ private:
 
     
 
-
-
-
-    std::unique_ptr<FilmStripKnob> emphasisLowKnob = nullptr;
-    std::unique_ptr<FilmStripKnob> emphasisMidKnob = nullptr;
-    std::unique_ptr<FilmStripKnob> emphasisHighKnob = nullptr;
-    std::unique_ptr<FilmStripKnob> emphasisLowFreqKnob = nullptr;
-    std::unique_ptr<FilmStripKnob> emphasisMidFreqKnob = nullptr;
-    std::unique_ptr<FilmStripKnob> emphasisHighFreqKnob = nullptr;
-
     std::unique_ptr<LightButton> companderButton = nullptr;
     std::unique_ptr<LightButton> emphasisButton = nullptr;
     std::unique_ptr<LightButton> compressorButton = nullptr;
@@ -71,6 +66,14 @@ private:
 
     std::unique_ptr<LightButton> bypassButton = nullptr;
     std::unique_ptr<LightButton> autoGainButton = nullptr;
+
+
+    EmphasisPanel emphasisPanel;
+    PreDistortions preDistortionsPanel;
+    DistortionsPanel distortionsPanel;
+    NoisePanel noiseTypesPanel;
+
+    ComboBoxLookAndFeel comboBoxLook;
 
 
     juce::ComboBox oversamplingComboBox;

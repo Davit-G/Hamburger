@@ -87,13 +87,18 @@ AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::createP
     params.add(std::make_unique<AudioParameterFloat>("emphasisMidFreq", "Emphasis Mid Frequency", 500.0f, 3000.0f, 1220.f));
     params.add(std::make_unique<AudioParameterFloat>("emphasisHighFreq", "Emphasis Hi Frequency", 6000.0f, 18000.0f, 9000.f));
 
-    params.add(std::make_unique<AudioParameterFloat>("frequencyShiftFreq", "Frequency Shift Amount", -5000.0f, 5000.0f, 0.0f));
+    params.add(std::make_unique<AudioParameterFloat>("frequencyShiftFreq", "Frequency Shift Amount", -500.0f, 500.0f, 0.0f));
 
 
     params.add(std::make_unique<AudioParameterBool>("compandingOn", "Compander On", false));
     params.add(std::make_unique<AudioParameterBool>("compressionOn", "Compressor On", true));
     params.add(std::make_unique<AudioParameterBool>("expansionOn", "Expander On", false));
     params.add(std::make_unique<AudioParameterBool>("emphasisOn", "Emphasis EQ On", true));
+    params.add(std::make_unique<AudioParameterBool>("shifterOn", "Emphasis Shifter On", true));
+
+    params.add(std::make_unique<AudioParameterBool>("preDistortionEnabled", "PreDistortion Enabled", true));
+    params.add(std::make_unique<AudioParameterBool>("primaryDistortionEnabled", "Distortion Enabled", true));
+    params.add(std::make_unique<AudioParameterBool>("noiseDistortionEnabled", "Noise Enabled", true));
 
     params.add(std::make_unique<AudioParameterBool>("hamburgerEnabled", "Enabled (Bypass)", true));
     params.add(std::make_unique<AudioParameterBool>("autoGain", "Auto Gain", false));
@@ -106,13 +111,14 @@ AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::createP
     params.add(std::make_unique<AudioParameterFloat>("compRatio", "Compander Ratio", 1.0f, 10.0f, 3.5f));
     params.add(std::make_unique<AudioParameterFloat>("compOut", "Compander Makeup", 0.0f, 24.0f, 0.f));
 
-    params.add(std::make_unique<AudioParameterChoice>("primaryDistortionType", "Distortion Type", StringArray({ "Soft Clip", "Hard Clip", "Fold", "Fuzz", "Tube" }), 0));
-    params.add(std::make_unique<AudioParameterChoice>("preDistortionType", "Pre-Distortion Type", StringArray({ "AllPassChain", "Reverb", "Comb" }), 0));
+    params.add(std::make_unique<AudioParameterChoice>("primaryDistortionType", "Distortion Type", StringArray({ "Classic", "Tube" }), 0));
+    params.add(std::make_unique<AudioParameterChoice>("preDistortionType", "Pre-Distortion Type", StringArray({ "Disperser", "Reverb", "Comb" }), 0));
     params.add(std::make_unique<AudioParameterChoice>("noiseDistortionType", "Noise Type", StringArray({ "Sizzle", "Erosion", "Asperity", "Downsample / Bitreduction", "Jeff Thickness"}), 0));
 
     params.add(std::make_unique<AudioParameterFloat>("fuzz", "Fuzz", 0.0f, 100.0f, 0.0f));
     params.add(std::make_unique<AudioParameterFloat>("sizzle", "Sizzle", 0.0f, 100.0f, 0.0f));
     params.add(std::make_unique<AudioParameterFloat>("fold", "Fold", 0.0f, 100.0f, 0.0f));
+    params.add(std::make_unique<AudioParameterFloat>("bias", "Bias", -1.0f, 1.0f, 0.0f));
 
     // using new layout system
 
@@ -129,14 +135,14 @@ AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::createP
     params.add(std::make_unique<AudioParameterFloat>("bitReduction", "Bit Reduction Amount", 1.0f, 32.0f, 32.f));
 
     // pre-distortions
-    params.add(std::make_unique<AudioParameterFloat>("reverbMix", "Reverb Amount", 0.0f, 1.0f, 1.f));
+    params.add(std::make_unique<AudioParameterFloat>("reverbMix", "Reverb Amount", 0.0f, 100.0f, 100.f));
     params.add(std::make_unique<AudioParameterFloat>("reverbSize", "Reverb Size", 0.0f, 1.0f, 1.f));
     params.add(std::make_unique<AudioParameterFloat>("reverbWidth", "Reverb Width", 0.0f, 1.0f, 1.f));
     params.add(std::make_unique<AudioParameterFloat>("reverbDamping", "Reverb Damping", 0.0f, 1.0f, 0.3f));
 
-    params.add(std::make_unique<AudioParameterFloat>("combDelay", "Comb Delay", 0.0f, 2000.0f, 0.f));
+    params.add(std::make_unique<AudioParameterFloat>("combDelay", "Comb Delay", 0.01f, 2000.0f, 0.01f));
     params.add(std::make_unique<AudioParameterFloat>("combFeedback", "Comb Feedback", -1.0f, 1.0f, 0.f));
-    params.add(std::make_unique<AudioParameterFloat>("combMix", "Comb Mix", 0.0f, 1.0f, 1.0f));
+    params.add(std::make_unique<AudioParameterFloat>("combMix", "Comb Mix", 0.0f, 100.0f, 100.0f));
 
     params.add(std::make_unique<AudioParameterFloat>("allPassFreq", "AllPass Frequency", 20.0f, 20000.0f, 400.f));
     params.add(std::make_unique<AudioParameterFloat>("allPassQ", "AllPass Q", 0.01f, 1.41f, 0.1f));
@@ -269,6 +275,7 @@ void AudioPluginAudioProcessor::prepareToPlay(double sampleRate, int samplesPerB
     distortionTypeSelection.prepareToPlay(sampleRate, samplesPerBlock);
 
     shifter.prepareToPlay(sampleRate, samplesPerBlock);
+    endShifter.prepareToPlay(sampleRate, samplesPerBlock);
 }
 
 void AudioPluginAudioProcessor::releaseResources()
@@ -334,7 +341,7 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
 
     // dry/wet
     
-    // dryWetMixer.pushDrySamples(block);
+    dryWetMixer.pushDrySamples(block);
 
     // input gain
     // Some computation here
@@ -425,6 +432,9 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
 
     // expander at the end
     if (companderOn && enableExpander->get()) compander.processExpanderBlock(buffer);
+
+    endShifter.setFrequencyShift(-freqShiftFreq->get());
+    endShifter.processBlock(block);
 
     outputGain.setGainDecibels(outputGainKnob->get());
     outputGain.process(juce::dsp::ProcessContextReplacing<float>(block));

@@ -2,13 +2,11 @@
 
 #include <JuceHeader.h>
 
-//==============================================================================
-/*
- */
+
 class CombFilter
 {
 public:
-    CombFilter(juce::AudioParameterFloat* param, juce::AudioParameterFloat* param2, juce::AudioParameterFloat* param3) : delayLine(10000) {
+    CombFilter(juce::AudioParameterFloat* param, juce::AudioParameterFloat* param2, juce::AudioParameterFloat* param3) : delayLine(10000), dryWet(500) {
         combDelay = param;
         jassert(combDelay);
 
@@ -27,6 +25,9 @@ public:
         delayLine.setDelay(combDelay->get());
 
         float feedback = combFeedback->get();
+
+        dryWet.pushDrySamples(block);
+        dryWet.setWetMixProportion(combMix->get()*0.01);
         
         for (int i = 0; i < block.getNumSamples(); i++) {
             float outputL = delayLine.popSample(0);
@@ -39,6 +40,7 @@ public:
             block.setSample(1, i, block.getSample(1, i) + outputR);
         }
 
+        dryWet.mixWetSamples(block);
     }
 
     void prepareToPlay(double sampleRate, int samplesPerBlock) {
@@ -48,12 +50,18 @@ public:
         spec.numChannels = 2;
 
         delayLine.prepare(spec);
+
+        dryWet.reset();
+        dryWet.setWetLatency(0);
+        dryWet.prepare(spec);
     }
 
 private:
     juce::AudioParameterFloat *combDelay = nullptr;
     juce::AudioParameterFloat *combFeedback = nullptr;
     juce::AudioParameterFloat *combMix = nullptr;
+
+    dsp::DryWetMixer<float> dryWet;
 
     float oldCombDelay = 0.0;
     float oldCombFeedback = 0.0;

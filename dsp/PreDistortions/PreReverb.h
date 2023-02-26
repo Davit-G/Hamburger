@@ -8,7 +8,8 @@
 class PreReverb
 {
 public:
-    PreReverb(juce::AudioParameterFloat* param, juce::AudioParameterFloat* param2, juce::AudioParameterFloat* param3, juce::AudioParameterFloat* param4) {
+    PreReverb(juce::AudioParameterFloat *param, juce::AudioParameterFloat *param2, juce::AudioParameterFloat *param3, juce::AudioParameterFloat *param4) : dryWet(500)
+    {
         reverbMix = param;
         jassert(reverbMix);
 
@@ -21,12 +22,14 @@ public:
         reverbDamping = param4;
         jassert(reverbDamping);
     }
-    ~PreReverb() {
+    ~PreReverb(){
 
     };
 
-    void processBlock(dsp::AudioBlock<float>& block) {
-        if ((oldReverbMix != reverbMix->get()) || (oldReverbDamping != reverbDamping->get()) || (oldReverbSize != reverbSize->get()) || (oldReverbWidth != reverbWidth->get())) {
+    void processBlock(dsp::AudioBlock<float> &block)
+    {
+        if ((oldReverbMix != reverbMix->get()) || (oldReverbDamping != reverbDamping->get()) || (oldReverbSize != reverbSize->get()) || (oldReverbWidth != reverbWidth->get()))
+        {
             juce::Reverb::Parameters parameters;
             parameters.width = reverbWidth->get();
             parameters.freezeMode = 0.0;
@@ -37,16 +40,22 @@ public:
 
             reverb.setParameters(parameters);
 
-            
             oldReverbSize = parameters.roomSize;
             oldReverbWidth = parameters.width;
             oldReverbDamping = parameters.damping;
         }
 
+        dryWet.pushDrySamples(block);
+
         reverb.processStereo(block.getChannelPointer(0), block.getChannelPointer(1), block.getNumSamples());
+
+        dryWet.setWetMixProportion(reverbMix->get() * 0.01);
+
+        dryWet.mixWetSamples(block);
     }
 
-    void prepareToPlay(double sampleRate, int samplesPerBlock) {
+    void prepareToPlay(double sampleRate, int samplesPerBlock)
+    {
         juce::Reverb::Parameters parameters;
         parameters.width = 1.0;
         parameters.freezeMode = 0.0;
@@ -58,6 +67,14 @@ public:
         reverb.setParameters(parameters);
         reverb.reset();
         reverb.setSampleRate(sampleRate);
+
+        dsp::ProcessSpec spec;
+        spec.sampleRate = sampleRate;
+        spec.maximumBlockSize = samplesPerBlock;
+        spec.numChannels = 2;
+
+        dryWet.setWetLatency(0);
+        dryWet.prepare(spec);
     }
 
 private:
@@ -65,6 +82,8 @@ private:
     juce::AudioParameterFloat *reverbSize = nullptr;
     juce::AudioParameterFloat *reverbWidth = nullptr;
     juce::AudioParameterFloat *reverbDamping = nullptr;
+
+    dsp::DryWetMixer<float> dryWet;
 
     float oldReverbMix = 0.0;
     float oldReverbSize = 0.0;
@@ -75,6 +94,6 @@ private:
 
     double oldSampleRate;
     double oldSamplesPerBlock;
-    
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PreReverb)
 };
