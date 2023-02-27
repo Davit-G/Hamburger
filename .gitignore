@@ -3,5 +3,6 @@ cmake-build
 cmake-build-debug
 .vscode
 .idea
+.DS_Store
 
 JUCE
