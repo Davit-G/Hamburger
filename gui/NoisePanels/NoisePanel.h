@@ -29,12 +29,10 @@ public:
         
         setScreen(NoisePages::Sizzle);
 
-        noiseSelectorAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment>(p.treeState, "noiseDistortionType", noiseSelector);
         noiseSelector.setLookAndFeel(&comboBoxLook);
         noiseSelector.addItemList(StringArray({ "Sizzle", "Erosion", "Asperity", "Downsample / Bitreduction", "Jeff Thickness"}), 1);
-        noiseSelector.setSelectedItemIndex(0);
         noiseSelector.toFront(false);
-        addAndMakeVisible(&noiseSelector);
+        noiseSelector.setSelectedItemIndex(0);
 
         noiseSelector.onChange = [this] {
             auto selection = noiseSelector.getSelectedItemIndex();
@@ -44,6 +42,10 @@ public:
             }
         };
 
+        // this has to come after the slider initialisation, or else the value doesnt get set to the one seen in the apvts and it's wrong
+        noiseSelectorAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment>(p.treeState, "noiseDistortionType", noiseSelector);
+
+        addAndMakeVisible(&noiseSelector);
     };
 
     ~NoisePanel(){};

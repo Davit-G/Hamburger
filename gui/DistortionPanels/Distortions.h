@@ -24,7 +24,6 @@ public:
         
         setScreen(DistortionsPages::Classic);
 
-        distortionSelectorAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment>(p.treeState, "primaryDistortionType", preDistortionSelector);
         preDistortionSelector.setLookAndFeel(&comboBoxLook);
         preDistortionSelector.addItemList(StringArray({ "Classic", "Tube" }), 1);
         preDistortionSelector.setSelectedItemIndex(0);
@@ -39,7 +38,8 @@ public:
             }
         };
 
-
+        // this has to come after the slider initialisation, or else the value doesnt get set to the one seen in the apvts and it's wrong
+        distortionSelectorAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment>(p.treeState, "primaryDistortionType", preDistortionSelector);
     };
 
     ~DistortionsPanel(){};

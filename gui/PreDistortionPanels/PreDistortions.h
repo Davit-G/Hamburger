@@ -26,13 +26,10 @@ public:
         
         setScreen(PreDistortionsPages::AllPass);
 
-        preDistortionSelectorAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment>(p.treeState, "preDistortionType", preDistortionSelector);
         preDistortionSelector.setLookAndFeel(&comboBoxLook);
         preDistortionSelector.addItemList(StringArray({ "Disperser", "Reverb", "Comb" }), 1);
         preDistortionSelector.setSelectedItemIndex(0);
         preDistortionSelector.toFront(false);
-        addAndMakeVisible(&preDistortionSelector);
-
         preDistortionSelector.onChange = [this] {
             auto selection = preDistortionSelector.getSelectedItemIndex();
 
@@ -40,6 +37,12 @@ public:
                 setScreen(static_cast<PreDistortionsPages>(selection));
             }
         };
+        
+        // this has to come after the slider initialisation, or else the value doesnt get set to the one seen in the apvts and it's wrong
+        preDistortionSelectorAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment>(p.treeState, "preDistortionType", preDistortionSelector);
+        
+        addAndMakeVisible(&preDistortionSelector);
+
 
 
     };
