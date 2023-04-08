@@ -14,7 +14,7 @@ void Erosion::processBlock(dsp::AudioBlock<float>& block, double sampleRate)
     }
 
     // get the current value of the saturation knob to figure out how much to multiply a random value by
-    float saturationAmount = erosionAmount->get() * 2.f;
+    float saturationAmount = erosionAmount->get() * 0.5f;
 
     // create buffer to store the random values
     randomBuffer.clear();
