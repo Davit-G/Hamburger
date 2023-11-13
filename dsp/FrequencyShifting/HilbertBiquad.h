@@ -2,8 +2,6 @@
 
 #include <JuceHeader.h>
 
-// Thank you https://www.katjaas.nl/hilbert/hilbert.html
-
 class CustomBiquadFilter {
 public:
     CustomBiquadFilter(float a0, float a1, float a2, float b1, float b2)
