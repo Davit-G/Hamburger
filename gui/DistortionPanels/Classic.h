@@ -48,7 +48,5 @@ private:
     std::unique_ptr<FilmStripKnob> bias = nullptr;
     std::unique_ptr<FilmStripKnob> fold = nullptr;
 
-
-
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Classic);
 };
