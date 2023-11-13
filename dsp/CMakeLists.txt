@@ -6,4 +6,4 @@ target_sources("${BaseTargetName}"
         Compander.cpp
         )
 
-add_subdirectory(FrequencyShifting)
+# add_subdirectory(FrequencyShifting)

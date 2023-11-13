@@ -56,10 +56,10 @@ public:
             newScreen = std::make_unique<EQPanel>(processorRef);
             break;
         case EmphasisPages::Shift:
-            newScreen =  std::make_unique<ShiftPanel>(processorRef);
+            newScreen = nullptr;
             break;
         case EmphasisPages::RM:
-            newScreen = nullptr;// std::make_unique<EffectsScreen>();
+            newScreen = nullptr;
             break;
         default:
             break;

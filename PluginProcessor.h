@@ -88,7 +88,7 @@ private:
     juce::AudioParameterFloat *emphasisMidFreq = nullptr;
     juce::AudioParameterFloat *emphasisHighFreq = nullptr;
 
-    juce::AudioParameterFloat *freqShiftFreq = nullptr;
+    // juce::AudioParameterFloat *freqShiftFreq = nullptr;
 
 
     juce::AudioParameterChoice *oversamplingFactor = nullptr;
@@ -105,8 +105,8 @@ private:
 
     Compander compander;
 
-    FrequencyShifterAlt shifter;
-    FrequencyShifterAlt endShifter;
+    // FrequencyShifterAlt shifter;
+    // FrequencyShifterAlt endShifter;
 
     // NaiveTubeDistortion tubeDistortion;
 

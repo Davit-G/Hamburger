@@ -54,7 +54,7 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
     emphasisFreq[2] = emphasisHighFreq;
     jassert(emphasisHighFreq);
 
-    freqShiftFreq = dynamic_cast<juce::AudioParameterFloat *>(treeState.getParameter("frequencyShiftFreq")); jassert(freqShiftFreq); 
+    // freqShiftFreq = dynamic_cast<juce::AudioParameterFloat *>(treeState.getParameter("frequencyShiftFreq")); jassert(freqShiftFreq); 
 
     saturation = dynamic_cast<juce::AudioParameterFloat *>(treeState.getParameter("saturationAmount")); jassert(saturation); 
 
@@ -87,7 +87,7 @@ AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::createP
     params.add(std::make_unique<AudioParameterFloat>("emphasisMidFreq", "Emphasis Mid Frequency", 500.0f, 3000.0f, 1220.f));
     params.add(std::make_unique<AudioParameterFloat>("emphasisHighFreq", "Emphasis Hi Frequency", 6000.0f, 18000.0f, 9000.f));
 
-    params.add(std::make_unique<AudioParameterFloat>("frequencyShiftFreq", "Frequency Shift Amount", -500.0f, 500.0f, 0.0f));
+    // params.add(std::make_unique<AudioParameterFloat>("frequencyShiftFreq", "Frequency Shift Amount", -500.0f, 500.0f, 0.0f));
 
 
     params.add(std::make_unique<AudioParameterBool>("compandingOn", "Compander On", false));
@@ -274,8 +274,8 @@ void AudioPluginAudioProcessor::prepareToPlay(double sampleRate, int samplesPerB
 
     distortionTypeSelection.prepareToPlay(sampleRate, samplesPerBlock);
 
-    shifter.prepareToPlay(sampleRate, samplesPerBlock);
-    endShifter.prepareToPlay(sampleRate, samplesPerBlock);
+    // shifter.prepareToPlay(sampleRate, samplesPerBlock);
+    // endShifter.prepareToPlay(sampleRate, samplesPerBlock);
 }
 
 void AudioPluginAudioProcessor::releaseResources()
@@ -349,8 +349,8 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
     inputGain.setGainDecibels(gainAmount);
     inputGain.process(juce::dsp::ProcessContextReplacing<float>(block));
 
-    shifter.setFrequencyShift(freqShiftFreq->get());
-    shifter.processBlock(block);
+    // shifter.setFrequencyShift(freqShiftFreq->get());
+    // shifter.processBlock(block);
     // return; 
     
     bool emphasisOn = enableEmphasis->get();
@@ -433,8 +433,8 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
     // expander at the end
     if (companderOn && enableExpander->get()) compander.processExpanderBlock(buffer);
 
-    endShifter.setFrequencyShift(-freqShiftFreq->get());
-    endShifter.processBlock(block);
+    // endShifter.setFrequencyShift(-freqShiftFreq->get());
+    // endShifter.processBlock(block);
 
     outputGain.setGainDecibels(outputGainKnob->get());
     outputGain.process(juce::dsp::ProcessContextReplacing<float>(block));
