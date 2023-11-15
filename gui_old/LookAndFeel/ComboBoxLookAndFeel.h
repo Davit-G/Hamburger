@@ -12,27 +12,27 @@ public:
         setColour(juce::ComboBox::ColourIds::buttonColourId, juce::Colours::transparentBlack);
         setColour(juce::ComboBox::ColourIds::outlineColourId, juce::Colours::transparentBlack);
         // setColour(juce::ComboBox::ColourIds::focusedOutlineColourId, juce::Colours::transparentBlack);
-        setColour(juce::ComboBox::ColourIds::textColourId, juce::Colours::white);
-        setColour(juce::PopupMenu::ColourIds::backgroundColourId, juce::Colours::black);
-        setColour(juce::PopupMenu::ColourIds::textColourId, juce::Colours::white);
-        setColour(juce::PopupMenu::ColourIds::highlightedBackgroundColourId, juce::Colour::fromHSV(0.0f, 0.0f, 0.2f, 1.0f));
-        setColour(juce::PopupMenu::ColourIds::highlightedTextColourId, juce::Colours::white);
-        setColour(juce::ComboBox::arrowColourId, juce::Colours::white);
-    }
+        setColour(juce::ComboBox::ColourIds::textColourId, juce::Colours::black);
+        setColour(juce::PopupMenu::ColourIds::backgroundColourId, juce::Colours::white);
+        setColour(juce::PopupMenu::ColourIds::textColourId, juce::Colours::black);
+        setColour(juce::PopupMenu::ColourIds::highlightedBackgroundColourId, juce::Colour::fromRGBA(220, 220, 220, 255));
+        setColour(juce::PopupMenu::ColourIds::highlightedTextColourId, juce::Colours::black);
+        setColour(juce::ComboBox::arrowColourId, juce::Colours::grey);
+    };
 
-    Font getComboBoxFont()
+    static Font getComboBoxFont()
     {
-        auto font = Font(Typeface::createSystemTypefaceFor(BinaryData::QuestrialRegular_ttf, BinaryData::QuestrialRegular_ttfSize));
-        font.setSizeAndStyle(18, font.getAvailableStyles()[0], 1, 0);
+        auto font = Font(Typeface::createSystemTypefaceFor(BinaryData::QuicksandBold_ttf, BinaryData::QuicksandBold_ttfSize));
+        font.setSizeAndStyle(16, font.getAvailableStyles()[0], 1, 0);
 
         auto styles = font.getAvailableStyles();
         // DBG(styles[1]);
         return font;
     }
 
-    Font getPopupMenuFont()
+    static Font getPopupMenuFont()
     {
-        auto font = Font(Typeface::createSystemTypefaceFor(BinaryData::QuestrialRegular_ttf, BinaryData::QuestrialRegular_ttfSize));
+        auto font = Font(Typeface::createSystemTypefaceFor(BinaryData::QuicksandBold_ttf, BinaryData::QuicksandBold_ttfSize));
         font.setSizeAndStyle(32, font.getAvailableStyles()[0], 1, 0);
         return font;
     }

@@ -45,8 +45,8 @@ public:
         hardClipper = std::make_unique<HardClip>(saturationAmount);
         fold = std::make_unique<Cooked>(foldParam);
         fuzz = std::make_unique<Fuzz>(fuzzParam);
-    };
-    ~PrimaryDistortion(){};
+    }
+    ~PrimaryDistortion(){}
 
     void processBlock(dsp::AudioBlock<float> &block)
     {
@@ -78,7 +78,8 @@ public:
         }
 
         iirFilter.process(dsp::ProcessContextReplacing<float>(block)); // hpf afterwards to remove bias
-    };
+    }
+
     void prepareToPlay(double sampleRate, int samplesPerBlock)
     {
         softClipper->prepareToPlay(sampleRate, samplesPerBlock);
@@ -95,12 +96,12 @@ public:
         spec.numChannels = 2;
 
         iirFilter.prepare(spec);
-    };
+    }
 
     void setSampleRate(double newSampleRate)
     {
         sampleRate = newSampleRate;
-    };
+    }
 
 private:
     juce::AudioProcessorValueTreeState &treeStateRef;

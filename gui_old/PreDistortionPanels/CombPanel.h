@@ -8,7 +8,6 @@ class CombPanel : public juce::Component
 public:
     CombPanel(AudioPluginAudioProcessor &p) : processorRef(p)
     {
-
         juce::Image smallKnobImage = juce::ImageCache::getFromMemory(BinaryData::ingain2_min_png, BinaryData::ingain2_min_pngSize);
         juce::Image knobImage = juce::ImageCache::getFromMemory(BinaryData::knob_min_png, BinaryData::knob_min_pngSize);
         juce::Image sizzleImage = juce::ImageCache::getFromMemory(BinaryData::sizzleknob_min_png, BinaryData::sizzleknob_min_pngSize);
@@ -33,16 +32,12 @@ public:
         combMix->setBounds(center - combMix->getKnobSize() * 0.5 + 85, 15, combMix->getKnobSize(), combMix->getKnobHeight());
     }
 
-   
-
 private:
     AudioPluginAudioProcessor &processorRef;
 
     std::unique_ptr<FilmStripKnob> combDelay = nullptr;
     std::unique_ptr<FilmStripKnob> combFeedback = nullptr;
     std::unique_ptr<FilmStripKnob> combMix = nullptr;
-
-
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(CombPanel);
 };

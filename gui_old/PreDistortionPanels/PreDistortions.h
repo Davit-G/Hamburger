@@ -40,11 +40,7 @@ public:
         
         // this has to come after the slider initialisation, or else the value doesnt get set to the one seen in the apvts and it's wrong
         preDistortionSelectorAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment>(p.treeState, "preDistortionType", preDistortionSelector);
-        
         addAndMakeVisible(&preDistortionSelector);
-
-
-
     };
 
     ~PreDistortions(){};
@@ -63,7 +59,6 @@ public:
         preDistortionSelector.setBounds(dims);
 
         enablePreDistortionButton->setBounds(7, 5, 18, 18);
-
     }
 
      void setScreen(PreDistortionsPages type)

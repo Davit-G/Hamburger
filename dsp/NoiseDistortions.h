@@ -38,8 +38,8 @@ public:
         redux = std::make_unique<Redux>(downsampleAmount, bitReduction);
         jeff = std::make_unique<Jeff>(noiseAmount);
         
-    };
-    ~NoiseDistortions(){};
+    }
+    ~NoiseDistortions(){}
 
     void processBlock(dsp::AudioBlock<float> &block)
     {
@@ -55,30 +55,28 @@ public:
         case 1: // erosion
             erosion->processBlock(block, sampleRate);
             break;
-        case 2: // asperity?
-            break;
-        case 3: // downsampling
+        case 2: // downsampling
             redux->processBlock(block);
             break;
-        case 4: // jeff noise
+        case 3: // asperity
             jeff->processBlock(block);
             break;
         default:
             break;
         }
-    };
+    }
 
     void prepareToPlay(double sampleRate, int samplesPerBlock)
     {
         sizzle->prepareToPlay(sampleRate, samplesPerBlock);
         erosion->prepareToPlay(sampleRate, samplesPerBlock);
         jeff->prepareToPlay(sampleRate, samplesPerBlock);
-    };
+    }
 
     void setSampleRate(double newSampleRate)
     {
         sampleRate = newSampleRate;
-    };
+    }
 
 private:
     juce::AudioProcessorValueTreeState &treeStateRef;

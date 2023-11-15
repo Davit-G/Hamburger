@@ -22,7 +22,7 @@ public:
     }
     ~AllPassChain(){
 
-    };
+    }
 
     void processBlock(dsp::AudioBlock<float> &block)
     {

@@ -23,8 +23,9 @@ public:
 
         makeupKnob = dynamic_cast<juce::AudioParameterFloat *>(treeState.getParameter("compOut"));
         jassert(makeupKnob); // heads up if the parameter doesn't exist
-    };
-    ~Compander(){};
+    }
+    
+    ~Compander(){}
 
     void updateParameters();
     void processExpanderBlock(juce::AudioBuffer<float> &dryBuffer);

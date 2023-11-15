@@ -13,14 +13,14 @@ public:
         oversamplingArray[0]->addDummyOversamplingStage();
 
         for (int i = 1; i <= 4; i++) {
-            DBG("Adding oversampling stack " << i);
+            // DBG("Adding oversampling stack " << i);
             oversamplingArray.add(new dsp::Oversampling<float>(2, i, dsp::Oversampling<float>::filterHalfBandPolyphaseIIR, false));
         }
-    };
+    }
 
     ~OversamplingStack() {
         // oversamplingArray.clear();
-    };
+    }
 
     dsp::AudioBlock<float> processSamplesUp(dsp::AudioBlock<float>& block) {
         if (oversamplingFactor == 0) { // if there is no oversampling
@@ -60,7 +60,7 @@ public:
         for (auto& oversampler : oversamplingArray) {
             oversampler->initProcessing(spec.maximumBlockSize);
         }
-    };
+    }
 
     void setOversamplingFactor(int factor) {
         oversamplingFactor = factor;
@@ -68,6 +68,6 @@ public:
 private:
     juce::OwnedArray<dsp::Oversampling<float>> oversamplingArray;
 
-    int maxOversamplingFactor = 4;
+    // int maxOversamplingFactor = 4;
     int oversamplingFactor = 1;
 };

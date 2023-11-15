@@ -1,11 +1,11 @@
-#include "PluginProcessor.h"
+#include "../PluginProcessor.h"
 #include "PluginEditor.h"
 
 #include <JuceHeader.h>
-#include "./gui/PreDistortionPanels/PreDistortions.h"
+#include "PreDistortionPanels/PreDistortions.h"
 
 //==============================================================================
-AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor(AudioPluginAudioProcessor &p) : AudioProcessorEditor(&p),
+EditorV1::EditorV1(AudioPluginAudioProcessor &p) : AudioProcessorEditor(&p),
                                                                                                  processorRef(p),
                                                                                                  emphasisPanel(p),
                                                                                                  preDistortionsPanel(p),
@@ -92,12 +92,12 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor(AudioPluginAudi
     setSize(778, 600);
 }
 
-AudioPluginAudioProcessorEditor::~AudioPluginAudioProcessorEditor()
+EditorV1::~EditorV1()
 {
 }
 
 //==============================================================================
-void AudioPluginAudioProcessorEditor::paint(juce::Graphics &g)
+void EditorV1::paint(juce::Graphics &g)
 {
     // (Our component is opaque, so we must completely fill the background with a solid colour)
     // g.fillAll (getLookAndFeel().findColour (juce::ResizableWindow::backgroundColourId));
@@ -107,7 +107,7 @@ void AudioPluginAudioProcessorEditor::paint(juce::Graphics &g)
     g.drawImageAt(background, 0, 0);
 }
 
-void AudioPluginAudioProcessorEditor::resized()
+void EditorV1::resized()
 {
     // In the future, a better ui would involve non-preprogrammed locations for knobs and stuff
     auto localBounds = getLocalBounds();

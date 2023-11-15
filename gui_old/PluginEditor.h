@@ -1,27 +1,25 @@
 #pragma once
 
-#include "PluginProcessor.h"
-// #include "gui/ParameterKnob.h"
-#include "gui/FilmStripKnob.h"
-
-#include "gui/LightButton.h"
+#include "../PluginProcessor.h"
+#include "FilmStripKnob.h"
+#include "LightButton.h"
 
 #include <JuceHeader.h>
 
-#include "gui/Emphasis/EmphasisPanel.h"
-#include "gui/PreDistortionPanels/PreDistortions.h"
-#include "gui/DistortionPanels/Distortions.h"
-#include "gui/NoisePanels/NoisePanel.h"
+#include "Emphasis/EmphasisPanel.h"
+#include "PreDistortionPanels/PreDistortions.h"
+#include "DistortionPanels/Distortions.h"
+#include "NoisePanels/NoisePanel.h"
 
-#include "./gui/LookAndFeel/ComboBoxLookAndFeel.h"
+#include "LookAndFeel/ComboBoxLookAndFeel.h"
 
 
 //==============================================================================
-class AudioPluginAudioProcessorEditor : public juce::AudioProcessorEditor
+class EditorV1 : public juce::AudioProcessorEditor
 {
 public:
-    explicit AudioPluginAudioProcessorEditor(AudioPluginAudioProcessor &);
-    ~AudioPluginAudioProcessorEditor() override;
+    explicit EditorV1(AudioPluginAudioProcessor &);
+    ~EditorV1() override;
 
     //==============================================================================
     void paint(juce::Graphics &) override;
@@ -46,9 +44,6 @@ private:
     std::unique_ptr<FilmStripKnob> sizzleKnob = nullptr;
     std::unique_ptr<FilmStripKnob> foldKnob = nullptr;
 
-    // using new layout system
-
-
     // primary distortions
     std::unique_ptr<FilmStripKnob> saturationKnob = nullptr;
 
@@ -57,8 +52,6 @@ private:
     std::unique_ptr<FilmStripKnob> noiseFrequencyKnob = nullptr;
     std::unique_ptr<FilmStripKnob> noiseQKnob = nullptr;
 
-    
-
     std::unique_ptr<LightButton> companderButton = nullptr;
     std::unique_ptr<LightButton> emphasisButton = nullptr;
     std::unique_ptr<LightButton> compressorButton = nullptr;
@@ -66,7 +59,6 @@ private:
 
     std::unique_ptr<LightButton> bypassButton = nullptr;
     std::unique_ptr<LightButton> autoGainButton = nullptr;
-
 
     EmphasisPanel emphasisPanel;
     PreDistortions preDistortionsPanel;
@@ -84,5 +76,5 @@ private:
 
     juce::Image background;
 
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AudioPluginAudioProcessorEditor)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(EditorV1)
 };

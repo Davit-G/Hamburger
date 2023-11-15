@@ -21,29 +21,10 @@ public:
         knob.setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
         knob.setRange(minRange, maxRange, 0.00001f);
         knob.setTextBoxStyle(juce::Slider::NoTextBox, false, 90, 0);
-        // knob.setPopupDisplayEnabled(true, false, this);
         knob.setTextValueSuffix(" " + nameParam);
-
         
-        addAndMakeVisible(&knob);
-
-        knobMinRangeLabel.setText(String(minRange), juce::NotificationType::dontSendNotification);
-        knobMinRangeLabel.toFront(false);
-        knobMinRangeLabel.setJustificationType(juce::Justification::bottomRight);
-        knobMinRangeLabel.setColour(juce::Label::ColourIds::textColourId, juce::Colour::fromRGB(110, 110, 110));
         auto font = Font(Typeface::createSystemTypefaceFor(BinaryData::QuicksandBold_ttf, BinaryData::QuicksandBold_ttfSize));
-        font.setSizeAndStyle(15, "SemiBold", 1, 0);
-        knobMinRangeLabel.setFont(font);
-        // addAndMakeVisible(&knobMinRangeLabel);
-
-        knobMaxRangeLabel.setText(String(maxRange), juce::NotificationType::dontSendNotification);
-        knobMaxRangeLabel.toFront(false);
-        knobMaxRangeLabel.setJustificationType(juce::Justification::bottomLeft);
-        knobMaxRangeLabel.setColour(juce::Label::ColourIds::textColourId, juce::Colour::fromRGB(110, 110, 110));
-        font = Font(Typeface::createSystemTypefaceFor(BinaryData::QuicksandBold_ttf, BinaryData::QuicksandBold_ttfSize));
-        font.setSizeAndStyle(15, "SemiBold", 1, 0);
-        knobMaxRangeLabel.setFont(font);
-        // addAndMakeVisible(&knobMaxRangeLabel);
+        addAndMakeVisible(&knob);
 
         // addListener(this);
         knobLabel.setText(nameParam, juce::NotificationType::dontSendNotification);
@@ -54,9 +35,6 @@ public:
         font.setSizeAndStyle(knobSize * 0.15 + 9, "SemiBold", 1, 0);
         knobLabel.setFont(font);
         addAndMakeVisible(&knobLabel);
-
-        // setPaintingIsUnclipped(true);
-        // knobLabel.setPaintingIsUnclipped(true);
 
         this->knobSize = knobSize;
         knobName = nameParam;
@@ -69,13 +47,16 @@ public:
 
     void paint(juce::Graphics &g) override
     {
-        juce::ignoreUnused(g);
+        // paint bg to see the area occupied by this element
+        g.fillAll(juce::Colours::red);
     }
 
     void resized() override
     {
         auto bounds = getLocalBounds();
         auto knobBounds = bounds.removeFromTop(getKnobSize() - 3);
+
+        knobBounds.reduce(8, 8);
 
         // auto rangeLabels = bounds.removeFromTop(15);
 
@@ -87,7 +68,7 @@ public:
 
     int getKnobSize()
     {
-        return knobSize;
+        return knobSize + 10;
     }
 
     int getKnobHeight()

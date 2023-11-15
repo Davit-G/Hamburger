@@ -54,7 +54,7 @@ juce_add_plugin("${BaseTargetName}"
     PLUGIN_MANUFACTURER_CODE Davy               # A four-character manufacturer id with at least one upper-case character
     PLUGIN_CODE Hmb2                            # A unique four-character plugin id with exactly one upper-case character
                                                 # GarageBand 10.3 requires the first letter to be upper-case, and the remaining letters to be lower-case
-    FORMATS AU VST3 Standalone                  # The formats to build. Other valid formats are: AAX Unity VST AU AUv3
+    FORMATS VST3 Standalone                  # The formats to build. Other valid formats are: AAX Unity VST AU AUv3
     PRODUCT_NAME "HamburgerV2"  # The name of the final executable, which can differ from the target name
     VST3_CATEGORIES Fx Distortion Fx Dynamics 
 )
@@ -74,13 +74,11 @@ juce_generate_juce_header("${BaseTargetName}")
 
 target_sources("${BaseTargetName}"
     PRIVATE
-        PluginEditor.cpp
         PluginProcessor.cpp
         )
 
 
 add_subdirectory(dsp)
-add_subdirectory(gui)
 
 
 target_compile_features("${BaseTargetName}" PUBLIC cxx_std_17)
@@ -129,6 +127,7 @@ juce_add_binary_data("${BaseTargetName}BinaryData" HEADER_NAME BinaryData.h NAME
     Assets/poweron.png
     Assets/poweroff.png
     Assets/Quicksand.ttf
+    Assets/Questrial-Regular.ttf
     Assets/Quicksand-Bold.ttf
     Assets/Quicksand-SemiBold.ttf
     Assets/tick.png

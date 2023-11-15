@@ -13,7 +13,7 @@ public:
 
 	~EnvelopeFollower() {
 
-	};
+	}
 
 	float processSample(float xn);
 	float processSampleStereo(float xL, float xR);
