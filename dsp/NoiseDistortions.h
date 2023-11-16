@@ -29,13 +29,15 @@ public:
         jassert(noiseQ);
 
         downsampleAmount = dynamic_cast<juce::AudioParameterFloat *>(state.getParameter("downsampleAmount"));
+        downsampleJitter = dynamic_cast<juce::AudioParameterFloat *>(state.getParameter("downsampleJitter"));
         bitReduction = dynamic_cast<juce::AudioParameterFloat *>(state.getParameter("bitReduction"));
         jassert(downsampleAmount);
+        jassert(downsampleJitter);
         jassert(bitReduction);
 
         sizzle = std::make_unique<Sizzle>(noiseAmount);
         erosion = std::make_unique<Erosion>(noiseAmount, noiseFrequency, noiseQ);
-        redux = std::make_unique<Redux>(downsampleAmount, bitReduction);
+        redux = std::make_unique<Redux>(downsampleAmount, downsampleJitter, bitReduction);
         jeff = std::make_unique<Jeff>(noiseAmount);
         
     }
@@ -86,6 +88,7 @@ private:
     juce::AudioParameterFloat* noiseFrequency;
     juce::AudioParameterFloat* noiseQ;
     juce::AudioParameterFloat* downsampleAmount;
+    juce::AudioParameterFloat* downsampleJitter;
     juce::AudioParameterFloat* bitReduction;
 
     juce::AudioParameterBool* noiseEnabled;

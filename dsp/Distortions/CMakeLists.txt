@@ -8,6 +8,7 @@ SoftClipper.cpp
 HardClip.cpp
 Erosion.cpp
 Jeff.cpp
+Grunge.cpp
 )
 
 # add_subdirectory(pinknoise)

@@ -121,6 +121,10 @@ AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::createP
     params.add(std::make_unique<AudioParameterFloat>("fold", "Fold", 0.0f, 100.0f, 0.0f));
     params.add(std::make_unique<AudioParameterFloat>("bias", "Bias", -1.0f, 1.0f, 0.0f));
 
+
+    params.add(std::make_unique<AudioParameterFloat>("grungeAmt", "Grunge Amount", 0.0f, 1.0f, 0.0f));
+    params.add(std::make_unique<AudioParameterFloat>("grungeTone", "Grunge Tone", 0.0f, 1.0f, 0.5f));
+
     // using new layout system
 
 
@@ -133,6 +137,7 @@ AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::createP
     params.add(std::make_unique<AudioParameterFloat>("noiseQ", "Noise Q", 0.1f, 3.0f, 0.7f));
 
     params.add(std::make_unique<AudioParameterFloat>("downsampleAmount", "Downsample Amount", 0.0f, 20.0f, 0.f));
+    params.add(std::make_unique<AudioParameterFloat>("downsampleJitter", "Downsample Jitter", 0.0f, 1.0f, 0.f));
     params.add(std::make_unique<AudioParameterFloat>("bitReduction", "Bit Reduction Amount", 1.0f, 32.0f, 32.f));
 
     // pre-distortions

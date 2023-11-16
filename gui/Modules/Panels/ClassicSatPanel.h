@@ -12,13 +12,17 @@ public:
         satKnob(p, "SATURATION", "saturationAmount", 0.0f, 100.0f),
         foldKnob(p, "FOLD", "fold", 0.0f, 100.0f),
         biasKnob(p, "BIAS", "bias", 0.0f, 100.0f),
-        fuzzKnob(p, "FUZZ", "fuzz", 0.0f, 100.0f)
+        fuzzKnob(p, "FUZZ", "fuzz", 0.0f, 100.0f),
+        grungeToneKnob(p, "TONE", "grungeTone", 0.0f, 1.0f),
+        grungeAmountKnob(p, "GRUNGE", "grungeAmt", 0.0f, 1.0f)
         {
         
         addAndMakeVisible(satKnob);
         addAndMakeVisible(foldKnob);
         addAndMakeVisible(biasKnob);
         addAndMakeVisible(fuzzKnob);
+        addAndMakeVisible(grungeToneKnob);
+        addAndMakeVisible(grungeAmountKnob);
 
         auto laf = new KnobLAF(juce::Colours::orangered);
         setLookAndFeel(laf); // will cascade to all children knobs
@@ -34,11 +38,11 @@ public:
         auto bounds = getLocalBounds();
         satKnob.setBounds(bounds.removeFromTop(bounds.getHeight() / 1.5f).reduced(10));
 
-        auto width = bounds.getWidth() / 3;
+        auto width = bounds.getWidth() / 5;
+        grungeAmountKnob.setBounds(bounds.removeFromLeft(width));
+        grungeToneKnob.setBounds(bounds.removeFromLeft(width));
         foldKnob.setBounds(bounds.removeFromLeft(width));
-        bounds.removeFromLeft(3);
         biasKnob.setBounds(bounds.removeFromLeft(width));
-        bounds.removeFromRight(3);
         fuzzKnob.setBounds(bounds);
     }
 
@@ -46,4 +50,6 @@ public:
     ParamKnob foldKnob;
     ParamKnob biasKnob;
     ParamKnob fuzzKnob;
+    ParamKnob grungeAmountKnob;
+    ParamKnob grungeToneKnob;
 };

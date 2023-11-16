@@ -14,7 +14,7 @@
 class Redux : public Component
 {
 public:
-    Redux(juce::AudioParameterFloat *downsampling, juce::AudioParameterFloat *bitReduction);
+    Redux(juce::AudioParameterFloat *downsampling, juce::AudioParameterFloat *jitter, juce::AudioParameterFloat *bitReduction);
     ~Redux();
 
     void processBlock(dsp::AudioBlock<float>& block);
@@ -22,7 +22,10 @@ public:
 
 private:
     juce::AudioParameterFloat *downsampling;
+    juce::AudioParameterFloat *jitter;
     juce::AudioParameterFloat *bitReduction;
+
+    float jitterOffset = 0.0f;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Redux)
 };

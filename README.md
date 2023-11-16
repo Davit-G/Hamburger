@@ -15,3 +15,4 @@ Make sure CMake is configured to compile for your required platform.
 
 The code in this repo is licensed under the GNU General Public License v3.
 All assets (images, audio, etc) are licensed under CC BY-NC-SA 4.0. Message me before redistributing my works.
+

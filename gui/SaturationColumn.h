@@ -11,6 +11,15 @@ public:
     SaturationColumn(AudioPluginAudioProcessor &p) : processorRef(p) {
         std::vector<std::unique_ptr<Panel>> panels;
         // ORDERING IS VERY IMPORTANT
+
+        // todo:
+
+        // one panel for soft distortions like soft clipping (AND the one I created earlier that's good for guitar)
+        // one panel for tube saturation / more analog sounding distortions
+        // one panel for waveshaper type distortions
+
+
+
         panels.push_back(std::make_unique<ClassicSatPanel>(p));
         panels.push_back(std::make_unique<TubeSatPanel>(p));
         saturation = std::make_unique<Module>(p, "SATURATION", "primaryDistortionEnabled", "primaryDistortionType", std::move(panels));

@@ -10,13 +10,15 @@ class ReductionPanel : public Panel
 public:
     ReductionPanel(AudioPluginAudioProcessor &p) : Panel(p, "REDUCTION"),
                                                    downSample(p, "DOWNSAMPLE", "downsampleAmount", 0.0f, 20.0f),
-                                                   bitReduction(p, "BITS", "bitReduction", 1.0f, 32.0f)
+                                                   bitReduction(p, "BITS", "bitReduction", 1.0f, 32.0f),
+                                                   jitter(p, "GRIT", "downsampleJitter", 0.0f, 1.0f)
     {
         auto laf = new KnobLAF(juce::Colours::yellowgreen);
         setLookAndFeel(laf); // will cascade to all children knobs
 
         addAndMakeVisible(downSample);
         addAndMakeVisible(bitReduction);
+        addAndMakeVisible(jitter);
     }
 
     void paint(juce::Graphics &g) override
@@ -26,10 +28,13 @@ public:
 
     void resized() {
         auto bounds = getLocalBounds();
-        downSample.setBounds(bounds.removeFromLeft(bounds.getWidth() / 2));
+        auto width = bounds.getWidth() / 3;
+        downSample.setBounds(bounds.removeFromLeft(width));
+        jitter.setBounds(bounds.removeFromLeft(width));
         bitReduction.setBounds(bounds);
     }
 
     ParamKnob downSample;
+    ParamKnob jitter;
     ParamKnob bitReduction;
 };

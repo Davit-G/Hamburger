@@ -7,6 +7,8 @@
 #include "Distortions/Fuzz.h"
 #include "Distortions/Cooked.h"
 #include "Distortions/Jeff.h"
+#include "Distortions/Grunge.h"
+
 
 /*
 Primary distortion modes:
@@ -41,12 +43,19 @@ public:
         bias = dynamic_cast<juce::AudioParameterFloat *>(state.getParameter("bias"));
         jassert(bias);
 
+        grungeToneParam = dynamic_cast<juce::AudioParameterFloat *>(state.getParameter("grungeTone"));
+        grungeAmountParam = dynamic_cast<juce::AudioParameterFloat *>(state.getParameter("grungeAmt"));
+        jassert(grungeToneParam);
+        jassert(grungeAmountParam);
+
         softClipper = std::make_unique<SoftClip>(saturationAmount);
         hardClipper = std::make_unique<HardClip>(saturationAmount);
         fold = std::make_unique<Cooked>(foldParam);
         fuzz = std::make_unique<Fuzz>(fuzzParam);
+        grunge = std::make_unique<Grunge>(grungeAmountParam, grungeToneParam);
     }
-    ~PrimaryDistortion(){}
+
+    ~PrimaryDistortion() {}
 
     void processBlock(dsp::AudioBlock<float> &block)
     {
@@ -60,6 +69,7 @@ public:
             fold->processBlock(block);
             fuzz->processBlock(block);
             block.add(bias->get());
+            grunge->processBlock(block);
             softClipper->processBlock(block);
             break;
         case 1: // tube
@@ -86,6 +96,7 @@ public:
         hardClipper->prepareToPlay(sampleRate, samplesPerBlock);
         fold->prepareToPlay(sampleRate, samplesPerBlock);
         fuzz->prepareToPlay(sampleRate, samplesPerBlock);
+        grunge->prepareToPlay(sampleRate, samplesPerBlock);
 
         // init iir filter
         *iirFilter.state = *dsp::IIR::Coefficients<float>::makeHighPass(sampleRate, 14.0f, 0.6);
@@ -110,6 +121,8 @@ private:
     juce::AudioParameterFloat *saturationAmount;
     juce::AudioParameterFloat *fuzzParam;
     juce::AudioParameterFloat *foldParam;
+    juce::AudioParameterFloat *grungeToneParam;
+    juce::AudioParameterFloat *grungeAmountParam;
 
     juce::AudioParameterBool *distortionEnabled;
 
@@ -118,6 +131,7 @@ private:
     std::unique_ptr<HardClip> hardClipper = nullptr;
     std::unique_ptr<Cooked> fold = nullptr;
     std::unique_ptr<Fuzz> fuzz = nullptr;
+    std::unique_ptr<Grunge> grunge = nullptr;
 
     juce::AudioParameterFloat *bias;
 
