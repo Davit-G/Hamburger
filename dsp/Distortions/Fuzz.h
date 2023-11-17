@@ -15,7 +15,7 @@ public:
 	void prepareToPlay(double sampleRate, int samplesPerBlock);
 
 private:
-	SmoothParam amount;
+    SmoothParam bias;
 
     EnvelopeFollower follower;
     

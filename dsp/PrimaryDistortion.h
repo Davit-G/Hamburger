@@ -14,8 +14,7 @@
 class PrimaryDistortion
 {
 public:
-    PrimaryDistortion(juce::AudioProcessorValueTreeState &state) : treeStateRef(state),
-        bias(state, "bias")
+    PrimaryDistortion(juce::AudioProcessorValueTreeState &state) : treeStateRef(state)
     {   
         distoType = dynamic_cast<juce::AudioParameterChoice *>(state.getParameter("primaryDistortionType"));
         jassert(distoType);
@@ -38,8 +37,6 @@ public:
     {
         int distoTypeIndex = distoType->getIndex();
 
-        bias.update();
-
         if (distortionEnabled->get()  == false) return;
 
         switch (distoTypeIndex)
@@ -47,17 +44,9 @@ public:
         case 0: // classic
             // fold->processBlock(block);
             // patty->processBlock(block);
-
-            for (int i = 0; i < block.getNumSamples(); i++)
-            {
-                auto biasAmt = bias.get();
-                block.setSample(0, i, block.getSample(0, i) + biasAmt);
-                block.setSample(1, i, block.getSample(1, i) + biasAmt);
-            }
-            
-            fuzz->processBlock(block);
-
             grunge->processBlock(block);
+            patty->processBlock(block);
+            fuzz->processBlock(block);
             softClipper->processBlock(block);
             iirFilter.process(dsp::ProcessContextReplacing<float>(block)); // hpf afterwards to remove bias
             break;
@@ -88,7 +77,7 @@ public:
         tubeAmp->prepareToPlay(sampleRate, samplesPerBlock);
 
         // init iir filter
-        *iirFilter.state = *dsp::IIR::Coefficients<float>::makeHighPass(sampleRate, 20.0f, 1.0f);
+        *iirFilter.state = *dsp::IIR::Coefficients<float>::makeHighPass(sampleRate, 5.0f, 0.707f);
 
         dsp::ProcessSpec spec;
         spec.sampleRate = sampleRate;
@@ -116,8 +105,6 @@ private:
     std::unique_ptr<Fuzz> fuzz = nullptr;
     std::unique_ptr<Grunge> grunge = nullptr;
     std::unique_ptr<Amp> tubeAmp = nullptr;
-
-    SmoothParam bias;
 
     dsp::ProcessorDuplicator<dsp::IIR::Filter<float>, dsp::IIR::Coefficients<float>> iirFilter;
 

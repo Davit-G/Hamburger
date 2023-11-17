@@ -22,16 +22,16 @@ public:
 
 		triodesL[1].lowFrequencyShelf_Hz = 10.0;
 		triodesL[1].lowFrequencyShelfGain_dB = -10.0;
-		triodesL[1].millerHF_Hz = 20000.0;
+		triodesL[1].millerHF_Hz = 7000.0 + 6000.0 * tone.getRaw();
 		triodesL[1].dcBlockingLF_Hz = 38.0;
-		triodesL[1].outputGain = pow(10.0, +3.0 / 20.0);
+		triodesL[1].outputGain = pow(10.0, +6.0 / 20.0);
 		triodesL[1].dcShiftCoefficient = 0.20;
 
 		triodesL[2].lowFrequencyShelf_Hz = 10.0;
 		triodesL[2].lowFrequencyShelfGain_dB = -10.0;
-		triodesL[2].millerHF_Hz = 7000.0 + 6000.0 * tone.getRaw();
+		triodesL[2].millerHF_Hz = 9000.0 + 6000.0 * tone.getRaw();
 		// triodesL[2].millerHF_Hz = 20000.0;
-		triodesL[2].dcBlockingLF_Hz = 10.0;
+		triodesL[2].dcBlockingLF_Hz = 40.0;
 		triodesL[2].outputGain = pow(10.0, +4.0 / 20.0);
 		triodesL[2].dcShiftCoefficient = 0.50;
 
@@ -40,7 +40,7 @@ public:
 		// triodesL[3].millerHF_Hz = 6400.0;
 		triodesL[3].millerHF_Hz = 20000.0;
 		triodesL[3].dcBlockingLF_Hz = 33.0;
-		triodesL[3].outputGain = pow(10.0, -15.0 / 20.0);
+		triodesL[3].outputGain = pow(10.0, -12.0 / 20.0);
 		triodesL[3].dcShiftCoefficient = 0.52;
         
         for (int i = 0; i < 4; i++)
