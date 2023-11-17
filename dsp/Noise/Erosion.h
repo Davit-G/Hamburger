@@ -2,31 +2,27 @@
 
 #include <JuceHeader.h>
 
+#include "../SmoothParam.h"
 //==============================================================================
 /*
  */
 class Erosion
 {
 public:
-    Erosion(juce::AudioParameterFloat* param1, juce::AudioParameterFloat* param2, juce::AudioParameterFloat* param3) : delayLine(200) {
-        erosionAmount = param1;
-        jassert(erosionAmount);
-        erosionFrequency = param2;
-        jassert(erosionAmount);
-        erosionQ = param3;
-        jassert(erosionAmount);
-    }
-    ~Erosion() {
-
-    };
+    Erosion(juce::AudioProcessorValueTreeState& treeState) : delayLine(200),
+        erosionAmount(treeState, "noiseAmount"),
+        erosionFrequency(treeState, "noiseFrequency"),
+        erosionQ(treeState, "noiseQ") {}
+    
+    ~Erosion() {};
 
     void processBlock(dsp::AudioBlock<float>& block, double sampleRate);
     void prepareToPlay(double sampleRate, int samplesPerBlock);
 
 private:
-    juce::AudioParameterFloat *erosionAmount = nullptr;
-    juce::AudioParameterFloat *erosionFrequency = nullptr;
-    juce::AudioParameterFloat *erosionQ = nullptr;
+    SmoothParam erosionAmount;
+    SmoothParam erosionFrequency;
+    SmoothParam erosionQ;
 
     // stereo delay line
     dsp::DelayLine<float, dsp::DelayLineInterpolationTypes::Linear> delayLine;

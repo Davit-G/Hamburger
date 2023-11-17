@@ -11,23 +11,18 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include "../SmoothParam.h"
 
-
-//==============================================================================
-/*
-*/
 class Fuzz
 {
 public:
-	Fuzz(juce::AudioParameterFloat* param);
+	Fuzz(juce::AudioProcessorValueTreeState& treeState);
 	~Fuzz();
 
 	void processBlock(dsp::AudioBlock<float>& block);
 	void prepareToPlay(double sampleRate, int samplesPerBlock);
 
 private:
-	juce::AudioParameterFloat *knobValue = nullptr;
-
-	SmoothedValue<float> smoothedInput;
+	SmoothParam amount;
 	JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Fuzz)
 };

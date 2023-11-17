@@ -1,10 +1,6 @@
 #include "HardClip.h"
 
-HardClip::HardClip(juce::AudioParameterFloat* param)
-{
-    saturationKnob = param;
-    jassert(saturationKnob);
-}
+HardClip::HardClip(juce::AudioProcessorValueTreeState& treeState) : gain(treeState, "saturationAmount") {}
 
 HardClip::~HardClip()
 {
@@ -12,11 +8,13 @@ HardClip::~HardClip()
 
 void HardClip::prepareToPlay(double sampleRate, int samplesPerBlock)
 {
-    
+    gain.prepareToPlay(sampleRate, samplesPerBlock);
 }
 
 void HardClip::processBlock(dsp::AudioBlock<float>& block) {
-    float saturationAmount = saturationKnob->get();
+    gain.update();
+    
+    float saturationAmount = gain.getRaw();
 	for (int channel = 0; channel < block.getNumChannels(); ++channel)
     {
         auto *channelData = block.getChannelPointer(channel);

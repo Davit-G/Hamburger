@@ -11,6 +11,7 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include "../SmoothParam.h"
 
 //==============================================================================
 /*
@@ -18,14 +19,14 @@
 class Cooked
 {
 public:
-    Cooked(juce::AudioParameterFloat* param);
+    Cooked(juce::AudioProcessorValueTreeState& treeState);
     ~Cooked();
 
     void processBlock(dsp::AudioBlock<float> &block);
     void prepareToPlay(double sampleRate, int samplesPerBlock);
 
 private:
-    juce::AudioParameterFloat *knobValue = nullptr;
-    SmoothedValue<float> smoothedInput;
+    SmoothParam amount;
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Cooked)
 };

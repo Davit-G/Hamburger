@@ -12,34 +12,24 @@
 #include "Cooked.h"
 
 //==============================================================================
-Cooked::Cooked(juce::AudioParameterFloat* param)
-{
-	// In your constructor, you should add any child components, and
-	// initialise any special settings that your component needs.
-	knobValue = param;
-    jassert(knobValue);
-}
+Cooked::Cooked(juce::AudioProcessorValueTreeState& treeState) : amount(treeState, "fold") {}
 
-Cooked::~Cooked()
-{
-}
-
+Cooked::~Cooked() {}
 
 void Cooked::prepareToPlay(double sampleRate, int samplesPerBlock) {
-	smoothedInput.reset(sampleRate, 0.07);
-	smoothedInput.setCurrentAndTargetValue(0.0);
+	amount.prepareToPlay(sampleRate, samplesPerBlock);
 }
 
 void Cooked::processBlock(dsp::AudioBlock<float>& block) {
-	smoothedInput.setTargetValue(knobValue->get() * 0.01f);
+	amount.update();
+
 	auto rightDryData = block.getChannelPointer(1);
 	auto leftDryData = block.getChannelPointer(0);
 
 	for (int sample = 0; sample < block.getNumSamples(); sample++) {
-		float nextCooked = smoothedInput.getNextValue();
+		float nextCooked = amount.getNextValue() * 0.01f;
 
 		//the original waveshaping thing
-
 		if (nextCooked != 0.f) {
 			auto x = rightDryData[sample] * (nextCooked * 20 + 1);
 			rightDryData[sample] = (4 * (abs(0.25*x + 0.25 - round(0.25*x + 0.25)) - 0.25));

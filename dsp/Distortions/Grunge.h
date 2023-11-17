@@ -2,22 +2,20 @@
 
 #include <JuceHeader.h>
 
+#include "../SmoothParam.h"
 
 class Grunge
 {
 public:
-	Grunge(juce::AudioParameterFloat* amountParam, juce::AudioParameterFloat* toneParam);
-	~Grunge();
+	Grunge(juce::AudioProcessorValueTreeState& treeState);
+	~Grunge() {};
 
 	void processBlock(dsp::AudioBlock<float>& block);
 	void prepareToPlay(double sampleRate, int samplesPerBlock);
 
 private:
-	juce::AudioParameterFloat *amountKnob = nullptr;
-	juce::AudioParameterFloat *toneKnob = nullptr;
-
-	SmoothedValue<float> smoothedAmount;
-	SmoothedValue<float> smoothedTone;
+	SmoothParam amount;
+	SmoothParam tone;
 
     juce::dsp::DelayLine <float, juce::dsp::DelayLineInterpolationTypes::Linear> delayLine;
     

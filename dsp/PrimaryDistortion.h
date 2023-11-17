@@ -10,51 +10,24 @@
 
 #include "Distortions/tube/Amp.h"
 
-
-/*
-Primary distortion modes:
-
-Soft clip
-Hard clip
-Fold
-Fuzz
-Tube
-*/
-
 class PrimaryDistortion
 {
 public:
-    PrimaryDistortion(juce::AudioProcessorValueTreeState &state) : treeStateRef(state)
-    {
+    PrimaryDistortion(juce::AudioProcessorValueTreeState &state) : treeStateRef(state),
+        bias(state, "bias")
+    {   
         distoType = dynamic_cast<juce::AudioParameterChoice *>(state.getParameter("primaryDistortionType"));
         jassert(distoType);
 
         distortionEnabled = dynamic_cast<juce::AudioParameterBool *>(state.getParameter("primaryDistortionEnabled"));
         jassert(distortionEnabled);
 
-        saturationAmount = dynamic_cast<juce::AudioParameterFloat *>(state.getParameter("saturationAmount"));
-        jassert(saturationAmount);
-
-        fuzzParam = dynamic_cast<juce::AudioParameterFloat *>(state.getParameter("fuzz"));
-        jassert(fuzzParam);
-
-        foldParam = dynamic_cast<juce::AudioParameterFloat *>(state.getParameter("fold"));
-        jassert(foldParam);
-
-        bias = dynamic_cast<juce::AudioParameterFloat *>(state.getParameter("bias"));
-        jassert(bias);
-
-        grungeToneParam = dynamic_cast<juce::AudioParameterFloat *>(state.getParameter("grungeTone"));
-        grungeAmountParam = dynamic_cast<juce::AudioParameterFloat *>(state.getParameter("grungeAmt"));
-        jassert(grungeToneParam);
-        jassert(grungeAmountParam);
-
-        softClipper = std::make_unique<SoftClip>(saturationAmount);
-        hardClipper = std::make_unique<HardClip>(saturationAmount);
-        fold = std::make_unique<Cooked>(foldParam);
-        fuzz = std::make_unique<Fuzz>(fuzzParam);
-        grunge = std::make_unique<Grunge>(grungeAmountParam, grungeToneParam);
-        tubeAmp = std::make_unique<Amp>();
+        softClipper = std::make_unique<SoftClip>(state);
+        hardClipper = std::make_unique<HardClip>(state);
+        fold = std::make_unique<Cooked>(state);
+        fuzz = std::make_unique<Fuzz>(state);
+        grunge = std::make_unique<Grunge>(state);
+        tubeAmp = std::make_unique<Amp>(state);
     }
 
     ~PrimaryDistortion() {}
@@ -63,6 +36,8 @@ public:
     {
         int distoTypeIndex = distoType->getIndex();
 
+        bias.update();
+
         if (distortionEnabled->get()  == false) return;
 
         switch (distoTypeIndex)
@@ -70,7 +45,14 @@ public:
         case 0: // classic
             // fold->processBlock(block);
             fuzz->processBlock(block);
-            block.add(bias->get());
+
+            for (int i = 0; i < block.getNumSamples(); i++)
+            {
+                auto biasAmt = bias.get();
+                block.setSample(0, i, block.getSample(0, i) + biasAmt);
+                block.setSample(1, i, block.getSample(1, i) + biasAmt);
+            }
+            
             grunge->processBlock(block);
             softClipper->processBlock(block);
             iirFilter.process(dsp::ProcessContextReplacing<float>(block)); // hpf afterwards to remove bias
@@ -118,14 +100,8 @@ public:
 
 private:
     juce::AudioProcessorValueTreeState &treeStateRef;
+
     juce::AudioParameterChoice *distoType = nullptr;
-
-    juce::AudioParameterFloat *saturationAmount;
-    juce::AudioParameterFloat *fuzzParam;
-    juce::AudioParameterFloat *foldParam;
-    juce::AudioParameterFloat *grungeToneParam;
-    juce::AudioParameterFloat *grungeAmountParam;
-
     juce::AudioParameterBool *distortionEnabled;
 
     std::unique_ptr<SoftClip> softClipper = nullptr;
@@ -135,7 +111,7 @@ private:
     std::unique_ptr<Grunge> grunge = nullptr;
     std::unique_ptr<Amp> tubeAmp = nullptr;
 
-    juce::AudioParameterFloat *bias;
+    SmoothParam bias;
 
     dsp::ProcessorDuplicator<dsp::IIR::Filter<float>, dsp::IIR::Coefficients<float>> iirFilter;
 

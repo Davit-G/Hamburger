@@ -11,16 +11,10 @@
 #include "Sizzle.h"
 
 //==============================================================================
-Sizzle::Sizzle(juce::AudioParameterFloat* param)
+Sizzle::Sizzle(juce::AudioProcessorValueTreeState& treeState)
 :
-envelopeDetector(false)
-{
-	// In your constructor, you should add any child components, and
-	// initialise any special settings that your component needs.
-
-	knobValue = param;
-    jassert(knobValue);
-}
+envelopeDetector(false),
+noiseAmount(treeState, "noiseAmount") {}
 
 Sizzle::~Sizzle()
 {
@@ -28,8 +22,7 @@ Sizzle::~Sizzle()
 
 
 void Sizzle::prepareToPlay(double sampleRate, int samplesPerBlock) {
-	smoothedInput.reset(sampleRate, 0.07);
-	smoothedInput.setCurrentAndTargetValue(0.0);
+	noiseAmount.prepareToPlay(sampleRate, samplesPerBlock);
 
 	envelopeDetector.prepareToPlay(sampleRate, samplesPerBlock);
 	envelopeDetector.setAttackTime(10);
@@ -37,16 +30,14 @@ void Sizzle::prepareToPlay(double sampleRate, int samplesPerBlock) {
 }
 
 void Sizzle::processBlock(dsp::AudioBlock<float>& block) {
-	if (knobValue == nullptr) return;
-	smoothedInput.setTargetValue(knobValue->get()*0.01f);
-	
-	if (knobValue->get() == 0) return;
+	noiseAmount.update();
+	if (noiseAmount.getRaw() == 0) return;
 
 	auto rightDryData = block.getChannelPointer(1);
 	auto leftDryData = block.getChannelPointer(0);
 
 	for (int sample = 0; sample < block.getNumSamples(); sample++) {
-		float nextSizzle = smoothedInput.getNextValue();
+		float nextSizzle = noiseAmount.getNextValue() * 0.01f;
 
 		float envelope = envelopeDetector.processSampleStereo(leftDryData[sample], rightDryData[sample]);
 

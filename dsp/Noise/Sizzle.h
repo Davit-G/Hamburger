@@ -12,6 +12,7 @@
 
 #include <JuceHeader.h>
 
+#include "../SmoothParam.h"
 #include "../EnvelopeFollower.h"
 
 //==============================================================================
@@ -20,7 +21,7 @@
 class Sizzle
 {
 public:
-	Sizzle(juce::AudioParameterFloat* param);
+	Sizzle(juce::AudioProcessorValueTreeState& treeState);
 	~Sizzle();
 
 	void processBlock(dsp::AudioBlock<float>& block);
@@ -75,6 +76,5 @@ private:
 	EnvelopeFollower envelopeDetector;
 	juce::Random random;
 	
-	juce::AudioParameterFloat *knobValue = nullptr;
-	SmoothedValue<float> smoothedInput;
+	SmoothParam noiseAmount;
 };

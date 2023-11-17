@@ -6,7 +6,7 @@
 class Amp
 {
 public:
-    Amp() {
+    Amp(juce::AudioProcessorValueTreeState &treeState) {  
 		triodesL[0].lowFrequencyShelf_Hz = 10.0;
 		triodesL[0].lowFrequencyShelfGain_dB = -10.0;
 		triodesL[0].millerHF_Hz = 20000.0;
@@ -16,52 +16,37 @@ public:
 
 		triodesL[1].lowFrequencyShelf_Hz = 10.0;
 		triodesL[1].lowFrequencyShelfGain_dB = -10.0;
-		triodesL[1].millerHF_Hz = 9000.0;
+		triodesL[1].millerHF_Hz = 20000.0;
 		triodesL[1].dcBlockingLF_Hz = 32.0;
 		triodesL[1].outputGain = pow(10.0, +5.0 / 20.0);
 		triodesL[1].dcShiftCoefficient = 0.20;
 
 		triodesL[2].lowFrequencyShelf_Hz = 10.0;
 		triodesL[2].lowFrequencyShelfGain_dB = -10.0;
-		triodesL[2].millerHF_Hz = 7000.0;
+		// triodesL[2].millerHF_Hz = 7000.0;
+		triodesL[2].millerHF_Hz = 20000.0;
 		triodesL[2].dcBlockingLF_Hz = 40.0;
 		triodesL[2].outputGain = pow(10.0, +6.0 / 20.0);
 		triodesL[2].dcShiftCoefficient = 0.50;
 
 		triodesL[3].lowFrequencyShelf_Hz = 10.0;
 		triodesL[3].lowFrequencyShelfGain_dB = -10.0;
-		triodesL[3].millerHF_Hz = 6400.0;
+		// triodesL[3].millerHF_Hz = 6400.0;
+		triodesL[3].millerHF_Hz = 20000.0;
 		triodesL[3].dcBlockingLF_Hz = 43.0;
-		triodesL[3].outputGain = pow(10.0, -20.0 / 20.0);
+		triodesL[3].outputGain = pow(10.0, -15.0 / 20.0);
 		triodesL[3].dcShiftCoefficient = 0.52;
 
-        triodesR[0].lowFrequencyShelf_Hz = 10.0;
-		triodesR[0].lowFrequencyShelfGain_dB = -10.0;
-		triodesR[0].millerHF_Hz = 20000.0;
-		triodesR[0].dcBlockingLF_Hz = 8.0;
-		triodesR[0].outputGain = pow(10.0, -3.0 / 20.0);
-		triodesR[0].dcShiftCoefficient = 1.0;
-
-		triodesR[1].lowFrequencyShelf_Hz = 10.0;
-		triodesR[1].lowFrequencyShelfGain_dB = -10.0;
-		triodesR[1].millerHF_Hz = 9000.0;
-		triodesR[1].dcBlockingLF_Hz = 32.0;
-		triodesR[1].outputGain = pow(10.0, +5.0 / 20.0);
-		triodesR[1].dcShiftCoefficient = 0.20;
-
-		triodesR[2].lowFrequencyShelf_Hz = 10.0;
-		triodesR[2].lowFrequencyShelfGain_dB = -10.0;
-		triodesR[2].millerHF_Hz = 7000.0;
-		triodesR[2].dcBlockingLF_Hz = 40.0;
-		triodesR[2].outputGain = pow(10.0, +6.0 / 20.0);
-		triodesR[2].dcShiftCoefficient = 0.50;
-
-		triodesR[3].lowFrequencyShelf_Hz = 10.0;
-		triodesR[3].lowFrequencyShelfGain_dB = -10.0;
-		triodesR[3].millerHF_Hz = 6400.0;
-		triodesR[3].dcBlockingLF_Hz = 43.0;
-		triodesR[3].outputGain = pow(10.0, -20.0 / 20.0);
-		triodesR[3].dcShiftCoefficient = 0.52;
+        
+        for (int i = 0; i < 4; i++)
+        {
+            triodesR[i].lowFrequencyShelf_Hz = triodesL[i].lowFrequencyShelf_Hz;
+            triodesR[i].lowFrequencyShelfGain_dB = triodesL[i].lowFrequencyShelfGain_dB;
+            triodesR[i].millerHF_Hz = triodesL[i].millerHF_Hz;
+            triodesR[i].dcBlockingLF_Hz = triodesL[i].dcBlockingLF_Hz;
+            triodesR[i].outputGain = triodesL[i].outputGain;
+            triodesR[i].dcShiftCoefficient = triodesL[i].dcShiftCoefficient;
+        }
     }
 
     ~Amp() {}
@@ -74,7 +59,6 @@ public:
         spec.numChannels = 2; // eh
 
         inputHighPass.reset();
-        // set it to 20hz for now, but I want to make this a parameter
         juce::dsp::IIR::Coefficients<float>::Ptr inputHighPassCoefficients = juce::dsp::IIR::Coefficients<float>::makeHighPass(sampleRate, 20.0f);
         inputHighPass.state = *inputHighPassCoefficients;
 
@@ -94,55 +78,53 @@ public:
         inputHighPass.process(dsp::ProcessContextReplacing<float>(block));
 
         // step 2: apply gain
-        block.multiplyBy(inputGain);
+        // block.multiplyBy(inputGain);
 
         // left channel
-        auto leftChannel = block.getChannelPointer(0);
         for (int j = 0; j < block.getNumSamples(); j++)
         {
-            auto sample = leftChannel[j];
+            auto sampleL = block.getSample(0, j);
             
             // step 3: triode 1
-            sample = triodesL[0].processAudioSample(sample);
+            sampleL = triodesL[0].processAudioSample(sampleL);
 
             // step 4: drive the signal
-            sample *= driveGain;
+            sampleL *= driveGain;
 
             // step 5: triode 2 and 3 and etc, go nuts
-            sample = triodesL[1].processAudioSample(sample);
-            sample = triodesL[2].processAudioSample(sample);
-            sample = triodesL[3].processAudioSample(sample);
+            sampleL = triodesL[1].processAudioSample(sampleL);
+            sampleL = triodesL[2].processAudioSample(sampleL);
+            sampleL = triodesL[3].processAudioSample(sampleL);
 
             // step 6: class B
-            sample *= tubeCompress;
+            sampleL *= tubeCompress;
 
             // we shall ignore class B for now
 
-            block.setSample(0, j, sample);
+            block.setSample(0, j, sampleL);
         }
 
         // do same for right channel
-        auto rightChannel = block.getChannelPointer(1);
         for (int j = 0; j < block.getNumSamples(); j++)
         {
-            auto sample = rightChannel[j];
+            auto sampleR = block.getSample(1, j);
             
             // step 3: triode 1
-            triodesR[0].processAudioSample(sample);
+            sampleR = triodesR[0].processAudioSample(sampleR);
 
             // step 4: drive the signal
-            sample *= driveGain;
+            sampleR *= driveGain;
 
             // step 5: triode 2 and 3 and etc, go nuts
-            sample = triodesR[1].processAudioSample(sample);
-            sample = triodesR[2].processAudioSample(sample);
-            sample = triodesR[3].processAudioSample(sample);
+            sampleR = triodesR[1].processAudioSample(sampleR);
+            sampleR = triodesR[2].processAudioSample(sampleR);
+            sampleR = triodesR[3].processAudioSample(sampleR);
             // step 6: class B
-            sample *= tubeCompress;
+            sampleR *= tubeCompress;
 
             // we shall ignore class B for now
 
-            block.setSample(1, j, sample);
+            block.setSample(1, j, sampleR);
         }
         
         // step 7: tone stack?

@@ -11,6 +11,7 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include "../SmoothParam.h"
 
 //==============================================================================
 /*
@@ -18,15 +19,14 @@
 class Jeff
 {
 public:
-	Jeff(juce::AudioParameterFloat* param);
+	Jeff(juce::AudioProcessorValueTreeState& treeState);
 	~Jeff();
 
 	void processBlock(dsp::AudioBlock<float>& block);
 	void prepareToPlay(double sampleRate, int samplesPerBlock);
 
 private:
-	SmoothedValue<float> smoothedInput;
+	SmoothParam amount;
 
-	juce::AudioParameterFloat* saturationAmount;
 	JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Jeff)
 };

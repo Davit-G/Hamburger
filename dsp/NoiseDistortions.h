@@ -5,6 +5,8 @@
 #include "./Noise/Redux.h"
 #include "./Noise/Jeff.h"
 
+#include "SmoothParam.h"
+
 class NoiseDistortions
 {
 public:
@@ -16,24 +18,10 @@ public:
         noiseEnabled = dynamic_cast<juce::AudioParameterBool *>(state.getParameter("noiseDistortionEnabled"));
         jassert(noiseEnabled);
 
-        noiseAmount = dynamic_cast<juce::AudioParameterFloat *>(state.getParameter("noiseAmount"));
-        noiseFrequency = dynamic_cast<juce::AudioParameterFloat *>(state.getParameter("noiseFrequency"));
-        noiseQ = dynamic_cast<juce::AudioParameterFloat *>(state.getParameter("noiseQ"));
-        jassert(noiseAmount);
-        jassert(noiseFrequency);
-        jassert(noiseQ);
-
-        downsampleAmount = dynamic_cast<juce::AudioParameterFloat *>(state.getParameter("downsampleAmount"));
-        downsampleJitter = dynamic_cast<juce::AudioParameterFloat *>(state.getParameter("downsampleJitter"));
-        bitReduction = dynamic_cast<juce::AudioParameterFloat *>(state.getParameter("bitReduction"));
-        jassert(downsampleAmount);
-        jassert(downsampleJitter);
-        jassert(bitReduction);
-
-        sizzle = std::make_unique<Sizzle>(noiseAmount);
-        erosion = std::make_unique<Erosion>(noiseAmount, noiseFrequency, noiseQ);
-        redux = std::make_unique<Redux>(downsampleAmount, downsampleJitter, bitReduction);
-        jeff = std::make_unique<Jeff>(noiseAmount);
+        sizzle = std::make_unique<Sizzle>(state);
+        erosion = std::make_unique<Erosion>(state);
+        redux = std::make_unique<Redux>(state);
+        jeff = std::make_unique<Jeff>(state);
         
     }
     ~NoiseDistortions(){}
@@ -78,13 +66,6 @@ public:
 private:
     juce::AudioProcessorValueTreeState &treeStateRef;
     juce::AudioParameterChoice *distoType = nullptr;
-
-    juce::AudioParameterFloat* noiseAmount;
-    juce::AudioParameterFloat* noiseFrequency;
-    juce::AudioParameterFloat* noiseQ;
-    juce::AudioParameterFloat* downsampleAmount;
-    juce::AudioParameterFloat* downsampleJitter;
-    juce::AudioParameterFloat* bitReduction;
 
     juce::AudioParameterBool* noiseEnabled;
 

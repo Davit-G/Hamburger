@@ -4,6 +4,9 @@
 
 void Erosion::processBlock(dsp::AudioBlock<float>& block, double sampleRate)
 {
+    erosionAmount.update();
+    erosionFrequency.update();
+    erosionQ.update();
 
     auto leftBlock = block.getSingleChannelBlock(0);
     auto rightBlock = block.getSingleChannelBlock(1);
@@ -14,7 +17,7 @@ void Erosion::processBlock(dsp::AudioBlock<float>& block, double sampleRate)
     }
 
     // get the current value of the saturation knob to figure out how much to multiply a random value by
-    float saturationAmount = erosionAmount->get() * 0.1f;
+    float saturationAmount = erosionAmount.getRaw() * 0.1f;
 
     // create buffer to store the random values
     randomBuffer.clear();
@@ -28,7 +31,7 @@ void Erosion::processBlock(dsp::AudioBlock<float>& block, double sampleRate)
         randomBuffer.setSample(1, i, randomValue);
     }
 
-    *iirFilter.state = *dsp::IIR::Coefficients<float>::makeBandPass(sampleRate, erosionFrequency->get(), erosionQ->get());
+    *iirFilter.state = *dsp::IIR::Coefficients<float>::makeBandPass(sampleRate, erosionFrequency.getRaw(), erosionQ.getRaw());
 
     // now, filter the random values
     iirFilter.process(dsp::ProcessContextReplacing<float>(randomBlock));
@@ -47,6 +50,9 @@ void Erosion::processBlock(dsp::AudioBlock<float>& block, double sampleRate)
 void Erosion::prepareToPlay(double sampleRate, int samplesPerBlock)
 {
     // init delay
+    erosionAmount.prepareToPlay(sampleRate, samplesPerBlock);
+    erosionFrequency.prepareToPlay(sampleRate, samplesPerBlock);
+    erosionQ.prepareToPlay(sampleRate, samplesPerBlock);
 
     dsp::ProcessSpec spec;
     spec.sampleRate = sampleRate;

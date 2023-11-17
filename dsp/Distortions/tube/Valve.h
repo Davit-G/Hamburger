@@ -27,23 +27,27 @@ public:
 		lossyIntegrator[0].prepareToPlay(_sampleRate);
 		lossyIntegrator[1].prepareToPlay(_sampleRate);
 
-		// --- low shelf
-		lowShelvingFilterCoeffs = juce::dsp::IIR::Coefficients<float>::makeLowShelf(_sampleRate, lowFrequencyShelf_Hz, 0.707f, lowFrequencyShelfGain_dB);
-		lowShelvingFilter.coefficients = *lowShelvingFilterCoeffs;
-
-		// --- output HPF
-		dcBlockingFilterCoeffs = juce::dsp::IIR::Coefficients<float>::makeHighPass(_sampleRate, dcBlockingLF_Hz, 0.707f);
-		dcBlockingFilter.coefficients = *dcBlockingFilterCoeffs;
-
-		// --- LPF (upper edge), technically supposed to be second order
-		upperBandwidthFilterCoeffs = juce::dsp::IIR::Coefficients<float>::makeLowPass(_sampleRate, millerHF_Hz, 0.707f);
-		upperBandwidthFilter1stOrder.coefficients = *upperBandwidthFilterCoeffs;
-		upperBandwidthFilter2ndOrder.coefficients = *upperBandwidthFilterCoeffs;
+		calculateCoefficients();
 
 		lowShelvingFilter.prepare(spec);
 		dcBlockingFilter.prepare(spec);
 		upperBandwidthFilter1stOrder.prepare(spec);
 		upperBandwidthFilter2ndOrder.prepare(spec);
+	}
+
+	void calculateCoefficients() {
+		// --- low shelf
+		lowShelvingFilterCoeffs = juce::dsp::IIR::Coefficients<float>::makeLowShelf(sampleRate, lowFrequencyShelf_Hz, 0.707f, juce::Decibels::decibelsToGain(lowFrequencyShelfGain_dB));
+		lowShelvingFilter.coefficients = *lowShelvingFilterCoeffs;
+
+		// --- output HPF
+		dcBlockingFilterCoeffs = juce::dsp::IIR::Coefficients<float>::makeHighPass(sampleRate, dcBlockingLF_Hz, 0.707f);
+		dcBlockingFilter.coefficients = *dcBlockingFilterCoeffs;
+
+		// --- LPF (upper edge), technically supposed to be second order
+		upperBandwidthFilterCoeffs = juce::dsp::IIR::Coefficients<float>::makeLowPass(sampleRate, millerHF_Hz, 0.707f);
+		upperBandwidthFilter1stOrder.coefficients = *upperBandwidthFilterCoeffs;
+		upperBandwidthFilter2ndOrder.coefficients = *upperBandwidthFilterCoeffs;
 	}
 
 	// --- do the valve emulation
@@ -71,9 +75,9 @@ public:
 								clipPointNegative);
 		
 		yn = dcBlockingFilter.processSample(yn); // --- remove DC
-		// yn = lowShelvingFilter.processSample(yn); // --- LF Shelf
-		// yn = upperBandwidthFilter1stOrder.processSample(yn); // --- HF Edge
-		// yn = upperBandwidthFilter2ndOrder.processSample(yn);
+		yn = lowShelvingFilter.processSample(yn); // --- LF Shelf
+		yn = upperBandwidthFilter1stOrder.processSample(yn); // --- HF Edge
+		yn = upperBandwidthFilter2ndOrder.processSample(yn);
 		yn *= -outputGain; // --- (5) final output scaling and inversion
 
 		return yn;

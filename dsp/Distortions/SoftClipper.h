@@ -2,13 +2,12 @@
 
 #include <JuceHeader.h>
 
-//==============================================================================
-/*
- */
+#include "../SmoothParam.h"
+
 class SoftClip
 {
 public:
-    SoftClip(juce::AudioParameterFloat* param);
+    SoftClip(juce::AudioProcessorValueTreeState& treeState);
 
     ~SoftClip();
 
@@ -17,7 +16,7 @@ public:
 
 
 private:
-    juce::AudioParameterFloat *saturationKnob = nullptr;
+    SmoothParam saturationKnob;
 
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SoftClip)

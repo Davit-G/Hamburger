@@ -12,29 +12,14 @@
 #include "Grunge.h"
 
 //==============================================================================
-Grunge::Grunge(juce::AudioParameterFloat* amountParam, juce::AudioParameterFloat* toneParam)
-{
-	// In your constructor, you should add any child components, and
-	// initialise any special settings that your component needs.
-	amountKnob = amountParam;
-    jassert(amountKnob);
-
-    toneKnob = toneParam;
-    jassert(toneKnob);
-}
-
-Grunge::~Grunge()
-{
-    amountKnob = nullptr;
-    toneKnob = nullptr;
-}
-
+Grunge::Grunge(juce::AudioProcessorValueTreeState& treeState) :
+    amount(treeState, "grungeAmt"),
+    tone(treeState, "grungeTone") 
+{}
 
 void Grunge::prepareToPlay(double sampleRate, int samplesPerBlock) {
-	smoothedAmount.reset(44100, 0.07);
-	smoothedAmount.setCurrentAndTargetValue(0.0);
-    smoothedTone.reset(44100, 0.07);
-	smoothedTone.setCurrentAndTargetValue(0.0);
+	amount.prepareToPlay(sampleRate, samplesPerBlock);
+    tone.prepareToPlay(sampleRate, samplesPerBlock);
 
     delayLine.prepare({ sampleRate, (juce::uint32)samplesPerBlock, 2 });
     delayLine.setMaximumDelayInSamples(1);
@@ -48,14 +33,13 @@ void Grunge::prepareToPlay(double sampleRate, int samplesPerBlock) {
 }
 
 void Grunge::processBlock(dsp::AudioBlock<float>& block) {
-	if (amountKnob == nullptr) return;
-	smoothedAmount.setTargetValue(amountKnob->get());
-	smoothedTone.setTargetValue(toneKnob->get());
+	amount.update();
+    tone.update();
 
     for (int i = 0; i < block.getNumSamples(); i++) {
-        float fbKnobAmt = smoothedAmount.getNextValue();
+        float fbKnobAmt = amount.getNextValue();
         float fbAmt = -powf(fbKnobAmt, 2.0f) + 2*fbKnobAmt;
-        float toneFloat = smoothedTone.getNextValue() * 55 + 5;
+        float toneFloat = tone.getNextValue() * 55 + 5;
     
         auto dcCoeffs = juce::dsp::IIR::Coefficients<float>::makeHighPass(sampleRate, toneFloat);
 

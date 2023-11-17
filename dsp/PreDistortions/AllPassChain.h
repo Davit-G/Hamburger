@@ -9,32 +9,29 @@
 class AllPassChain
 {
 public:
-    AllPassChain(juce::AudioParameterFloat *param, juce::AudioParameterFloat *param2, juce::AudioParameterFloat *param3)
-    {
-        allPassFrequency = param;
-        jassert(allPassFrequency);
-
-        allPassQ = param2;
-        jassert(allPassQ);
-
-        allPassAmount = param3;
-        jassert(allPassAmount);
-    }
+    AllPassChain(juce::AudioProcessorValueTreeState& treeState) : 
+        allPassFrequency(treeState, "allPassFreq"), 
+        allPassQ(treeState, "allPassQ"), 
+        allPassAmount(treeState, "allPassAmount") {}
     ~AllPassChain(){
 
     }
 
     void processBlock(dsp::AudioBlock<float> &block)
     {
-        if ((oldAllPassFreq != allPassFrequency->get()) || (oldAllPassQ != allPassQ->get()) || (oldAllPassAmount != allPassAmount->get()))
+        allPassAmount.update();
+        allPassFrequency.update();
+        allPassQ.update();
+
+        if ((oldAllPassFreq != allPassFrequency.getRaw()) || (oldAllPassQ != allPassQ.getRaw()) || (oldAllPassAmount != allPassAmount.getRaw()))
         {
             for (const auto &allPassFilter : allPassFilters)
             {
-                *allPassFilter.state = *dsp::IIR::Coefficients<float>::makeAllPass(oldSampleRate, allPassFrequency->get(), allPassQ->get());
+                *allPassFilter.state = *dsp::IIR::Coefficients<float>::makeAllPass(oldSampleRate, allPassFrequency.getRaw(), allPassQ.getRaw());
             }
         }
 
-        for (int i = 0; i < allPassAmount->get(); i++)
+        for (int i = 0; i < allPassAmount.getRaw(); i++)
         {
             allPassFilters[i].process(dsp::ProcessContextReplacing<float>(block));
         }
@@ -42,6 +39,9 @@ public:
 
     void prepareToPlay(double sampleRate, int samplesPerBlock)
     {
+        allPassFrequency.prepareToPlay(sampleRate, samplesPerBlock);
+        allPassQ.prepareToPlay(sampleRate, samplesPerBlock);
+        allPassAmount.prepareToPlay(sampleRate, samplesPerBlock);
 
         dsp::ProcessSpec spec;
         spec.sampleRate = sampleRate;
@@ -50,7 +50,7 @@ public:
 
         for (const auto &allPassFilter : allPassFilters)
         {
-            *allPassFilter.state = *dsp::IIR::Coefficients<float>::makeAllPass(sampleRate, allPassFrequency->get(), allPassQ->get());
+            *allPassFilter.state = *dsp::IIR::Coefficients<float>::makeAllPass(sampleRate, allPassFrequency.getRaw(), allPassQ.getRaw());
         }
 
         for (int i = 0; i < 50; i++) {
@@ -62,9 +62,9 @@ public:
     }
 
 private:
-    juce::AudioParameterFloat *allPassFrequency = nullptr;
-    juce::AudioParameterFloat *allPassQ = nullptr;
-    juce::AudioParameterFloat *allPassAmount = nullptr;
+    SmoothParam allPassFrequency;
+    SmoothParam allPassQ;
+    SmoothParam allPassAmount;
 
     float oldAllPassFreq = 0.0;
     float oldAllPassQ = 0.0;

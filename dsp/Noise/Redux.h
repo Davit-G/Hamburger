@@ -10,20 +10,21 @@
 
 #pragma once
 #include <JuceHeader.h>
+#include "../SmoothParam.h"
 
 class Redux : public Component
 {
 public:
-    Redux(juce::AudioParameterFloat *downsampling, juce::AudioParameterFloat *jitter, juce::AudioParameterFloat *bitReduction);
+    Redux(juce::AudioProcessorValueTreeState& treeState);
     ~Redux();
 
     void processBlock(dsp::AudioBlock<float>& block);
     void prepareToPlay(double sampleRate, int samplesPerBlock);
 
 private:
-    juce::AudioParameterFloat *downsampling;
-    juce::AudioParameterFloat *jitter;
-    juce::AudioParameterFloat *bitReduction;
+    SmoothParam downsample;
+    SmoothParam jitter;
+    SmoothParam bitReduction;
 
     float jitterOffsetL = 0.0f;
     float jitterOffsetR = 0.0f;

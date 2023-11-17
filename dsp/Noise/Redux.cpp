@@ -13,13 +13,11 @@
 
 
 //==============================================================================
-Redux::Redux(juce::AudioParameterFloat *downsampling, juce::AudioParameterFloat *jitter, juce::AudioParameterFloat *bitReduction)
+Redux::Redux(juce::AudioProcessorValueTreeState& treeState) : 
+	downsample(treeState, "downsampleAmount"),
+	jitter(treeState, "downsampleJitter"),
+	bitReduction(treeState, "bitReduction")
 {
-	// In your constructor, you should add any child components, and
-	// initialise any special settings that your component needs.
-	this->downsampling = downsampling;
-	this->jitter = jitter;
-	this->bitReduction = bitReduction;
 }
 
 Redux::~Redux()
@@ -28,7 +26,9 @@ Redux::~Redux()
 
 
 void Redux::prepareToPlay(double sampleRate, int samplesPerBlock) {
-
+	downsample.prepareToPlay(sampleRate, samplesPerBlock);
+	jitter.prepareToPlay(sampleRate, samplesPerBlock);
+	bitReduction.prepareToPlay(sampleRate, samplesPerBlock);
 }
 
 void Redux::processBlock(dsp::AudioBlock<float>& block) {
@@ -36,16 +36,18 @@ void Redux::processBlock(dsp::AudioBlock<float>& block) {
 	auto rightDryData = block.getChannelPointer(1);
 	auto leftDryData = block.getChannelPointer(0);
 
-
-	float downsamplingValue = downsampling->get();
-	float bitReductionValue = bitReduction->get();
-	float jitterAmount = jitter->get();
-
-	if (downsamplingValue == 0.0f) {
-		downsamplingValue = 0.0001f;
-	}
+	downsample.update();
+	bitReduction.update();
+	jitter.update();	
 
 	for (int sample = 0; sample < block.getNumSamples(); sample++) {
+		float downsamplingValue = downsample.get();
+		float bitReductionValue = bitReduction.get();
+		float jitterAmount = jitter.get();
+
+		if (downsamplingValue == 0.0f) {
+			downsamplingValue = 0.0001f;
+		}
 
 		auto x = rightDryData[sample];
 		float posValues = powf(2, bitReductionValue);
@@ -54,7 +56,7 @@ void Redux::processBlock(dsp::AudioBlock<float>& block) {
 		//sample and hold process
 		if (floor(fmodf(sample, downsamplingValue + jitterOffsetL)) == 0) {
 			x = rightDryData[sample] - x;
-			jitterOffsetL = jitterAmount * (rand() / (float)RAND_MAX) * 0.1;
+			jitterOffsetL = jitterAmount * (rand() / (float)RAND_MAX) * 0.3;
 		}
 		else {
 			x = rightDryData[sample - int(floor(fmodf(sample, downsamplingValue + jitterOffsetL)))];
@@ -71,7 +73,7 @@ void Redux::processBlock(dsp::AudioBlock<float>& block) {
 		//sample and hold process
 		if (floor(fmodf(sample, downsamplingValue + jitterOffsetR)) == 0) {
 			x = leftDryData[sample] - x;
-			jitterOffsetR = jitterAmount * (rand() / (float)RAND_MAX) * 0.1;
+			jitterOffsetR = jitterAmount * (rand() / (float)RAND_MAX) * 0.3;
 		}
 		else {
 			x = leftDryData[sample - int(floor(fmodf(sample, downsamplingValue + jitterOffsetR)))];

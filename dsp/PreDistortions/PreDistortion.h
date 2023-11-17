@@ -15,14 +15,9 @@ class PreDistortion
 public:
     PreDistortion(juce::AudioProcessorValueTreeState &state) : treeStateRef(state) {
         distoType = dynamic_cast<juce::AudioParameterChoice *>(state.getParameter("preDistortionType")); jassert(distoType);
-
         preDistortionEnabled = dynamic_cast<juce::AudioParameterBool *>(state.getParameter("preDistortionEnabled")); jassert(preDistortionEnabled);
 
-        allPassFreq = dynamic_cast<juce::AudioParameterFloat *>(state.getParameter("allPassFreq")); jassert(allPassFreq);
-        allPassQ = dynamic_cast<juce::AudioParameterFloat *>(state.getParameter("allPassQ")); jassert(allPassQ);
-        allPassAmount = dynamic_cast<juce::AudioParameterFloat *>(state.getParameter("allPassAmount")); jassert(allPassAmount);
-
-        allPassChain = std::make_unique<AllPassChain>(allPassFreq, allPassQ, allPassAmount);
+        allPassChain = std::make_unique<AllPassChain>(state);
     }
     ~PreDistortion() {}
 
@@ -60,9 +55,6 @@ private:
     juce::AudioParameterChoice *distoType = nullptr;
 
     std::unique_ptr<AllPassChain> allPassChain;
-    juce::AudioParameterFloat* allPassFreq = nullptr;
-    juce::AudioParameterFloat* allPassQ = nullptr;
-    juce::AudioParameterFloat* allPassAmount = nullptr;
 
     juce::AudioParameterBool* preDistortionEnabled = nullptr;
 
