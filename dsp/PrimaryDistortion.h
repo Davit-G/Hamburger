@@ -4,6 +4,7 @@
 
 #include "Distortions/SoftClipper.h"
 #include "Distortions/HardClip.h"
+#include "Distortions/PattyFuzz.h"
 #include "Distortions/Fuzz.h"
 #include "Distortions/Cooked.h"
 #include "Distortions/Grunge.h"
@@ -25,6 +26,7 @@ public:
         softClipper = std::make_unique<SoftClip>(state);
         hardClipper = std::make_unique<HardClip>(state);
         fold = std::make_unique<Cooked>(state);
+        patty = std::make_unique<PattyFuzz>(state);
         fuzz = std::make_unique<Fuzz>(state);
         grunge = std::make_unique<Grunge>(state);
         tubeAmp = std::make_unique<Amp>(state);
@@ -44,7 +46,7 @@ public:
         {
         case 0: // classic
             // fold->processBlock(block);
-            fuzz->processBlock(block);
+            // patty->processBlock(block);
 
             for (int i = 0; i < block.getNumSamples(); i++)
             {
@@ -53,6 +55,8 @@ public:
                 block.setSample(1, i, block.getSample(1, i) + biasAmt);
             }
             
+            fuzz->processBlock(block);
+
             grunge->processBlock(block);
             softClipper->processBlock(block);
             iirFilter.process(dsp::ProcessContextReplacing<float>(block)); // hpf afterwards to remove bias
@@ -78,6 +82,7 @@ public:
         softClipper->prepareToPlay(sampleRate, samplesPerBlock);
         hardClipper->prepareToPlay(sampleRate, samplesPerBlock);
         fold->prepareToPlay(sampleRate, samplesPerBlock);
+        patty->prepareToPlay(sampleRate, samplesPerBlock);
         fuzz->prepareToPlay(sampleRate, samplesPerBlock);
         grunge->prepareToPlay(sampleRate, samplesPerBlock);
         tubeAmp->prepareToPlay(sampleRate, samplesPerBlock);
@@ -107,6 +112,7 @@ private:
     std::unique_ptr<SoftClip> softClipper = nullptr;
     std::unique_ptr<HardClip> hardClipper = nullptr;
     std::unique_ptr<Cooked> fold = nullptr;
+    std::unique_ptr<PattyFuzz> patty = nullptr;
     std::unique_ptr<Fuzz> fuzz = nullptr;
     std::unique_ptr<Grunge> grunge = nullptr;
     std::unique_ptr<Amp> tubeAmp = nullptr;

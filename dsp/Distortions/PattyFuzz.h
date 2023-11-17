@@ -3,21 +3,16 @@
 #include <JuceHeader.h>
 #include "../SmoothParam.h"
 
-#include "../EnvelopeFollower.h"
-
-class Fuzz
+class PattyFuzz
 {
 public:
-	Fuzz(juce::AudioProcessorValueTreeState& treeState);
-	~Fuzz();
+	PattyFuzz(juce::AudioProcessorValueTreeState& treeState);
+	~PattyFuzz();
 
 	void processBlock(dsp::AudioBlock<float>& block);
 	void prepareToPlay(double sampleRate, int samplesPerBlock);
 
 private:
 	SmoothParam amount;
-
-    EnvelopeFollower follower;
-    
-	JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Fuzz)
+	JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PattyFuzz)
 };

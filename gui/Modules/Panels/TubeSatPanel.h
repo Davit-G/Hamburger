@@ -8,7 +8,7 @@
 class TubeSatPanel : public Panel
 {
 public:
-    TubeSatPanel(AudioPluginAudioProcessor &p) : Panel(p, "TUBE"), knob(p, "BIAS", "tubeBias", -1.0f, 1.0f) {
+    TubeSatPanel(AudioPluginAudioProcessor &p) : Panel(p, "TUBE"), knob(p, "BIAS", "tubeTone", -1.0f, 1.0f) {
         auto laf = new KnobLAF(juce::Colours::yellowgreen);
         setLookAndFeel(laf); // will cascade to all children knobs
 

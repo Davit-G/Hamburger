@@ -1,5 +1,3 @@
-
-
 #include <JuceHeader.h>
 #include "Valve.h"
 
@@ -61,7 +59,7 @@ public:
 
     void prepareToPlay(double sampleRate, int samplesPerBlock)
     {
-        tubeBias.prepareToPlay(sampleRate, samplesPerBlock);
+        tone.prepareToPlay(sampleRate, samplesPerBlock);
 
         dsp::ProcessSpec spec;
         spec.sampleRate = sampleRate;
@@ -148,7 +146,7 @@ private:
     ClassAValve triodesL[4];
     ClassAValve triodesR[4];
 
-    SmoothParam tubeBias;
+    SmoothParam tone;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Amp)
 };
