@@ -132,6 +132,8 @@ juce_add_binary_data("${BaseTargetName}BinaryData" HEADER_NAME BinaryData.h NAME
     Assets/Quicksand-SemiBold.ttf
     Assets/tick.png
     Assets/knobShadow2.png
+    Assets/bg3.jpg
+    Assets/fire.jpg
 )
 set_target_properties("${BaseTargetName}BinaryData" PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
 

@@ -52,29 +52,29 @@ void Redux::processBlock(dsp::AudioBlock<float>& block) {
 		x = fmodf(x, 1 / posValues);  //bit reduction process
 
 		//sample and hold process
-		if (floor(fmodf(sample, downsamplingValue + jitterOffset)) == 0) {
+		if (floor(fmodf(sample, downsamplingValue + jitterOffsetL)) == 0) {
 			x = rightDryData[sample] - x;
-			jitterOffset = jitterAmount * (rand() / (float)RAND_MAX) * 0.1;
+			jitterOffsetL = jitterAmount * (rand() / (float)RAND_MAX) * 0.1;
 		}
 		else {
-			x = rightDryData[sample - int(floor(fmodf(sample, downsamplingValue + jitterOffset)))];
+			x = rightDryData[sample - int(floor(fmodf(sample, downsamplingValue + jitterOffsetL)))];
 		}
 
 		rightDryData[sample] = x;
 
 
 		x = leftDryData[sample];
-		posValues = powf(2, bitReductionValue); //all the possible vertical steps
+		posValues = powf(2, bitReductionValue); //all the possible vertical steps;
 		x = fmodf(x, 1 / posValues);  //bit reduction process
 
 
 		//sample and hold process
-		if (floor(fmodf(sample, downsamplingValue + jitterOffset)) == 0) {
+		if (floor(fmodf(sample, downsamplingValue + jitterOffsetR)) == 0) {
 			x = leftDryData[sample] - x;
-			jitterOffset = jitterAmount * (rand() / (float)RAND_MAX) * 0.1;
+			jitterOffsetR = jitterAmount * (rand() / (float)RAND_MAX) * 0.1;
 		}
 		else {
-			x = leftDryData[sample - int(floor(fmodf(sample, downsamplingValue + jitterOffset)))];
+			x = leftDryData[sample - int(floor(fmodf(sample, downsamplingValue + jitterOffsetR)))];
 		}
 
 		leftDryData[sample] = x;

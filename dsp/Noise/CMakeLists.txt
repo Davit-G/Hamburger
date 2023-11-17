@@ -1,3 +1,7 @@
 target_sources("${BaseTargetName}"
 PRIVATE
-fxobjects.cpp)
+Redux.cpp
+Sizzle.cpp
+Erosion.cpp
+Jeff.cpp
+)

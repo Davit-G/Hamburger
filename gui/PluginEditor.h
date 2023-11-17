@@ -29,7 +29,8 @@ public:
 
     void paint(juce::Graphics &g)
     {
-        g.fillAll(juce::Colours::black);
+        auto image = ImageCache::getFromMemory(BinaryData::bg3_jpg, BinaryData::bg3_jpgSize);
+        g.drawImage(image, getLocalBounds().toFloat());
     }
 
     void resized()

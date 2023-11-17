@@ -1,15 +1,11 @@
 target_sources("${BaseTargetName}"
 PRIVATE
-Redux.cpp
-Sizzle.cpp
 Fuzz.cpp
 Cooked.cpp
 SoftClipper.cpp
 HardClip.cpp
-Erosion.cpp
-Jeff.cpp
 Grunge.cpp
 )
 
-# add_subdirectory(pinknoise)
+# add_subdirectory(tube)
 # add_subdirectory(naivetube)

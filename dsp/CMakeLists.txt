@@ -1,4 +1,5 @@
 add_subdirectory(Distortions)
+add_subdirectory(Noise)
 
 target_sources("${BaseTargetName}"
     PRIVATE

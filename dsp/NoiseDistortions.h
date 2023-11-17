@@ -1,14 +1,9 @@
 #include <JuceHeader.h>
 
-#include "./Distortions/Sizzle.h"
-#include "./Distortions/Erosion.h"
-#include "./Distortions/Redux.h"
-
-/*
-Primary distortion modes:
-
-
-*/
+#include "./Noise/Sizzle.h"
+#include "./Noise/Erosion.h"
+#include "./Noise/Redux.h"
+#include "./Noise/Jeff.h"
 
 class NoiseDistortions
 {

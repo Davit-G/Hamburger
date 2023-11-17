@@ -6,8 +6,9 @@
 #include "Distortions/HardClip.h"
 #include "Distortions/Fuzz.h"
 #include "Distortions/Cooked.h"
-#include "Distortions/Jeff.h"
 #include "Distortions/Grunge.h"
+
+#include "Distortions/tube/Amp.h"
 
 
 /*
@@ -53,6 +54,7 @@ public:
         fold = std::make_unique<Cooked>(foldParam);
         fuzz = std::make_unique<Fuzz>(fuzzParam);
         grunge = std::make_unique<Grunge>(grungeAmountParam, grungeToneParam);
+        tubeAmp = std::make_unique<Amp>();
     }
 
     ~PrimaryDistortion() {}
@@ -66,14 +68,15 @@ public:
         switch (distoTypeIndex)
         {
         case 0: // classic
-            fold->processBlock(block);
+            // fold->processBlock(block);
             fuzz->processBlock(block);
             block.add(bias->get());
             grunge->processBlock(block);
             softClipper->processBlock(block);
+            iirFilter.process(dsp::ProcessContextReplacing<float>(block)); // hpf afterwards to remove bias
             break;
         case 1: // tube
-            hardClipper->processBlock(block);
+            tubeAmp->processBlock(block);
             break;
         case 2: // fold
             break;
@@ -86,8 +89,6 @@ public:
         default:
             break;
         }
-
-        iirFilter.process(dsp::ProcessContextReplacing<float>(block)); // hpf afterwards to remove bias
     }
 
     void prepareToPlay(double sampleRate, int samplesPerBlock)
@@ -97,9 +98,10 @@ public:
         fold->prepareToPlay(sampleRate, samplesPerBlock);
         fuzz->prepareToPlay(sampleRate, samplesPerBlock);
         grunge->prepareToPlay(sampleRate, samplesPerBlock);
+        tubeAmp->prepareToPlay(sampleRate, samplesPerBlock);
 
         // init iir filter
-        *iirFilter.state = *dsp::IIR::Coefficients<float>::makeHighPass(sampleRate, 14.0f, 0.6);
+        *iirFilter.state = *dsp::IIR::Coefficients<float>::makeHighPass(sampleRate, 20.0f, 1.0f);
 
         dsp::ProcessSpec spec;
         spec.sampleRate = sampleRate;
@@ -126,12 +128,12 @@ private:
 
     juce::AudioParameterBool *distortionEnabled;
 
-
     std::unique_ptr<SoftClip> softClipper = nullptr;
     std::unique_ptr<HardClip> hardClipper = nullptr;
     std::unique_ptr<Cooked> fold = nullptr;
     std::unique_ptr<Fuzz> fuzz = nullptr;
     std::unique_ptr<Grunge> grunge = nullptr;
+    std::unique_ptr<Amp> tubeAmp = nullptr;
 
     juce::AudioParameterFloat *bias;
 

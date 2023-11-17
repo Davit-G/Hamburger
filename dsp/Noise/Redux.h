@@ -25,7 +25,8 @@ private:
     juce::AudioParameterFloat *jitter;
     juce::AudioParameterFloat *bitReduction;
 
-    float jitterOffset = 0.0f;
+    float jitterOffsetL = 0.0f;
+    float jitterOffsetR = 0.0f;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Redux)
 };

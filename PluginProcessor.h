@@ -3,22 +3,12 @@
 #include <JuceHeader.h>
 
 #include "dsp/Compander.h"
-#include "dsp/Distortions/Fuzz.h"
-#include "dsp/Distortions/Sizzle.h"
-#include "dsp/Distortions/Cooked.h"
 #include "dsp/Gain.h"
 #include "dsp/OversamplingStack.h"
-#include "dsp/Distortions/SoftClipper.h"
 
 #include "dsp/PrimaryDistortion.h"
 #include "dsp/NoiseDistortions.h"
 #include "dsp/PreDistortions/PreDistortion.h"
-
-// #include "dsp/FrequencyShifting/FrequencyShifter.h"
-// #include "dsp/FrequencyShifting/FreqShiftBiquad.h"
-// #include "dsp/FrequencyShifting/WeaverShifter.h"
-
-// #include "Distortions/naivetube/NaiveTubeDistortion.h"
 
 //==============================================================================
 class AudioPluginAudioProcessor : public juce::AudioProcessor
@@ -104,15 +94,6 @@ private:
     juce::AudioParameterFloat *saturation = nullptr;
 
     Compander compander;
-
-    // FrequencyShifterAlt shifter;
-    // FrequencyShifterAlt endShifter;
-
-    // NaiveTubeDistortion tubeDistortion;
-
-    // Fuzz pattyDistortion;
-    // Sizzle sizzleNoise;
-    // Cooked cookedDistortion;
 
     PreDistortion preDistortionSelection;
     PrimaryDistortion distortionTypeSelection;

@@ -45,13 +45,18 @@ public:
 
     void paint(juce::Graphics &g) override
     {
-        g.setColour(juce::Colours::black);
-        g.drawRect(getLocalBounds(), 1);
+        // g.setColour(juce::Colours::black);
+        // g.drawRect(getLocalBounds(), 1);
+
+        Path p;
+        p.addRoundedRectangle(getLocalBounds().reduced(4).toFloat(), 15.0f);
+        g.setColour(juce::Colour::fromRGBA(0, 0, 0, 200));
+        g.fillPath(p);
     }
 
     void resized() override
     {
-        auto bounds = getLocalBounds();
+        auto bounds = getLocalBounds().reduced(8);
         auto titleBounds = bounds.removeFromTop(30);
         titleBounds.reduce(10, 0);
 
@@ -63,7 +68,7 @@ public:
         }
         else
         {
-            header.items.add(FlexItem(categorySelector).withMinWidth(220.0f));
+            header.items.add(FlexItem(categorySelector).withMinWidth(200.0f));
         }
         header.performLayout(titleBounds);
 

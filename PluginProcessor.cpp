@@ -84,9 +84,11 @@ AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::createP
     params.add(std::make_unique<AudioParameterFloat>("emphasisLowGain", "Emphasis Low Gain", -18.0f, 18.0f, 0.f));
     params.add(std::make_unique<AudioParameterFloat>("emphasisMidGain", "Emphasis Mid Gain", -18.0f, 18.0f, 0.f));
     params.add(std::make_unique<AudioParameterFloat>("emphasisHighGain", "Emphasis Hi Gain", -18.0f, 18.0f, 0.f));
-    params.add(std::make_unique<AudioParameterFloat>("emphasisLowFreq", "Emphasis Low Frequency", 30.0f, 200.0f, 62.f));
-    params.add(std::make_unique<AudioParameterFloat>("emphasisMidFreq", "Emphasis Mid Frequency", 500.0f, 3000.0f, 1220.f));
-    params.add(std::make_unique<AudioParameterFloat>("emphasisHighFreq", "Emphasis Hi Frequency", 6000.0f, 18000.0f, 9000.f));
+
+    // params.add(std::make_unique<AudioParameterFloat>("emphasisLowFreq", "Emphasis Low Frequency", 30.0f, 200.0f, 62.f));
+    params.add(std::make_unique<AudioParameterFloat>("emphasisLowFreq", "Emphasis Low Frequency", NormalisableRange<float>(30.0f, 200.0f, 0.f, 0.25f), 62.0f)); 
+    params.add(std::make_unique<AudioParameterFloat>("emphasisMidFreq", "Emphasis Mid Frequency", NormalisableRange<float>(500.0f, 3000.0f, 0.f, 0.25f), 1220.0f));
+    params.add(std::make_unique<AudioParameterFloat>("emphasisHighFreq", "Emphasis Hi Frequency", NormalisableRange<float>(6000.0f, 18000.0f, 0.f, 0.25f), 9000.0f));
 
     // params.add(std::make_unique<AudioParameterFloat>("frequencyShiftFreq", "Frequency Shift Amount", -500.0f, 500.0f, 0.0f));
 
@@ -133,7 +135,7 @@ AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::createP
 
     // noise distortions
     params.add(std::make_unique<AudioParameterFloat>("noiseAmount", "Noise Amount", 0.0f, 100.0f, 0.f));
-    params.add(std::make_unique<AudioParameterFloat>("noiseFrequency", "Noise Frequency", 20.0f, 20000.0f, 4000.f));
+    params.add(std::make_unique<AudioParameterFloat>("noiseFrequency", "Noise Frequency", NormalisableRange<float>(20.0f, 20000.0f, 0.f, 0.25f), 4000.0f));
     params.add(std::make_unique<AudioParameterFloat>("noiseQ", "Noise Q", 0.1f, 3.0f, 0.7f));
 
     params.add(std::make_unique<AudioParameterFloat>("downsampleAmount", "Downsample Amount", 0.0f, 20.0f, 0.f));
@@ -150,7 +152,7 @@ AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::createP
     params.add(std::make_unique<AudioParameterFloat>("combFeedback", "Comb Feedback", -1.0f, 1.0f, 0.f));
     params.add(std::make_unique<AudioParameterFloat>("combMix", "Comb Mix", 0.0f, 100.0f, 100.0f));
 
-    params.add(std::make_unique<AudioParameterFloat>("allPassFreq", "AllPass Frequency", 20.0f, 20000.0f, 400.f));
+    params.add(std::make_unique<AudioParameterFloat>("allPassFreq", "AllPass Frequency", NormalisableRange<float>(20.0f, 20000.0f, 0.f, 0.25f), 400.0f));;
     params.add(std::make_unique<AudioParameterFloat>("allPassQ", "AllPass Q", 0.01f, 1.41f, 0.1f));
     params.add(std::make_unique<AudioParameterFloat>("allPassAmount", "AllPass Number", 0.0f, 50.0f, 1.0f));
 
