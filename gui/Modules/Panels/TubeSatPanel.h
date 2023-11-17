@@ -8,11 +8,11 @@
 class TubeSatPanel : public Panel
 {
 public:
-    TubeSatPanel(AudioPluginAudioProcessor &p) : Panel(p, "TUBE") {
-        auto laf = new KnobLAF(juce::Colours::violet);
+    TubeSatPanel(AudioPluginAudioProcessor &p) : Panel(p, "TUBE"), knob(p, "BIAS", "tubeBias", -1.0f, 1.0f) {
+        auto laf = new KnobLAF(juce::Colours::yellowgreen);
         setLookAndFeel(laf); // will cascade to all children knobs
-        // addAndMakeVisible(knob);
-        // addAndMakeVisible(knob2);
+
+        addAndMakeVisible(knob);
     }
 
     void paint(juce::Graphics &g) override
@@ -23,10 +23,8 @@ public:
     void resized() override
     {
         auto bounds = getLocalBounds();
-        // knob.setBounds(bounds.removeFromLeft(bounds.getWidth() / 2));
-        // knob2.setBounds(bounds);
+        knob.setBounds(bounds);
     }
 
-    // ParamKnob knob;
-    // ParamKnob knob2;
+    ParamKnob knob;
 };

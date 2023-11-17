@@ -1,5 +1,3 @@
-
-
 #include <JuceHeader.h>
 #include "LossyIntegrator.h"
 
