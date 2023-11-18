@@ -9,11 +9,11 @@ class ClassicSatPanel : public Panel
 {
 public:
     ClassicSatPanel(AudioPluginAudioProcessor &p) : Panel(p, "GRILL"), 
-        satKnob(p, "SATURATION", "saturationAmount", 0.0f, 100.0f),
-        biasKnob(p, "BIAS", "bias", 0.0f, 100.0f),
-        fuzzKnob(p, "FUZZ", "fuzz", 0.0f, 100.0f),
-        grungeAmountKnob(p, "GRUNGE", "grungeAmt", 0.0f, 1.0f),
-        grungeToneKnob(p, "TONE", "grungeTone", 0.0f, 1.0f)
+        satKnob(p, "SATURATION", "saturationAmount"),
+        biasKnob(p, "BIAS", "bias"),
+        fuzzKnob(p, "FUZZ", "fuzz"),
+        grungeAmountKnob(p, "GRUNGE", "grungeAmt"),
+        grungeToneKnob(p, "TONE", "grungeTone")
         {
         
         addAndMakeVisible(satKnob);

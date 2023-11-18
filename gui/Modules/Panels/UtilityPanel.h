@@ -15,9 +15,9 @@ class UtilityPanel : public Panel
 {
 public:
     UtilityPanel(AudioPluginAudioProcessor &p) : Panel(p, "UTILITY"),
-    inGain(p, "IN", "inputGain", -24.0f, 24.0f),
-    mix(p, "MIX", "mix", 0.0f, 100.0f),
-    outGain(p, "OUT", "outputGain", -24.0f, 24.0f)
+    inGain(p, "IN", "inputGain"),
+    mix(p, "MIX", "mix"),
+    outGain(p, "OUT", "outputGain")
     {
         auto laf = new KnobLAF(juce::Colours::whitesmoke);
         setLookAndFeel(laf); // will cascade to all children knobs

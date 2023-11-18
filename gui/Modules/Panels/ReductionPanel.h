@@ -9,9 +9,9 @@ class ReductionPanel : public Panel
 {
 public:
     ReductionPanel(AudioPluginAudioProcessor &p, juce::String name) : Panel(p, name),
-                                                   downSample(p, "RATE", "downsampleFreq", 20.0f, 40000.0f),
-                                                   bitReduction(p, "BITS", "bitReduction", 1.0f, 32.0f),
-                                                   jitter(p, "GRIT", "downsampleJitter", 0.0f, 1.0f)
+                                                   downSample(p, "RATE", "downsampleFreq"),
+                                                   bitReduction(p, "BITS", "bitReduction"),
+                                                   jitter(p, "GRIT", "downsampleJitter")
     {
         auto laf = new KnobLAF(juce::Colours::yellowgreen);
         setLookAndFeel(laf); // will cascade to all children knobs

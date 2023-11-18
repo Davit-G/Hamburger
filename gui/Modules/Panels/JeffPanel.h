@@ -9,7 +9,7 @@ class JeffPanel : public Panel
 {
 public:
     JeffPanel(AudioPluginAudioProcessor &p) : Panel(p, "JEFF"),
-    knob(p, "JEFF", "noiseAmount", 0.0f, 100.0f) {
+    knob(p, "JEFF", "noiseAmount") {
         auto laf = new KnobLAF(juce::Colours::limegreen);
         setLookAndFeel(laf); // will cascade to all children knobs
 

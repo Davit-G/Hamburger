@@ -9,9 +9,9 @@ class ErosionPanel : public Panel
 {
 public:
     ErosionPanel(AudioPluginAudioProcessor &p) : Panel(p, "EROSION"),
-        erosionAmt(p, "AMOUNT", "noiseAmount", 0.0f, 100.0f),
-        erosionFreq(p, "FREQ", "noiseFrequency", 20.0f, 20000.0f),
-        erosionQ(p, "Q", "noiseQ", 0.1f, 3.0f)
+        erosionAmt(p, "AMOUNT", "noiseAmount"),
+        erosionFreq(p, "FREQ", "noiseFrequency"),
+        erosionQ(p, "Q", "noiseQ")
     {
         auto laf = new KnobLAF(juce::Colours::yellowgreen);
         setLookAndFeel(laf); // will cascade to all children knobs

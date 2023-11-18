@@ -9,9 +9,9 @@ class AllPassPanel : public Panel
 {
 public:
     AllPassPanel(AudioPluginAudioProcessor &p) : Panel(p, "ALLPASS"),
-        amount(p, "AMOUNT", "allPassAmount", 0.0f, 50.0f),
-        freq(p, "FREQ", "allPassFreq", 20.0f, 20000.0f),
-        q(p, "Q", "allPassQ", 0.01f, 1.41f)
+        amount(p, "AMOUNT", "allPassAmount"),
+        freq(p, "FREQ", "allPassFreq"),
+        q(p, "Q", "allPassQ")
     {
         auto laf = new KnobLAF(juce::Colours::yellowgreen);
         setLookAndFeel(laf); // will cascade to all children knobs

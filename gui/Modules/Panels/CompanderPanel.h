@@ -9,11 +9,11 @@ class CompanderPanel : public Panel
 {
 public:
     CompanderPanel(AudioPluginAudioProcessor &p) : Panel(p, "COMPANDER"),
-                                                   threshold(p, "THRESHOLD", "compThreshold", -48.0f, 0.0f),
-                                                   ratio(p, "RATIO", "compRatio", 1.0f, 10.0f),
-                                                   attack(p, "ATTACK", "compAttack", 3.0f, 200.0f),
-                                                   release(p, "RELEASE", "compRelease", 10.0f, 500.0f),
-                                                   makeup(p, "GAIN", "compOut", 0.0f, 24.0f)
+                                                   threshold(p, "THRESHOLD", "compThreshold"),
+                                                   ratio(p, "RATIO", "compRatio"),
+                                                   attack(p, "ATTACK", "compAttack"),
+                                                   release(p, "RELEASE", "compRelease"),
+                                                   makeup(p, "GAIN", "compOut")
     {
         auto laf = new KnobLAF(juce::Colours::blueviolet);
         setLookAndFeel(laf); // will cascade to all children knobs

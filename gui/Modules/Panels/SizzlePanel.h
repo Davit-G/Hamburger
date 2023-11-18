@@ -9,7 +9,7 @@ class SizzlePanel : public Panel
 {
 public:
     SizzlePanel(AudioPluginAudioProcessor &p) : Panel(p, "SIZZLE"),
-    sizzleKnob(p, "SIZZLE", "noiseAmount", 0.0f, 100.0f) {
+    sizzleKnob(p, "SIZZLE", "noiseAmount") {
         auto laf = new KnobLAF(juce::Colours::limegreen);
         setLookAndFeel(laf); // will cascade to all children knobs
 
