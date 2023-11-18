@@ -43,7 +43,11 @@ public:
         case 2: // downsampling
             redux->processBlock(block);
             break;
-        case 3: // asperity
+        case 3: // smooth downsampling
+            redux->antiAliasingStep(block);
+            redux->processBlock(block);
+            break;
+        case 4: // asperity
             jeff->processBlock(block);
             break;
         default:
@@ -56,6 +60,7 @@ public:
         sizzle->prepareToPlay(sampleRate, samplesPerBlock);
         erosion->prepareToPlay(sampleRate, samplesPerBlock);
         jeff->prepareToPlay(sampleRate, samplesPerBlock);
+        redux->prepareToPlay(sampleRate, samplesPerBlock);
     }
 
     void setSampleRate(double newSampleRate)

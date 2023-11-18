@@ -20,14 +20,18 @@ public:
 
     void processBlock(dsp::AudioBlock<float>& block);
     void prepareToPlay(double sampleRate, int samplesPerBlock);
+    void antiAliasingStep(dsp::AudioBlock<float>& block);
 
 private:
     SmoothParam downsample;
     SmoothParam jitter;
     SmoothParam bitReduction;
 
+    dsp::ProcessorDuplicator<dsp::IIR::Filter<float>, dsp::IIR::Coefficients<float>> antialiasingFilter[4];
+
     float jitterOffsetL = 0.0f;
     float jitterOffsetR = 0.0f;
 
+    double sampleRate = 44100.0;
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Redux)
 };

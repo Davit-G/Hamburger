@@ -8,8 +8,8 @@
 class ReductionPanel : public Panel
 {
 public:
-    ReductionPanel(AudioPluginAudioProcessor &p) : Panel(p, "BIT"),
-                                                   downSample(p, "DOWNSMPL", "downsampleAmount", 0.0f, 20.0f),
+    ReductionPanel(AudioPluginAudioProcessor &p, juce::String name) : Panel(p, name),
+                                                   downSample(p, "RATE", "downsampleFreq", 20.0f, 22050.0f),
                                                    bitReduction(p, "BITS", "bitReduction", 1.0f, 32.0f),
                                                    jitter(p, "GRIT", "downsampleJitter", 0.0f, 1.0f)
     {

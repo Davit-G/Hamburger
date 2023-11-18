@@ -27,7 +27,8 @@ public:
         // ORDERING IS VERY IMPORTANT
         noisePanels.push_back(std::make_unique<SizzlePanel>(p));
         noisePanels.push_back(std::make_unique<ErosionPanel>(p));
-        noisePanels.push_back(std::make_unique<ReductionPanel>(p));
+        noisePanels.push_back(std::make_unique<ReductionPanel>(p, "BIT"));
+        noisePanels.push_back(std::make_unique<ReductionPanel>(p, "SOFT BIT"));
         noisePanels.push_back(std::make_unique<JeffPanel>(p));
         noise = std::make_unique<Module>(p, "NOISE", "noiseDistortionEnabled", "noiseDistortionType", std::move(noisePanels));
         addAndMakeVisible(noise.get());
