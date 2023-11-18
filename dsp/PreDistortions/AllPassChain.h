@@ -23,15 +23,19 @@ public:
         allPassFrequency.update();
         allPassQ.update();
 
-        if ((oldAllPassFreq != allPassFrequency.getRaw()) || (oldAllPassQ != allPassQ.getRaw()) || (oldAllPassAmount != allPassAmount.getRaw()))
+        float amount = allPassAmount.getRaw();
+        float freq = allPassFrequency.getRaw();
+        float q = allPassQ.getRaw();
+
+        if ((oldAllPassFreq != freq) || (oldAllPassQ != q) || (oldAllPassAmount != amount))
         {
             for (const auto &allPassFilter : allPassFilters)
             {
-                *allPassFilter.state = *dsp::IIR::Coefficients<float>::makeAllPass(oldSampleRate, allPassFrequency.getRaw(), allPassQ.getRaw());
+                *allPassFilter.state = *dsp::IIR::Coefficients<float>::makeAllPass(oldSampleRate, freq, q);
             }
         }
 
-        for (int i = 0; i < allPassAmount.getRaw(); i++)
+        for (int i = 0; i < amount; i++)
         {
             allPassFilters[i].process(dsp::ProcessContextReplacing<float>(block));
         }
