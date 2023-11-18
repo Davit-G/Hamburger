@@ -139,7 +139,7 @@ AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::createP
     params.add(std::make_unique<AudioParameterFloat>("noiseFrequency", "Noise Frequency", NormalisableRange<float>(20.0f, 20000.0f, 0.f, 0.25f), 4000.0f));
     params.add(std::make_unique<AudioParameterFloat>("noiseQ", "Noise Q", 0.1f, 3.0f, 0.7f));
 
-    params.add(std::make_unique<AudioParameterFloat>("downsampleFreq", "Downsample Freq", NormalisableRange<float>(200.0f, 100000.0f, 0.f, 0.25f), 100000.0f));
+    params.add(std::make_unique<AudioParameterFloat>("downsampleFreq", "Downsample Freq", NormalisableRange<float>(200.0f, 40000.0f, 0.f, 0.25f), 40000.0f));
     params.add(std::make_unique<AudioParameterFloat>("downsampleJitter", "Downsample Jitter", 0.0f, 1.0f, 0.f));
     params.add(std::make_unique<AudioParameterFloat>("bitReduction", "Bit Reduction Amount", 1.0f, 32.0f, 32.f));
 

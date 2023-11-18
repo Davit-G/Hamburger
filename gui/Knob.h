@@ -8,10 +8,12 @@ class ParamKnob : public juce::Component
 {
 public:
     ParamKnob(AudioPluginAudioProcessor &p, juce::String name, juce::String attachmentID, float minRange, float maxRange): processorRef(p) {
+        knobAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(processorRef.treeState, attachmentID, knob);
+        jassert(knobAttachment);
 
         knob.setSliderStyle(juce::Slider::RotaryVerticalDrag);
         knob.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
-        knob.setRange(minRange, maxRange);
+        knob.setRange(minRange, maxRange); 
         addAndMakeVisible(knob);
         
         label.setText(name, juce::dontSendNotification);
@@ -20,8 +22,7 @@ public:
         label.setFont(KnobLAF::getTheFont(14.0f));
         addAndMakeVisible(label);
 
-        knobAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(processorRef.treeState, attachmentID, knob);
-        jassert(knobAttachment);
+        
     }
 
     ~ParamKnob() {
