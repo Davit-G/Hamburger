@@ -20,7 +20,7 @@ public:
         std::vector<std::unique_ptr<Panel>> companderPanels;
         // ORDERING IS VERY IMPORTANT
         companderPanels.push_back(std::make_unique<CompanderPanel>(p));
-        compander = std::make_unique<Module>(p, "COMPANDER", "compandingOn", "", std::move(companderPanels));
+        compander = std::make_unique<Module>(p, "COMPANDER", "compressionOn", "", std::move(companderPanels));
         addAndMakeVisible(compander.get());
 
         std::vector<std::unique_ptr<Panel>> noisePanels;

@@ -20,12 +20,11 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
 #endif
                          ),
       treeState(*this, nullptr, "PARAMETER", createParameterLayout()),
-      compander(treeState),
+      dynamics(treeState),
       dryWetMixer(30),
       distortionTypeSelection(treeState),
       noiseDistortionSelection(treeState),
-      preDistortionSelection(treeState),
-      compressionSelection(treeState)
+      preDistortionSelection(treeState)
 {
     treeState.state = ValueTree("savedParams");
 
@@ -108,15 +107,16 @@ AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::createP
 
     params.add(std::make_unique<AudioParameterChoice>("oversamplingFactor", "Oversampling Factor", params::oversamplingFactor.categories, 0));
 
-    params.add(std::make_unique<AudioParameterFloat>("compAttack", "Compander Attack", 3.0f, 200.0f, 150.f));
-    params.add(std::make_unique<AudioParameterFloat>("compRelease", "Compander Release", 10.0f, 500.0f, 200.f));
+    params.add(std::make_unique<AudioParameterFloat>("compAttack", "Compander Attack", 0.0f, 200.0f, 150.f));
+    params.add(std::make_unique<AudioParameterFloat>("compRelease", "Compander Release", 0.0f, 500.0f, 200.f));
     params.add(std::make_unique<AudioParameterFloat>("compThreshold", "Compander Threshold", -48.0f, 0.0f, -35.f));
     params.add(std::make_unique<AudioParameterFloat>("compRatio", "Compander Ratio", 1.0f, 10.0f, 3.5f));
-    params.add(std::make_unique<AudioParameterFloat>("compOut", "Compander Makeup", 0.0f, 24.0f, 0.f));
+    params.add(std::make_unique<AudioParameterFloat>("compOut", "Compander Makeup", -24.0f, 24.0f, 0.f));
 
     params.add(std::make_unique<AudioParameterChoice>("primaryDistortionType", "Distortion Type", params::distortion.categories, 0));
     params.add(std::make_unique<AudioParameterChoice>("preDistortionType", "Pre-Distortion Type", params::preDistortionTypes.categories, 0));
     params.add(std::make_unique<AudioParameterChoice>("noiseDistortionType", "Noise Type", params::noiseTypes.categories, 0));
+    params.add(std::make_unique<AudioParameterChoice>("compressionType", "Compression Type", params::companderInfo.categories, 0));
 
     params.add(std::make_unique<AudioParameterFloat>("fuzz", "Fuzz", 0.0f, 100.0f, 0.0f));
     params.add(std::make_unique<AudioParameterFloat>("fuzzShape", "Fuzz Shape", 0.0f, 100.0f, 50.0f));
@@ -145,7 +145,6 @@ AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::createP
 
     params.add(std::make_unique<AudioParameterFloat>("tubeTone", "Tube Distortion Tone", -1.0f, 1.0f, -0.2f));
 
-    // pre-distortions
     params.add(std::make_unique<AudioParameterFloat>("reverbMix", "Reverb Amount", 0.0f, 100.0f, 100.f));
     params.add(std::make_unique<AudioParameterFloat>("reverbSize", "Reverb Size", 0.0f, 1.0f, 1.f));
     params.add(std::make_unique<AudioParameterFloat>("reverbWidth", "Reverb Width", 0.0f, 1.0f, 1.f));
@@ -158,7 +157,6 @@ AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::createP
     params.add(std::make_unique<AudioParameterFloat>("allPassFreq", "AllPass Frequency", NormalisableRange<float>(20.0f, 20000.0f, 0.f, 0.25f), 400.0f));;
     params.add(std::make_unique<AudioParameterFloat>("allPassQ", "AllPass Q", 0.01f, 1.41f, 0.1f));
     params.add(std::make_unique<AudioParameterFloat>("allPassAmount", "AllPass Number", 0.0f, 50.0f, 1.0f));
-
 
     return params;
 }
@@ -275,7 +273,7 @@ void AudioPluginAudioProcessor::prepareToPlay(double sampleRate, int samplesPerB
     distortionTypeSelection.prepareToPlay(sampleRate, samplesPerBlock);
     noiseDistortionSelection.prepareToPlay(sampleRate, samplesPerBlock);
 
-    compander.prepareToPlay(sampleRate, samplesPerBlock);
+    dynamics.prepareToPlay(sampleRate, samplesPerBlock);
     // pattyDistortion.prepareToPlay(sampleRate, samplesPerBlock);
     // cookedDistortion.prepareToPlay(sampleRate, samplesPerBlock);
     // softClipper.prepareToPlay(sampleRate, samplesPerBlock);
@@ -384,11 +382,7 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
     }
 
     // companding
-    bool companderOn = enableCompander->get();
-
-    if (companderOn) compander.updateParameters();
-    if (companderOn && enableCompressor->get()) compander.processCompressorBlock(buffer);
-
+    dynamics.processBlock(block);
 
     // oversampling
     // bool oversamplingOn = enableOversampling->get();
@@ -436,8 +430,8 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
     emphasisCompensationGain.setGainDecibels(-eqCompensation);
     emphasisCompensationGain.process(juce::dsp::ProcessContextReplacing<float>(block));
 
-    // expander at the end
-    if (companderOn && enableExpander->get()) compander.processExpanderBlock(buffer);
+    // where the expander used to be
+    // rip tho :(
 
     outputGain.setGainDecibels(outputGainKnob->get());
     outputGain.process(juce::dsp::ProcessContextReplacing<float>(block));
@@ -445,8 +439,6 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
     dryWetMixer.setWetMixProportion(mixKnob->get() * 0.01f);
 
     dryWetMixer.mixWetSamples(block);
-
-    // TODO: Limiter at the end to stop clipping 
 }
 
 //==============================================================================

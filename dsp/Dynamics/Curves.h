@@ -64,27 +64,27 @@ float Curves::computeUpwardsDownwardsGain(float x, float upperThres, float lower
     float output = -100.0;
 
     float a = upperThres - 2*knee;
-    if (lowerThres >= upperThres - 2*knee) {
+    if (lowerThres >= a) {
         lowerThres = a;
     }
 
     if (2 * (x - upperThres) > knee) {
         // line above knee for top part
         output = upperThres + (x - upperThres) / upperR;
-    } else if (2 * (abs(x - lowerThres)) > knee) {
+    } else if (2 * (abs(x - upperThres)) <= knee) {
         // top knee
-        output = x + ((1 / upperR - 1) * pow(x - upperThres + knee / 2, 2)) / (2 * knee);
-    } else if (2 * (x < lowerThres) - knee) {
+        output = x + ((1 / upperR - 1) * pow(x - upperThres + (knee * 0.5f), 2)) / (2 * knee);
+    } else if (2 * abs(x - lowerThres) <= knee) {
         // bottom knee
+        output = x + ((1 - 1 / lowerR) * pow(x - lowerThres - (knee * 0.5f), 2)) / (2 * knee);
+    } else if (2 * abs(x - lowerThres) < - knee) {
+        // line on bottom knee
         output = lowerThres + (x - lowerThres) / lowerR;
-    } else if (2 * (x > upperThres) + knee) {
-        // above knee for bottom part
-        output = x + ((1 / lowerR - 1) * pow(x - lowerThres + knee / 2, 2)) / (2 * knee);
+    // } else if (knee / 2 + lowerThres < x && x < (-knee / 2) + upperThres) {
     } else {
-        // } else if (knee + 2 * lowerThres < 2 * x && 2 * x < 2 * upperThres - knee) {
         // in between the two thresholds
         output = x;
-    }
+    } 
 
     float gainReduction = 0.f;
     gainReduction = output - x;

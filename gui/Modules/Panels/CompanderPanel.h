@@ -56,7 +56,6 @@ private:
     Grid grid;
 
     ParamKnob threshold;
-    // ParamKnob knee;
     ParamKnob ratio;
     ParamKnob attack;
     ParamKnob release;

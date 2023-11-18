@@ -2,14 +2,13 @@
 
 #include <JuceHeader.h>
 
-#include "dsp/Compander.h"
 #include "dsp/Gain.h"
 #include "dsp/OversamplingStack.h"
 
 #include "dsp/PrimaryDistortion.h"
 #include "dsp/NoiseDistortions.h"
 #include "dsp/PreDistortions/PreDistortion.h"
-#include "dsp/Dynamics/Compression.h"
+#include "dsp/Dynamics/Dynamics.h"
 
 //==============================================================================
 class AudioPluginAudioProcessor : public juce::AudioProcessor
@@ -79,14 +78,10 @@ private:
     juce::AudioParameterFloat *emphasisMidFreq = nullptr;
     juce::AudioParameterFloat *emphasisHighFreq = nullptr;
 
-    // juce::AudioParameterFloat *freqShiftFreq = nullptr;
-
-
     juce::AudioParameterChoice *oversamplingFactor = nullptr;
 
     int oldOversamplingFactor = -1;
 
-    // array of emphasisLow, emphasisMid, emphasisHigh
     juce::AudioParameterFloat *emphasis[3];
     juce::AudioParameterFloat *emphasisFreq[3];
     float prevEmphasis[3] = {0.f, 0.f, 0.f};
@@ -94,12 +89,11 @@ private:
 
     juce::AudioParameterFloat *saturation = nullptr;
 
-    Compander compander;
 
     PreDistortion preDistortionSelection;
     PrimaryDistortion distortionTypeSelection;
     NoiseDistortions noiseDistortionSelection;
-    Compression compressionSelection;
+    Dynamics dynamics;
 
     dsp::ProcessorDuplicator<dsp::IIR::Filter<float>, dsp::IIR::Coefficients<float>> peakFilterBefore[3];
     dsp::ProcessorDuplicator<dsp::IIR::Filter<float>, dsp::IIR::Coefficients<float>> peakFilterAfter[3];
