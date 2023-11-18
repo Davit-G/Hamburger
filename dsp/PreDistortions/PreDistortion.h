@@ -4,12 +4,6 @@
 
 #include "./AllPassChain.h"
 
-/*
-AllPassChain
-Reverb
-Comb / Comb parallel
-*/
-
 class PreDistortion
 {
 public:

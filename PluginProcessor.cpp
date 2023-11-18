@@ -24,8 +24,8 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
       dryWetMixer(30),
       distortionTypeSelection(treeState),
       noiseDistortionSelection(treeState),
-      preDistortionSelection(treeState)
-//    tubeDistortion(treeState)
+      preDistortionSelection(treeState),
+      compressionSelection(treeState)
 {
     treeState.state = ValueTree("savedParams");
 
@@ -143,7 +143,7 @@ AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::createP
     params.add(std::make_unique<AudioParameterFloat>("downsampleJitter", "Downsample Jitter", 0.0f, 1.0f, 0.f));
     params.add(std::make_unique<AudioParameterFloat>("bitReduction", "Bit Reduction Amount", 1.0f, 32.0f, 32.f));
 
-    params.add(std::make_unique<AudioParameterFloat>("tubeTone", "Tube Distortion Tone", -1.0f, 1.0f, 0.f));
+    params.add(std::make_unique<AudioParameterFloat>("tubeTone", "Tube Distortion Tone", -1.0f, 1.0f, -0.2f));
 
     // pre-distortions
     params.add(std::make_unique<AudioParameterFloat>("reverbMix", "Reverb Amount", 0.0f, 100.0f, 100.f));

@@ -30,6 +30,7 @@ public:
     void updateParameters();
     void processExpanderBlock(juce::AudioBuffer<float> &dryBuffer);
     void processCompressorBlock(juce::AudioBuffer<float> &dryBuffer);
+    void processUpwardsDownwardsBlock(juce::AudioBuffer<float> &dryBuffer);
 
     void prepareToPlay(double sampleRate, int samplesPerBlock);
 
@@ -41,9 +42,6 @@ private:
     juce::AudioParameterFloat *thresholdKnob = nullptr;
     juce::AudioParameterFloat *ratioKnob = nullptr;
     juce::AudioParameterFloat *makeupKnob = nullptr;
-
-    float computeExpanderGain(float input_db);
-    float computeCompressorGain(float input_db);
 
     float ratio = 1.f;
     float threshold = 0.f;

@@ -45,4 +45,8 @@ namespace params {
     static const PanelInfo noiseTypes = {
         "NOISE", "", StringArray({"SIZZLE", "EROSION", "REDUCE", "SMOOTHREDUCE", "JEFF"})
     };
+
+    static const PanelInfo dynamics = {
+        "DYNAMICS", "", StringArray({"COMPANDER", "OTT", "MID-SIDE"})
+    };
 };

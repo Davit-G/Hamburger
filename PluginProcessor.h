@@ -9,6 +9,7 @@
 #include "dsp/PrimaryDistortion.h"
 #include "dsp/NoiseDistortions.h"
 #include "dsp/PreDistortions/PreDistortion.h"
+#include "dsp/Dynamics/Compression.h"
 
 //==============================================================================
 class AudioPluginAudioProcessor : public juce::AudioProcessor
@@ -98,6 +99,7 @@ private:
     PreDistortion preDistortionSelection;
     PrimaryDistortion distortionTypeSelection;
     NoiseDistortions noiseDistortionSelection;
+    Compression compressionSelection;
 
     dsp::ProcessorDuplicator<dsp::IIR::Filter<float>, dsp::IIR::Coefficients<float>> peakFilterBefore[3];
     dsp::ProcessorDuplicator<dsp::IIR::Filter<float>, dsp::IIR::Coefficients<float>> peakFilterAfter[3];

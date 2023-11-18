@@ -51,9 +51,10 @@ public:
             iirFilter.process(dsp::ProcessContextReplacing<float>(block)); // hpf afterwards to remove bias
             break;
         case 1: // tube
+            grunge->processBlock(block);
             tubeAmp->processBlock(block);
             break;
-        case 2: // fold
+        case 2: // wavefolding
             break;
         case 3: // fuzz
             break;

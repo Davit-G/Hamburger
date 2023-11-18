@@ -6,40 +6,48 @@
 class Amp
 {
 public:
-    Amp(juce::AudioProcessorValueTreeState &treeState) : tone(treeState, "tubeTone") {  
+    Amp(juce::AudioProcessorValueTreeState &treeState) : 
+        tubeTone(treeState, "tubeTone"),
+        drive(treeState, "saturationAmount")
+    {  
 		calculateCoefficients();
     }
 
     ~Amp() {}
 
     void calculateCoefficients() {
+        float driv = drive.getRaw() * 0.02f;
+
         triodesL[0].lowFrequencyShelf_Hz = 10.0;
 		triodesL[0].lowFrequencyShelfGain_dB = -10.0;
 		triodesL[0].millerHF_Hz = 20000.0;
-		triodesL[0].dcBlockingLF_Hz = 35.0;
+		triodesL[0].dcBlockingLF_Hz = 15.0;
 		triodesL[0].outputGain = pow(10.0, -4.0 / 20.0);
 		triodesL[0].dcShiftCoefficient = 1.0;
+        triodesL[0].inputGain = driv + 0.3f;
 
 		triodesL[1].lowFrequencyShelf_Hz = 10.0;
-		triodesL[1].lowFrequencyShelfGain_dB = -10.0;
-		triodesL[1].millerHF_Hz = 7000.0 + 6000.0 * tone.getRaw();
-		triodesL[1].dcBlockingLF_Hz = 18.0;
+		triodesL[1].lowFrequencyShelfGain_dB = 0.0;
+        triodesL[1].inputGain = driv + 0.8f;
+		triodesL[1].millerHF_Hz = 7000.0 + 6000.0 * tubeTone.getRaw();
+		triodesL[1].dcBlockingLF_Hz = 38.0;
 		triodesL[1].outputGain = pow(10.0, +6.0 / 20.0);
-		triodesL[1].dcShiftCoefficient = 0.20;
+		triodesL[1].dcShiftCoefficient = 2.10;
 
 		triodesL[2].lowFrequencyShelf_Hz = 10.0;
 		triodesL[2].lowFrequencyShelfGain_dB = -10.0;
-		triodesL[2].millerHF_Hz = 9000.0 + 6000.0 * tone.getRaw();
+		triodesL[2].millerHF_Hz = 9000.0 + 6000.0 * tubeTone.getRaw();
 		// triodesL[2].millerHF_Hz = 20000.0;
-		triodesL[2].dcBlockingLF_Hz = 10.0;
+        triodesL[2].inputGain = driv + 0.8f;
+		triodesL[2].dcBlockingLF_Hz = 36.0;
 		triodesL[2].outputGain = pow(10.0, +4.0 / 20.0);
 		triodesL[2].dcShiftCoefficient = 0.50;
 
 		triodesL[3].lowFrequencyShelf_Hz = 10.0;
 		triodesL[3].lowFrequencyShelfGain_dB = -10.0;
 		// triodesL[3].millerHF_Hz = 6400.0;
-		triodesL[3].millerHF_Hz = 20000.0;
-		triodesL[3].dcBlockingLF_Hz = 15.0;
+		triodesL[3].millerHF_Hz = 8000.0 + 5000.0 * tubeTone.getRaw();
+		triodesL[3].dcBlockingLF_Hz = 38.0;
 		triodesL[3].outputGain = pow(10.0, -12.0 / 20.0);
 		triodesL[3].dcShiftCoefficient = 0.52;
         
@@ -51,6 +59,7 @@ public:
             triodesR[i].dcBlockingLF_Hz = triodesL[i].dcBlockingLF_Hz;
             triodesR[i].outputGain = triodesL[i].outputGain;
             triodesR[i].dcShiftCoefficient = triodesL[i].dcShiftCoefficient;
+            triodesR[i].inputGain = triodesL[i].inputGain;
 
             triodesL[i].calculateCoefficients();
             triodesR[i].calculateCoefficients();
@@ -59,7 +68,7 @@ public:
 
     void prepareToPlay(double sampleRate, int samplesPerBlock)
     {
-        tone.prepareToPlay(sampleRate, samplesPerBlock);
+        tubeTone.prepareToPlay(sampleRate, samplesPerBlock);
 
         dsp::ProcessSpec spec;
         spec.sampleRate = sampleRate;
@@ -81,7 +90,7 @@ public:
 
     void processBlock(dsp::AudioBlock<float> &block)
     {   
-        tone.update();
+        tubeTone.update();
 
         calculateCoefficients();
 
@@ -146,7 +155,8 @@ private:
     ClassAValve triodesL[4];
     ClassAValve triodesR[4];
 
-    SmoothParam tone;
+    SmoothParam tubeTone;
+    SmoothParam drive;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Amp)
 };
