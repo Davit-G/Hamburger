@@ -28,21 +28,25 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
 {
     treeState.state = ValueTree("savedParams");
 
-    inputGainKnob = dynamic_cast<juce::AudioParameterFloat *>(treeState.getParameter("inputGain")); jassert(inputGainKnob); 
-    outputGainKnob = dynamic_cast<juce::AudioParameterFloat *>(treeState.getParameter("outputGain")); jassert(outputGainKnob); 
-    mixKnob = dynamic_cast<juce::AudioParameterFloat *>(treeState.getParameter("mix")); jassert(mixKnob); 
+    inputGainKnob = dynamic_cast<juce::AudioParameterFloat *>(treeState.getParameter("inputGain"));
+    jassert(inputGainKnob);
+    outputGainKnob = dynamic_cast<juce::AudioParameterFloat *>(treeState.getParameter("outputGain"));
+    jassert(outputGainKnob);
+    mixKnob = dynamic_cast<juce::AudioParameterFloat *>(treeState.getParameter("mix"));
+    jassert(mixKnob);
 
-    hamburgerEnabledButton = dynamic_cast<juce::AudioParameterBool *>(treeState.getParameter("hamburgerEnabled")); jassert(hamburgerEnabledButton);
+    hamburgerEnabledButton = dynamic_cast<juce::AudioParameterBool *>(treeState.getParameter("hamburgerEnabled"));
+    jassert(hamburgerEnabledButton);
 
     emphasisLow = dynamic_cast<juce::AudioParameterFloat *>(treeState.getParameter("emphasisLowGain"));
-    emphasis[0] = emphasisLow; 
-    jassert(emphasisLow); 
+    emphasis[0] = emphasisLow;
+    jassert(emphasisLow);
     emphasisMid = dynamic_cast<juce::AudioParameterFloat *>(treeState.getParameter("emphasisMidGain"));
     emphasis[1] = emphasisMid;
-    jassert(emphasisMid); 
+    jassert(emphasisMid);
     emphasisHigh = dynamic_cast<juce::AudioParameterFloat *>(treeState.getParameter("emphasisHighGain"));
     emphasis[2] = emphasisHigh;
-    jassert(emphasisHigh); 
+    jassert(emphasisHigh);
 
     emphasisLowFreq = dynamic_cast<juce::AudioParameterFloat *>(treeState.getParameter("emphasisLowFreq"));
     emphasisFreq[0] = emphasisLowFreq;
@@ -54,22 +58,33 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
     emphasisFreq[2] = emphasisHighFreq;
     jassert(emphasisHighFreq);
 
-    // freqShiftFreq = dynamic_cast<juce::AudioParameterFloat *>(treeState.getParameter("frequencyShiftFreq")); jassert(freqShiftFreq); 
+    // freqShiftFreq = dynamic_cast<juce::AudioParameterFloat *>(treeState.getParameter("frequencyShiftFreq")); jassert(freqShiftFreq);
 
-    saturation = dynamic_cast<juce::AudioParameterFloat *>(treeState.getParameter("saturationAmount")); jassert(saturation); 
+    saturation = dynamic_cast<juce::AudioParameterFloat *>(treeState.getParameter("saturationAmount"));
+    jassert(saturation);
 
-    oversamplingFactor = dynamic_cast<juce::AudioParameterChoice *>(treeState.getParameter("oversamplingFactor")); jassert(oversamplingFactor);
+    oversamplingFactor = dynamic_cast<juce::AudioParameterChoice *>(treeState.getParameter("oversamplingFactor"));
+    jassert(oversamplingFactor);
 
-    enableCompander = dynamic_cast<juce::AudioParameterBool *>(treeState.getParameter("compandingOn")); jassert(enableCompander); 
-    enableEmphasis = dynamic_cast<juce::AudioParameterBool *>(treeState.getParameter("emphasisOn")); jassert(enableEmphasis); 
-    enableCompressor = dynamic_cast<juce::AudioParameterBool *>(treeState.getParameter("compressionOn")); jassert(enableCompander); 
-    enableExpander = dynamic_cast<juce::AudioParameterBool *>(treeState.getParameter("expansionOn")); jassert(enableEmphasis);
+    enableCompander = dynamic_cast<juce::AudioParameterBool *>(treeState.getParameter("compandingOn"));
+    jassert(enableCompander);
+    enableEmphasis = dynamic_cast<juce::AudioParameterBool *>(treeState.getParameter("emphasisOn"));
+    jassert(enableEmphasis);
+    enableCompressor = dynamic_cast<juce::AudioParameterBool *>(treeState.getParameter("compressionOn"));
+    jassert(enableCompander);
+    enableExpander = dynamic_cast<juce::AudioParameterBool *>(treeState.getParameter("expansionOn"));
+    jassert(enableEmphasis);
 
-
+#if PERFETTO
+    MelatoninPerfetto::get().beginSession(300000);
+#endif
 }
 
 AudioPluginAudioProcessor::~AudioPluginAudioProcessor()
 {
+#if PERFETTO
+    MelatoninPerfetto::get().endSession();
+#endif
 }
 
 AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::createParameterLayout()
@@ -85,12 +100,11 @@ AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::createP
     params.add(std::make_unique<AudioParameterFloat>("emphasisHighGain", "Emphasis Hi Gain", -18.0f, 18.0f, 0.f));
 
     // params.add(std::make_unique<AudioParameterFloat>("emphasisLowFreq", "Emphasis Low Frequency", 30.0f, 200.0f, 62.f));
-    params.add(std::make_unique<AudioParameterFloat>("emphasisLowFreq", "Emphasis Low Frequency", NormalisableRange<float>(30.0f, 200.0f, 0.f, 0.25f), 62.0f)); 
+    params.add(std::make_unique<AudioParameterFloat>("emphasisLowFreq", "Emphasis Low Frequency", NormalisableRange<float>(30.0f, 200.0f, 0.f, 0.25f), 62.0f));
     params.add(std::make_unique<AudioParameterFloat>("emphasisMidFreq", "Emphasis Mid Frequency", NormalisableRange<float>(500.0f, 3000.0f, 0.f, 0.25f), 1220.0f));
     params.add(std::make_unique<AudioParameterFloat>("emphasisHighFreq", "Emphasis Hi Frequency", NormalisableRange<float>(6000.0f, 18000.0f, 0.f, 0.25f), 9000.0f));
 
     // params.add(std::make_unique<AudioParameterFloat>("frequencyShiftFreq", "Frequency Shift Amount", -500.0f, 500.0f, 0.0f));
-
 
     params.add(std::make_unique<AudioParameterBool>("compandingOn", "Compander On", false));
     params.add(std::make_unique<AudioParameterBool>("compressionOn", "Compressor On", true));
@@ -124,12 +138,10 @@ AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::createP
     params.add(std::make_unique<AudioParameterFloat>("fold", "Fold", 0.0f, 100.0f, 0.0f));
     params.add(std::make_unique<AudioParameterFloat>("bias", "Bias", -1.0f, 1.0f, 0.0f));
 
-
     params.add(std::make_unique<AudioParameterFloat>("grungeAmt", "Grunge Amount", 0.0f, 1.0f, 0.0f));
     params.add(std::make_unique<AudioParameterFloat>("grungeTone", "Grunge Tone", 0.0f, 1.0f, 0.5f));
 
     // using new layout system
-
 
     // primary distortions
     params.add(std::make_unique<AudioParameterFloat>("saturationAmount", "Saturation", 0.0f, 100.0f, 0.f));
@@ -154,7 +166,8 @@ AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::createP
     params.add(std::make_unique<AudioParameterFloat>("combFeedback", "Comb Feedback", -1.0f, 1.0f, 0.f));
     params.add(std::make_unique<AudioParameterFloat>("combMix", "Comb Mix", 0.0f, 100.0f, 100.0f));
 
-    params.add(std::make_unique<AudioParameterFloat>("allPassFreq", "AllPass Frequency", NormalisableRange<float>(20.0f, 20000.0f, 0.f, 0.25f), 400.0f));;
+    params.add(std::make_unique<AudioParameterFloat>("allPassFreq", "AllPass Frequency", NormalisableRange<float>(20.0f, 20000.0f, 0.f, 0.25f), 400.0f));
+    ;
     params.add(std::make_unique<AudioParameterFloat>("allPassQ", "AllPass Q", 0.01f, 1.41f, 0.1f));
     params.add(std::make_unique<AudioParameterFloat>("allPassAmount", "AllPass Number", 0.0f, 50.0f, 1.0f));
 
@@ -229,6 +242,7 @@ void AudioPluginAudioProcessor::changeProgramName(int index, const juce::String 
 //==============================================================================
 void AudioPluginAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
 {
+    // TRACE_DSP();
     // Use this method as the place to do any pre-playback
     // initialisation that you need..
     juce::ignoreUnused(sampleRate, samplesPerBlock);
@@ -237,12 +251,12 @@ void AudioPluginAudioProcessor::prepareToPlay(double sampleRate, int samplesPerB
     spec.sampleRate = sampleRate;
     spec.maximumBlockSize = samplesPerBlock;
     spec.numChannels = getTotalNumOutputChannels();
-    
+
     dryWetMixer.reset();
     dryWetMixer.prepare(spec);
     dryWetMixer.setWetLatency(getLatencySamples());
 
-    inputGain.prepare(spec); 
+    inputGain.prepare(spec);
     outputGain.prepare(spec);
     emphasisCompensationGain.prepare(spec);
 
@@ -317,6 +331,7 @@ bool AudioPluginAudioProcessor::isBusesLayoutSupported(const BusesLayout &layout
 void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
                                              juce::MidiBuffer &midiMessages)
 {
+
     juce::ignoreUnused(midiMessages);
 
     juce::ScopedNoDenormals noDenormals;
@@ -339,15 +354,16 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
     // Alternatively, you can process the samples with the channels
     // interleaved by keeping the same state.
 
-    if (hamburgerEnabledButton->get() == false) {
+    if (hamburgerEnabledButton->get() == false)
+    {
         // DBG("Hamburger is disabled");
         return;
     }
 
+    TRACE_EVENT_BEGIN("dsp", "audio block from buffer");
     dsp::AudioBlock<float> block(buffer);
-
+    TRACE_EVENT_END("dsp");
     // dry/wet
-    
 
     // input gain
     // Some computation here
@@ -355,11 +371,15 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
     inputGain.setGainDecibels(gainAmount);
     inputGain.process(juce::dsp::ProcessContextReplacing<float>(block));
 
-    dryWetMixer.pushDrySamples(block);
-    
+    {
+        TRACE_EVENT("dsp", "dry/wet push");
+        dryWetMixer.pushDrySamples(block);
+    }
+
     bool emphasisOn = enableEmphasis->get();
     if (emphasisOn)
     {
+        TRACE_EVENT("dsp", "emphasis EQ before");
         // update coeffs IF WE NEED TO
         for (int i = 0; i < 3; i++)
         {
@@ -382,63 +402,83 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
     }
 
     // companding
-    dynamics.processBlock(block);
-
+    {
+        TRACE_EVENT("dsp", "companding");
+        dynamics.processBlock(block);
+        // TRACE_EVENT_END("dsp", "companding");
+    }
     // oversampling
     // bool oversamplingOn = enableOversampling->get();
-    // i'd like to believe that changing the oversampling type mid-calculation will not affect it, 
+    // i'd like to believe that changing the oversampling type mid-calculation will not affect it,
     // as long as it doesnt happen after this line and before the line where the oversampling is processed down again
 
     int oversampleAmount = oversamplingFactor->getIndex();
 
     int newSamplingRate = getSampleRate() * pow(2, oversampleAmount);
+    {
+        TRACE_EVENT("dsp", "oversampling config");
 
-    dryWetMixer.setWetLatency(oversamplingStack.getLatencySamples());
+        dryWetMixer.setWetLatency(oversamplingStack.getLatencySamples());
 
-    oversamplingStack.setOversamplingFactor(oversampleAmount);
-    if (oldOversamplingFactor != oversampleAmount) {
-        // DBG("Oversampling changed to " << oversampleAmount);
-        oldOversamplingFactor = oversampleAmount;
-        setLatencySamples(oversamplingStack.getLatencySamples());
+        oversamplingStack.setOversamplingFactor(oversampleAmount);
+        if (oldOversamplingFactor != oversampleAmount)
+        {
+            // DBG("Oversampling changed to " << oversampleAmount);
+            oldOversamplingFactor = oversampleAmount;
+            setLatencySamples(oversamplingStack.getLatencySamples());
+        }
     }
 
-    
-    noiseDistortionSelection.setSampleRate(getSampleRate()); 
-    noiseDistortionSelection.processBlock(block); // TODO: make order changer thingy
+    {
+        TRACE_EVENT("dsp", "noise distortion");
+        noiseDistortionSelection.setSampleRate(getSampleRate());
+        noiseDistortionSelection.processBlock(block); // TODO: make order changer thingy
+    }
 
     dsp::AudioBlock<float> oversampledBlock = oversamplingStack.processSamplesUp(block);
 
-    preDistortionSelection.setSampleRate(newSamplingRate);
-    preDistortionSelection.processBlock(oversampledBlock);
+    {
+        TRACE_EVENT("dsp", "pre distortion");
+        preDistortionSelection.setSampleRate(newSamplingRate);
+        preDistortionSelection.processBlock(oversampledBlock);
+    }
 
-    distortionTypeSelection.setSampleRate(newSamplingRate);
-    distortionTypeSelection.processBlock(oversampledBlock);
+    {
+        TRACE_EVENT("dsp", "primary distortion");
+        distortionTypeSelection.setSampleRate(newSamplingRate);
+        distortionTypeSelection.processBlock(oversampledBlock);
+    }
 
     // oversampling
     oversamplingStack.processSamplesDown(block);
 
     // tone with filter
     // here goes the second emphasis EQ before the expander
-    if (emphasisOn) {
+    if (emphasisOn)
+    {
+        TRACE_EVENT("dsp", "emphasis EQ after");
         for (int i = 0; i < 3; i++)
         {
             peakFilterAfter[i].process(dsp::ProcessContextReplacing<float>(block));
         }
     }
-    // emphasis compensated gain
-    float eqCompensation = (prevEmphasis[0] + prevEmphasis[1] + prevEmphasis[2]) * 0.3333333f * 0.4f;
-    emphasisCompensationGain.setGainDecibels(-eqCompensation);
-    emphasisCompensationGain.process(juce::dsp::ProcessContextReplacing<float>(block));
 
-    // where the expander used to be
-    // rip tho :(
+    {
+        TRACE_EVENT("dsp", "other");
+        // emphasis compensated gain
+        float eqCompensation = (prevEmphasis[0] + prevEmphasis[1] + prevEmphasis[2]) * 0.3333333f * 0.4f;
+        emphasisCompensationGain.setGainDecibels(-eqCompensation);
+        emphasisCompensationGain.process(juce::dsp::ProcessContextReplacing<float>(block));
 
-    outputGain.setGainDecibels(outputGainKnob->get());
-    outputGain.process(juce::dsp::ProcessContextReplacing<float>(block));
+        // where the expander used to be
+        // rip tho :(
+        outputGain.setGainDecibels(outputGainKnob->get());
+        outputGain.process(juce::dsp::ProcessContextReplacing<float>(block));
 
-    dryWetMixer.setWetMixProportion(mixKnob->get() * 0.01f);
+        dryWetMixer.setWetMixProportion(mixKnob->get() * 0.01f);
 
-    dryWetMixer.mixWetSamples(block);
+        dryWetMixer.mixWetSamples(block);
+    }
 }
 
 //==============================================================================

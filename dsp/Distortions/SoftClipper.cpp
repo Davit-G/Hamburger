@@ -34,6 +34,7 @@ void SoftClip::legacyProcessBlock(dsp::AudioBlock<float>& block) {
 }
 
 void SoftClip::processBlock(dsp::AudioBlock<float>& block) {
+    TRACE_EVENT("dsp", "SoftClip::processBlock");
     saturationKnob.update();
 
     for (int sample = 0; sample < block.getNumSamples(); sample++)
@@ -70,7 +71,7 @@ float SoftClip::softClipper(float x, float threshold, float knee, float ratio = 
     }
     else
     {
-        output = x + ((1 / ratio - 1) * pow((x - threshold + knee / 2), 2) / (2 * knee));
+        output = x + ((1 / ratio - 1) * pow((x - threshold + knee * 0.5), 2) / (2 * knee));
     }
 
     return output * sign; // return it to the original sign afterwards

@@ -138,6 +138,19 @@ juce_add_binary_data("${BaseTargetName}BinaryData" HEADER_NAME BinaryData.h NAME
 set_target_properties("${BaseTargetName}BinaryData" PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
 
 
+# Melatonin profiling
+
+include (FetchContent)
+
+FetchContent_Declare (melatonin_perfetto
+  GIT_REPOSITORY https://github.com/sudara/melatonin_perfetto.git
+  GIT_TAG origin/main)
+
+FetchContent_MakeAvailable (melatonin_perfetto)
+
+
+
+
 # `target_link_libraries` links libraries and JUCE modules to other libraries or executables. Here,
 # we're linking our executable target to the `juce::juce_audio_utils` module. Inter-module
 # dependencies are resolved automatically, so `juce_core`, `juce_events` and so on will also be
@@ -150,6 +163,7 @@ target_link_libraries("${BaseTargetName}"
         juce::juce_dsp
         juce::juce_audio_utils
         "${BaseTargetName}BinaryData"
+        Melatonin::Perfetto
     PUBLIC
         juce::juce_recommended_config_flags
         juce::juce_recommended_lto_flags

@@ -10,6 +10,9 @@
 #include "dsp/PreDistortions/PreDistortion.h"
 #include "dsp/Dynamics/Dynamics.h"
 
+// profiling
+#include <melatonin_perfetto/melatonin_perfetto.h>
+
 //==============================================================================
 class AudioPluginAudioProcessor : public juce::AudioProcessor
 {
@@ -111,6 +114,11 @@ private:
     dsp::Oversampling<float> oversampling;
 
     OversamplingStack oversamplingStack;
+
+    #if PERFETTO // if we have the profiling
+        std::unique_ptr<perfetto::TracingSession> tracingSession;
+    #endif
+
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AudioPluginAudioProcessor)
 };

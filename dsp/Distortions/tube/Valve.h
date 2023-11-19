@@ -51,32 +51,43 @@ public:
 	// --- do the valve emulation
 	double processAudioSample(double xn)
 	{
+		TRACE_DSP();
+
 		double yn = 0.0;
 		
+		TRACE_EVENT_BEGIN("dsp", "valve grid conduction check");
 		xn *= inputGain; // --- input scaling
 		xn = doValveGridConduction(xn, gridConductionThreshold); // grid conduction check, must be done prior to waveshaping
-		
+		TRACE_EVENT_END("dsp");
+
+		TRACE_EVENT_BEGIN("dsp", "lossy integrator dc offset");
 		double dcOffset = lossyIntegrator[0].processAudioSample(xn); // detect the DC offset that the clipping may have caused
 		dcOffset = fmin(dcOffset, 0.0);// --- process only negative DC bias shifts
-		
+		TRACE_EVENT_END("dsp");
+
+
 		// --- save this - user may indicate it in a meter if they want
 		//     Note that this is a bipolar value, but we only do DC shift for 
 		//     *negative* values so meters should be aware
 		dcOffsetDetected = fabs(dcOffset*dcShiftCoefficient);
 
 		// the emulation itself
+		TRACE_EVENT_BEGIN("dsp", "valve emulation");
 		yn = doValveEmulation(xn, 
 								waveshaperSaturation, 
 								gridConductionThreshold,
 								dcOffsetDetected,
 								clipPointPositive, 
 								clipPointNegative);
-		
+		TRACE_EVENT_END("dsp");
+
+		TRACE_EVENT_BEGIN("dsp", "filters");
 		yn = dcBlockingFilter.processSample(yn); // --- remove DC
 		yn = lowShelvingFilter.processSample(yn); // --- LF Shelf
 		yn = upperBandwidthFilter1stOrder.processSample(yn); // --- HF Edge
 		yn = upperBandwidthFilter2ndOrder.processSample(yn);
 		yn *= -outputGain; // --- (5) final output scaling and inversion
+		TRACE_EVENT_END("dsp");
 
 		return yn;
 	}

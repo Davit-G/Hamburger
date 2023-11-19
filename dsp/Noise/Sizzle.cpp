@@ -30,6 +30,7 @@ void Sizzle::prepareToPlay(double sampleRate, int samplesPerBlock) {
 }
 
 void Sizzle::processBlock(dsp::AudioBlock<float>& block) {
+	TRACE_EVENT("dsp", "Sizzle::processBlock");
 	noiseAmount.update();
 	if (noiseAmount.getRaw() == 0) return;
 

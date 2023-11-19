@@ -44,6 +44,8 @@ void Redux::prepareToPlay(double sampleRate, int samplesPerBlock)
 
 void Redux::antiAliasingStep(dsp::AudioBlock<float> &block)
 {
+	TRACE_EVENT("dsp", "Redux::antiAliasingStep");
+
 	downsample.update();
 	for (int i = 0; i < 4; i++)
 	{
@@ -54,7 +56,7 @@ void Redux::antiAliasingStep(dsp::AudioBlock<float> &block)
 
 void Redux::processBlock(dsp::AudioBlock<float> &block)
 {
-	
+	TRACE_EVENT("dsp", "Redux::processBlock");
 	auto rightDryData = block.getChannelPointer(1);
 	auto leftDryData = block.getChannelPointer(0);
 

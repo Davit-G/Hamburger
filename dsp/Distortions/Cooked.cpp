@@ -21,6 +21,7 @@ void Cooked::prepareToPlay(double sampleRate, int samplesPerBlock) {
 }
 
 void Cooked::processBlock(dsp::AudioBlock<float>& block) {
+	TRACE_EVENT("dsp", "Cooked::processBlock");
 	amount.update();
 
 	auto rightDryData = block.getChannelPointer(1);

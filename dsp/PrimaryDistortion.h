@@ -11,11 +11,13 @@
 
 #include "Distortions/tube/Amp.h"
 
+#include <melatonin_perfetto/melatonin_perfetto.h>
+
 class PrimaryDistortion
 {
 public:
     PrimaryDistortion(juce::AudioProcessorValueTreeState &state) : treeStateRef(state)
-    {   
+    {
         distoType = dynamic_cast<juce::AudioParameterChoice *>(state.getParameter("primaryDistortionType"));
         jassert(distoType);
 
@@ -35,25 +37,36 @@ public:
 
     void processBlock(dsp::AudioBlock<float> &block)
     {
+        TRACE_DSP();
         int distoTypeIndex = distoType->getIndex();
 
-        if (distortionEnabled->get()  == false) return;
+        if (distortionEnabled->get() == false)
+            return;
 
         switch (distoTypeIndex)
         {
-        case 0: // classic
+        case 0: {// classic
             // fold->processBlock(block);
             // patty->processBlock(block);
+
+            // TRACE_EVENT_BEGIN("dsp", "classic");
+            TRACE_EVENT("dsp", "classic");
             grunge->processBlock(block);
             patty->processBlock(block);
             fuzz->processBlock(block);
             softClipper->processBlock(block);
             iirFilter.process(dsp::ProcessContextReplacing<float>(block)); // hpf afterwards to remove bias
+            // TRACE_EVENT_END("dsp", "classic");
             break;
-        case 1: // tube
+        }
+        case 1: {// tube
+            // TRACE_EVENT_BEGIN("dsp", "tube");
+            TRACE_EVENT("dsp", "tube");
             grunge->processBlock(block);
             tubeAmp->processBlock(block);
+            // TRACE_EVENT_END("dsp", "tube");
             break;
+        }
         case 2: // wavefolding
             break;
         case 3: // fuzz

@@ -33,6 +33,7 @@ void Grunge::prepareToPlay(double sampleRate, int samplesPerBlock) {
 }
 
 void Grunge::processBlock(dsp::AudioBlock<float>& block) {
+    TRACE_EVENT("dsp", "Grunge::processBlock");
 	amount.update();
     tone.update();
 

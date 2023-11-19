@@ -22,6 +22,7 @@ void PattyFuzz::prepareToPlay(double sampleRate, int samplesPerBlock) {
 }
 
 void PattyFuzz::processBlock(dsp::AudioBlock<float>& block) {
+	TRACE_EVENT("dsp", "PattyFuzz::processBlock");
 	amount.update();
 
 	auto rightDryData = block.getChannelPointer(1);

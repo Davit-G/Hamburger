@@ -25,6 +25,7 @@ void Fuzz::prepareToPlay(double sampleRate, int samplesPerBlock) {
 }
 
 void Fuzz::processBlock(dsp::AudioBlock<float>& block) {
+	TRACE_EVENT("dsp", "Fuzz::processBlock");
 	bias.update();
 
 	for (int sample = 0; sample < block.getNumSamples(); sample++) {

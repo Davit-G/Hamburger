@@ -24,6 +24,7 @@ void Jeff::prepareToPlay(double sampleRate, int samplesPerBlock) {
 }
 
 void Jeff::processBlock(dsp::AudioBlock<float>& block) {
+	TRACE_EVENT("dsp", "Jeff::processBlock");
 	amount.update();
 
 	auto rightDryData = block.getChannelPointer(1);

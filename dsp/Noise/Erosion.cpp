@@ -4,6 +4,8 @@
 
 void Erosion::processBlock(dsp::AudioBlock<float>& block, double sampleRate)
 {
+    TRACE_EVENT("dsp", "Erosion::processBlock");
+
     erosionAmount.update();
     erosionFrequency.update();
     erosionQ.update();

@@ -12,8 +12,9 @@ void HardClip::prepareToPlay(double sampleRate, int samplesPerBlock)
 }
 
 void HardClip::processBlock(dsp::AudioBlock<float>& block) {
+    TRACE_EVENT("dsp", "HardClip::processBlock");
     gain.update();
-    
+
     float saturationAmount = gain.getRaw();
 	for (int channel = 0; channel < block.getNumChannels(); ++channel)
     {

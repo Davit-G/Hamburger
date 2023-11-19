@@ -90,17 +90,23 @@ public:
 
     void processBlock(dsp::AudioBlock<float> &block)
     {   
+        TRACE_EVENT_BEGIN("dsp", "tube coefficients");
         tubeTone.update();
 
         calculateCoefficients();
+        TRACE_EVENT_END("dsp");
 
         // step 1: remove DC with highpass filter
+        TRACE_EVENT_BEGIN("dsp", "highpass");
         inputHighPass.process(dsp::ProcessContextReplacing<float>(block));
+        TRACE_EVENT_END("dsp");
+
 
         // step 2: apply gain
         block.multiplyBy(inputGain);
 
         // left channel
+        TRACE_EVENT_BEGIN("dsp", "left channel tube");
         for (int j = 0; j < block.getNumSamples(); j++)
         {
             auto sampleL = block.getSample(0, j);
@@ -118,7 +124,9 @@ public:
             // we shall ignore class B for now
             block.setSample(0, j, sampleL);
         }
+        TRACE_EVENT_END("dsp");
 
+        TRACE_EVENT_BEGIN("dsp", "right channel tube");
         // do same for right channel
         for (int j = 0; j < block.getNumSamples(); j++)
         {
@@ -138,6 +146,7 @@ public:
 
             block.setSample(1, j, sampleR);
         }
+        TRACE_EVENT_END("dsp");
         
         // step 7: tone stack?
         // step 8: output gain

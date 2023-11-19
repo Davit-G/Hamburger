@@ -30,26 +30,37 @@ public:
     {
         int distoTypeIndex = distoType->getIndex();
 
+
         if (noiseEnabled->get() != true) return;
 
         switch (distoTypeIndex)
         {
         case 0: // sizzle
+            { TRACE_EVENT("dsp", "sizzle");
             sizzle->processBlock(block);
             break;
+            }
         case 1: // erosion
+            { TRACE_EVENT("dsp", "erosion");
             erosion->processBlock(block, sampleRate);
             break;
+            }
         case 2: // downsampling
+            { TRACE_EVENT("dsp", "redux");
             redux->processBlock(block);
             break;
+            }
         case 3: // smooth downsampling
+            { TRACE_EVENT("dsp", "smooth redux");
             redux->antiAliasingStep(block);
             redux->processBlock(block);
             break;
+            }
         case 4: // asperity
+            { TRACE_EVENT("dsp", "asperity");
             jeff->processBlock(block);
             break;
+            }
         default:
             break;
         }
