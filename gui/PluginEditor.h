@@ -13,7 +13,6 @@ class EditorV2 : public juce::AudioProcessorEditor
 {
 public:
     EditorV2(AudioPluginAudioProcessor &p) : AudioProcessorEditor(&p),
-                                             processorRef(p),
                                              leftColumn(p),
                                              saturationColumn(p),
                                              utilColumn(p)
@@ -27,13 +26,13 @@ public:
 
     ~EditorV2() override{}
 
-    void paint(juce::Graphics &g)
+    void paint(juce::Graphics &g) override
     {
         auto image = ImageCache::getFromMemory(BinaryData::bg3_jpg, BinaryData::bg3_jpgSize);
         g.drawImage(image, getLocalBounds().toFloat());
     }
 
-    void resized()
+    void resized() override
     {
         auto bounds = getLocalBounds();
         auto totalWidth = bounds.getWidth() / 4;
@@ -47,7 +46,7 @@ public:
     }
 
 private:
-    AudioPluginAudioProcessor &processorRef;
+    // AudioPluginAudioProcessor &processorRef;
 
     LeftColumn leftColumn;
     SaturationColumn saturationColumn;

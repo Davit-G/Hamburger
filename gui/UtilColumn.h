@@ -10,7 +10,7 @@
 class UtilColumn : public juce::Component
 {
 public:
-    UtilColumn(AudioPluginAudioProcessor &p) : processorRef(p)
+    UtilColumn(AudioPluginAudioProcessor &p)
     {
         // panel with elements already inside
         std::vector<std::unique_ptr<Panel>> eqPanels;
@@ -37,7 +37,7 @@ public:
     }
 
 private:
-    AudioPluginAudioProcessor &processorRef;
+    // AudioPluginAudioProcessor &processorRef;
 
     std::unique_ptr<Module> eq;
     std::unique_ptr<Module> utility;

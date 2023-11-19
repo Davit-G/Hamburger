@@ -18,16 +18,16 @@ public:
         return font;
     }
 
-    Font getLabelFont() {
+    Font getLabelFont(Label& label) override {
         return getTheFont(16);
     }
 
-    Font getComboBoxFont()
+    Font getComboBoxFont(ComboBox& box) override
     {
         return getTheFont(16);
     }
 
-    Font getPopupMenuFont()
+    Font getPopupMenuFont() override
     {
         return getTheFont(32);
     }

@@ -13,7 +13,7 @@ enum CompressionType {
 class Compressor
 {
 public:
-    Compressor(juce::AudioProcessorValueTreeState &state, CompressionType type) : type(type), envelope(true), treeState(state) {}
+    Compressor(juce::AudioProcessorValueTreeState &state, CompressionType ctype) : type(ctype), envelope(true) {}
     
     ~Compressor(){}
 
@@ -22,7 +22,7 @@ public:
 
     void processBlock(dsp::AudioBlock<float>& dryBuffer);
 
-    void prepareToPlay(double sampleRate, int samplesPerBlock);
+    void prepare(dsp::ProcessSpec& spec);
 
     float attack = 0.0f;
     float release = 0.0f;
@@ -37,6 +37,6 @@ public:
 private:
     CompressionType type;
 
-    juce::AudioProcessorValueTreeState &treeState;
+    // juce::AudioProcessorValueTreeState &treeState;
     EnvelopeFollower envelope;
 };

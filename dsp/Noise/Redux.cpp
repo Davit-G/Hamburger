@@ -22,21 +22,16 @@ Redux::~Redux()
 {
 }
 
-void Redux::prepareToPlay(double sampleRate, int samplesPerBlock)
+void Redux::prepare(dsp::ProcessSpec& spec)
 {
-	downsample.prepareToPlay(sampleRate, samplesPerBlock);
-	jitter.prepareToPlay(sampleRate, samplesPerBlock);
-	bitReduction.prepareToPlay(sampleRate, samplesPerBlock);
-	this->sampleRate = sampleRate;
-
-	dsp::ProcessSpec spec;
-	spec.sampleRate = sampleRate;
-	spec.maximumBlockSize = samplesPerBlock;
-	spec.numChannels = 2;
+	downsample.prepare(spec);
+	jitter.prepare(spec);
+	bitReduction.prepare(spec);
+	this->sampleRate = spec.sampleRate;
 
 	for (int i = 0; i < 4; i++)
 	{
-		*antialiasingFilter[i].state = *dsp::IIR::Coefficients<float>::makeLowPass(sampleRate, 7000, 1.0f);
+		*antialiasingFilter[i].state = *dsp::IIR::Coefficients<float>::makeLowPass(sampleRate, 7000.0f, 1.0f);
 		antialiasingFilter[i].reset();
 		antialiasingFilter[i].prepare(spec);
 	}
@@ -68,7 +63,7 @@ void Redux::processBlock(dsp::AudioBlock<float> &block)
 	for (int sample = 0; sample < block.getNumSamples(); sample++)
 	{
 		float dsmplFreq = downsample.get();
-		float downsamplingValue = sampleRate / (2 * dsmplFreq);
+		float downsamplingValue = sampleRate / (2.0f * dsmplFreq);
 
 		float bitReductionValue = bitReduction.get();
 		float jitterAmount = jitter.get();
@@ -86,7 +81,7 @@ void Redux::processBlock(dsp::AudioBlock<float> &block)
 		if (floor(fmodf(sample, downsamplingValue + jitterOffsetL)) == 0)
 		{
 			x = rightDryData[sample] - x;
-			jitterOffsetL = jitterAmount * (rand() / (float)RAND_MAX) * 0.3;
+			jitterOffsetL = jitterAmount * (rand() / (float)RAND_MAX) * 0.3f;
 		}
 		else
 		{
@@ -103,7 +98,7 @@ void Redux::processBlock(dsp::AudioBlock<float> &block)
 		if (floor(fmodf(sample, downsamplingValue + jitterOffsetR)) == 0)
 		{
 			x = leftDryData[sample] - x;
-			jitterOffsetR = jitterAmount * (rand() / (float)RAND_MAX) * 0.3;
+			jitterOffsetR = jitterAmount * (rand() / (float)RAND_MAX) * 0.3f;
 		}
 		else
 		{

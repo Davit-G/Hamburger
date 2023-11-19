@@ -6,46 +6,23 @@
 float EnvelopeFollower::processSample(float xn)
 {
     // full wave rectify signal
-    float input = std::abs(xn);
+    float input = abs(xn);
 
     // square signal for RMS
-    if (useRMS)
-    {
-        input *= input;
+    input *= input;
+
+    // pick between rising or falling value
+    float currEnvelope = 0.0f;
+    float diff = input - lastEnvelope;
+    if (diff > 0.0f) {
+        currEnvelope = attackTime * diff + input;
+    } else {
+        currEnvelope = releaseTime * diff + input;
     }
 
-    float currEnvelope = 0.0;
-
-    // compression section
-    if (input > lastEnvelope)
-    {
-        currEnvelope = attackTime * (lastEnvelope - input) + input;
-    }
-    else
-    {
-        currEnvelope = releaseTime * (lastEnvelope - input) + input;
-    }
-
-    // do we need to check underflow?
-    // checkFloatUnderflow(currEnvelope)
-
-    // if we want, clip at 0DB
-    if (false)
-    {
-        currEnvelope = fmin(currEnvelope, 1.0);
-    }
-
-    // why would an envelope be below 0. It won't. so clip it.
-    currEnvelope = fmax(currEnvelope, 0.0);
-
-    // store envelope for future
+    currEnvelope = fmax(currEnvelope, 0.0f);
     lastEnvelope = currEnvelope;
-
-    // then some random RMS bullshittery
-    if (useRMS)
-    {
-        currEnvelope = pow(currEnvelope, 0.5);
-    }
+    currEnvelope = pow(currEnvelope, 0.5f);
 
     if (!useLog) // just skip the log stuff for now, make it into var later
     {
@@ -53,58 +30,32 @@ float EnvelopeFollower::processSample(float xn)
     }
 
     // --- setup for log( )
-    if (currEnvelope <= 0)
-        return -96.0;
+    if (currEnvelope <= 0.0f)
+        return -96.0f;
     // --- true log output in dB, can go above 0dBFS!
-    return 20.0 * log10(currEnvelope);
+    return 20.0f * log10(currEnvelope);
 }
 
 float EnvelopeFollower::processSampleStereo(float xL, float xR)
 {
     // full wave rectify stereo signal and sum
-    float input = (std::abs(xL) + std::abs(xR)) * 0.5;
+    float input = (abs(xL) + abs(xR)) * 0.5f;
 
-    // square signal for RMS
-    if (useRMS)
-    {
-        input *= input;
-    }
-
-    float currEnvelope = 0.0;
-
-    // compression section
-    if (input > lastEnvelope)
-    {
-        currEnvelope = attackTime * (lastEnvelope - input) + input;
-    }
-    else
-    {
-        currEnvelope = releaseTime * (lastEnvelope - input) + input;
-    }
-
+    input *= input; // square signal for RMS
     
-
-    // do we need to check underflow?
-    // checkFloatUnderflow(currEnvelope)
-
-    // if we want, clip at 0DB
-    if (false)
-    {
-        currEnvelope = fmin(currEnvelope, 1.0);
+    // pick between rising or falling value
+    float currEnvelope = 0.0f;
+    float diff = input - lastEnvelope;
+    if (diff > 0.0f) {
+        currEnvelope = attackTime * diff + input;
+    } else {
+        currEnvelope = releaseTime * diff + input;
     }
 
     // why would an envelope be below 0. It won't. so clip it.
-    currEnvelope = fmax(currEnvelope, 0.0);
-
-    // store envelope for future
-    lastEnvelope = currEnvelope;
-
-    // then some random RMS bullshittery
-
-    if (useRMS)
-    {
-        currEnvelope = pow(currEnvelope, 0.5);
-    }
+    currEnvelope = fmax(currEnvelope, 0.0f);
+    lastEnvelope = currEnvelope; // store envelope for future
+    currEnvelope = pow(currEnvelope, 0.5f); // then some random RMS bullshittery
 
     if (!useLog) // just skip the log stuff for now, make it into var later
     {
@@ -112,15 +63,16 @@ float EnvelopeFollower::processSampleStereo(float xL, float xR)
     }
 
     // --- setup for log( )
-    if (currEnvelope <= 0)
-        return -96.0;
+    if (currEnvelope <= 0.0f)
+        return -96.0f;
+    
     // --- true log output in dB, can go above 0dBFS!
-    return 20.0 * log10(currEnvelope);
+    return 20.0f * log10(currEnvelope);
 }
 
-void EnvelopeFollower::prepareToPlay(double sr, int samplesPerBlock)
+void EnvelopeFollower::prepare(dsp::ProcessSpec& spec)
 {
     // set correct sample rate information
-    setSampleRate(sr);
-    lastEnvelope = 0.0;
-};
+    setSampleRate(spec.sampleRate);
+    lastEnvelope = 0.0f;
+}

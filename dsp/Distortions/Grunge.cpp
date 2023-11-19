@@ -17,19 +17,19 @@ Grunge::Grunge(juce::AudioProcessorValueTreeState& treeState) :
     tone(treeState, "grungeTone") 
 {}
 
-void Grunge::prepareToPlay(double sampleRate, int samplesPerBlock) {
-	amount.prepareToPlay(sampleRate, samplesPerBlock);
-    tone.prepareToPlay(sampleRate, samplesPerBlock);
+void Grunge::prepare(dsp::ProcessSpec& spec) {
+	amount.prepare(spec);
+    tone.prepare(spec);
 
-    delayLine.prepare({ sampleRate, (juce::uint32)samplesPerBlock, 2 });
+    delayLine.prepare(spec);
     delayLine.setMaximumDelayInSamples(1);
     delayLine.setDelay(1);
-    dcBlockerL.prepare({ sampleRate, (juce::uint32)samplesPerBlock, 2 });
-    dcBlockerR.prepare({ sampleRate, (juce::uint32)samplesPerBlock, 2 });
-    dcBlockerL.coefficients = juce::dsp::IIR::Coefficients<float>::makeHighPass(sampleRate, 24.0f);
-    dcBlockerR.coefficients = juce::dsp::IIR::Coefficients<float>::makeHighPass(sampleRate, 24.0f);
+    dcBlockerL.prepare(spec);
+    dcBlockerR.prepare(spec);
+    dcBlockerL.coefficients = juce::dsp::IIR::Coefficients<float>::makeHighPass(spec.sampleRate, 24.0f);
+    dcBlockerR.coefficients = juce::dsp::IIR::Coefficients<float>::makeHighPass(spec.sampleRate, 24.0f);
 
-    this->sampleRate = sampleRate;
+    this->sampleRate = spec.sampleRate;
 }
 
 void Grunge::processBlock(dsp::AudioBlock<float>& block) {
@@ -37,15 +37,15 @@ void Grunge::processBlock(dsp::AudioBlock<float>& block) {
 	amount.update();
     tone.update();
 
+    float toneFloat = tone.getRaw() * 55.0f + 5.0f;
+    auto dcCoeffs = juce::dsp::IIR::Coefficients<float>::makeHighPass(sampleRate, toneFloat);
+
+    dcBlockerL.coefficients = dcCoeffs;
+    dcBlockerR.coefficients = dcCoeffs;
+
     for (int i = 0; i < block.getNumSamples(); i++) {
         float fbKnobAmt = amount.getNextValue();
-        float fbAmt = -powf(fbKnobAmt, 2.0f) + 2*fbKnobAmt;
-        float toneFloat = tone.getNextValue() * 55 + 5;
-    
-        auto dcCoeffs = juce::dsp::IIR::Coefficients<float>::makeHighPass(sampleRate, toneFloat);
-
-        dcBlockerL.coefficients = dcCoeffs;
-        dcBlockerR.coefficients = dcCoeffs;
+        float fbAmt = - (fbKnobAmt * fbKnobAmt) + 2 * fbKnobAmt;
 
         float sampleL = block.getSample(0, i);
         float sampleR = block.getSample(1, i);

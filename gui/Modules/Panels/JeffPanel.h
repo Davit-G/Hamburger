@@ -16,10 +16,10 @@ public:
         addAndMakeVisible(knob);
     }
 
-    void paint(juce::Graphics &g) override
-    {
-        // g.fillAll(juce::Colours::green);
-    }
+    // void paint(juce::Graphics &g) override
+    // {
+    //     // g.fillAll(juce::Colours::green);
+    // }
 
     void resized() override
     {

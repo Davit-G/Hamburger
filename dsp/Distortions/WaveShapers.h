@@ -5,7 +5,7 @@
 \param xn - the input value
 \return -1 if xn is negative or +1 if xn is 0 or greater
 */
-inline double sgn(double xn)
+inline float sgn(float xn)
 {
 	return (xn > 0) - (xn < 0);
 }
@@ -18,9 +18,9 @@ inline double sgn(double xn)
 \param asymmetry  - the degree of asymmetry
 \return gain value
 */
-inline double calcWSGain(double xn, double saturation, double asymmetry)
+inline float calcWSGain(float xn, float saturation, float asymmetry)
 {
-	double g = ((xn >= 0.0 && asymmetry > 0.0) || (xn < 0.0 && asymmetry < 0.0)) ? saturation * (1.0 + 4.0*fabs(asymmetry)) : saturation;
+	double g = ((xn >= 0.0f && asymmetry > 0.0f) || (xn < 0.0f && asymmetry < 0.0f)) ? saturation * (1.0f + 4.0f*fabs(asymmetry)) : saturation;
 	return g;
 }
 
@@ -31,7 +31,7 @@ inline double calcWSGain(double xn, double saturation, double asymmetry)
 \param saturation  - the saturation control
 \return the waveshaped output value
 */
-inline double atanWaveShaper(double xn, double saturation)
+inline float atanWaveShaper(float xn, float saturation)
 {
 	return atan(saturation*xn) / atan(saturation);
 }
@@ -43,7 +43,7 @@ inline double atanWaveShaper(double xn, double saturation)
 \param saturation  - the saturation control
 \return the waveshaped output value
 */
-inline double tanhWaveShaper(double xn, double saturation)
+inline float tanhWaveShaper(float xn, float saturation)
 {
 	return tanh(saturation*xn) / tanh(saturation);
 }
@@ -54,10 +54,10 @@ inline double tanhWaveShaper(double xn, double saturation)
 \param saturation  - the saturation control
 \return the waveshaped output value
 */
-inline double softClipWaveShaper(double xn, double saturation)
+inline float softClipWaveShaper(float xn, float saturation)
 {
 	// --- un-normalized soft clipper from Reiss book
-	return sgn(xn)*(1.0 - exp(-fabs(saturation*xn)));
+	return sgn(xn)*(1.0f - exp(-fabs(saturation*xn)));
 }
 
 /**
@@ -66,9 +66,9 @@ inline double softClipWaveShaper(double xn, double saturation)
 \param saturation  - the saturation control
 \return the waveshaped output value
 */
-inline double fuzzExp1WaveShaper(double xn, double saturation, double asymmetry)
+inline float fuzzExp1WaveShaper(float xn, float saturation, float asymmetry)
 {
 	// --- setup gain
-	double wsGain = calcWSGain(xn, saturation, asymmetry);
-	return sgn(xn)*(1.0 - exp(-fabs(wsGain*xn))) / (1.0 - exp(-wsGain));
+	float wsGain = calcWSGain(xn, saturation, asymmetry);
+	return sgn(xn)*(1.0f - exp(-fabs(wsGain*xn))) / (1.0f - exp(-wsGain));
 }

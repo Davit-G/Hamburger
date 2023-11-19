@@ -27,10 +27,10 @@ public:
         addAndMakeVisible(outGain);
     }
 
-    void paint(juce::Graphics &g) override
-    {
-        // g.fillAll(juce::Colours::cyan);
-    }
+    // void paint(juce::Graphics &g) override
+    // {
+    //     // g.fillAll(juce::Colours::cyan);
+    // }
 
     void resized() {
         auto bounds = getLocalBounds().reduced(20);

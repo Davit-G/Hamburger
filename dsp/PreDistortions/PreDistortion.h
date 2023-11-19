@@ -7,7 +7,7 @@
 class PreDistortion
 {
 public:
-    PreDistortion(juce::AudioProcessorValueTreeState &state) : treeStateRef(state) {
+    PreDistortion(juce::AudioProcessorValueTreeState &state) {
         distoType = dynamic_cast<juce::AudioParameterChoice *>(state.getParameter("preDistortionType")); jassert(distoType);
         preDistortionEnabled = dynamic_cast<juce::AudioParameterBool *>(state.getParameter("preDistortionEnabled")); jassert(preDistortionEnabled);
 
@@ -36,23 +36,23 @@ public:
         }
     }
 
-    void prepareToPlay(double sampleRate, int samplesPerBlock) {
-        allPassChain->prepareToPlay(sampleRate, samplesPerBlock);
+    void prepare(dsp::ProcessSpec& spec) {
+        allPassChain->prepare(spec);
     }
 
-    void setSampleRate(double newSampleRate) { 
+    void setSampleRate(float newSampleRate) { 
         sampleRate = newSampleRate;
     }
 
 private:
-    juce::AudioProcessorValueTreeState &treeStateRef;
+    // juce::AudioProcessorValueTreeState &treeStateRef;
     juce::AudioParameterChoice *distoType = nullptr;
 
     std::unique_ptr<AllPassChain> allPassChain;
 
     juce::AudioParameterBool* preDistortionEnabled = nullptr;
 
-    double sampleRate;
+    float sampleRate;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PreDistortion)
 };

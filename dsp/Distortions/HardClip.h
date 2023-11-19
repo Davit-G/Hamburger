@@ -13,7 +13,7 @@ public:
     ~HardClip();
 
     void processBlock(dsp::AudioBlock<float>& block);
-    void prepareToPlay(double sampleRate, int samplesPerBlock);
+    void prepare(dsp::ProcessSpec& spec);
 private:
     SmoothParam gain;
     

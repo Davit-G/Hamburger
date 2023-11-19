@@ -10,7 +10,7 @@
 class NoiseDistortions
 {
 public:
-    NoiseDistortions(juce::AudioProcessorValueTreeState &state) : treeStateRef(state)
+    NoiseDistortions(juce::AudioProcessorValueTreeState &state)
     {
         distoType = dynamic_cast<juce::AudioParameterChoice *>(state.getParameter("noiseDistortionType"));
         jassert(distoType);
@@ -66,21 +66,21 @@ public:
         }
     }
 
-    void prepareToPlay(double sampleRate, int samplesPerBlock)
+    void prepare(dsp::ProcessSpec& spec)
     {
-        sizzle->prepareToPlay(sampleRate, samplesPerBlock);
-        erosion->prepareToPlay(sampleRate, samplesPerBlock);
-        jeff->prepareToPlay(sampleRate, samplesPerBlock);
-        redux->prepareToPlay(sampleRate, samplesPerBlock);
+        sizzle->prepare(spec);
+        erosion->prepare(spec);
+        jeff->prepare(spec);
+        redux->prepare(spec);
     }
 
-    void setSampleRate(double newSampleRate)
+    void setSampleRate(float newSampleRate)
     {
         sampleRate = newSampleRate;
     }
 
 private:
-    juce::AudioProcessorValueTreeState &treeStateRef;
+    // juce::AudioProcessorValueTreeState &treeStateRef;
     juce::AudioParameterChoice *distoType = nullptr;
 
     juce::AudioParameterBool* noiseEnabled;
@@ -90,7 +90,7 @@ private:
     std::unique_ptr<Redux> redux = nullptr;
     std::unique_ptr<Jeff> jeff = nullptr;
 
-    double sampleRate;
+    float sampleRate;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(NoiseDistortions)
 };

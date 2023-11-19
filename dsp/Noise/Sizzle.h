@@ -25,9 +25,9 @@ public:
 	~Sizzle();
 
 	void processBlock(dsp::AudioBlock<float>& block);
-	void prepareToPlay(double sampleRate, int samplesPerBlock);
+	void prepare(dsp::ProcessSpec& spec);
 
-	void setSampleRate(double sampleRate) { envelopeDetector.setSampleRate(sampleRate);}
+	void setSampleRate(float sampleRate) { envelopeDetector.setSampleRate(sampleRate);}
 
 	static float whiteNoise()
 	{
@@ -41,16 +41,16 @@ public:
 
 	float oldSizzleFunction(float inputSample, float nextSizzle)
 	{
-		return inputSample * (1 - whiteNoise() * (nextSizzle / 2)); // nextSizzle;
+		return inputSample * (1.0f - whiteNoise() * (nextSizzle * 0.5f)); // nextSizzle;
 	}
 
 	float newSizzleFunction(float inputSample, float nextSizzle, float envelope)
 	{
 
 		float audioClipped = std::fmin(1.f, std::fmax(0.f, inputSample));
-		float noiseAmount = pow(audioClipped, 2) - 2 * audioClipped + 1;
+		float amt = powf(audioClipped, 2.0f) - 2.0f * audioClipped + 1.0f;
 
-		return inputSample + (random.nextFloat() * ((nextSizzle * envelope * noiseAmount) / 2)); // nextSizzle * (nextSizzle / 2)
+		return inputSample + (random.nextFloat() * ((nextSizzle * envelope * amt) * 0.5f)); // nextSizzle * (nextSizzle / 2)
 	}
 
 private:

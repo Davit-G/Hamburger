@@ -21,12 +21,12 @@ public:
         addAndMakeVisible(q);
     }
 
-    void paint(juce::Graphics &g) override
-    {
-        // g.fillAll(juce::Colours::green);
-    }
+    // void paint(juce::Graphics &g) override
+    // {
+    //     // g.fillAll(juce::Colours::green);
+    // }
 
-    void resized() {
+    void resized() override {
         // three, in a row
         auto bounds = getLocalBounds();
         amount.setBounds(bounds.removeFromLeft(bounds.getWidth() / 3));

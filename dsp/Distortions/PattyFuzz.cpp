@@ -17,8 +17,8 @@ PattyFuzz::PattyFuzz(juce::AudioProcessorValueTreeState& treeState) : amount(tre
 PattyFuzz::~PattyFuzz() {}
 
 
-void PattyFuzz::prepareToPlay(double sampleRate, int samplesPerBlock) {
-	amount.prepareToPlay(sampleRate, samplesPerBlock);
+void PattyFuzz::prepare(dsp::ProcessSpec& spec) {
+	amount.prepare(spec);
 }
 
 void PattyFuzz::processBlock(dsp::AudioBlock<float>& block) {

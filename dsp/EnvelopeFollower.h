@@ -1,5 +1,6 @@
 #pragma once
 #include <cmath> // std::abs
+#include <JuceHeader.h>
 
 class EnvelopeFollower
 {
@@ -11,34 +12,30 @@ public:
     	setReleaseTime(3);
 	}
 
-	~EnvelopeFollower() {
-
-	}
+	~EnvelopeFollower() {}
 
 	float processSample(float xn);
 	float processSampleStereo(float xL, float xR);
 
-	void prepareToPlay(double sampleRate, int samplesPerBlock);
+	void prepare(dsp::ProcessSpec& spec);
 
-	void setAttackTime(double attack_in_ms)
+	void setAttackTime(float attack_in_ms)
 	{
 		if (attackTime_mSec != attack_in_ms) { // saving performance
 			attackTime_mSec = attack_in_ms;
-			attackTime = std::exp(AUDIO_ENVELOPE_ANALOG_TC / (attack_in_ms *
-															(float)sampleRate * 0.001));
+			attackTime = expf(AUDIO_ENVELOPE_ANALOG_TC / (attack_in_ms * sampleRate * 0.001f));
 		}
 	}
 
-	void setReleaseTime(double release_in_ms)
+	void setReleaseTime(float release_in_ms)
 	{
 		if (releaseTime_mSec != release_in_ms) { // saving performance
 			releaseTime_mSec = release_in_ms;
-			releaseTime = std::exp(AUDIO_ENVELOPE_ANALOG_TC / (release_in_ms *
-															(float)sampleRate * 0.001));
+			releaseTime = expf(AUDIO_ENVELOPE_ANALOG_TC / (release_in_ms * sampleRate * 0.001f));
 		}
 	}
 	
-	void setSampleRate(double sampleRateIn) {
+	void setSampleRate(float sampleRateIn) {
 		sampleRate = sampleRateIn;
 		// recalc attack and release times
 		setAttackTime(attackTime_mSec);
@@ -52,10 +49,11 @@ private:
 	float releaseTime;
 	
 	bool useLog = true;
-	bool useRMS = true;
+	// bool useRMS = true; i guess it always uses RMS so ignore that
 
 	float lastEnvelope;
-	double sampleRate;
+	float sampleRate;
 
-	const double AUDIO_ENVELOPE_ANALOG_TC = -0.99967234081320612357829304641019; // ln(36.7%)
+	// const double AUDIO_ENVELOPE_ANALOG_TC_DOUBLE = -0.99967234081320612357829304641019; // ln(36.7%)
+	const float AUDIO_ENVELOPE_ANALOG_TC = -0.99967234081320612357829304641019f; // ln(36.7%)
 };

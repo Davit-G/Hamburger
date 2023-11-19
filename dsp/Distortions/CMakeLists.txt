@@ -7,3 +7,5 @@ SoftClipper.cpp
 HardClip.cpp
 Grunge.cpp
 )
+
+add_subdirectory(tube)

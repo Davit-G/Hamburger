@@ -6,9 +6,9 @@ HardClip::~HardClip()
 {
 }
 
-void HardClip::prepareToPlay(double sampleRate, int samplesPerBlock)
+void HardClip::prepare(dsp::ProcessSpec& spec)
 {
-    gain.prepareToPlay(sampleRate, samplesPerBlock);
+    gain.prepare(spec);
 }
 
 void HardClip::processBlock(dsp::AudioBlock<float>& block) {

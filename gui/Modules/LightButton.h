@@ -6,8 +6,8 @@ class LightButton : public juce::Button {
     // depending on whether it is toggled or not
 
 public:
-    LightButton(AudioPluginAudioProcessor &p, const juce::Image& offImage, const juce::Image& onImage) 
-    : processorRef(p), onImage(onImage), offImage(offImage), Button("thing")
+    LightButton(AudioPluginAudioProcessor &p, const juce::Image& aoffImage, const juce::Image& aonImage) 
+    : onImage(aonImage), offImage(aoffImage), Button("thing")
     {
         // attachment = std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment>(processorRef.treeState, "attachmentID", *this);
 
@@ -18,6 +18,7 @@ public:
 
     void paintButton(juce::Graphics& g, bool shouldDrawButtonAsHighlighted, bool shouldDrawButtonAsDown) override
     {
+        juce::ignoreUnused(shouldDrawButtonAsHighlighted, shouldDrawButtonAsDown);
         if (getToggleState()) {
             g.drawImage(onImage, 0, 0, getWidth(), getHeight(), 0, 0, onImage.getWidth(), onImage.getHeight(), false);
         }
@@ -29,7 +30,7 @@ public:
 private:
     // std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> attachment = nullptr;
 
-    AudioPluginAudioProcessor &processorRef;
+    // AudioPluginAudioProcessor &processorRef;
 
     // std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> buttonValue;
 

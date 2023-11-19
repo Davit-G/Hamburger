@@ -14,10 +14,10 @@ public:
         erosionFrequency(treeState, "noiseFrequency"),
         erosionQ(treeState, "noiseQ") {}
     
-    ~Erosion() {};
+    ~Erosion() {}
 
     void processBlock(dsp::AudioBlock<float>& block, double sampleRate);
-    void prepareToPlay(double sampleRate, int samplesPerBlock);
+    void prepare(dsp::ProcessSpec& spec);
 
 private:
     SmoothParam erosionAmount;
@@ -37,8 +37,8 @@ private:
     AudioBuffer<float> randomBuffer;
     dsp::AudioBlock<float> randomBlock;
 
-    double oldSampleRate;
-    double oldSamplesPerBlock;
+    float oldSampleRate;
+    float oldSamplesPerBlock;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Erosion)
 };

@@ -8,17 +8,11 @@
 class SaturationColumn : public juce::Component
 {
 public:
-    SaturationColumn(AudioPluginAudioProcessor &p) : processorRef(p) {
+    SaturationColumn(AudioPluginAudioProcessor &p) {
         std::vector<std::unique_ptr<Panel>> panels;
         // ORDERING IS VERY IMPORTANT
-
-        // todo:
-
-        // one panel for soft distortions like soft clipping (AND the one I created earlier that's good for guitar)
-        // one panel for tube saturation / more analog sounding distortions
-        // one panel for waveshaper type distortions
-
-
+        // code is weird so order of panels compared to order of DSP processing matters
+        // TODO: fix this later
 
         panels.push_back(std::make_unique<ClassicSatPanel>(p));
         panels.push_back(std::make_unique<TubeSatPanel>(p));
@@ -30,13 +24,13 @@ public:
 
     void resized() override{
         auto bounds = getLocalBounds();
-        auto height = bounds.getHeight();
+        // auto height = bounds.getHeight();
 
         saturation->setBounds(bounds);
     }
 
 private:
-    AudioPluginAudioProcessor &processorRef;
+    // AudioPluginAudioProcessor &processorRef;
 
     std::unique_ptr<Module> saturation;
 

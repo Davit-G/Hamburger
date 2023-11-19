@@ -8,7 +8,7 @@
 class Dynamics
 {
 public:
-    Dynamics(juce::AudioProcessorValueTreeState &state) : treeStateRef(state),
+    Dynamics(juce::AudioProcessorValueTreeState &state) :
         compressor1(state, CompressionType::UPWARDS_DOWNWARDS),
         compressor2(state, CompressionType::UPWARDS_DOWNWARDS),
         compressor3(state, CompressionType::UPWARDS_DOWNWARDS),
@@ -17,9 +17,6 @@ public:
         attack(state, "compAttack"),
         release(state, "compRelease"),
         makeup(state, "compOut")
-        // lowBlock(lowBuffer),
-        // midBlock(midBuffer),
-        // highBlock(highBuffer)
     {
         distoType = dynamic_cast<juce::AudioParameterChoice *>(state.getParameter("compressionType")); jassert(distoType);
         enabled = dynamic_cast<juce::AudioParameterBool *>(state.getParameter("compressionOn")); jassert(enabled);
@@ -44,14 +41,15 @@ public:
             float highResultL = highCrossOver.processSample(0, midResultL);
             midResultL = midResultL - highResultL;
 
+            lowBuffer.setSample(0, sample, lowResultL);
+            midBuffer.setSample(0, sample, midResultL);
+            highBuffer.setSample(0, sample, highResultL);
+
             float lowResultR = lowCrossOver.processSample(1, rightSample);
             float midResultR = rightSample - lowResultR;
             float highResultR = highCrossOver.processSample(1, midResultR);
             midResultR = midResultR - highResultR;
 
-            lowBuffer.setSample(0, sample, lowResultL);
-            midBuffer.setSample(0, sample, midResultL);
-            highBuffer.setSample(0, sample, highResultL);
             lowBuffer.setSample(1, sample, lowResultR);
             midBuffer.setSample(1, sample, midResultR);
             highBuffer.setSample(1, sample, highResultR);
@@ -105,15 +103,11 @@ public:
         }
     }
 
-    void prepareToPlay(double sampleRate, int samplesPerBlock) {
-        compressor1.prepareToPlay(sampleRate, samplesPerBlock);
-        compressor2.prepareToPlay(sampleRate, samplesPerBlock);
-        compressor3.prepareToPlay(sampleRate, samplesPerBlock);
-
-        dsp::ProcessSpec spec;
-        spec.sampleRate = sampleRate;
-        spec.maximumBlockSize = samplesPerBlock;
-        spec.numChannels = 2;
+    void prepare(dsp::ProcessSpec& spec)
+    {
+        compressor1.prepare(spec);
+        compressor2.prepare(spec);
+        compressor3.prepare(spec);
 
         lowCrossOver.setCutoffFrequency(500.0f);
         highCrossOver.setCutoffFrequency(2500.0f);
@@ -122,9 +116,9 @@ public:
         lowCrossOver.prepare(spec);
         highCrossOver.prepare(spec);
 
-        lowBuffer.setSize(2, samplesPerBlock);
-        midBuffer.setSize(2, samplesPerBlock);
-        highBuffer.setSize(2, samplesPerBlock);
+        lowBuffer.setSize(2, spec.maximumBlockSize);
+        midBuffer.setSize(2, spec.maximumBlockSize);
+        highBuffer.setSize(2, spec.maximumBlockSize);
     }
 
     void setSampleRate(double newSampleRate) { 
@@ -132,7 +126,7 @@ public:
     }
 
 private:
-    juce::AudioProcessorValueTreeState &treeStateRef;
+    // juce::AudioProcessorValueTreeState &treeStateRef;
     juce::AudioParameterChoice *distoType = nullptr;
 
     juce::AudioParameterBool* enabled = nullptr;

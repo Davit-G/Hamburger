@@ -11,8 +11,8 @@ public:
         jassert(param); // heads up if the parameter doesn't exist
     }
 
-    void prepareToPlay(double sampleRate, int samplesPerBlock) {
-        smoothedParam.reset(sampleRate, 0.1);
+    void prepare(dsp::ProcessSpec& spec) {
+        smoothedParam.reset(spec.sampleRate, 0.1);
         smoothedParam.setCurrentAndTargetValue(param->get());
     }
 

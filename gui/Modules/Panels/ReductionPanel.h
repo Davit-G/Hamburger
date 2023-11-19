@@ -21,12 +21,12 @@ public:
         addAndMakeVisible(jitter);
     }
 
-    void paint(juce::Graphics &g) override
-    {
-        // g.fillAll(juce::Colours::green);
-    }
+    // void paint(juce::Graphics &g) override
+    // {
+    //     // g.fillAll(juce::Colours::green);
+    // }
 
-    void resized() {
+    void resized() override {
         auto bounds = getLocalBounds();
         auto width = bounds.getWidth() / 3;
         downSample.setBounds(bounds.removeFromLeft(width));

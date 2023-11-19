@@ -6,8 +6,8 @@
 class Panel : public juce::Component
 {
 public:
-    Panel(AudioPluginAudioProcessor &p, juce::String name) : processor(p), name(name) {
-        setName(name);
+    Panel(AudioPluginAudioProcessor &p, juce::String theName) : processor(p), name(theName) {
+        setName(theName);
     }
 
     virtual ~Panel() = default;

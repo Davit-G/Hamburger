@@ -7,7 +7,7 @@ public:
     Gain()
     {
         // initialise gain to 1.0
-        gain = 1.0;
+        gain = 1.0f;
     }
     ~Gain() {}
     void setGain(float newGain)
@@ -23,7 +23,7 @@ public:
         return input * gain;
     }
 
-    float processBlock(juce::AudioBuffer<float> &buffer)
+    void processBlock(juce::AudioBuffer<float> &buffer)
     {
         for (int channel = 0; channel < buffer.getNumChannels(); ++channel)
         {

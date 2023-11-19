@@ -16,7 +16,7 @@
 class PrimaryDistortion
 {
 public:
-    PrimaryDistortion(juce::AudioProcessorValueTreeState &state) : treeStateRef(state)
+    PrimaryDistortion(juce::AudioProcessorValueTreeState &state)
     {
         distoType = dynamic_cast<juce::AudioParameterChoice *>(state.getParameter("primaryDistortionType"));
         jassert(distoType);
@@ -80,34 +80,30 @@ public:
         }
     }
 
-    void prepareToPlay(double sampleRate, int samplesPerBlock)
+    void prepare(dsp::ProcessSpec& spec)
     {
-        softClipper->prepareToPlay(sampleRate, samplesPerBlock);
-        hardClipper->prepareToPlay(sampleRate, samplesPerBlock);
-        fold->prepareToPlay(sampleRate, samplesPerBlock);
-        patty->prepareToPlay(sampleRate, samplesPerBlock);
-        fuzz->prepareToPlay(sampleRate, samplesPerBlock);
-        grunge->prepareToPlay(sampleRate, samplesPerBlock);
-        tubeAmp->prepareToPlay(sampleRate, samplesPerBlock);
+        setSampleRate(sampleRate);
+        softClipper->prepare(spec);
+        hardClipper->prepare(spec);
+        fold->prepare(spec);
+        patty->prepare(spec);
+        fuzz->prepare(spec);
+        grunge->prepare(spec);
+        tubeAmp->prepare(spec);
 
         // init iir filter
         *iirFilter.state = *dsp::IIR::Coefficients<float>::makeHighPass(sampleRate, 5.0f, 0.707f);
 
-        dsp::ProcessSpec spec;
-        spec.sampleRate = sampleRate;
-        spec.maximumBlockSize = samplesPerBlock;
-        spec.numChannels = 2;
-
         iirFilter.prepare(spec);
     }
 
-    void setSampleRate(double newSampleRate)
+    void setSampleRate(float newSampleRate)
     {
         sampleRate = newSampleRate;
     }
 
 private:
-    juce::AudioProcessorValueTreeState &treeStateRef;
+    // juce::AudioProcessorValueTreeState &treeStateRef;
 
     juce::AudioParameterChoice *distoType = nullptr;
     juce::AudioParameterBool *distortionEnabled;
@@ -122,7 +118,7 @@ private:
 
     dsp::ProcessorDuplicator<dsp::IIR::Filter<float>, dsp::IIR::Coefficients<float>> iirFilter;
 
-    double sampleRate;
+    float sampleRate;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PrimaryDistortion)
 };

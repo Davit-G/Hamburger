@@ -60,19 +60,10 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
 
     // freqShiftFreq = dynamic_cast<juce::AudioParameterFloat *>(treeState.getParameter("frequencyShiftFreq")); jassert(freqShiftFreq);
 
-    saturation = dynamic_cast<juce::AudioParameterFloat *>(treeState.getParameter("saturationAmount"));
-    jassert(saturation);
-
     oversamplingFactor = dynamic_cast<juce::AudioParameterChoice *>(treeState.getParameter("oversamplingFactor"));
     jassert(oversamplingFactor);
-
-    enableCompander = dynamic_cast<juce::AudioParameterBool *>(treeState.getParameter("compandingOn"));
-    jassert(enableCompander);
+    
     enableEmphasis = dynamic_cast<juce::AudioParameterBool *>(treeState.getParameter("emphasisOn"));
-    jassert(enableEmphasis);
-    enableCompressor = dynamic_cast<juce::AudioParameterBool *>(treeState.getParameter("compressionOn"));
-    jassert(enableCompander);
-    enableExpander = dynamic_cast<juce::AudioParameterBool *>(treeState.getParameter("expansionOn"));
     jassert(enableEmphasis);
 
 #if PERFETTO
@@ -245,8 +236,7 @@ void AudioPluginAudioProcessor::prepareToPlay(double sampleRate, int samplesPerB
     // TRACE_DSP();
     // Use this method as the place to do any pre-playback
     // initialisation that you need..
-    juce::ignoreUnused(sampleRate, samplesPerBlock);
-
+    
     dsp::ProcessSpec spec;
     spec.sampleRate = sampleRate;
     spec.maximumBlockSize = samplesPerBlock;
@@ -281,22 +271,15 @@ void AudioPluginAudioProcessor::prepareToPlay(double sampleRate, int samplesPerB
 
     float totalLatency = oversamplingStack.getLatencySamples();
     // DBG("Total Latency: " << totalLatency);
-    setLatencySamples(std::ceil(totalLatency));
+    setLatencySamples((int)std::ceil(totalLatency));
 
-    preDistortionSelection.prepareToPlay(sampleRate, samplesPerBlock);
-    distortionTypeSelection.prepareToPlay(sampleRate, samplesPerBlock);
-    noiseDistortionSelection.prepareToPlay(sampleRate, samplesPerBlock);
+    preDistortionSelection.prepare(spec);
+    distortionTypeSelection.prepare(spec);
+    noiseDistortionSelection.prepare(spec);
 
-    dynamics.prepareToPlay(sampleRate, samplesPerBlock);
-    // pattyDistortion.prepareToPlay(sampleRate, samplesPerBlock);
-    // cookedDistortion.prepareToPlay(sampleRate, samplesPerBlock);
-    // softClipper.prepareToPlay(sampleRate, samplesPerBlock);
-    // tubeDistortion.prepareToPlay(sampleRate, samplesPerBlock);
+    dynamics.prepare(spec);
 
-    distortionTypeSelection.prepareToPlay(sampleRate, samplesPerBlock);
-
-    // shifter.prepareToPlay(sampleRate, samplesPerBlock);
-    // endShifter.prepareToPlay(sampleRate, samplesPerBlock);
+    distortionTypeSelection.prepare(spec);
 }
 
 void AudioPluginAudioProcessor::releaseResources()

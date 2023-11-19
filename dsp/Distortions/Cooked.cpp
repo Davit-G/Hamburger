@@ -16,8 +16,8 @@ Cooked::Cooked(juce::AudioProcessorValueTreeState& treeState) : amount(treeState
 
 Cooked::~Cooked() {}
 
-void Cooked::prepareToPlay(double sampleRate, int samplesPerBlock) {
-	amount.prepareToPlay(sampleRate, samplesPerBlock);
+void Cooked::prepare(dsp::ProcessSpec& spec) {
+	amount.prepare(spec);
 }
 
 void Cooked::processBlock(dsp::AudioBlock<float>& block) {

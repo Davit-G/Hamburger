@@ -27,10 +27,6 @@ public:
         addAndMakeVisible(highGain);
     }
 
-    void paint(juce::Graphics &g) override
-    {
-    }
-
     void resized() {
         // knob.setBounds(getLocalBounds());
         auto bounds = getLocalBounds();

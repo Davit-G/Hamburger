@@ -18,7 +18,7 @@ float Curves::computeCompressorGain(float input_db, float threshold, float ratio
     // input is supposed to be in DB
     // output is supposed to be in gain
 
-    float output = -100.0;
+    float output = -100.0f;
 
     if (2 * (input_db - threshold) < -kneeWidth)
     {
@@ -30,7 +30,7 @@ float Curves::computeCompressorGain(float input_db, float threshold, float ratio
     }
     else
     {
-        output = input_db + ((1 / ratio - 1) * pow((input_db - threshold + kneeWidth / 2), 2) / (2 * kneeWidth));
+        output = input_db + ((1.0f / ratio - 1.0f) * pow((input_db - threshold + kneeWidth * 0.5f), 2.0f) / (2.0f * kneeWidth));
     }
 
     float gainReduction = 0.f;
@@ -42,7 +42,7 @@ float Curves::computeCompressorGain(float input_db, float threshold, float ratio
 
 float Curves::computeExpanderGain(float input_db, float ratio, float kneeWidth)
 {
-    float output = -100.0;
+    float output = -100.0f;
     float thres = 0.f;
 
     if (2 * (input_db - thres) > kneeWidth) {
@@ -52,7 +52,7 @@ float Curves::computeExpanderGain(float input_db, float ratio, float kneeWidth)
     else if (2 * (input_db - thres) <= -kneeWidth) {
         output = thres + (input_db - thres) * ratio;
     } else {
-        output = input_db + ((1 / ratio) * pow((input_db - thres + kneeWidth / 2), 2) / (2 * kneeWidth));
+        output = input_db + ((1 / ratio) * pow((input_db - thres + kneeWidth * 0.5f), 2.0f) / (2.0f * kneeWidth));
     }
 
     float gainReduction = 0.f;
@@ -61,7 +61,7 @@ float Curves::computeExpanderGain(float input_db, float ratio, float kneeWidth)
 }
 
 float Curves::computeUpwardsDownwardsGain(float x, float upperThres, float lowerThres, float upperR, float lowerR, float knee) {
-    float output = -100.0;
+    float output = -100.0f;
 
     float a = upperThres - 2*knee;
     if (lowerThres >= a) {
@@ -73,10 +73,10 @@ float Curves::computeUpwardsDownwardsGain(float x, float upperThres, float lower
         output = upperThres + (x - upperThres) / upperR;
     } else if (2 * (abs(x - upperThres)) <= knee) {
         // top knee
-        output = x + ((1 / upperR - 1) * pow(x - upperThres + (knee * 0.5f), 2)) / (2 * knee);
+        output = x + ((1 / upperR - 1) * pow(x - upperThres + (knee * 0.5f), 2.0f)) / (2.0f * knee);
     } else if (2 * abs(x - lowerThres) <= knee) {
         // bottom knee
-        output = x + ((1 - 1 / lowerR) * pow(x - lowerThres - (knee * 0.5f), 2)) / (2 * knee);
+        output = x + ((1 - 1 / lowerR) * pow(x - lowerThres - (knee * 0.5f), 2.0f)) / (2.0f * knee);
     } else if (2 * abs(x - lowerThres) < - knee) {
         // line on bottom knee
         output = lowerThres + (x - lowerThres) / lowerR;

@@ -12,9 +12,9 @@ SoftClip::~SoftClip()
 {
 }
 
-void SoftClip::prepareToPlay(double sampleRate, int samplesPerBlock)
+void SoftClip::prepare(dsp::ProcessSpec& spec)
 {
-    saturationKnob.prepareToPlay(sampleRate, samplesPerBlock);
+    saturationKnob.prepare(spec);
 }
 
 /* DONT USE TOGETHER WITH processBlock or smooth value calculations mess up */

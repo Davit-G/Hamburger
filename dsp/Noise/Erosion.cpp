@@ -49,24 +49,19 @@ void Erosion::processBlock(dsp::AudioBlock<float>& block, double sampleRate)
     }
 }
 
-void Erosion::prepareToPlay(double sampleRate, int samplesPerBlock)
+void Erosion::prepare(dsp::ProcessSpec& spec)
 {
     // init delay
-    erosionAmount.prepareToPlay(sampleRate, samplesPerBlock);
-    erosionFrequency.prepareToPlay(sampleRate, samplesPerBlock);
-    erosionQ.prepareToPlay(sampleRate, samplesPerBlock);
-
-    dsp::ProcessSpec spec;
-    spec.sampleRate = sampleRate;
-    spec.maximumBlockSize = samplesPerBlock;
-    spec.numChannels = 2;
+    erosionAmount.prepare(spec);
+    erosionFrequency.prepare(spec);
+    erosionQ.prepare(spec);
 
     delayLine.prepare(spec);
 
-    delayLine.setMaximumDelayInSamples(0.1 * sampleRate);
+    delayLine.setMaximumDelayInSamples(0.1f * spec.sampleRate);
 
     // init iir filter
-    *iirFilter.state = *dsp::IIR::Coefficients<float>::makeBandPass(sampleRate, 880.0, 3.0);
+    *iirFilter.state = *dsp::IIR::Coefficients<float>::makeBandPass(spec.sampleRate, 880.0f, 3.0f);
 
     iirFilter.prepare(spec);
 
@@ -74,11 +69,11 @@ void Erosion::prepareToPlay(double sampleRate, int samplesPerBlock)
     random.setSeedRandomly();
 
     // init random buffer
-    randomBuffer.setSize(2, samplesPerBlock);
+    randomBuffer.setSize(2, spec.maximumBlockSize);
     randomBuffer.clear();
 
     randomBlock = dsp::AudioBlock<float>(randomBuffer);
 
-    oldSampleRate = sampleRate;
-    oldSamplesPerBlock = samplesPerBlock;
+    oldSampleRate = spec.sampleRate;
+    oldSamplesPerBlock = spec.maximumBlockSize;
 }

@@ -21,10 +21,10 @@ Sizzle::~Sizzle()
 }
 
 
-void Sizzle::prepareToPlay(double sampleRate, int samplesPerBlock) {
-	noiseAmount.prepareToPlay(sampleRate, samplesPerBlock);
+void Sizzle::prepare(dsp::ProcessSpec& spec) {
+	noiseAmount.prepare(spec);
 
-	envelopeDetector.prepareToPlay(sampleRate, samplesPerBlock);
+	envelopeDetector.prepare(spec);
 	envelopeDetector.setAttackTime(10);
 	envelopeDetector.setReleaseTime(10);
 }

@@ -34,6 +34,10 @@ public:
             {
                 *allPassFilter.state = *dsp::IIR::Coefficients<float>::makeAllPass(oldSampleRate, freq, q);
             }
+            
+            oldAllPassFreq = freq;
+            oldAllPassQ = q;
+            oldAllPassAmount = amount;
         }
 
         for (int i = 0; i < amount; i++)
@@ -42,20 +46,15 @@ public:
         }
     }
 
-    void prepareToPlay(double sampleRate, int samplesPerBlock)
+    void prepare(dsp::ProcessSpec& spec)
     {
-        allPassFrequency.prepareToPlay(sampleRate, samplesPerBlock);
-        allPassQ.prepareToPlay(sampleRate, samplesPerBlock);
-        allPassAmount.prepareToPlay(sampleRate, samplesPerBlock);
-
-        dsp::ProcessSpec spec;
-        spec.sampleRate = sampleRate;
-        spec.maximumBlockSize = samplesPerBlock;
-        spec.numChannels = 2;
+        allPassFrequency.prepare(spec);
+        allPassQ.prepare(spec);
+        allPassAmount.prepare(spec);
 
         for (const auto &allPassFilter : allPassFilters)
         {
-            *allPassFilter.state = *dsp::IIR::Coefficients<float>::makeAllPass(sampleRate, allPassFrequency.getRaw(), allPassQ.getRaw());
+            *allPassFilter.state = *dsp::IIR::Coefficients<float>::makeAllPass(spec.sampleRate, allPassFrequency.getRaw(), allPassQ.getRaw());
         }
 
         for (int i = 0; i < 50; i++) {
@@ -63,7 +62,7 @@ public:
             allPassFilters[i].reset();
         }
 
-        oldSampleRate = sampleRate;
+        oldSampleRate = spec.sampleRate;
     }
 
 private:
@@ -77,8 +76,7 @@ private:
 
     dsp::ProcessorDuplicator<dsp::IIR::Filter<float>, dsp::IIR::Coefficients<float>> allPassFilters[50];
 
-    double oldSampleRate;
-    double oldSamplesPerBlock;
+    float oldSampleRate;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AllPassChain)
 };

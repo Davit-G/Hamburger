@@ -19,8 +19,8 @@ Jeff::~Jeff()
 }
 
 
-void Jeff::prepareToPlay(double sampleRate, int samplesPerBlock) {
-	amount.prepareToPlay(sampleRate, samplesPerBlock);
+void Jeff::prepare(dsp::ProcessSpec& spec) {
+	amount.prepare(spec);
 }
 
 void Jeff::processBlock(dsp::AudioBlock<float>& block) {
@@ -32,12 +32,11 @@ void Jeff::processBlock(dsp::AudioBlock<float>& block) {
 
 	for (int sample = 0; sample < block.getNumSamples(); sample++) {
 		float nextJeff = amount.get() * 0.01f;
-		// float nextJeff = smoothedInput.getNextValue();
 
 		auto x = rightDryData[sample];
-		rightDryData[sample] = x + (x*nextJeff*sin(x * 2 * nextJeff * 20 * 3.14)) / 5;
+		rightDryData[sample] = x + (x * nextJeff * sin(x * nextJeff * 125.6f)) * 0.2f;
 
 		x = leftDryData[sample];
-		leftDryData[sample] = x + (x*nextJeff*sin(x * 2 * nextJeff * 20 * 3.14)) / 5;
+		leftDryData[sample] = x + (x * nextJeff * sin(x * nextJeff * 125.6f)) * 0.2f;
 	}
 }

@@ -25,7 +25,7 @@ public:
         addAndMakeVisible(label);
     }
 
-    ~ParamKnob() {
+    ~ParamKnob() override {
         knobAttachment = nullptr;
     }
 
@@ -41,11 +41,11 @@ public:
         knob.setBounds(bounds);
     }
 
-    void paint(juce::Graphics &g) override
-    {
-        // g.setColour(juce::Colours::black);
-        // g.drawRect(getLocalBounds(), 1);
-    }
+    // void paint(juce::Graphics &g) override
+    // {
+    //     // g.setColour(juce::Colours::black);
+    //     // g.drawRect(getLocalBounds(), 1);
+    // }
 
 private:
     AudioPluginAudioProcessor &processorRef;

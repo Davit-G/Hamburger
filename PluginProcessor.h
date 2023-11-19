@@ -62,16 +62,12 @@ public:
     
 
 private:
-    juce::AudioParameterFloat *knobValue = nullptr;
+    // juce::AudioParameterFloat *knobValue = nullptr;
     juce::AudioParameterFloat *inputGainKnob = nullptr;
     juce::AudioParameterFloat *mixKnob = nullptr;
     juce::AudioParameterFloat *outputGainKnob = nullptr;
 
-    juce::AudioParameterBool *enableCompander = nullptr;
     juce::AudioParameterBool *enableEmphasis = nullptr;
-    juce::AudioParameterBool *enableCompressor = nullptr;
-    juce::AudioParameterBool *enableExpander = nullptr;
-
     juce::AudioParameterBool *hamburgerEnabledButton = nullptr; // acts as bypass
 
     juce::AudioParameterFloat *emphasisLow = nullptr;
@@ -88,10 +84,7 @@ private:
     juce::AudioParameterFloat *emphasis[3];
     juce::AudioParameterFloat *emphasisFreq[3];
     float prevEmphasis[3] = {0.f, 0.f, 0.f};
-    float prevEmphasisFreq[3] = {0.f, 0.f, 0.f};
-
-    juce::AudioParameterFloat *saturation = nullptr;
-
+    // float prevEmphasisFreq[3] = {0.f, 0.f, 0.f};
 
     PreDistortion preDistortionSelection;
     PrimaryDistortion distortionTypeSelection;
@@ -103,7 +96,7 @@ private:
 
     float filterFrequencies[3] = {62.0f, 1220.0f, 9000.0f};
 
-    double oversampledSampleRate;
+    // double oversampledSampleRate;
 
     dsp::Gain<float> inputGain;
     dsp::Gain<float> outputGain;
