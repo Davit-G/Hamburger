@@ -22,7 +22,7 @@ Redux::~Redux()
 {
 }
 
-void Redux::prepare(dsp::ProcessSpec& spec)
+void Redux::prepare(dsp::ProcessSpec &spec)
 {
 	downsample.prepare(spec);
 	jitter.prepare(spec);
@@ -42,9 +42,15 @@ void Redux::antiAliasingStep(dsp::AudioBlock<float> &block)
 	TRACE_EVENT("dsp", "Redux::antiAliasingStep");
 
 	downsample.update();
+	if (oldDownsample != downsample.getRaw())
+	{
+		for (int i = 0; i < 4; i++)
+		{
+			*antialiasingFilter[i].state = *dsp::IIR::Coefficients<float>::makeLowPass(this->sampleRate, fmin(downsample.getRaw() * 2.f - 40.0f, 20000.0), 0.7f);
+		}
+	}
 	for (int i = 0; i < 4; i++)
 	{
-		*antialiasingFilter[i].state = *dsp::IIR::Coefficients<float>::makeLowPass(this->sampleRate, fmin(downsample.getRaw() * 2.f - 40.0f, 20000.0), 0.7f);
 		antialiasingFilter[i].process(juce::dsp::ProcessContextReplacing<float>(block));
 	}
 }
@@ -59,11 +65,10 @@ void Redux::processBlock(dsp::AudioBlock<float> &block)
 	bitReduction.update();
 	jitter.update();
 
-	
 	for (int sample = 0; sample < block.getNumSamples(); sample++)
 	{
 		float dsmplFreq = downsample.get();
-		float downsamplingValue = sampleRate / (2.0f * dsmplFreq);
+		float downsamplingValue = sampleRate * 0.5f / dsmplFreq;
 
 		float bitReductionValue = bitReduction.get();
 		float jitterAmount = jitter.get();

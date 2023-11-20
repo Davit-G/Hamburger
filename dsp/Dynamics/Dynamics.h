@@ -31,6 +31,8 @@ public:
         ratio.update();
         threshold.update();
 
+        if (!enabled->get()) return;
+
         for (int sample = 0; sample < block.getNumSamples(); sample++)
         {
             float leftSample = block.getSample(0, sample);
@@ -68,8 +70,6 @@ public:
         dsp::AudioBlock<float> lowBlock(lowBuffer);
         dsp::AudioBlock<float> midBlock(midBuffer);
         dsp::AudioBlock<float> highBlock(highBuffer);
-
-        if (!enabled->get()) return;
 
         switch (distoTypeIndex)
         {

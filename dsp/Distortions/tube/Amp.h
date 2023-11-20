@@ -27,8 +27,7 @@ public:
 private:
     juce::dsp::ProcessorDuplicator<juce::dsp::IIR::Filter<float>, juce::dsp::IIR::Coefficients<float>> inputHighPass;
 
-    ClassAValve triodesL[4];
-    ClassAValve triodesR[4];
+    ClassAValve triodes[4];
 
     SmoothParam tubeTone;
     SmoothParam drive;

@@ -10,14 +10,25 @@ void LossyIntegrator::prepare(dsp::ProcessSpec &spec)
     integrator_z[1] = 0.0f;
 }
 
-float LossyIntegrator::processAudioSample(float xn)
+dsp::SIMDRegister<float> LossyIntegrator::processAudioSample(dsp::SIMDRegister<float> xn)
 {
-    float hpf = alpha0 * (xn - rho * integrator_z[0] - integrator_z[1]);
-    float bpf = alpha * hpf + integrator_z[0];
-    float lpf = alpha * bpf + integrator_z[1];
+    auto hpf = (xn - (integrator_z[0] * rho) - integrator_z[1]) * alpha0;
+    auto bpf = hpf * alpha + integrator_z[0];
+    auto lpf = bpf * alpha + integrator_z[1];
 
-    integrator_z[0] = alpha * hpf + bpf;
-    integrator_z[1] = alpha * bpf + lpf;
+    integrator_z[0] = hpf * alpha + bpf;
+    integrator_z[1] = bpf * alpha + lpf;
+
+    return lpf;
+}
+
+float LossyIntegrator::processAudioSample(float xn) {
+    auto hpf = (xn - (integrator_z[0][0] * rho) - integrator_z[1][0]) * alpha0;
+    auto bpf = hpf * alpha + integrator_z[0][0];
+    auto lpf = bpf * alpha + integrator_z[1][0];
+
+    integrator_z[0][0] = hpf * alpha + bpf;
+    integrator_z[1][0] = bpf * alpha + lpf;
 
     return lpf;
 }

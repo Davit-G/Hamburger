@@ -3,7 +3,6 @@
 #include <JuceHeader.h>
 
 #include "Distortions/SoftClipper.h"
-#include "Distortions/HardClip.h"
 #include "Distortions/PattyFuzz.h"
 #include "Distortions/Fuzz.h"
 #include "Distortions/Cooked.h"
@@ -25,7 +24,6 @@ public:
         jassert(distortionEnabled);
 
         softClipper = std::make_unique<SoftClip>(state);
-        hardClipper = std::make_unique<HardClip>(state);
         fold = std::make_unique<Cooked>(state);
         patty = std::make_unique<PattyFuzz>(state);
         fuzz = std::make_unique<Fuzz>(state);
@@ -42,6 +40,8 @@ public:
 
         if (distortionEnabled->get() == false)
             return;
+        
+        auto context = dsp::ProcessContextReplacing<float>(block);
 
         switch (distoTypeIndex)
         {
@@ -55,7 +55,7 @@ public:
             patty->processBlock(block);
             fuzz->processBlock(block);
             softClipper->processBlock(block);
-            iirFilter.process(dsp::ProcessContextReplacing<float>(block)); // hpf afterwards to remove bias
+            iirFilter.process(context); // hpf afterwards to remove bias
             // TRACE_EVENT_END("dsp", "classic");
             break;
         }
@@ -82,9 +82,7 @@ public:
 
     void prepare(dsp::ProcessSpec& spec)
     {
-        setSampleRate(sampleRate);
         softClipper->prepare(spec);
-        hardClipper->prepare(spec);
         fold->prepare(spec);
         patty->prepare(spec);
         fuzz->prepare(spec);
@@ -92,9 +90,11 @@ public:
         tubeAmp->prepare(spec);
 
         // init iir filter
-        *iirFilter.state = *dsp::IIR::Coefficients<float>::makeHighPass(sampleRate, 5.0f, 0.707f);
-
+        iirFilter.reset();
+        *iirFilter.state = *dsp::IIR::Coefficients<float>::makeHighPass(spec.sampleRate, 5.0f, 0.707f);
         iirFilter.prepare(spec);
+
+        setSampleRate(spec.sampleRate);
     }
 
     void setSampleRate(float newSampleRate)
@@ -109,7 +109,6 @@ private:
     juce::AudioParameterBool *distortionEnabled;
 
     std::unique_ptr<SoftClip> softClipper = nullptr;
-    std::unique_ptr<HardClip> hardClipper = nullptr;
     std::unique_ptr<Cooked> fold = nullptr;
     std::unique_ptr<PattyFuzz> patty = nullptr;
     std::unique_ptr<Fuzz> fuzz = nullptr;

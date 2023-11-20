@@ -68,16 +68,19 @@ float Curves::computeUpwardsDownwardsGain(float x, float upperThres, float lower
         lowerThres = a;
     }
 
+    // 2 * abs(x - lowerThres)
+    float b = 2 * abs(x - lowerThres);
+
     if (2 * (x - upperThres) > knee) {
         // line above knee for top part
         output = upperThres + (x - upperThres) / upperR;
     } else if (2 * (abs(x - upperThres)) <= knee) {
         // top knee
         output = x + ((1 / upperR - 1) * pow(x - upperThres + (knee * 0.5f), 2.0f)) / (2.0f * knee);
-    } else if (2 * abs(x - lowerThres) <= knee) {
+    } else if (b <= knee) {
         // bottom knee
         output = x + ((1 - 1 / lowerR) * pow(x - lowerThres - (knee * 0.5f), 2.0f)) / (2.0f * knee);
-    } else if (2 * abs(x - lowerThres) < - knee) {
+    } else if (b < -knee) {
         // line on bottom knee
         output = lowerThres + (x - lowerThres) / lowerR;
     // } else if (knee / 2 + lowerThres < x && x < (-knee / 2) + upperThres) {

@@ -278,8 +278,6 @@ void AudioPluginAudioProcessor::prepareToPlay(double sampleRate, int samplesPerB
     noiseDistortionSelection.prepare(spec);
 
     dynamics.prepare(spec);
-
-    distortionTypeSelection.prepare(spec);
 }
 
 void AudioPluginAudioProcessor::releaseResources()

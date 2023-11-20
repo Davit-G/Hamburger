@@ -32,6 +32,8 @@ private:
     float jitterOffsetL = 0.0f;
     float jitterOffsetR = 0.0f;
 
+    float oldDownsample = 1.0f;
+
     double sampleRate = 44100.0;
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Redux)
 };

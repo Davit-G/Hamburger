@@ -148,7 +148,11 @@ FetchContent_Declare (melatonin_perfetto
 
 FetchContent_MakeAvailable (melatonin_perfetto)
 
+FetchContent_Declare (xsimd 
+    GIT_REPOSITORY https://github.com/xtensor-stack/xsimd.git
+    GIT_TAG origin/master)
 
+FetchContent_MakeAvailable (xsimd)
 
 
 # `target_link_libraries` links libraries and JUCE modules to other libraries or executables. Here,
@@ -164,6 +168,7 @@ target_link_libraries("${BaseTargetName}"
         juce::juce_audio_utils
         "${BaseTargetName}BinaryData"
         Melatonin::Perfetto
+        xsimd
     PUBLIC
         juce::juce_recommended_config_flags
         juce::juce_recommended_lto_flags

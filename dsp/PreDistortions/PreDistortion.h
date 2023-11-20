@@ -18,12 +18,15 @@ public:
     void processBlock(dsp::AudioBlock<float>& block) {
         int distoTypeIndex = distoType->getIndex();
 
+        
+
         if (preDistortionEnabled->get() == false) return;
 
         switch (distoTypeIndex)
         {
         case 0: // AllPass Chain
             allPassChain->processBlock(block);
+            // simdAllPass->processBlock(block);
             break;
         case 1:
             break;
@@ -38,6 +41,7 @@ public:
 
     void prepare(dsp::ProcessSpec& spec) {
         allPassChain->prepare(spec);
+        // simdAllPass->prepare(spec);
     }
 
     void setSampleRate(float newSampleRate) { 
@@ -49,6 +53,7 @@ private:
     juce::AudioParameterChoice *distoType = nullptr;
 
     std::unique_ptr<AllPassChain> allPassChain;
+    // std::unique_ptr<SIMDAllPassChain> simdAllPass;
 
     juce::AudioParameterBool* preDistortionEnabled = nullptr;
 
