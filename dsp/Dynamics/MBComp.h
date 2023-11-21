@@ -7,9 +7,9 @@
 class MBComp
 {
 public:
-    MBComp(juce::AudioProcessorValueTreeState &state) : compressor1(state, CompressionType::UPWARDS_DOWNWARDS),
-                                                        compressor2(state, CompressionType::UPWARDS_DOWNWARDS),
-                                                        compressor3(state, CompressionType::UPWARDS_DOWNWARDS),
+    MBComp(juce::AudioProcessorValueTreeState &state) : compressor1(CompressionType::COMPRESSOR),
+                                                        compressor2(CompressionType::COMPRESSOR),
+                                                        compressor3(CompressionType::COMPRESSOR),
                                                         threshold(state, "compThreshold"),
                                                         ratio(state, "compRatio"),
                                                         attack(state, "compAttack"),
@@ -26,34 +26,54 @@ public:
         ratio.update();
         threshold.update();
 
-        block.copyTo(lowBuffer);
-        block.copyTo(midBuffer);
-        block.copyTo(highBuffer);
+        for (int sample = 0; sample < block.getNumSamples(); sample++)
+        {
+            float leftSample = block.getSample(0, sample);
+            float rightSample = block.getSample(1, sample);
 
-        // low result
-        lowCrossOver.process(dsp::ProcessContextReplacing<float>(lowBlock)); // initial low end
-        midBlock.addProductOf(lowBlock, -1.f); // get everything except low end, give to mid block
-        highCrossOver.process(dsp::ProcessContextReplacing<float>(midBlock)); // get high end from mid block
-        highBlock.copyFrom(midBlock); // put high end into high block
-        midBlock.addProductOf(highBlock, -1.f); // set proper mid freqs
+            float lowResultL = lowCrossOver.processSample(0, leftSample);
+            float notLow = leftSample - lowResultL;
+            float highResultL = highCrossOver.processSample(0, notLow);
+            float midResultL = notLow - highResultL;
 
-        float atk = attack.get();
-        float rel = release.get();
-        float mkp = makeup.get();
-        float rat = ratio.get();
-        float thr = threshold.get();
+            float lowResultR = lowCrossOver.processSample(1, rightSample);
+            float midResultR = rightSample - lowResultR;
+            float highResultR = highCrossOver.processSample(1, midResultR);
+            midResultR = midResultR - highResultR;
 
-        compressor1.updateParameters(atk, rel, mkp, rat, thr + 2.f, 0.1f, 0.f);
-        compressor2.updateParameters(atk, rel, mkp, rat, thr, 0.1f, 0.f);
-        compressor3.updateParameters(atk, rel, mkp, rat, thr, 0.1f, 0.f);
+            lowBuffer.setSample(0, sample, lowResultL);
+            midBuffer.setSample(0, sample, midResultL);
+            highBuffer.setSample(0, sample, highResultL);
+            lowBuffer.setSample(1, sample, lowResultR);
+            midBuffer.setSample(1, sample, midResultR);
+            highBuffer.setSample(1, sample, highResultR);
+        }
+
+        float atk = attack.getRaw();
+        float rel = release.getRaw();
+        float mkp = makeup.getRaw();
+        float rat = ratio.getRaw();
+        float thr = threshold.getRaw();
+
+        // float atk, float rel, float mkp, float ratioLow, float ratioUp, float thresholdLow, float thresholdUp, float kneeW, float mkpDB)
+        compressor1.updateUpDown(atk, rel, mkp, rat, rat, thr, thr + 2.0f, 0.1f, 0.f);
+        compressor2.updateUpDown(atk, rel, mkp, rat, rat, thr, thr + 2.0f, 0.1f, 0.f);
+        compressor3.updateUpDown(atk, rel, mkp, rat, rat, thr, thr + 2.0f, 0.1f, 0.f);
         
         compressor1.processBlock(lowBlock);
         compressor2.processBlock(midBlock);
         compressor3.processBlock(highBlock);
 
-        block.copyFrom(lowBlock);
-        block.addProductOf(midBlock, 1.0f);
-        block.addProductOf(highBlock, 1.0f);
+        for (int sample = 0; sample < block.getNumSamples(); sample++) {
+            block.setSample(0, sample, 
+                lowBuffer.getSample(0, sample) + 
+                midBuffer.getSample(0, sample) + 
+                highBuffer.getSample(0, sample));
+            block.setSample(1, sample, 
+                lowBuffer.getSample(1, sample) + 
+                midBuffer.getSample(1, sample) + 
+                highBuffer.getSample(1, sample));
+        }
     }
 
     void prepare(dsp::ProcessSpec &spec)

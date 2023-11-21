@@ -40,7 +40,7 @@ void Sizzle::processBlock(dsp::AudioBlock<float>& block) {
 	for (int sample = 0; sample < block.getNumSamples(); sample++) {
 		float nextSizzle = noiseAmount.getNextValue() * 0.01f;
 
-		float envelope = envelopeDetector.processSampleStereo(leftDryData[sample], rightDryData[sample]);
+		float envelope = juce::Decibels::decibelsToGain(envelopeDetector.processSampleStereo(leftDryData[sample], rightDryData[sample]));
 
 		rightDryData[sample] = newSizzleFunction(rightDryData[sample], nextSizzle, envelope);
 		leftDryData[sample] = newSizzleFunction(leftDryData[sample], nextSizzle, envelope);

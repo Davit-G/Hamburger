@@ -65,9 +65,9 @@ public:
                                     numSamples);
 
         dsp::ProcessContextReplacing<dsp::SIMDRegister<float>> context2 (interleaved);
-        for (int i = 0; i < amount; i++) {
-            iir[i].process(context2);
-        }
+        // for (int i = 0; i < amount; i++) {
+        //     iir[i].process(context2);
+        // }
 
         auto outChannels = prepareChannelPointers (context.getOutputBlock());
 

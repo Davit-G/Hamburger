@@ -8,8 +8,8 @@ public:
 	EnvelopeFollower(bool log) {
 		useLog = log;
 
-		setAttackTime(3);
-    	setReleaseTime(3);
+		setAttackTime(50);
+    	setReleaseTime(500);
 	}
 
 	~EnvelopeFollower() {}
@@ -23,7 +23,7 @@ public:
 	{
 		if (attackTime_mSec != attack_in_ms) { // saving performance
 			attackTime_mSec = attack_in_ms;
-			attackTime = expf(AUDIO_ENVELOPE_ANALOG_TC / (attack_in_ms * sampleRate * 0.001f));
+			attackTime = exp(AUDIO_ENVELOPE_ANALOG_TC / (attack_in_ms * sampleRate * 0.001f));
 		}
 	}
 
@@ -31,7 +31,7 @@ public:
 	{
 		if (releaseTime_mSec != release_in_ms) { // saving performance
 			releaseTime_mSec = release_in_ms;
-			releaseTime = expf(AUDIO_ENVELOPE_ANALOG_TC / (release_in_ms * sampleRate * 0.001f));
+			releaseTime = exp(AUDIO_ENVELOPE_ANALOG_TC / (release_in_ms * sampleRate * 0.001f));
 		}
 	}
 	
@@ -54,6 +54,6 @@ private:
 	float lastEnvelope;
 	float sampleRate;
 
-	// const double AUDIO_ENVELOPE_ANALOG_TC_DOUBLE = -0.99967234081320612357829304641019; // ln(36.7%)
+	const double AUDIO_ENVELOPE_ANALOG_TC_DOUBLE = -0.99967234081320612357829304641019; // ln(36.7%)
 	const float AUDIO_ENVELOPE_ANALOG_TC = -0.99967234081320612357829304641019f; // ln(36.7%)
 };

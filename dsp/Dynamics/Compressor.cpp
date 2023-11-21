@@ -18,7 +18,7 @@ void Compressor::processBlock(dsp::AudioBlock<float>& dryBuffer)
         float rightSample = dryBuffer.getSample(1, sample);
 
         // TRACE_EVENT_BEGIN("dsp", "envelope.processSampleStereo");
-        auto envelopeVal = envelope.processSampleStereo(leftSample, rightSample);
+        float envelopeVal = envelope.processSampleStereo(leftSample, rightSample);
         // TRACE_EVENT_END("dsp");
         float gain = 0.0f;
 
@@ -32,16 +32,18 @@ void Compressor::processBlock(dsp::AudioBlock<float>& dryBuffer)
             gain = Curves::computeCompressorGain(envelopeVal, thresholdLower, ratioLower, kneeWidth);
             break;
         case UPWARDS_DOWNWARDS:
-            gain = Curves::computeUpwardsDownwardsGain(envelopeVal, thresholdLower, thresholdUpper, ratioLower, ratioUpper, kneeWidth);
+            gain = Curves::computeUpwardsDownwardsGain(envelopeVal, thresholdUpper, thresholdLower, ratioUpper, ratioLower, kneeWidth);
             break;
         }
         // TRACE_EVENT_END("dsp");
 
         // TRACE_EVENT_BEGIN("dsp", "apply gain");
-        dryBuffer.setSample(0, sample, leftSample * gain * makeupGain);
-        dryBuffer.setSample(1, sample, rightSample * gain * makeupGain);
+        dryBuffer.setSample(0, sample, leftSample * gain);
+        dryBuffer.setSample(1, sample, rightSample * gain);
         // TRACE_EVENT_END("dsp");
     }
+
+    dryBuffer.multiplyBy(makeupGain);
 }
 
 void Compressor::updateParameters(float atk, float rel, float mkp, float rat, float thres, float knee, float mkpDB)
@@ -61,7 +63,7 @@ void Compressor::updateParameters(float atk, float rel, float mkp, float rat, fl
     TRACE_EVENT_END("dsp");
 }
 
-void Compressor::updateParameters(float atk, float rel, float mkp, float ratioLower, float ratioUpper, float thresholdLower, float thresholdUpper, float knee, float mkpDB)
+void Compressor::updateUpDown(float atk, float rel, float mkp, float ratioLow, float ratioUp, float thresholdLow, float thresholdUp, float kneeW, float mkpDB)
 {
     TRACE_EVENT_BEGIN("dsp", "Compressor::updateParameters");
     envelope.setAttackTime(atk);
@@ -69,11 +71,11 @@ void Compressor::updateParameters(float atk, float rel, float mkp, float ratioLo
     this->attack = atk;
     this->release = rel;
     this->makeup = mkp;
-    this->ratioLower = ratioLower;
-    this->ratioUpper = ratioUpper;
-    this->thresholdLower = thresholdLower;
-    this->thresholdUpper = thresholdUpper;
-    this->kneeWidth = knee;
+    this->ratioLower = ratioLow;
+    this->ratioUpper = ratioUp;
+    this->thresholdLower = thresholdLow;
+    this->thresholdUpper = thresholdUp;
+    this->kneeWidth = kneeW;
     this->makeup_dB = mkp;
     TRACE_EVENT_END("dsp");
 }

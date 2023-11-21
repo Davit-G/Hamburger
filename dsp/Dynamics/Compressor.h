@@ -13,11 +13,11 @@ enum CompressionType {
 class Compressor
 {
 public:
-    Compressor(juce::AudioProcessorValueTreeState &state, CompressionType ctype) : type(ctype), envelope(true) {}
+    Compressor(CompressionType ctype) : type(ctype), envelope(true) {}
     
     ~Compressor(){}
 
-    void updateParameters(float attack, float release, float makeup, float ratioLower, float ratioUpper, float thresholdLower, float thresholdUpper, float kneeWidth, float makeup_dB);
+    void updateUpDown(float attack, float release, float makeup, float ratioLower, float ratioUpper, float thresholdLower, float thresholdUpper, float kneeWidth, float makeup_dB);
     void updateParameters(float attack, float release, float makeup, float ratio, float threshold, float kneeWidth, float makeup_dB);
 
     void processBlock(dsp::AudioBlock<float>& dryBuffer);

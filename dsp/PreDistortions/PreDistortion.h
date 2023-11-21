@@ -25,7 +25,7 @@ public:
         switch (distoTypeIndex)
         {
         case 0: // AllPass Chain
-            allPassChain->processBlock(block);
+            // allPassChain->processBlock(block);
             // simdAllPass->processBlock(block);
             break;
         case 1:
