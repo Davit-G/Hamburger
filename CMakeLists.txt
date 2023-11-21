@@ -154,6 +154,14 @@ FetchContent_Declare (xsimd
 
 FetchContent_MakeAvailable (xsimd)
 
+FetchContent_Declare (VS_JUST_MY_CODE_DEBUGGING 
+GIT_REPOSITORY https://github.com/xtensor-stack/xsimd.git
+GIT_TAG origin/master)
+
+FetchContent_MakeAvailable (xsimd)
+
+
+
 
 # `target_link_libraries` links libraries and JUCE modules to other libraries or executables. Here,
 # we're linking our executable target to the `juce::juce_audio_utils` module. Inter-module

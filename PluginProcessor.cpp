@@ -393,45 +393,42 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
     // i'd like to believe that changing the oversampling type mid-calculation will not affect it,
     // as long as it doesnt happen after this line and before the line where the oversampling is processed down again
 
-    int oversampleAmount = oversamplingFactor->getIndex();
+    // int oversampleAmount = oversamplingFactor->getIndex();
 
-    int newSamplingRate = getSampleRate() * pow(2, oversampleAmount);
+    // int newSamplingRate = getSampleRate() * pow(2, oversampleAmount);
     {
         TRACE_EVENT("dsp", "oversampling config");
 
-        dryWetMixer.setWetLatency(oversamplingStack.getLatencySamples());
+        // dryWetMixer.setWetLatency(oversamplingStack.getLatencySamples());
 
-        oversamplingStack.setOversamplingFactor(oversampleAmount);
-        if (oldOversamplingFactor != oversampleAmount)
-        {
-            // DBG("Oversampling changed to " << oversampleAmount);
-            oldOversamplingFactor = oversampleAmount;
-            setLatencySamples(oversamplingStack.getLatencySamples());
-        }
+        // oversamplingStack.setOversamplingFactor(oversampleAmount);
+        // if (oldOversamplingFactor != oversampleAmount)
+        // {
+        //     // DBG("Oversampling changed to " << oversampleAmount);
+        //     oldOversamplingFactor = oversampleAmount;
+        //     setLatencySamples(oversamplingStack.getLatencySamples());
+        // }
     }
 
     {
         TRACE_EVENT("dsp", "noise distortion");
-        noiseDistortionSelection.setSampleRate(getSampleRate());
         noiseDistortionSelection.processBlock(block); // TODO: make order changer thingy
     }
 
-    dsp::AudioBlock<float> oversampledBlock = oversamplingStack.processSamplesUp(block);
+    // dsp::AudioBlock<float> oversampledBlock = oversamplingStack.processSamplesUp(block);
 
     {
         TRACE_EVENT("dsp", "pre distortion");
-        preDistortionSelection.setSampleRate(newSamplingRate);
-        preDistortionSelection.processBlock(oversampledBlock);
+        preDistortionSelection.processBlock(block);
     }
 
     {
         TRACE_EVENT("dsp", "primary distortion");
-        distortionTypeSelection.setSampleRate(newSamplingRate);
-        distortionTypeSelection.processBlock(oversampledBlock);
+        distortionTypeSelection.processBlock(block);
     }
 
     // oversampling
-    oversamplingStack.processSamplesDown(block);
+    // oversamplingStack.processSamplesDown(block);
 
     // tone with filter
     // here goes the second emphasis EQ before the expander

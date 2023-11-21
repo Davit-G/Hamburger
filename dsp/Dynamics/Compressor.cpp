@@ -46,6 +46,35 @@ void Compressor::processBlock(dsp::AudioBlock<float>& dryBuffer)
     dryBuffer.multiplyBy(makeupGain);
 }
 
+float Compressor::processOneSampleGainStereo(float sampleL, float sampleR)
+{
+    TRACE_DSP();
+    float makeupGain = juce::Decibels::decibelsToGain(makeup_dB);
+    float leftSample = sampleL;
+    float rightSample = sampleR;
+
+    // TRACE_EVENT_BEGIN("dsp", "envelope.processSampleStereo");
+    float envelopeVal = envelope.processSampleStereo(leftSample, rightSample);
+    // TRACE_EVENT_END("dsp");
+    float gain = 0.0f;
+
+    // TRACE_EVENT_BEGIN("dsp", "compute different gain types");
+    switch (type)
+    {
+    case EXPANDER:
+        gain = Curves::computeExpanderGain(envelopeVal, ratioLower, kneeWidth);
+        break;
+    case COMPRESSOR:
+        gain = Curves::computeCompressorGain(envelopeVal, thresholdLower, ratioLower, kneeWidth);
+        break;
+    case UPWARDS_DOWNWARDS:
+        gain = Curves::computeUpwardsDownwardsGain(envelopeVal, thresholdUpper, thresholdLower, ratioUpper, ratioLower, kneeWidth);
+        break;
+    }
+    
+    return gain * makeupGain;
+}
+
 void Compressor::updateParameters(float atk, float rel, float mkp, float rat, float thres, float knee, float mkpDB)
 {
     TRACE_EVENT_BEGIN("dsp", "Compressor::updateParameters");

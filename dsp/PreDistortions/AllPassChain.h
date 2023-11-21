@@ -43,10 +43,11 @@ public:
         float freq = allPassFrequency.getRaw();
         float q = allPassQ.getRaw();
 
+        interleaved = dsp::AudioBlock<dsp::SIMDRegister<float>>(interleavedBlockData, 1, block.getNumSamples());
 
         auto context = dsp::ProcessContextReplacing<float>(block);
         const auto& input  = context.getInputBlock();
-        const auto numSamples = (int) block.getNumSamples();
+        auto numSamples = (int) block.getNumSamples();
         
         auto inChannels = prepareChannelPointers (input);
         
@@ -63,11 +64,12 @@ public:
         AudioData::interleaveSamples(AudioData::NonInterleavedSource<Format> { inChannels.data(),                                 registerSize, },
                                     AudioData::InterleavedDest<Format>      { toBasePointer (interleaved.getChannelPointer (0)), registerSize },
                                     numSamples);
-
-        dsp::ProcessContextReplacing<dsp::SIMDRegister<float>> context2 (interleaved);
-        // for (int i = 0; i < amount; i++) {
-        //     iir[i].process(context2);
-        // }
+        
+        dsp::ProcessContextReplacing<dsp::SIMDRegister<float>> newCtx (interleaved);
+        
+        for (int i = 0; i < amount; i++) {
+            iir[i].process(newCtx);
+        }
 
         auto outChannels = prepareChannelPointers (context.getOutputBlock());
 

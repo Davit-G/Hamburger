@@ -26,6 +26,17 @@ public:
         ratio.update();
         threshold.update();
 
+        float atk = attack.getRaw();
+        float rel = release.getRaw();
+        float mkp = makeup.getRaw();
+        float rat = ratio.getRaw();
+        float thr = threshold.getRaw();
+
+        // float atk, float rel, float mkp, float ratioLow, float ratioUp, float thresholdLow, float thresholdUp, float kneeW, float mkpDB)
+        compressor1.updateUpDown(atk, rel, mkp, rat, rat, thr, thr + 2.0f, 0.1f, 0.f);
+        compressor2.updateUpDown(atk, rel, mkp, rat, rat, thr, thr + 2.0f, 0.1f, 0.f);
+        compressor3.updateUpDown(atk, rel, mkp, rat, rat, thr, thr + 2.0f, 0.1f, 0.f);
+
         for (int sample = 0; sample < block.getNumSamples(); sample++)
         {
             float leftSample = block.getSample(0, sample);
@@ -39,39 +50,21 @@ public:
             float highResultR = highCrossOver.processSample(1, rightSample);
             float midResultR = rightSample - lowResultR - highResultR;
 
-            lowBuffer.setSample(0, sample, lowResultL);
-            midBuffer.setSample(0, sample, midResultL);
-            highBuffer.setSample(0, sample, highResultL);
-            lowBuffer.setSample(1, sample, lowResultR);
-            midBuffer.setSample(1, sample, midResultR);
-            highBuffer.setSample(1, sample, highResultR);
+            float lowGain = compressor1.processOneSampleGainStereo(lowResultL, lowResultR);
+            float midGain = compressor2.processOneSampleGainStereo(midResultL, midResultR);
+            float highGain = compressor3.processOneSampleGainStereo(highResultL, highResultR);
+
+            lowBuffer.setSample(0, sample, lowResultL * lowGain);
+            midBuffer.setSample(0, sample, midResultL * midGain);
+            highBuffer.setSample(0, sample, highResultL * highGain);
+            lowBuffer.setSample(1, sample, lowResultR * lowGain);
+            midBuffer.setSample(1, sample, midResultR * midGain);
+            highBuffer.setSample(1, sample, highResultR * highGain);
         }
 
-        float atk = attack.getRaw();
-        float rel = release.getRaw();
-        float mkp = makeup.getRaw();
-        float rat = ratio.getRaw();
-        float thr = threshold.getRaw();
-
-        // float atk, float rel, float mkp, float ratioLow, float ratioUp, float thresholdLow, float thresholdUp, float kneeW, float mkpDB)
-        compressor1.updateUpDown(atk, rel, mkp, rat, rat, thr, thr + 2.0f, 0.1f, 0.f);
-        compressor2.updateUpDown(atk, rel, mkp, rat, rat, thr, thr + 2.0f, 0.1f, 0.f);
-        compressor3.updateUpDown(atk, rel, mkp, rat, rat, thr, thr + 2.0f, 0.1f, 0.f);
-        
-        compressor1.processBlock(lowBlock);
-        compressor2.processBlock(midBlock);
-        compressor3.processBlock(highBlock);
-
-        for (int sample = 0; sample < block.getNumSamples(); sample++) {
-            block.setSample(0, sample, 
-                lowBuffer.getSample(0, sample) + 
-                midBuffer.getSample(0, sample) + 
-                highBuffer.getSample(0, sample));
-            block.setSample(1, sample, 
-                lowBuffer.getSample(1, sample) + 
-                midBuffer.getSample(1, sample) + 
-                highBuffer.getSample(1, sample));
-        }
+        block.copyFrom(lowBlock);
+        block.addProductOf(midBlock, 1.0f);
+        block.addProductOf(highBlock, 1.0f);
     }
 
     void prepare(dsp::ProcessSpec &spec)

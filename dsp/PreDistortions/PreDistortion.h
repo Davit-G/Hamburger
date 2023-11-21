@@ -3,6 +3,7 @@
 #include <JuceHeader.h>
 
 #include "./AllPassChain.h"
+#include "./SIMDAllPassChain.h"
 
 class PreDistortion
 {
@@ -12,6 +13,7 @@ public:
         preDistortionEnabled = dynamic_cast<juce::AudioParameterBool *>(state.getParameter("preDistortionEnabled")); jassert(preDistortionEnabled);
 
         allPassChain = std::make_unique<AllPassChain>(state);
+        // simdAllPass = std::make_unique<SIMDAllPassChain>(state);
     }
     ~PreDistortion() {}
 
@@ -25,7 +27,7 @@ public:
         switch (distoTypeIndex)
         {
         case 0: // AllPass Chain
-            // allPassChain->processBlock(block);
+            allPassChain->processBlock(block);
             // simdAllPass->processBlock(block);
             break;
         case 1:

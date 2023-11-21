@@ -1,6 +1,9 @@
 #pragma once
 #include <Juceheader.h>
 #include "../SmoothParam.h"
+#include <cmath>
+
+// broken code do not touch
 
 using Float = dsp::SIMDRegister<float>;
 

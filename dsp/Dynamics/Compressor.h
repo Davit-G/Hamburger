@@ -21,6 +21,7 @@ public:
     void updateParameters(float attack, float release, float makeup, float ratio, float threshold, float kneeWidth, float makeup_dB);
 
     void processBlock(dsp::AudioBlock<float>& dryBuffer);
+    float processOneSampleGainStereo(float sampleL, float sampleR);
 
     void prepare(dsp::ProcessSpec& spec);
 
