@@ -32,14 +32,12 @@ public:
             float rightSample = block.getSample(1, sample);
 
             float lowResultL = lowCrossOver.processSample(0, leftSample);
-            float notLow = leftSample - lowResultL;
-            float highResultL = highCrossOver.processSample(0, notLow);
-            float midResultL = notLow - highResultL;
+            float highResultL = highCrossOver.processSample(0, leftSample);
+            float midResultL = leftSample - lowResultL - highResultL;
 
             float lowResultR = lowCrossOver.processSample(1, rightSample);
-            float midResultR = rightSample - lowResultR;
-            float highResultR = highCrossOver.processSample(1, midResultR);
-            midResultR = midResultR - highResultR;
+            float highResultR = highCrossOver.processSample(1, rightSample);
+            float midResultR = rightSample - lowResultR - highResultR;
 
             lowBuffer.setSample(0, sample, lowResultL);
             midBuffer.setSample(0, sample, midResultL);
