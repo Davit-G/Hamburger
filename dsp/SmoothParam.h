@@ -12,7 +12,7 @@ public:
     }
 
     void prepare(dsp::ProcessSpec& spec) {
-        smoothedParam.reset(spec.sampleRate, 0.1);
+        smoothedParam.reset(spec.sampleRate, 0.05);
         smoothedParam.setCurrentAndTargetValue(param->get());
     }
 
@@ -34,5 +34,5 @@ public:
 
 private:
     juce::AudioParameterFloat *param = nullptr;
-    juce::SmoothedValue<float, juce::ValueSmoothingTypes::Linear> smoothedParam;
+    juce::SmoothedValue<float, juce::ValueSmoothingTypes::Multiplicative> smoothedParam;
 };

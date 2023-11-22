@@ -52,9 +52,8 @@ public:
         auto inChannels = prepareChannelPointers (input);
         
         if (!((oldAllPassFreq == freq) && (oldAllPassQ == q) && (oldAllPassAmount == amount))) {
-            iirCoefficients = dsp::IIR::Coefficients<float>::makeAllPass(oldSampleRate, freq, q);
             for (int i = 0; i < amount; i++) {
-                *iir[i].state = *iirCoefficients;
+                *iir[i].state = dsp::IIR::ArrayCoefficients<float>::makeAllPass(oldSampleRate, allPassFrequency.getRaw(), allPassQ.getRaw());
             }
             oldAllPassFreq = freq;
             oldAllPassQ = q;
@@ -85,11 +84,10 @@ public:
         allPassAmount.prepare(spec);
 
         // new SIMD stuff
-        iirCoefficients = dsp::IIR::Coefficients<float>::makeAllPass(spec.sampleRate, allPassFrequency.getRaw(), allPassQ.getRaw());
         for (int i = 0; i < 50; i++) {
             // iir[i].reset(new dsp::IIR::Filter<dsp::SIMDRegister<float>>(iirCoefficients));
             iir[i].reset();
-            *iir[i].state = *iirCoefficients;
+            *iir[i].state = dsp::IIR::ArrayCoefficients<float>::makeAllPass(spec.sampleRate, allPassFrequency.getRaw(), allPassQ.getRaw());;
         }
 
         interleaved = dsp::AudioBlock<dsp::SIMDRegister<float>>(interleavedBlockData, 1, spec.maximumBlockSize);
@@ -122,9 +120,7 @@ private:
     float oldSampleRate;
 
 
-    // new SIMD stuff
-
-    dsp::IIR::Coefficients<float>::Ptr iirCoefficients;                 // [1]
+    // new SIMD stuff             // [1]
     // std::unique_ptr<dsp::IIR::Filter<dsp::SIMDRegister<float>>> iir[50];
     // std::unique_ptr<dsp::IIR::Filter<float>> iir[50];
     dsp::ProcessorDuplicator<dsp::IIR::Filter<dsp::SIMDRegister<float>>, dsp::IIR::Coefficients<float>> iir[50];

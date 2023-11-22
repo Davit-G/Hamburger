@@ -32,6 +32,9 @@ private:
     float jitterOffsetL = 0.0f;
     float jitterOffsetR = 0.0f;
 
+    float heldSampleL = 0.0f;
+    float heldSampleR = 0.0f;
+
     float oldDownsample = 1.0f;
 
     double sampleRate = 44100.0;

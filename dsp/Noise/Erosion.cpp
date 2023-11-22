@@ -12,7 +12,7 @@ TRACE_EVENT("dsp", "Erosion::processBlock");
 
     for (int i = 0; i < block.getNumSamples(); i++) {
         delayLine.pushSample(0, block.getSample(0, i));
-        delayLine.pushSample(1, block.getSample(0, i));
+        delayLine.pushSample(1, block.getSample(1, i));
     }
 
     // get the current value of the saturation knob to figure out how much to multiply a random value by
