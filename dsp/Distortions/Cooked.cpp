@@ -39,4 +39,4 @@ void Cooked::processBlock(dsp::AudioBlock<float>& block) {
 			leftDryData[sample] = (4 * (abs(0.25*x + 0.25 - round(0.25*x + 0.25)) - 0.25));
 		}
 	}
-}
+};

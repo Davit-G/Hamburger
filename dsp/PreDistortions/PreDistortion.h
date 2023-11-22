@@ -4,6 +4,7 @@
 
 #include "./AllPassChain.h"
 // #include "./SIMDAllPassChain.h"
+#include "SVFAllPassChain.h"
 
 class PreDistortion
 {
@@ -13,6 +14,7 @@ public:
         preDistortionEnabled = dynamic_cast<juce::AudioParameterBool *>(state.getParameter("preDistortionEnabled")); jassert(preDistortionEnabled);
 
         allPassChain = std::make_unique<AllPassChain>(state);
+        svfAllPass = std::make_unique<SVFAllPassChain>(state);
         // simdAllPass = std::make_unique<SIMDAllPassChain>(state);
     }
     ~PreDistortion() {}
@@ -27,8 +29,9 @@ public:
         switch (distoTypeIndex)
         {
         case 0: // AllPass Chain
-            allPassChain->processBlock(block);
+            // allPassChain->processBlock(block);
             // simdAllPass->processBlock(block);
+            svfAllPass->processBlock(block);
             break;
         case 1:
             break;
@@ -43,6 +46,7 @@ public:
 
     void prepare(dsp::ProcessSpec& spec) {
         allPassChain->prepare(spec);
+        svfAllPass->prepare(spec);
         // simdAllPass->prepare(spec);
     }
 
@@ -55,6 +59,7 @@ private:
     juce::AudioParameterChoice *distoType = nullptr;
 
     std::unique_ptr<AllPassChain> allPassChain;
+    std::unique_ptr<SVFAllPassChain> svfAllPass;
     // std::unique_ptr<SIMDAllPassChain> simdAllPass;
 
     juce::AudioParameterBool* preDistortionEnabled = nullptr;

@@ -20,6 +20,10 @@ public:
         smoothedParam.setTargetValue(param->get());
     }
 
+    void updateFloored() {
+        smoothedParam.setTargetValue(floor(param->get()));
+    }
+    
     float getNextValue() {
         return smoothedParam.getNextValue();
     }
@@ -34,5 +38,5 @@ public:
 
 private:
     juce::AudioParameterFloat *param = nullptr;
-    juce::SmoothedValue<float, juce::ValueSmoothingTypes::Multiplicative> smoothedParam;
+    juce::SmoothedValue<float, juce::ValueSmoothingTypes::Linear> smoothedParam; // dont use multiply it leads to audio glitches
 };
