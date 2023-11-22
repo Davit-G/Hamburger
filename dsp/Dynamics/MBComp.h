@@ -42,13 +42,20 @@ public:
             float leftSample = block.getSample(0, sample);
             float rightSample = block.getSample(1, sample);
 
-            float lowResultL = lowCrossOver.processSample(0, leftSample);
-            float highResultL = highCrossOver.processSample(0, leftSample);
-            float midResultL = leftSample - lowResultL - highResultL;
+            float lowResultL = 0.0f;
+            float notLowL = 0.0f;
+            lowCrossOver.processSample(0, leftSample, lowResultL, notLowL);
+            float midResultL = 0.0f;
+            float highResultL = 0.0f;
+            highCrossOver.processSample(0, notLowL, midResultL, highResultL);
 
-            float lowResultR = lowCrossOver.processSample(1, rightSample);
-            float highResultR = highCrossOver.processSample(1, rightSample);
-            float midResultR = rightSample - lowResultR - highResultR;
+
+            float lowResultR = 0.0f;
+            float notLowR = 0.0f;
+            lowCrossOver.processSample(1, rightSample, lowResultR, notLowR);
+            float midResultR = 0.0f;
+            float highResultR = 0.0f;
+            highCrossOver.processSample(1, notLowR, midResultR, highResultR);
 
             float lowGain = compressor1.processOneSampleGainStereo(lowResultL, lowResultR);
             float midGain = compressor2.processOneSampleGainStereo(midResultL, midResultR);
@@ -73,8 +80,8 @@ public:
         compressor2.prepare(spec);
         compressor3.prepare(spec);
 
-        lowCrossOver.setCutoffFrequency(500.0f);
-        highCrossOver.setCutoffFrequency(2500.0f);
+        lowCrossOver.setCutoffFrequency(200.0f);
+        highCrossOver.setCutoffFrequency(3000.0f);
         lowCrossOver.setType(dsp::LinkwitzRileyFilterType::lowpass);
         highCrossOver.setType(dsp::LinkwitzRileyFilterType::highpass);
         lowCrossOver.prepare(spec);

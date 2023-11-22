@@ -269,9 +269,9 @@ void AudioPluginAudioProcessor::prepareToPlay(double sampleRate, int samplesPerB
 
     oversamplingStack.prepare(spec);
 
-    float totalLatency = oversamplingStack.getLatencySamples();
-    // DBG("Total Latency: " << totalLatency);
-    setLatencySamples((int)std::ceil(totalLatency));
+    // float totalLatency = oversamplingStack.getLatencySamples();
+    // // DBG("Total Latency: " << totalLatency);
+    // setLatencySamples((int)std::ceil(totalLatency));
 
     preDistortionSelection.prepare(spec);
     distortionTypeSelection.prepare(spec);

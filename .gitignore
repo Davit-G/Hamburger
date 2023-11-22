@@ -6,3 +6,5 @@ cmake-build-debug
 .DS_Store
 .git
 JUCE
+
+*.bat
