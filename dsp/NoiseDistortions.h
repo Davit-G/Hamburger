@@ -42,7 +42,7 @@ public:
             }
         case 1: // erosion
             { TRACE_EVENT("dsp", "erosion");
-            erosion->processBlock(block, sampleRate);
+            erosion->processBlock(block);
             break;
             }
         case 2: // downsampling

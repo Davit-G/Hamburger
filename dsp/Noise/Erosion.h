@@ -16,7 +16,7 @@ public:
     
     ~Erosion() {}
 
-    void processBlock(dsp::AudioBlock<float>& block, double sampleRate);
+    void processBlock(dsp::AudioBlock<float>& block);
     void prepare(dsp::ProcessSpec& spec);
 
 private:
@@ -28,14 +28,11 @@ private:
     dsp::DelayLine<float, dsp::DelayLineInterpolationTypes::Linear> delayLine;
 
     // iir filter
-    dsp::ProcessorDuplicator<dsp::IIR::Filter<float>, dsp::IIR::Coefficients<float>> iirFilter;
+    // juce::dsp::IIR::Filter<float> iirFilter;
+    dsp::IIR::Filter<float> iirFilter;
 
     // noise generator
     juce::Random random;
-
-    // random noise buffer
-    AudioBuffer<float> randomBuffer;
-    dsp::AudioBlock<float> randomBlock;
 
     float oldSampleRate;
     float oldSamplesPerBlock;

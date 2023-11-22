@@ -261,8 +261,8 @@ void AudioPluginAudioProcessor::prepareToPlay(double sampleRate, int samplesPerB
     for (int i = 0; i < 3; i++)
     {
         // if (eqGainValue != prevEmphasis[i]) {    // TODOOOOOOOO
-        *peakFilterBefore[i].state = *dsp::IIR::Coefficients<float>::makePeakFilter(sampleRate, filterFrequencies[i], 0.5f, 0);
-        *peakFilterAfter[i].state = *dsp::IIR::Coefficients<float>::makePeakFilter(sampleRate, filterFrequencies[i], 0.5f, 0);
+        *peakFilterBefore[i].state = dsp::IIR::ArrayCoefficients<float>::makePeakFilter(sampleRate, filterFrequencies[i], 0.5f, 0);
+        *peakFilterAfter[i].state = dsp::IIR::ArrayCoefficients<float>::makePeakFilter(sampleRate, filterFrequencies[i], 0.5f, 0);
         // }
         prevEmphasis[i] = 0;
     }
@@ -343,6 +343,7 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
 
     TRACE_EVENT_BEGIN("dsp", "audio block from buffer");
     dsp::AudioBlock<float> block(buffer);
+    dsp::ProcessContextReplacing<float> context(block);
     TRACE_EVENT_END("dsp");
     // dry/wet
 
@@ -350,7 +351,7 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
     // Some computation here
     auto gainAmount = inputGainKnob->get();
     inputGain.setGainDecibels(gainAmount);
-    inputGain.process(juce::dsp::ProcessContextReplacing<float>(block));
+    inputGain.process(context);
 
     {
         TRACE_EVENT("dsp", "dry/wet push");
@@ -370,15 +371,15 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
             // DBG("EQ GAIN VALUE: " << eqGainValue);
             double grabbedSampleRate = getSampleRate();
             // if (eqGainValue != prevEmphasis[i]) {    // TODO: only update if changed
-            *peakFilterBefore[i].state = *dsp::IIR::Coefficients<float>::makePeakFilter(grabbedSampleRate, eqFreqValue, 0.5f, Decibels::decibelsToGain(-eqGainValue));
-            *peakFilterAfter[i].state = *dsp::IIR::Coefficients<float>::makePeakFilter(grabbedSampleRate, eqFreqValue, 0.5f, Decibels::decibelsToGain(eqGainValue));
+            *peakFilterBefore[i].state = dsp::IIR::ArrayCoefficients<float>::makePeakFilter(grabbedSampleRate, eqFreqValue, 0.5f, Decibels::decibelsToGain(-eqGainValue));
+            *peakFilterAfter[i].state = dsp::IIR::ArrayCoefficients<float>::makePeakFilter(grabbedSampleRate, eqFreqValue, 0.5f, Decibels::decibelsToGain(eqGainValue));
             // }
             prevEmphasis[i] = eqGainValue;
         }
 
         for (int i = 0; i < 3; i++)
         {
-            peakFilterBefore[i].process(dsp::ProcessContextReplacing<float>(block));
+            peakFilterBefore[i].process(context);
         }
     }
 
@@ -437,7 +438,7 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
         TRACE_EVENT("dsp", "emphasis EQ after");
         for (int i = 0; i < 3; i++)
         {
-            peakFilterAfter[i].process(dsp::ProcessContextReplacing<float>(block));
+            peakFilterAfter[i].process(context);
         }
     }
 
@@ -446,12 +447,12 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
         // emphasis compensated gain
         float eqCompensation = (prevEmphasis[0] + prevEmphasis[1] + prevEmphasis[2]) * 0.3333333f * 0.4f;
         emphasisCompensationGain.setGainDecibels(-eqCompensation);
-        emphasisCompensationGain.process(juce::dsp::ProcessContextReplacing<float>(block));
+        emphasisCompensationGain.process(context);
 
         // where the expander used to be
         // rip tho :(
         outputGain.setGainDecibels(outputGainKnob->get());
-        outputGain.process(juce::dsp::ProcessContextReplacing<float>(block));
+        outputGain.process(context);
 
         dryWetMixer.setWetMixProportion(mixKnob->get() * 0.01f);
 
