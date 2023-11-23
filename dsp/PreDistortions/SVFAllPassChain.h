@@ -15,7 +15,7 @@ class StateVariableFilter
 {
 public:
     static constexpr int Order = 2;
-    using NumericType = dsp::SampleTypeHelpers::ElementType<SampleType>::Type;
+    using NumericType = typename dsp::SampleTypeHelpers::ElementType<SampleType>::Type;
 
     /** Constructor. */
     StateVariableFilter();
@@ -101,7 +101,6 @@ public:
     SampleType g0, k0, sqrtA;                 // parameter intermediate values
     SampleType a1, a2, a3, ak, k0A;         // coefficients
     std::vector<SampleType> ic1eq, ic2eq;        // state variables
-    SampleType A = 1.0f;
 
 private:
     inline auto processCore(SampleType x, SampleType &s1, SampleType &s2) noexcept
@@ -117,10 +116,6 @@ private:
 
         return v2 + v0 - k0 * v1;
     }
-
-    
-
-    NumericType lowpassMult{0}, bandpassMult{0}, highpassMult{0};
 
     double sampleRate = 44100.0;
 
@@ -155,7 +150,7 @@ void StateVariableFilter<SampleType>::setQValue(SampleType newResonance)
 
     resonance = newResonance;
     k0 = (NumericType)1.0 / resonance;
-    k0A = k0 * A;
+    k0A = k0;
 
     if constexpr (shouldUpdate)
         update();
@@ -231,31 +226,30 @@ public:
             float l = block.getSample(0, j);
             float r = block.getSample(1, j);
 
-            float between = fmod(allPassAmt, 1.0f);
-
             int i;
-            for (i = 0; i < fmax(fmin(allPassAmt, 49.0f), 0.0f); i++)
+            
+            for (i = 0; i < fmin(allPassAmt, 49.0f); i++)
             {
                 l = svf[i].processSample(0, l);
                 r = svf[i].processSample(1, r);
-
-                block.setSample(0, j, l);
-                block.setSample(1, j, r);
             }
+
+            // get only the decimal, how far it is in between the thing
+            // crazy optimisation, avoid using fmod or float to int conversion
+            float between = allPassAmt - i; 
 
             float nextL = svf[i].processSample(0, l);
             float nextR = svf[i].processSample(1, r);
 
-            svf[(int)fmin(i + 1, 49)].processSample(0, nextL); // prepare the next filter ahead of time, so that the next sample is ready
-            svf[(int)fmin(i + 1, 49)].processSample(1, nextR);
+            int idx = i + 1 >= 50 ? 49 : i + 1;
+            svf[idx].processSample(0, nextL); // prepare the next filter ahead of time, so that the next sample is ready
+            svf[idx].processSample(1, nextR);
 
             l = l * (1.0f - between) + nextL * between;
             r = r * (1.0f - between) + nextR * between;
 
             block.setSample(0, j, l);
             block.setSample(1, j, r);
-
-
         }
     }
 
@@ -275,6 +269,8 @@ public:
     }
 
     void updateAllCoefficients(float sampleRate, float cutoff, float resonance) {
+        if (oldFreq == cutoff && oldQ == resonance) return; // no unnecessary updates will increase performance
+
         const auto w = juce::MathConstants<float>::pi * cutoff / sampleRate;
 
         auto g0 = dsp::FastMathApproximations::tan(w);
@@ -290,17 +286,24 @@ public:
 
         for (int i = 0; i < 50; i++)
         {
-            svf[i].g0 = g0;
-            svf[i].k0 = k0;
-            svf[i].k0A = k0A;
-            svf[i].a1 = a1;
-            svf[i].a2 = a2;
-            svf[i].a3 = a3;
-            svf[i].ak = ak;
+            auto &svf = this->svf[i];
+            svf.g0 = g0;
+            svf.k0 = k0;
+            svf.k0A = k0A;
+            svf.a1 = a1;
+            svf.a2 = a2;
+            svf.a3 = a3;
+            svf.ak = ak;
         }
+
+        oldFreq = cutoff;
+        oldQ = resonance;
     }
 
 private:
+    float oldFreq = 0.0f;
+    float oldQ = 0.0f;
+
     float sampleRate = 44100.0f;
 
     StateVariableFilter<float> svf[50];

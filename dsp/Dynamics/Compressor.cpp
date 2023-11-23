@@ -48,7 +48,6 @@ void Compressor::processBlock(dsp::AudioBlock<float>& dryBuffer)
 
 float Compressor::processOneSampleGainStereo(float sampleL, float sampleR)
 {
-    TRACE_DSP();
     float makeupGain = juce::Decibels::decibelsToGain(makeup_dB);
     float leftSample = sampleL;
     float rightSample = sampleR;
@@ -77,7 +76,7 @@ float Compressor::processOneSampleGainStereo(float sampleL, float sampleR)
 
 void Compressor::updateParameters(float atk, float rel, float mkp, float rat, float thres, float knee, float mkpDB)
 {
-    TRACE_EVENT_BEGIN("dsp", "Compressor::updateParameters");
+    // TRACE_EVENT_BEGIN("dsp", "Compressor::updateParameters");
     envelope.setAttackTime(atk);
     envelope.setReleaseTime(rel);
     this->attack = atk;
@@ -89,12 +88,12 @@ void Compressor::updateParameters(float atk, float rel, float mkp, float rat, fl
     this->thresholdUpper = thres + 12.0f + knee * 2.0f;
     this->kneeWidth = knee;
     this->makeup_dB = mkp;
-    TRACE_EVENT_END("dsp");
+    // TRACE_EVENT_END("dsp");
 }
 
 void Compressor::updateUpDown(float atk, float rel, float mkp, float ratioLow, float ratioUp, float thresholdLow, float thresholdUp, float kneeW, float mkpDB)
 {
-    TRACE_EVENT_BEGIN("dsp", "Compressor::updateParameters");
+    // TRACE_EVENT_BEGIN("dsp", "Compressor::updateParameters");
     envelope.setAttackTime(atk);
     envelope.setReleaseTime(rel);
     this->attack = atk;
@@ -106,5 +105,5 @@ void Compressor::updateUpDown(float atk, float rel, float mkp, float ratioLow, f
     this->thresholdUpper = thresholdUp;
     this->kneeWidth = kneeW;
     this->makeup_dB = mkp;
-    TRACE_EVENT_END("dsp");
+    // TRACE_EVENT_END("dsp");
 }

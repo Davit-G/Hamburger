@@ -43,9 +43,11 @@ public:
         float freq = allPassFrequency.getRaw();
         float q = allPassQ.getRaw();
 
-        interleaved = dsp::AudioBlock<dsp::SIMDRegister<float>>(interleavedBlockData, 1, block.getNumSamples());
+        // interleaved = dsp::AudioBlock<dsp::SIMDRegister<float>>(interleavedBlockData, 1, block.getNumSamples());
+        auto interleavedSubBlock = interleaved.getSubBlock(0, block.getNumSamples());
+        auto context = dsp::ProcessContextReplacing<float>(block); // maybe doesnt need to be created every time?? idk
 
-        auto context = dsp::ProcessContextReplacing<float>(block);
+
         const auto& input  = context.getInputBlock();
         auto numSamples = (int) block.getNumSamples();
         
@@ -61,10 +63,10 @@ public:
         }
 
         AudioData::interleaveSamples(AudioData::NonInterleavedSource<Format> { inChannels.data(),                                 registerSize, },
-                                    AudioData::InterleavedDest<Format>      { toBasePointer (interleaved.getChannelPointer (0)), registerSize },
+                                    AudioData::InterleavedDest<Format>      { toBasePointer (interleavedSubBlock.getChannelPointer (0)), registerSize },
                                     numSamples);
         
-        dsp::ProcessContextReplacing<dsp::SIMDRegister<float>> newCtx (interleaved);
+        dsp::ProcessContextReplacing<dsp::SIMDRegister<float>> newCtx (interleavedSubBlock);
         
         for (int i = 0; i < amount; i++) {
             iir[i].process(newCtx);
@@ -72,7 +74,7 @@ public:
 
         auto outChannels = prepareChannelPointers (context.getOutputBlock());
 
-        AudioData::deinterleaveSamples(AudioData::InterleavedSource<Format>  { toBasePointer (interleaved.getChannelPointer (0)), registerSize },
+        AudioData::deinterleaveSamples(AudioData::InterleavedSource<Format>  { toBasePointer (interleavedSubBlock.getChannelPointer (0)), registerSize },
                                         AudioData::NonInterleavedDest<Format> { outChannels.data(),                                registerSize },
                                         numSamples);
     }
