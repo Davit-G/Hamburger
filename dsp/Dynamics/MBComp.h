@@ -12,27 +12,29 @@ public:
                                                         compressor3(CompressionType::COMPRESSOR),
                                                         threshold(state, "compThreshold"),
                                                         ratio(state, "compRatio"),
+                                                        tilt(state, "compBandTilt"),
                                                         speed(state, "compSpeed"),
                                                         makeup(state, "compOut") {}
-
     ~MBComp() {}
 
     void processBlock(dsp::AudioBlock<float> &block)
     {
         speed.update();
         makeup.update();
+        tilt.update();
         ratio.update();
         threshold.update();
 
         float spd = speed.getRaw();
         float mkp = makeup.getRaw();
         float rat = ratio.getRaw();
+        float tlt = tilt.getRaw();
         float thr = threshold.getRaw();
 
         // float atk, float rel, float mkp, float ratioLow, float ratioUp, float thresholdLow, float thresholdUp, float kneeW, float mkpDB)
-        compressor1.updateUpDown(spd, spd * 0.8f, mkp, rat, rat, thr, thr + 2.0f, 0.1f, 0.f);
+        compressor1.updateUpDown(spd, spd * 0.8f, mkp, rat, rat, thr - tlt, thr + 2.0f - tlt, 0.1f, 0.f);
         compressor2.updateUpDown(spd, spd * 0.8f, mkp, rat, rat, thr, thr + 2.0f, 0.1f, 0.f);
-        compressor3.updateUpDown(spd, spd * 0.8f, mkp, rat, rat, thr, thr + 2.0f, 0.1f, 0.f);
+        compressor3.updateUpDown(spd, spd * 0.8f, mkp, rat, rat, thr + tlt, thr + 2.0f - tlt, 0.1f, 0.f);
 
         for (int sample = 0; sample < block.getNumSamples(); sample++)
         {
@@ -97,6 +99,7 @@ private:
 
     SmoothParam threshold;
     SmoothParam ratio;
+    SmoothParam tilt;
     SmoothParam speed;
     SmoothParam makeup;
 

@@ -22,11 +22,7 @@ private:
     juce::dsp::IIR::Filter<float> dcBlockerL;
     juce::dsp::IIR::Filter<float> dcBlockerR;
 
-    // float lastSampleL = 0.0f;
-    // float lastSampleR = 0.0f;
-
     double sampleRate;
-
 
 	JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Grunge)
 };

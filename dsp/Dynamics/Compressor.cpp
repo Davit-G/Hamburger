@@ -74,6 +74,28 @@ float Compressor::processOneSampleGainStereo(float sampleL, float sampleR)
     return gain * makeupGain;
 }
 
+float Compressor::processOneSampleGainMono(float sample)
+{
+    float makeupGain = juce::Decibels::decibelsToGain(makeup_dB);
+    float envelopeVal = envelope.processSample(sample);
+    float gain = 0.0f;
+
+    switch (type)
+    {
+    case EXPANDER:
+        gain = Curves::computeExpanderGain(envelopeVal, ratioLower, kneeWidth);
+        break;
+    case COMPRESSOR:
+        gain = Curves::computeCompressorGain(envelopeVal, thresholdLower, ratioLower, kneeWidth);
+        break;
+    case UPWARDS_DOWNWARDS:
+        gain = Curves::computeUpwardsDownwardsGain(envelopeVal, thresholdUpper, thresholdLower, ratioUpper, ratioLower, kneeWidth);
+        break;
+    }
+    
+    return gain * makeupGain;
+}
+
 void Compressor::updateParameters(float atk, float rel, float mkp, float rat, float thres, float knee, float mkpDB)
 {
     // TRACE_EVENT_BEGIN("dsp", "Compressor::updateParameters");

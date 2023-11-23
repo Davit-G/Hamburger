@@ -38,6 +38,6 @@ namespace params {
     };
 
     static const PanelInfo dynamics = {
-        "DYNAMICS", "", StringArray({"COMPANDER", "OTT", "MID-SIDE"})
+        "DYNAMICS", "", StringArray({"OTT", "MID-SIDE"})
     };
 };

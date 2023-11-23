@@ -17,14 +17,14 @@ public:
         // ORDERING IS VERY IMPORTANT
         eqPanels.push_back(std::make_unique<EQPanel>(p));
         eq = std::make_unique<Module>(p, "EMPHASIS", "emphasisOn", "", std::move(eqPanels));
-        eq->setLookAndFeel(new KnobLAF(Palette::colours[2]));
+        eq->setLookAndFeel(&eqLookAndFeel);
         addAndMakeVisible(eq.get());
 
         std::vector<std::unique_ptr<Panel>> utilityPanels;
         // ORDERING IS VERY IMPORTANT
         utilityPanels.push_back(std::make_unique<UtilityPanel>(p));
         utility = std::make_unique<Module>(p, "UTILITY", "hamburgerEnabled", "", std::move(utilityPanels));
-        utility->setLookAndFeel(new KnobLAF(Palette::colours[1]));
+        utility->setLookAndFeel(&utilityLookAndFeel);
         addAndMakeVisible(utility.get());
     }
 
@@ -34,13 +34,16 @@ public:
         auto bounds = getLocalBounds();
         auto height = bounds.getHeight();
 
-        eq->setBounds(bounds.removeFromTop(height / 2.5f));
-        utility->setBounds(bounds.removeFromBottom(height / 3));
+        eq->setBounds(bounds.removeFromTop(height * 0.5));
+        utility->setBounds(bounds.removeFromBottom(height * 0.25));
     }
 
 private:
     std::unique_ptr<Module> eq = nullptr;
     std::unique_ptr<Module> utility = nullptr;
+
+    KnobLAF eqLookAndFeel = KnobLAF(Palette::colours[2]);
+    KnobLAF utilityLookAndFeel = KnobLAF(juce::Colours::whitesmoke);
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(UtilColumn)
 };

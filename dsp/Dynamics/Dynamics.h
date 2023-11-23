@@ -5,12 +5,14 @@
 
 #include "../SmoothParam.h"
 #include "MBComp.h"
+#include "MSComp.h"
 
 class Dynamics
 {
 public:
     Dynamics(juce::AudioProcessorValueTreeState &state) :
-        mbComp(state)
+        mbComp(state),
+        msComp(state)
     {
         distoType = dynamic_cast<juce::AudioParameterChoice *>(state.getParameter("compressionType")); jassert(distoType);
         enabled = dynamic_cast<juce::AudioParameterBool *>(state.getParameter("compressionOn")); jassert(enabled);
@@ -23,13 +25,13 @@ public:
 
         switch (distoTypeIndex)
         {
-        case 0: // "COMPANDER"
+        case 0: // "OTT"
             mbComp.processBlock(block);
             break;
-        case 1: // "OTT",
-            
+        case 1: // "MID-SIDE" 
+            msComp.processBlock(block);
             break;
-        case 2: // "MID-SIDE"
+        case 2: 
             
             break;
         case 3:
@@ -43,6 +45,7 @@ public:
 
     void prepare(dsp::ProcessSpec& spec) {
         mbComp.prepare(spec);
+        msComp.prepare(spec);
     }
 
 private:
@@ -52,6 +55,7 @@ private:
     juce::AudioParameterBool* enabled = nullptr;
 
     MBComp mbComp;
+    MSComp msComp;
     
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Dynamics)

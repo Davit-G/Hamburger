@@ -110,7 +110,7 @@ AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::createP
     params.add(std::make_unique<AudioParameterChoice>("oversamplingFactor", "Oversampling Factor", params::oversamplingFactor.categories, 0));
 
     params.add(std::make_unique<AudioParameterFloat>("compSpeed", "Comp Speed", 0.0f, 500.0f, 100.f));
-    params.add(std::make_unique<AudioParameterFloat>("comBandTilt", "Comp Band Tilt", 0.0f, 500.0f, 100.f));
+    params.add(std::make_unique<AudioParameterFloat>("compBandTilt", "Comp Band Tilt", -12.0f, 12.0f, 0.f));
     params.add(std::make_unique<AudioParameterFloat>("compThreshold", "Comp Threshold", -48.0f, 0.0f, -35.f));
     params.add(std::make_unique<AudioParameterFloat>("compRatio", "Comp Ratio", 1.0f, 10.0f, 3.5f));
     params.add(std::make_unique<AudioParameterFloat>("compOut", "Comp Makeup", -24.0f, 24.0f, 0.f));

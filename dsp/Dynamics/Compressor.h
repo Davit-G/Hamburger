@@ -22,6 +22,7 @@ public:
 
     void processBlock(dsp::AudioBlock<float>& dryBuffer);
     float processOneSampleGainStereo(float sampleL, float sampleR);
+    float processOneSampleGainMono(float sample);
 
     void prepare(dsp::ProcessSpec& spec);
 
