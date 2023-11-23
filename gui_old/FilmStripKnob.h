@@ -85,7 +85,7 @@ private:
     AudioPluginAudioProcessor &processorRef;
     SaturationLookAndFeel pluginLookAndFeel;
 
-    std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> knobAttachment;
+    std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> knobAttachment = nullptr;
 
     int knobSize;
     juce::String knobName;

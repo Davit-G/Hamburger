@@ -14,13 +14,14 @@
 class LeftColumn : public juce::Component
 {
 public:
-    LeftColumn(AudioPluginAudioProcessor &p) : processorRef(p)
+    LeftColumn(AudioPluginAudioProcessor &p)
     {
         // panel with elements already inside
         std::vector<std::unique_ptr<Panel>> companderPanels;
         // ORDERING IS VERY IMPORTANT
         companderPanels.push_back(std::make_unique<CompanderPanel>(p));
         compander = std::make_unique<Module>(p, "COMPANDER", "compressionOn", "", std::move(companderPanels));
+        compander->setLookAndFeel(&knobLAF3);
         addAndMakeVisible(compander.get());
 
         std::vector<std::unique_ptr<Panel>> noisePanels;
@@ -30,13 +31,16 @@ public:
         noisePanels.push_back(std::make_unique<ReductionPanel>(p, "BIT"));
         noisePanels.push_back(std::make_unique<ReductionPanel>(p, "SOFT BIT"));
         noisePanels.push_back(std::make_unique<JeffPanel>(p));
+
         noise = std::make_unique<Module>(p, "NOISE", "noiseDistortionEnabled", "noiseDistortionType", std::move(noisePanels));
+        noise->setLookAndFeel(&knobLAF1);
         addAndMakeVisible(noise.get());
 
         std::vector<std::unique_ptr<Panel>> allpassPanels;
         // ORDERING IS VERY IMPORTANT
         allpassPanels.push_back(std::make_unique<AllPassPanel>(p));
         allpass = std::make_unique<Module>(p, "ALLPASS", "preDistortionEnabled", "", std::move(allpassPanels));
+        allpass->setLookAndFeel(&knobLAF2);
         addAndMakeVisible(allpass.get());
 
     }
@@ -58,12 +62,15 @@ public:
     }
 
 private:
-    AudioPluginAudioProcessor &processorRef;
     std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> enableButtonAttachment = nullptr;
 
-    std::unique_ptr<Module> compander;
-    std::unique_ptr<Module> noise;
-    std::unique_ptr<Module> allpass;
+    std::unique_ptr<Module> compander = nullptr;
+    std::unique_ptr<Module> noise = nullptr;
+    std::unique_ptr<Module> allpass = nullptr;
+
+    KnobLAF knobLAF1 = KnobLAF(Palette::colours[1]);
+    KnobLAF knobLAF2 = KnobLAF(Palette::colours[2]);
+    KnobLAF knobLAF3 = KnobLAF(Palette::colours[3]);
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(LeftColumn)
 };

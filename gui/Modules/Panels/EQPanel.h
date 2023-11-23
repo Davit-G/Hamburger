@@ -5,6 +5,8 @@
 #include "../Panel.h"
 #include "../../LookAndFeel/KnobLAF.h"
 
+#include "../../LookAndFeel/Palette.h" 
+
 class EQPanel : public Panel
 {
 public:
@@ -16,8 +18,6 @@ public:
                                             midGain(p, "GAIN", "emphasisMidGain", ParamUnits::db),
                                             highGain(p, "GAIN", "emphasisHighGain", ParamUnits::db)
     {
-        auto laf = new KnobLAF(juce::Colours::orange);
-        setLookAndFeel(laf); // will cascade to all children knobs
 
         addAndMakeVisible(lowFreq);
         addAndMakeVisible(midFreq);
@@ -28,7 +28,6 @@ public:
     }
 
     void resized() {
-        // knob.setBounds(getLocalBounds());
         auto bounds = getLocalBounds();
 
         using fr = Grid::Fr;

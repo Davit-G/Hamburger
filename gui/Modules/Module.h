@@ -11,8 +11,7 @@ class Module : public juce::Component
 {
 public:
     Module(AudioPluginAudioProcessor &processor, const std::string &moduleName, const std::string buttonAttachmentId, std::string categoryAttachmentId, std::vector<std::unique_ptr<Panel>> panels)
-        : processorRef(processor),
-          modulePanels(std::move(panels)),
+        : modulePanels(std::move(panels)),
           powerOffImage(juce::ImageCache::getFromMemory(BinaryData::poweroff_png, BinaryData::poweroff_pngSize)),
           powerOnImage(juce::ImageCache::getFromMemory(BinaryData::poweron_png, BinaryData::poweron_pngSize))
     {
@@ -78,7 +77,7 @@ public:
         }
     }
 
-    std::unique_ptr<LightButton> enabledButton;
+    std::unique_ptr<LightButton> enabledButton = nullptr;
     juce::ComboBox categorySelector;
 
 private:
@@ -153,8 +152,6 @@ private:
 
     std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment> categoryAttachment = nullptr;
     std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> attachment = nullptr;
-
-    juce::AudioProcessor &processorRef;
     // array of pointers of panel
     std::vector<std::unique_ptr<Panel>> modulePanels;
 

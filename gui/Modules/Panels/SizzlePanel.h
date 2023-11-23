@@ -4,22 +4,16 @@
 
 #include "../Panel.h"
 #include "PanelNames.h"
+#include "../../LookAndFeel/Palette.h" 
 
 class SizzlePanel : public Panel
 {
 public:
     SizzlePanel(AudioPluginAudioProcessor &p) : Panel(p, "SIZZLE"),
     sizzleKnob(p, "SIZZLE", "noiseAmount") {
-        auto laf = new KnobLAF(juce::Colours::limegreen);
-        setLookAndFeel(laf); // will cascade to all children knobs
 
         addAndMakeVisible(sizzleKnob);
     }
-
-    // void paint(juce::Graphics &g) override
-    // {
-    //     // g.fillAll(juce::Colours::green);
-    // }
 
     void resized() override
     {

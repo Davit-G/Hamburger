@@ -115,9 +115,9 @@ AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::createP
     params.add(std::make_unique<AudioParameterFloat>("compOut", "Comp Makeup", -24.0f, 24.0f, 0.f));
 
     params.add(std::make_unique<AudioParameterChoice>("primaryDistortionType", "Dist Type", params::distortion.categories, 0));
-    params.add(std::make_unique<AudioParameterChoice>("preDistortionType", "Pre-Dist Type", params::preDistortionTypes.categories, 0));
+    // params.add(std::make_unique<AudioParameterChoice>("preDistortionType", "Pre-Dist Type", params::preDistortionTypes.categories, 0));
     params.add(std::make_unique<AudioParameterChoice>("noiseDistortionType", "Noise Type", params::noiseTypes.categories, 0));
-    params.add(std::make_unique<AudioParameterChoice>("compressionType", "Comp Type", params::companderInfo.categories, 0));
+    params.add(std::make_unique<AudioParameterChoice>("compressionType", "Comp Type", params::dynamics.categories, 0));
 
     params.add(std::make_unique<AudioParameterFloat>("fuzz", "Fuzz", 0.0f, 100.0f, 0.0f));
     params.add(std::make_unique<AudioParameterFloat>("fuzzShape", "Fuzz Shape", 0.0f, 100.0f, 50.0f));
@@ -246,8 +246,8 @@ void AudioPluginAudioProcessor::prepareToPlay(double sampleRate, int samplesPerB
     for (int i = 0; i < 3; i++)
     {
         // if (eqGainValue != prevEmphasis[i]) {    // TODOOOOOOOO
-        *peakFilterBefore[i].state = dsp::IIR::ArrayCoefficients<float>::makePeakFilter(sampleRate, filterFrequencies[i], 0.5f, 0);
-        *peakFilterAfter[i].state = dsp::IIR::ArrayCoefficients<float>::makePeakFilter(sampleRate, filterFrequencies[i], 0.5f, 0);
+        *peakFilterBefore[i].state = dsp::IIR::ArrayCoefficients<float>::makePeakFilter(spec.sampleRate, filterFrequencies[i], 0.5f, 1.0f);
+        *peakFilterAfter[i].state = dsp::IIR::ArrayCoefficients<float>::makePeakFilter(spec.sampleRate, filterFrequencies[i], 0.5f, 1.0f);
         // }
         prevEmphasis[i] = 0;
     }

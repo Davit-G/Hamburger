@@ -14,13 +14,19 @@ public:
         // code is weird so order of panels compared to order of DSP processing matters
         // TODO: fix this later
 
-        panels.push_back(std::make_unique<ClassicSatPanel>(p));
-        panels.push_back(std::make_unique<TubeSatPanel>(p));
+        auto classic = std::make_unique<ClassicSatPanel>(p);
+        classic->setLookAndFeel(&saturationLAF);
+        panels.push_back(std::move(classic));
+
+        auto tube = std::make_unique<TubeSatPanel>(p);
+        tube->setLookAndFeel(&tubeSatLAF);
+        panels.push_back(std::move(tube));
+
         saturation = std::make_unique<Module>(p, "SATURATION", "primaryDistortionEnabled", "primaryDistortionType", std::move(panels));
         addAndMakeVisible(saturation.get());
     }
 
-    ~SaturationColumn() override{}
+    ~SaturationColumn() override {}
 
     void resized() override{
         auto bounds = getLocalBounds();
@@ -30,7 +36,8 @@ public:
     }
 
 private:
-    // AudioPluginAudioProcessor &processorRef;
+    KnobLAF saturationLAF = KnobLAF(Palette::colours[0]);
+    KnobLAF tubeSatLAF = KnobLAF(Palette::colours[4]);
 
     std::unique_ptr<Module> saturation;
 

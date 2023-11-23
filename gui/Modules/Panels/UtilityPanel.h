@@ -4,12 +4,7 @@
 
 #include "../Panel.h"
 #include "PanelNames.h"
-
-/*
-params.add(std::make_unique<AudioParameterFloat>("inputGain", "Input Gain", -24.0f, 24.0f, 0.f));
-    params.add(std::make_unique<AudioParameterFloat>("outputGain", "Out Gain", -24.0f, 24.0f, 0.f));
-    params.add(std::make_unique<AudioParameterFloat>("mix", "Mix", 0.0f, 100.0f, 100.f));
-*/
+#include "../../LookAndFeel/Palette.h" 
 
 class UtilityPanel : public Panel
 {
@@ -19,8 +14,6 @@ public:
     mix(p, "MIX", "mix", ParamUnits::percent),
     outGain(p, "OUT", "outputGain", ParamUnits::db)
     {
-        auto laf = new KnobLAF(juce::Colours::whitesmoke);
-        setLookAndFeel(laf); // will cascade to all children knobs
         
         addAndMakeVisible(inGain);
         addAndMakeVisible(mix);

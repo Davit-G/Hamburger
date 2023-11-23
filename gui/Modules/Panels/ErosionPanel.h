@@ -4,6 +4,7 @@
 
 #include "../Panel.h"
 #include "PanelNames.h"
+#include "../../LookAndFeel/Palette.h" 
 
 class ErosionPanel : public Panel
 {
@@ -13,18 +14,11 @@ public:
         erosionFreq(p, "FREQ", "noiseFrequency", ParamUnits::hz),
         erosionQ(p, "Q", "noiseQ")
     {
-        auto laf = new KnobLAF(juce::Colours::yellowgreen);
-        setLookAndFeel(laf); // will cascade to all children knobs
 
         addAndMakeVisible(erosionAmt);
         addAndMakeVisible(erosionFreq);
         addAndMakeVisible(erosionQ);
     }
-
-    // void paint(juce::Graphics &g) override
-    // {
-    //     // g.fillAll(juce::Colours::green);
-    // }
 
     void resized() {
         // three, in a row

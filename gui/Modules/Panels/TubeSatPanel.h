@@ -4,6 +4,7 @@
 #include "../Panel.h"
 #include "../../Knob.h"
 #include "PanelNames.h"
+#include "../../LookAndFeel/Palette.h" 
 
 class TubeSatPanel : public Panel
 {
@@ -13,21 +14,12 @@ public:
         grungeAmt(p, "GRUNGE", "grungeAmt"),
         grungeTone(p, "GRUNGE TONE", "grungeTone"), 
         drive(p, "DRIVE", "saturationAmount", ParamUnits::percent)
-        
     {
-        auto laf = new KnobLAF(juce::Colours::yellowgreen);
-        setLookAndFeel(laf); // will cascade to all children knobs
-
         addAndMakeVisible(tubeTone);
         addAndMakeVisible(grungeTone);
         addAndMakeVisible(grungeAmt);
         addAndMakeVisible(drive);
     }
-
-    // void paint(juce::Graphics &g) override
-    // {
-    //     // g.fillAll(juce::Colours::green);
-    // }
 
     void resized() override
     {

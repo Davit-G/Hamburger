@@ -9,8 +9,7 @@ public:
     Amp(juce::AudioProcessorValueTreeState &treeState) : 
         tubeTone(treeState, "tubeTone"),
         drive(treeState, "saturationAmount")
-    {  
-		calculateCoefficients();
+    {
     }
 
     ~Amp() {}
@@ -31,6 +30,8 @@ private:
 
     SmoothParam tubeTone;
     SmoothParam drive;
+
+    float sampleRate = 44100.0f;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Amp)
 };

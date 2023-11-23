@@ -9,12 +9,16 @@ void Amp::prepare(dsp::ProcessSpec &spec)
     juce::dsp::IIR::Coefficients<float>::Ptr inputHighPassCoefficients = juce::dsp::IIR::Coefficients<float>::makeHighPass(spec.sampleRate, 20.0f);
     inputHighPass.state = *inputHighPassCoefficients;
 
-    inputHighPass.prepare(spec);
+    inputHighPass.prepare(spec);    
 
     for (int i = 0; i < 4; i++)
     {
         triodes[i].prepare(spec);
     }
+
+    sampleRate = spec.sampleRate;
+
+    calculateCoefficients();
 }
 
 void Amp::calculateCoefficients()
@@ -52,7 +56,7 @@ void Amp::calculateCoefficients()
     triode3.dcBlockingLF_Hz = 36.0f;
     triode3.outputGain = pow(10.0f, +4.0f / 20.0f);
     triode3.dcShiftCoefficient = 0.50f;
-    
+
     triode4.lowFrequencyShelf_Hz = 10.0f;
     triode4.lowFrequencyShelfGain_dB = -10.0f;
     // trioesL[3].millerHF_Hz = 6400.0;

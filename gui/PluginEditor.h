@@ -46,8 +46,6 @@ public:
     }
 
 private:
-    // AudioPluginAudioProcessor &processorRef;
-
     LeftColumn leftColumn;
     SaturationColumn saturationColumn;
     UtilColumn utilColumn;

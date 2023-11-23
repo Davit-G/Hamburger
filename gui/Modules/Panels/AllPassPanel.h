@@ -4,6 +4,7 @@
 
 #include "../Panel.h"
 #include "PanelNames.h"
+#include "../../LookAndFeel/Palette.h" 
 
 class AllPassPanel : public Panel
 {
@@ -13,8 +14,6 @@ public:
         freq(p, "FREQ", "allPassFreq", ParamUnits::hz),
         q(p, "Q", "allPassQ")
     {
-        auto laf = new KnobLAF(juce::Colours::yellowgreen);
-        setLookAndFeel(laf); // will cascade to all children knobs
 
         addAndMakeVisible(amount);
         addAndMakeVisible(freq);

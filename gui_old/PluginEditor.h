@@ -69,10 +69,10 @@ private:
 
 
     juce::ComboBox oversamplingComboBox;
-    std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment> oversamplingAttachment;
+    std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment> oversamplingAttachment = nullptr;
 
     juce::ComboBox distortionTypeComboBox;
-    std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment> distortionTypesAttachment;
+    std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment> distortionTypesAttachment = nullptr;
 
     juce::Image background;
 

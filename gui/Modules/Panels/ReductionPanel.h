@@ -4,6 +4,7 @@
 
 #include "../Panel.h"
 #include "PanelNames.h"
+#include "../../LookAndFeel/Palette.h" 
 
 class ReductionPanel : public Panel
 {
@@ -13,14 +14,11 @@ public:
                                                    bitReduction(p, "BITS", "bitReduction"),
                                                    jitter(p, "GRIT", "downsampleJitter")
     {
-        auto laf = new KnobLAF(juce::Colours::yellowgreen);
-        setLookAndFeel(laf); // will cascade to all children knobs
-
         addAndMakeVisible(downSample);
         addAndMakeVisible(bitReduction);
         addAndMakeVisible(jitter);
     }
-    
+
     void resized() override {
         auto bounds = getLocalBounds();
         auto width = bounds.getWidth() / 3;

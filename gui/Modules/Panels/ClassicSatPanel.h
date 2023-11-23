@@ -5,6 +5,8 @@
 #include "../../Knob.h"
 #include "PanelNames.h"
 
+#include "../../LookAndFeel/Palette.h"
+
 class ClassicSatPanel : public Panel
 {
 public:
@@ -21,15 +23,7 @@ public:
         addAndMakeVisible(fuzzKnob);
         addAndMakeVisible(grungeToneKnob);
         addAndMakeVisible(grungeAmountKnob);
-
-        auto laf = new KnobLAF(juce::Colours::orangered);
-        setLookAndFeel(laf); // will cascade to all children knobs
     }
-
-    // void paint(juce::Graphics &g) override
-    // {
-    //     // g.fillAll(juce::Colours::green);
-    // }
 
     void resized() override
     {
@@ -42,7 +36,8 @@ public:
         biasKnob.setBounds(bounds.removeFromLeft(width));
         fuzzKnob.setBounds(bounds);
     }
-
+    
+private:
     ParamKnob satKnob;
     ParamKnob biasKnob;
     ParamKnob fuzzKnob;

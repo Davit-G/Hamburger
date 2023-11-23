@@ -28,12 +28,6 @@ public:
     }
 
 private:
-    // std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> attachment = nullptr;
-
-    // AudioPluginAudioProcessor &processorRef;
-
-    // std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> buttonValue;
-
     juce::Image onImage;
     juce::Image offImage;
 };

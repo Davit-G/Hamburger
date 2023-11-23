@@ -109,16 +109,10 @@ private:
     float oldAllPassFreq = 0.0;
     float oldAllPassQ = 0.0;
     float oldAllPassAmount = 0.0;
-
-    // dsp::ProcessorDuplicator<dsp::IIR::Filter<float>, dsp::IIR::Coefficients<float>> allPassFilters[50];
-
+    
     float oldSampleRate;
 
     constexpr auto registerSize = dsp::SIMDRegister<float>::size();
-
-    // new SIMD stuff             // [1]
-    // std::unique_ptr<dsp::IIR::Filter<dsp::SIMDRegister<float>>> iir[50];
-    // std::unique_ptr<dsp::IIR::Filter<float>> iir[50];
     dsp::ProcessorDuplicator<dsp::IIR::Filter<dsp::SIMDRegister<float>>, dsp::IIR::Coefficients<float>> iir[50];
 
     dsp::AudioBlock<dsp::SIMDRegister<float>> interleaved;

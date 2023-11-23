@@ -4,6 +4,7 @@
 
 #include "../Panel.h"
 #include "PanelNames.h"
+#include "../../LookAndFeel/Palette.h" 
 
 class CompanderPanel : public Panel
 {
@@ -14,8 +15,6 @@ public:
                                                    attack(p, "SPEED", "compSpeed", ParamUnits::ms),
                                                    makeup(p, "GAIN", "compOut", ParamUnits::db)
     {
-        auto laf = new KnobLAF(juce::Colours::blueviolet);
-        setLookAndFeel(laf); // will cascade to all children knobs
 
         addAndMakeVisible(threshold);
         addAndMakeVisible(ratio);
@@ -23,14 +22,8 @@ public:
         addAndMakeVisible(makeup);
     }
 
-    // void paint(juce::Graphics &g) override
-    // {
-    //     // g.fillAll(juce::Colours::green);
-    // }
-
     void resized() override
     {
-        // knob.setBounds(getLocalBounds());
         auto bounds = getLocalBounds();
 
         using fr = Grid::Fr;

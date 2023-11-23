@@ -12,11 +12,6 @@ struct PanelInfo {
     PanelInfo(juce::String n, juce::String aID, StringArray categories) : name(n), attachmentID(aID), categories({ categories }) {}
 };
 
-// export stringarrays for all the stuff
-// StringArray({ "Classic", "Tube" })
-// StringArray({ "Disperser", "Reverb", "Comb" })
-// StringArray({ "Sizzle", "Erosion", "Asperity", "Downsample / Bitreduction", "Jeff Thickness"})
-
 namespace params {
     static const PanelInfo oversamplingFactor = {
         "OVERSAMPLING", "oversamplingFactor", StringArray({"1x","2x","4x","8x","16x"})
@@ -28,10 +23,6 @@ namespace params {
 
     static const PanelInfo emphasisInfo = {
         "EMPHASIS", "", StringArray({"default"})
-    };
-
-    static const PanelInfo companderInfo = {
-        "COMPANDER", "", StringArray({"default"})
     };
 
     static const PanelInfo distortion = {

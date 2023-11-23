@@ -1,13 +1,14 @@
 #pragma once
 #include <JuceHeader.h>
 
+
 class KnobLAF : public juce::LookAndFeel_V4
 {
 public:
     KnobLAF(juce::Colour color = juce::Colour::fromRGB(50, 255, 205)) : knobColour(color) {
         setColour(Slider::rotarySliderOutlineColourId, juce::Colours::black);
         setColour(Slider::rotarySliderFillColourId, juce::Colours::white);
-        setColour(Slider::thumbColourId, juce::Colours::orange);
+        setColour(Slider::thumbColourId, juce::Colours::whitesmoke);
     }
 
     static Font getTheFont(int fontSize = 16) {
@@ -50,13 +51,10 @@ public:
         
         auto size = std::min(width, height);
 
-
-
         // the knob background
         g.fillEllipse(Rectangle<float>(size, size).reduced(5.0f).withCentre(bounds.getCentre()));
 
         // some circles or something
-
         g.setColour(knobColour);
 
         // g.drawEllipse(Rectangle<float>(size, size).reduced(7.0f).withCentre(bounds.getCentre()), 1.0f);
@@ -66,7 +64,6 @@ public:
         
         // the marker for where the knob is
         // capsule shaped, so maybe thick line going outwards, with rounded caps at the end
-
         Line<float> marker;
 
         float xOffset = std::sin(toAngle) * arcRadius;

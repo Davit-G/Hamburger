@@ -17,12 +17,14 @@ public:
         // ORDERING IS VERY IMPORTANT
         eqPanels.push_back(std::make_unique<EQPanel>(p));
         eq = std::make_unique<Module>(p, "EMPHASIS", "emphasisOn", "", std::move(eqPanels));
+        eq->setLookAndFeel(new KnobLAF(Palette::colours[2]));
         addAndMakeVisible(eq.get());
 
         std::vector<std::unique_ptr<Panel>> utilityPanels;
         // ORDERING IS VERY IMPORTANT
         utilityPanels.push_back(std::make_unique<UtilityPanel>(p));
         utility = std::make_unique<Module>(p, "UTILITY", "hamburgerEnabled", "", std::move(utilityPanels));
+        utility->setLookAndFeel(new KnobLAF(Palette::colours[1]));
         addAndMakeVisible(utility.get());
     }
 
@@ -37,8 +39,6 @@ public:
     }
 
 private:
-    // AudioPluginAudioProcessor &processorRef;
-
     std::unique_ptr<Module> eq;
     std::unique_ptr<Module> utility;
 
