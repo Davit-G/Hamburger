@@ -4,10 +4,28 @@
 #include <JuceHeader.h>
 #include "LookAndFeel/KnobLAF.h"
 
+// enum of units, with strings attached to them
+enum class ParamUnits {
+    none,
+    hz,
+    ms,
+    db,
+    percent
+};
+
+// a map on all strings to their corresponding units
+static std::map<ParamUnits, juce::String> unitStrings = {
+    {ParamUnits::none, ""},
+    {ParamUnits::hz, "Hz"},
+    {ParamUnits::ms, "ms"},
+    {ParamUnits::db, "dB"},
+    {ParamUnits::percent, "%"}
+};
+
 class ParamKnob : public juce::Component
 {
 public:
-    ParamKnob(AudioPluginAudioProcessor &p, juce::String name, juce::String attachmentID): processorRef(p) {
+    ParamKnob(AudioPluginAudioProcessor &p, juce::String name, juce::String attachmentID, ParamUnits unit = ParamUnits::none): processorRef(p) {
         knobAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(processorRef.treeState, attachmentID, knob);
         jassert(knobAttachment);
 
@@ -16,6 +34,22 @@ public:
         knob.setSliderStyle(juce::Slider::RotaryVerticalDrag);
         knob.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
         knob.setRange(knobParamRange.start, knobParamRange.end);
+        knob.onDragStart = [this] { 
+            // display the parameter value as the text instead of the parameter name
+            this->isDragging = true;
+        };
+
+        knob.onValueChange = [this, name, unit] {
+            if (this->isDragging) {
+                
+                this->label.setText(juce::String(this->knob.getValue(), 2) + " " + unitStrings[unit], juce::dontSendNotification);
+            }
+        };
+        knob.onDragEnd = [this, name] { 
+            // display the parameter name as the text again
+            this->isDragging = false;
+            this->label.setText(name, juce::dontSendNotification);
+        };
         addAndMakeVisible(knob);
         
         label.setText(name, juce::dontSendNotification);
@@ -53,6 +87,8 @@ private:
 
     Slider knob;
     Label label;
+
+    bool isDragging = false;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ParamKnob)
 };

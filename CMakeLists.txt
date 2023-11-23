@@ -11,7 +11,7 @@ cmake_minimum_required(VERSION 3.15)
 # `project()` command. `project()` sets up some helpful variables that describe source/binary
 # directories, and the current project version. This is a standard CMake command.
 
-project(Hamburger VERSION 0.1.1)
+project(Hamburger VERSION 0.3.0)
 
 set(BaseTargetName Hamburger)
 set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
@@ -55,7 +55,7 @@ juce_add_plugin("${BaseTargetName}"
     PLUGIN_CODE Hmb2                            # A unique four-character plugin id with exactly one upper-case character
                                                 # GarageBand 10.3 requires the first letter to be upper-case, and the remaining letters to be lower-case
     FORMATS VST3 Standalone                  # The formats to build. Other valid formats are: AAX Unity VST AU AUv3
-    PRODUCT_NAME "HamburgerV2"  # The name of the final executable, which can differ from the target name
+    PRODUCT_NAME "HamburgerV3"  # The name of the final executable, which can differ from the target name
     VST3_CATEGORIES Fx Distortion Fx Dynamics 
 )
 

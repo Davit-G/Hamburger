@@ -2,13 +2,6 @@
 
 #include <JuceHeader.h>
 
-template <typename T>
-static T* toBasePointer (dsp::SIMDRegister<T>* r) noexcept {return reinterpret_cast<T*> (r); }
-constexpr auto registerSize = dsp::SIMDRegister<float>::size();
-using Format = AudioData::Format<AudioData::Float32, AudioData::NativeEndian>;
-
-
-
 class AllPassChain
 {
 public:
@@ -68,7 +61,7 @@ public:
         
         dsp::ProcessContextReplacing<dsp::SIMDRegister<float>> newCtx (interleavedSubBlock);
         
-        for (int i = 0; i < amount; i++) {
+        for (size_t i = 0; i < amount; i++) {
             iir[i].process(newCtx);
         }
 
@@ -121,6 +114,7 @@ private:
 
     float oldSampleRate;
 
+    constexpr auto registerSize = dsp::SIMDRegister<float>::size();
 
     // new SIMD stuff             // [1]
     // std::unique_ptr<dsp::IIR::Filter<dsp::SIMDRegister<float>>> iir[50];

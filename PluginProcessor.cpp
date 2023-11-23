@@ -90,12 +90,9 @@ AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::createP
     params.add(std::make_unique<AudioParameterFloat>("emphasisMidGain", "Emphasis Mid Gain", -18.0f, 18.0f, 0.f));
     params.add(std::make_unique<AudioParameterFloat>("emphasisHighGain", "Emphasis Hi Gain", -18.0f, 18.0f, 0.f));
 
-    // params.add(std::make_unique<AudioParameterFloat>("emphasisLowFreq", "Emphasis Low Frequency", 30.0f, 200.0f, 62.f));
     params.add(std::make_unique<AudioParameterFloat>("emphasisLowFreq", "Emphasis Low Frequency", NormalisableRange<float>(30.0f, 200.0f, 0.f, 0.25f), 62.0f));
     params.add(std::make_unique<AudioParameterFloat>("emphasisMidFreq", "Emphasis Mid Frequency", NormalisableRange<float>(500.0f, 3000.0f, 0.f, 0.25f), 1220.0f));
     params.add(std::make_unique<AudioParameterFloat>("emphasisHighFreq", "Emphasis Hi Frequency", NormalisableRange<float>(6000.0f, 18000.0f, 0.f, 0.25f), 9000.0f));
-
-    // params.add(std::make_unique<AudioParameterFloat>("frequencyShiftFreq", "Frequency Shift Amount", -500.0f, 500.0f, 0.0f));
 
     params.add(std::make_unique<AudioParameterBool>("compandingOn", "Compander On", false));
     params.add(std::make_unique<AudioParameterBool>("compressionOn", "Compressor On", true));
@@ -103,25 +100,24 @@ AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::createP
     params.add(std::make_unique<AudioParameterBool>("emphasisOn", "Emphasis EQ On", true));
     params.add(std::make_unique<AudioParameterBool>("shifterOn", "Emphasis Shifter On", true));
 
-    params.add(std::make_unique<AudioParameterBool>("preDistortionEnabled", "PreDistortion Enabled", true));
-    params.add(std::make_unique<AudioParameterBool>("primaryDistortionEnabled", "Distortion Enabled", true));
+    params.add(std::make_unique<AudioParameterBool>("preDistortionEnabled", "Pre-Dist Enabled", true));
+    params.add(std::make_unique<AudioParameterBool>("primaryDistortionEnabled", "Dist Enabled", true));
     params.add(std::make_unique<AudioParameterBool>("noiseDistortionEnabled", "Noise Enabled", true));
 
-    params.add(std::make_unique<AudioParameterBool>("hamburgerEnabled", "Enabled (Bypass)", true));
+    params.add(std::make_unique<AudioParameterBool>("hamburgerEnabled", "Enabled", true));
     params.add(std::make_unique<AudioParameterBool>("autoGain", "Auto Gain", false));
 
     params.add(std::make_unique<AudioParameterChoice>("oversamplingFactor", "Oversampling Factor", params::oversamplingFactor.categories, 0));
 
-    params.add(std::make_unique<AudioParameterFloat>("compAttack", "Compander Attack", 0.0f, 200.0f, 150.f));
-    params.add(std::make_unique<AudioParameterFloat>("compRelease", "Compander Release", 0.0f, 500.0f, 200.f));
-    params.add(std::make_unique<AudioParameterFloat>("compThreshold", "Compander Threshold", -48.0f, 0.0f, -35.f));
-    params.add(std::make_unique<AudioParameterFloat>("compRatio", "Compander Ratio", 1.0f, 10.0f, 3.5f));
-    params.add(std::make_unique<AudioParameterFloat>("compOut", "Compander Makeup", -24.0f, 24.0f, 0.f));
+    params.add(std::make_unique<AudioParameterFloat>("compSpeed", "Comp Speed", 0.0f, 500.0f, 100.f));
+    params.add(std::make_unique<AudioParameterFloat>("compThreshold", "Comp Threshold", -48.0f, 0.0f, -35.f));
+    params.add(std::make_unique<AudioParameterFloat>("compRatio", "Comp Ratio", 1.0f, 10.0f, 3.5f));
+    params.add(std::make_unique<AudioParameterFloat>("compOut", "Comp Makeup", -24.0f, 24.0f, 0.f));
 
-    params.add(std::make_unique<AudioParameterChoice>("primaryDistortionType", "Distortion Type", params::distortion.categories, 0));
-    params.add(std::make_unique<AudioParameterChoice>("preDistortionType", "Pre-Distortion Type", params::preDistortionTypes.categories, 0));
+    params.add(std::make_unique<AudioParameterChoice>("primaryDistortionType", "Dist Type", params::distortion.categories, 0));
+    params.add(std::make_unique<AudioParameterChoice>("preDistortionType", "Pre-Dist Type", params::preDistortionTypes.categories, 0));
     params.add(std::make_unique<AudioParameterChoice>("noiseDistortionType", "Noise Type", params::noiseTypes.categories, 0));
-    params.add(std::make_unique<AudioParameterChoice>("compressionType", "Compression Type", params::companderInfo.categories, 0));
+    params.add(std::make_unique<AudioParameterChoice>("compressionType", "Comp Type", params::companderInfo.categories, 0));
 
     params.add(std::make_unique<AudioParameterFloat>("fuzz", "Fuzz", 0.0f, 100.0f, 0.0f));
     params.add(std::make_unique<AudioParameterFloat>("fuzzShape", "Fuzz Shape", 0.0f, 100.0f, 50.0f));
@@ -129,36 +125,25 @@ AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::createP
     params.add(std::make_unique<AudioParameterFloat>("fold", "Fold", 0.0f, 100.0f, 0.0f));
     params.add(std::make_unique<AudioParameterFloat>("bias", "Bias", -1.0f, 1.0f, 0.0f));
 
-    params.add(std::make_unique<AudioParameterFloat>("grungeAmt", "Grunge Amount", 0.0f, 1.0f, 0.0f));
+    params.add(std::make_unique<AudioParameterFloat>("grungeAmt", "Grunge Amt", 0.0f, 1.0f, 0.0f));
     params.add(std::make_unique<AudioParameterFloat>("grungeTone", "Grunge Tone", 0.0f, 1.0f, 0.5f));
-
     // using new layout system
 
     // primary distortions
     params.add(std::make_unique<AudioParameterFloat>("saturationAmount", "Saturation", 0.0f, 100.0f, 0.f));
 
     // noise distortions
-    params.add(std::make_unique<AudioParameterFloat>("noiseAmount", "Noise Amount", 0.0f, 100.0f, 0.f));
-    params.add(std::make_unique<AudioParameterFloat>("noiseFrequency", "Noise Frequency", NormalisableRange<float>(20.0f, 20000.0f, 0.f, 0.25f), 4000.0f));
+    params.add(std::make_unique<AudioParameterFloat>("noiseAmount", "Noise Amt", 0.0f, 100.0f, 0.f));
+    params.add(std::make_unique<AudioParameterFloat>("noiseFrequency", "Noise Freq", NormalisableRange<float>(20.0f, 20000.0f, 0.f, 0.25f), 4000.0f));
     params.add(std::make_unique<AudioParameterFloat>("noiseQ", "Noise Q", 0.1f, 3.0f, 0.7f));
 
-    params.add(std::make_unique<AudioParameterFloat>("downsampleFreq", "Downsample Freq", NormalisableRange<float>(200.0f, 40000.0f, 0.f, 0.25f), 40000.0f));
-    params.add(std::make_unique<AudioParameterFloat>("downsampleJitter", "Downsample Jitter", 0.0f, 1.0f, 0.f));
-    params.add(std::make_unique<AudioParameterFloat>("bitReduction", "Bit Reduction Amount", 1.0f, 32.0f, 32.f));
+    params.add(std::make_unique<AudioParameterFloat>("downsampleFreq", "Dwnsmpl Freq", NormalisableRange<float>(200.0f, 40000.0f, 0.f, 0.25f), 40000.0f));
+    params.add(std::make_unique<AudioParameterFloat>("downsampleJitter", "Dwnsmpl Jitter", 0.0f, 1.0f, 0.f));
+    params.add(std::make_unique<AudioParameterFloat>("bitReduction", "Dwnsmpl Bits", 1.0f, 32.0f, 32.f));
 
-    params.add(std::make_unique<AudioParameterFloat>("tubeTone", "Tube Distortion Tone", -1.0f, 1.0f, -0.2f));
-
-    params.add(std::make_unique<AudioParameterFloat>("reverbMix", "Reverb Amount", 0.0f, 100.0f, 100.f));
-    params.add(std::make_unique<AudioParameterFloat>("reverbSize", "Reverb Size", 0.0f, 1.0f, 1.f));
-    params.add(std::make_unique<AudioParameterFloat>("reverbWidth", "Reverb Width", 0.0f, 1.0f, 1.f));
-    params.add(std::make_unique<AudioParameterFloat>("reverbDamping", "Reverb Damping", 0.0f, 1.0f, 0.3f));
-
-    params.add(std::make_unique<AudioParameterFloat>("combDelay", "Comb Delay", 0.01f, 2000.0f, 0.01f));
-    params.add(std::make_unique<AudioParameterFloat>("combFeedback", "Comb Feedback", -1.0f, 1.0f, 0.f));
-    params.add(std::make_unique<AudioParameterFloat>("combMix", "Comb Mix", 0.0f, 100.0f, 100.0f));
+    params.add(std::make_unique<AudioParameterFloat>("tubeTone", "Tube Tone", -1.0f, 1.0f, -0.2f));
 
     params.add(std::make_unique<AudioParameterFloat>("allPassFreq", "AllPass Frequency", NormalisableRange<float>(20.0f, 20000.0f, 0.f, 0.25f), 400.0f));
-    ;
     params.add(std::make_unique<AudioParameterFloat>("allPassQ", "AllPass Q", 0.01f, 1.41f, 0.1f));
     params.add(std::make_unique<AudioParameterFloat>("allPassAmount", "AllPass Number", 0.0f, 50.0f, 1.0f));
 

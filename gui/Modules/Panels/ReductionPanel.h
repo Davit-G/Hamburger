@@ -9,7 +9,7 @@ class ReductionPanel : public Panel
 {
 public:
     ReductionPanel(AudioPluginAudioProcessor &p, juce::String name) : Panel(p, name),
-                                                   downSample(p, "RATE", "downsampleFreq"),
+                                                   downSample(p, "RATE", "downsampleFreq", ParamUnits::hz),
                                                    bitReduction(p, "BITS", "bitReduction"),
                                                    jitter(p, "GRIT", "downsampleJitter")
     {
@@ -20,12 +20,7 @@ public:
         addAndMakeVisible(bitReduction);
         addAndMakeVisible(jitter);
     }
-
-    // void paint(juce::Graphics &g) override
-    // {
-    //     // g.fillAll(juce::Colours::green);
-    // }
-
+    
     void resized() override {
         auto bounds = getLocalBounds();
         auto width = bounds.getWidth() / 3;

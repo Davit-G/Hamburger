@@ -9,11 +9,10 @@ class CompanderPanel : public Panel
 {
 public:
     CompanderPanel(AudioPluginAudioProcessor &p) : Panel(p, "COMPANDER"),
-                                                   threshold(p, "THRESHOLD", "compThreshold"),
+                                                   threshold(p, "THRESHOLD", "compThreshold", ParamUnits::db),
                                                    ratio(p, "RATIO", "compRatio"),
-                                                   attack(p, "ATTACK", "compAttack"),
-                                                   release(p, "RELEASE", "compRelease"),
-                                                   makeup(p, "GAIN", "compOut")
+                                                   attack(p, "SPEED", "compSpeed", ParamUnits::ms),
+                                                   makeup(p, "GAIN", "compOut", ParamUnits::db)
     {
         auto laf = new KnobLAF(juce::Colours::blueviolet);
         setLookAndFeel(laf); // will cascade to all children knobs
@@ -21,7 +20,6 @@ public:
         addAndMakeVisible(threshold);
         addAndMakeVisible(ratio);
         addAndMakeVisible(attack);
-        addAndMakeVisible(release);
         addAndMakeVisible(makeup);
     }
 
@@ -46,7 +44,6 @@ public:
             // GridItem(knee).withArea(1, 2),
             GridItem(ratio).withArea(1, 2),
             GridItem(attack).withArea(2, 1),
-            GridItem(release).withArea(2, 2),
             GridItem(makeup).withArea(2, 3)};
 
         grid.performLayout(bounds);
@@ -58,6 +55,5 @@ private:
     ParamKnob threshold;
     ParamKnob ratio;
     ParamKnob attack;
-    ParamKnob release;
     ParamKnob makeup;
 };

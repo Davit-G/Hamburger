@@ -9,7 +9,7 @@ class ClassicSatPanel : public Panel
 {
 public:
     ClassicSatPanel(AudioPluginAudioProcessor &p) : Panel(p, "GRILL"), 
-        satKnob(p, "SATURATION", "saturationAmount"),
+        satKnob(p, "SATURATION", "saturationAmount", ParamUnits::percent),
         biasKnob(p, "BIAS", "bias"),
         fuzzKnob(p, "FUZZ", "fuzz"),
         grungeAmountKnob(p, "GRUNGE", "grungeAmt"),

@@ -10,7 +10,7 @@ class AllPassPanel : public Panel
 public:
     AllPassPanel(AudioPluginAudioProcessor &p) : Panel(p, "ALLPASS"),
         amount(p, "AMOUNT", "allPassAmount"),
-        freq(p, "FREQ", "allPassFreq"),
+        freq(p, "FREQ", "allPassFreq", ParamUnits::hz),
         q(p, "Q", "allPassQ")
     {
         auto laf = new KnobLAF(juce::Colours::yellowgreen);

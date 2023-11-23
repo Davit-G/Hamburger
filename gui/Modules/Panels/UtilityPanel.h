@@ -15,9 +15,9 @@ class UtilityPanel : public Panel
 {
 public:
     UtilityPanel(AudioPluginAudioProcessor &p) : Panel(p, "UTILITY"),
-    inGain(p, "IN", "inputGain"),
-    mix(p, "MIX", "mix"),
-    outGain(p, "OUT", "outputGain")
+    inGain(p, "IN", "inputGain", ParamUnits::db),
+    mix(p, "MIX", "mix", ParamUnits::percent),
+    outGain(p, "OUT", "outputGain", ParamUnits::db)
     {
         auto laf = new KnobLAF(juce::Colours::whitesmoke);
         setLookAndFeel(laf); // will cascade to all children knobs
@@ -26,11 +26,6 @@ public:
         addAndMakeVisible(mix);
         addAndMakeVisible(outGain);
     }
-
-    // void paint(juce::Graphics &g) override
-    // {
-    //     // g.fillAll(juce::Colours::cyan);
-    // }
 
     void resized() {
         auto bounds = getLocalBounds().reduced(20);

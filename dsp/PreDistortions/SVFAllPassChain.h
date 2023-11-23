@@ -4,6 +4,7 @@
 #include <cmath>
 
 // the following code is taken and significantly modified from chowutils_dsp
+// want to squeeze as much perf out as physically possible.
 
 /**
  * A State Variable Filter, as derived by Andy Simper (Cytomic).
@@ -14,33 +15,17 @@ template <typename SampleType>
 class StateVariableFilter
 {
 public:
-    static constexpr int Order = 2;
-    using NumericType = typename dsp::SampleTypeHelpers::ElementType<SampleType>::Type;
+    template <typename T, bool = std::is_floating_point_v<T> || std::is_same_v<T, std::complex<float>> || std::is_same_v<T, std::complex<double>>>
+    struct TypeTraits
+    {
+        using ElementType = T;
+        static constexpr int Size = 1;
+    };
+
+    using NumericType = typename TypeTraits<SampleType>::ElementType;
 
     /** Constructor. */
-    StateVariableFilter();
-
-    template <bool shouldUpdate = true>
-    void setCutoffFrequency(SampleType newFrequencyHz);
-
-    template <bool shouldUpdate = true>
-    void setQValue(SampleType newResonance);
-
-    /**
-     * Updates the filter coefficients.
-     *
-     * Don't touch this unless you know what you're doing!
-     */
-    void update();
-
-    /** Returns the cutoff frequency of the filter. */
-    [[nodiscard]] SampleType getCutoffFrequency() const noexcept { return cutoffFrequency; }
-
-    /** Returns the resonance of the filter. */
-    [[nodiscard]] SampleType getQValue() const noexcept { return resonance; }
-
-    /** Returns the gain of the filter. */
-    [[nodiscard]] SampleType getGain() const noexcept { return gain; }
+    StateVariableFilter() {};
 
     /** Initialises the filter. */
     void prepare(const juce::dsp::ProcessSpec &spec);
@@ -55,54 +40,11 @@ public:
      */
     void snapToZero() noexcept;
 
-    /** Processes the input and output samples supplied in the processing context. */
-    template <typename ProcessContext>
-    void process(const ProcessContext &context) noexcept
-    {
-        const auto &inputBlock = context.getInputBlock();
-        auto &outputBlock = context.getOutputBlock();
-        const auto numChannels = outputBlock.getNumChannels();
-        const auto numSamples = outputBlock.getNumSamples();
-
-        jassert(inputBlock.getNumChannels() <= ic1eq.size());
-        jassert(inputBlock.getNumChannels() == numChannels);
-        jassert(inputBlock.getNumSamples() == numSamples);
-
-        if (context.isBypassed)
-        {
-            outputBlock.copyFrom(inputBlock);
-            return;
-        }
-
-        for (size_t channel = 0; channel < numChannels; ++channel)
-        {
-            auto *inputSamples = inputBlock.getChannelPointer(channel);
-            auto *outputSamples = outputBlock.getChannelPointer(channel);
-
-            auto s1 = ic1eq[channel];
-            auto s2 = ic2eq[channel];
-
-            for (size_t i = 0; i < numSamples; ++i)
-                outputSamples[i] = processCore(inputSamples[i], s1.get(), s2.get());
-        }
-
-// #if JUCE_SNAP_TO_ZERO
-        snapToZero();
-// #endif
-    }
-
-    inline auto processSample(int channel, SampleType inputValue) noexcept
-    {
-        return processCore(inputValue, ic1eq[(size_t)channel], ic2eq[(size_t)channel]);
-    }
-
-
     SampleType cutoffFrequency, resonance, gain; // parameters
-    SampleType g0, k0, sqrtA;                 // parameter intermediate values
-    SampleType a1, a2, a3, ak, k0A;         // coefficients
+    SampleType g0, k0, sqrtA;                    // parameter intermediate values
+    SampleType a1, a2, a3, ak;                   // coefficients
     std::vector<SampleType> ic1eq, ic2eq;        // state variables
 
-private:
     inline auto processCore(SampleType x, SampleType &s1, SampleType &s2) noexcept
     {
         const auto v3 = x - s2;
@@ -111,50 +53,19 @@ private:
         const auto v2 = a3 * v3 + a2 * s1 + s2;
 
         // update state
-        s1 = (NumericType)2 * v1 - s1;
-        s2 = (NumericType)2 * v2 - s2;
+        s1 = two * v1 - s1;
+        s2 = two * v2 - s2;
 
         return v2 + v0 - k0 * v1;
     }
+
+private:
+    NumericType two = (NumericType)2;
 
     double sampleRate = 44100.0;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(StateVariableFilter)
 };
-
-template <typename SampleType>
-StateVariableFilter<SampleType>::StateVariableFilter()
-{
-    setCutoffFrequency(static_cast<NumericType>(1000.0));
-    setQValue(static_cast<NumericType>(1.0 / juce::MathConstants<double>::sqrt2));
-}
-
-template <typename SampleType>
-template <bool shouldUpdate>
-void StateVariableFilter<SampleType>::setCutoffFrequency(SampleType newCutoffFrequencyHz)
-{
-    cutoffFrequency = newCutoffFrequencyHz;
-    const auto w = juce::MathConstants<NumericType>::pi * cutoffFrequency / (NumericType)sampleRate;
-
-    g0 = dsp::FastMathApproximations::tan(w);
-
-    if constexpr (shouldUpdate)
-        update();
-}
-
-template <typename SampleType>
-template <bool shouldUpdate>
-void StateVariableFilter<SampleType>::setQValue(SampleType newResonance)
-{
-    // jassert (SIMDUtils::all (newResonance > static_cast<NumericType> (0)));
-
-    resonance = newResonance;
-    k0 = (NumericType)1.0 / resonance;
-    k0A = k0;
-
-    if constexpr (shouldUpdate)
-        update();
-}
 
 template <typename SampleType>
 void StateVariableFilter<SampleType>::prepare(const dsp::ProcessSpec &spec)
@@ -168,42 +79,32 @@ void StateVariableFilter<SampleType>::prepare(const dsp::ProcessSpec &spec)
     ic2eq.resize(spec.numChannels);
 
     reset();
-
-    setCutoffFrequency(cutoffFrequency);
 }
 
 template <typename SampleType>
 void StateVariableFilter<SampleType>::reset()
 {
+    auto zero = static_cast<SampleType>(0);
     for (auto v : {&ic1eq, &ic2eq})
-        std::fill(v->begin(), v->end(), static_cast<SampleType>(0));
+        std::fill(v->begin(), v->end(), zero);
 }
 
 template <typename SampleType>
 void StateVariableFilter<SampleType>::snapToZero() noexcept // NOSONAR (cannot be const)
 {
-// #if JUCE_SNAP_TO_ZERO
+#if JUCE_SNAP_TO_ZERO
     for (auto v : {&ic1eq, &ic2eq})
         for (auto &element : *v)
             juce::dsp::util::snapToZero(element);
-// #endif
-}
-
-template <typename SampleType>
-void StateVariableFilter<SampleType>::update()
-{
-    SampleType g, k;
-    g = g0;
-    k = k0;
-
-    const auto gk = g + k;
-    a1 = (NumericType)1.0 / ((NumericType)1.0 + g * gk);
-    a2 = g * a1;
-    a3 = g * a2;
-    ak = gk * a1;
+#endif
 }
 
 // ok onwards to my code
+
+template <typename T>
+static T *toBasePointer(dsp::SIMDRegister<T> *r) noexcept { return reinterpret_cast<T *>(r); }
+constexpr auto registerSize = dsp::SIMDRegister<float>::size();
+using Format = AudioData::Format<AudioData::Float32, AudioData::NativeEndian>;
 
 class SVFAllPassChain
 {
@@ -212,45 +113,70 @@ public:
                                                                      allPassQ(treeState, "allPassQ"),
                                                                      allPassAmount(treeState, "allPassAmount") {}
 
+    template <typename SampleType>
+    auto prepareChannelPointers(const dsp::AudioBlock<SampleType> &block)
+    {
+        // pads the input channels with zero buffers if the number of channels is less than the register size
+        std::array<SampleType *, registerSize> result{};
+
+        for (size_t ch = 0; ch < result.size(); ++ch)
+            result[ch] = (ch < block.getNumChannels() ? block.getChannelPointer(ch) : zero.getChannelPointer(ch));
+
+        return result;
+    }
+
     void processBlock(dsp::AudioBlock<float> block)
     {
-        allPassAmount.updateFloored();
+        allPassAmount.update();
         allPassFrequency.update();
         allPassQ.update();
 
-        for (int j = 0; j < block.getNumSamples(); j++)
+        auto interleavedSubBlock = interleaved.getSubBlock(0, block.getNumSamples());
+        auto context = dsp::ProcessContextReplacing<float>(block);
+
+        const auto &input = context.getInputBlock();
+        auto numSamples = block.getNumSamples();
+
+        auto inChannels = prepareChannelPointers(input);
+
+        AudioData::interleaveSamples(AudioData::NonInterleavedSource<Format>{
+                                         inChannels.data(),
+                                         registerSize,
+                                     },
+                                     AudioData::InterleavedDest<Format>{toBasePointer(interleavedSubBlock.getChannelPointer(0)), registerSize}, numSamples);
+
+        dsp::ProcessContextReplacing<dsp::SIMDRegister<float>> newCtx(interleavedSubBlock);
+
+        updateAllCoefficients(sampleRate, allPassFrequency.getRaw(), allPassQ.getRaw());
+
+        float allPassAmt = fmin(allPassAmount.getRaw(), 49.0f);
+
+        TRACE_EVENT_BEGIN("dsp", "SVFAllPassChain loop");
+
+        auto inputSamples = interleavedSubBlock.getChannelPointer(0);
+        auto outputSamples = interleavedSubBlock.getChannelPointer(0);
+
+        for (size_t i = 0; i < allPassAmt; i++)
         {
-            updateAllCoefficients(sampleRate, allPassFrequency.get(), allPassQ.get());
+            auto &svf_ref = svf[i];
 
-            float allPassAmt = allPassAmount.get();
-            float l = block.getSample(0, j);
-            float r = block.getSample(1, j);
+            auto s1 = svf_ref.ic1eq[0];
+            auto s2 = svf_ref.ic2eq[0];
 
-            int i;
-            
-            for (i = 0; i < fmin(allPassAmt, 49.0f); i++)
-            {
-                l = svf[i].processSample(0, l);
-                r = svf[i].processSample(1, r);
-            }
+            for (size_t i = 0; i < numSamples; ++i)
+                outputSamples[i] = svf_ref.processCore(inputSamples[i], s1, s2); // will rewrite s1 and s2
 
-            // get only the decimal, how far it is in between the thing
-            // crazy optimisation, avoid using fmod or float to int conversion
-            float between = allPassAmt - i; 
-
-            float nextL = svf[i].processSample(0, l);
-            float nextR = svf[i].processSample(1, r);
-
-            int idx = i + 1 >= 50 ? 49 : i + 1;
-            svf[idx].processSample(0, nextL); // prepare the next filter ahead of time, so that the next sample is ready
-            svf[idx].processSample(1, nextR);
-
-            l = l * (1.0f - between) + nextL * between;
-            r = r * (1.0f - between) + nextR * between;
-
-            block.setSample(0, j, l);
-            block.setSample(1, j, r);
+            svf_ref.ic1eq[0] = s1;
+            svf_ref.ic2eq[0] = s2;
         }
+
+        TRACE_EVENT_END("dsp");
+
+        auto outChannels = prepareChannelPointers(context.getOutputBlock());
+
+        AudioData::deinterleaveSamples(AudioData::InterleavedSource<Format>{toBasePointer(interleavedSubBlock.getChannelPointer(0)), registerSize},
+                                       AudioData::NonInterleavedDest<Format>{outChannels.data(), registerSize},
+                                       numSamples);
     }
 
     void prepare(dsp::ProcessSpec &spec)
@@ -261,39 +187,51 @@ public:
         sampleRate = spec.sampleRate;
         // todo: initialise sample rate for filter, maybe change freq depending on sample rate? idk
 
-        for (int i = 0; i < 50; i++)
+        interleaved = dsp::AudioBlock<dsp::SIMDRegister<float>>(interleavedBlockData, 1, spec.maximumBlockSize);
+        zero = dsp::AudioBlock<float>(zeroData, dsp::SIMDRegister<float>::size(), spec.maximumBlockSize);
+
+        zero.clear();
+
+        auto monoSpec = spec;
+        monoSpec.numChannels = 1;
+
+        for (size_t i = 0; i < 50; i++)
         {
             svf[i].reset();
-            svf[i].prepare(spec);
+            svf[i].prepare(monoSpec);
         }
     }
 
-    void updateAllCoefficients(float sampleRate, float cutoff, float resonance) {
-        if (oldFreq == cutoff && oldQ == resonance) return; // no unnecessary updates will increase performance
+    void updateAllCoefficients(float sampleRate, float cutoff, float resonance)
+    {
+        if (oldFreq == cutoff && oldQ == resonance)
+            return; // no unnecessary updates will increase performance
 
-        const auto w = juce::MathConstants<float>::pi * cutoff / sampleRate;
+        const float w = juce::MathConstants<float>::pi * (cutoff / sampleRate);
 
-        auto g0 = dsp::FastMathApproximations::tan(w);
+        const float g0 = dsp::FastMathApproximations::tan(w);
+        const SIMDReg g0cast = (SIMDReg)g0;
 
-        auto k0 = 1.0f / resonance;
-        auto k0A = k0;
+        const float k0 = (1.0f / resonance);
+        const SIMDReg k0cast = (SIMDReg)k0;
 
-        const auto gk = g0 + k0;
-        auto a1 = 1.0f / (1.0f + g0 * gk);
-        auto a2 = g0 * a1;
-        auto a3 = g0 * a2;
-        auto ak = gk * a1;
+        const float gk = g0 + k0;
+        const SIMDReg gkCast = (SIMDReg)gk;
+
+        const SIMDReg a1 = (SIMDReg)(1.0f / (g0 * gk + 1.0f));
+        const SIMDReg a2 = g0cast * a1;
+        const SIMDReg a3 = g0cast * a2;
+        const SIMDReg ak = (gkCast * a1);
 
         for (int i = 0; i < 50; i++)
         {
-            auto &svf = this->svf[i];
-            svf.g0 = g0;
-            svf.k0 = k0;
-            svf.k0A = k0A;
-            svf.a1 = a1;
-            svf.a2 = a2;
-            svf.a3 = a3;
-            svf.ak = ak;
+            auto &svf_ref = this->svf[i];
+            svf_ref.g0 = g0cast;
+            svf_ref.k0 = k0cast;
+            svf_ref.a1 = a1;
+            svf_ref.a2 = a2;
+            svf_ref.a3 = a3;
+            svf_ref.ak = ak;
         }
 
         oldFreq = cutoff;
@@ -306,9 +244,16 @@ private:
 
     float sampleRate = 44100.0f;
 
-    StateVariableFilter<float> svf[50];
+    using SIMDReg = dsp::SIMDRegister<float>;
+
+    StateVariableFilter<SIMDReg> svf[50];
 
     SmoothParam allPassFrequency;
     SmoothParam allPassQ;
     SmoothParam allPassAmount;
+
+    dsp::AudioBlock<SIMDReg> interleaved;
+    dsp::AudioBlock<float> zero;
+
+    HeapBlock<char> interleavedBlockData, zeroData;
 };

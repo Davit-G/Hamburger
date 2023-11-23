@@ -9,12 +9,12 @@ class EQPanel : public Panel
 {
 public:
     EQPanel(AudioPluginAudioProcessor &p) : Panel(p, "EMPHASIS"),
-                                            lowFreq(p, "FREQ", "emphasisLowFreq"),
-                                            midFreq(p, "FREQ", "emphasisMidFreq"),
-                                            highFreq(p, "FREQ", "emphasisHighFreq"),
-                                            lowGain(p, "GAIN", "emphasisLowGain"),
-                                            midGain(p, "GAIN", "emphasisMidGain"),
-                                            highGain(p, "GAIN", "emphasisHighGain")
+                                            lowFreq(p, "FREQ", "emphasisLowFreq", ParamUnits::hz),
+                                            midFreq(p, "FREQ", "emphasisMidFreq", ParamUnits::hz),
+                                            highFreq(p, "FREQ", "emphasisHighFreq", ParamUnits::hz),
+                                            lowGain(p, "GAIN", "emphasisLowGain", ParamUnits::db),
+                                            midGain(p, "GAIN", "emphasisMidGain", ParamUnits::db),
+                                            highGain(p, "GAIN", "emphasisHighGain", ParamUnits::db)
     {
         auto laf = new KnobLAF(juce::Colours::orange);
         setLookAndFeel(laf); // will cascade to all children knobs

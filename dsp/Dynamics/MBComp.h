@@ -12,30 +12,27 @@ public:
                                                         compressor3(CompressionType::COMPRESSOR),
                                                         threshold(state, "compThreshold"),
                                                         ratio(state, "compRatio"),
-                                                        attack(state, "compAttack"),
-                                                        release(state, "compRelease"),
+                                                        speed(state, "compSpeed"),
                                                         makeup(state, "compOut") {}
 
     ~MBComp() {}
 
     void processBlock(dsp::AudioBlock<float> &block)
     {
-        attack.update();
-        release.update();
+        speed.update();
         makeup.update();
         ratio.update();
         threshold.update();
 
-        float atk = attack.getRaw();
-        float rel = release.getRaw();
+        float spd = speed.getRaw();
         float mkp = makeup.getRaw();
         float rat = ratio.getRaw();
         float thr = threshold.getRaw();
 
         // float atk, float rel, float mkp, float ratioLow, float ratioUp, float thresholdLow, float thresholdUp, float kneeW, float mkpDB)
-        compressor1.updateUpDown(atk, rel, mkp, rat, rat, thr, thr + 2.0f, 0.1f, 0.f);
-        compressor2.updateUpDown(atk, rel, mkp, rat, rat, thr, thr + 2.0f, 0.1f, 0.f);
-        compressor3.updateUpDown(atk, rel, mkp, rat, rat, thr, thr + 2.0f, 0.1f, 0.f);
+        compressor1.updateUpDown(spd, spd * 0.8f, mkp, rat, rat, thr, thr + 2.0f, 0.1f, 0.f);
+        compressor2.updateUpDown(spd, spd * 0.8f, mkp, rat, rat, thr, thr + 2.0f, 0.1f, 0.f);
+        compressor3.updateUpDown(spd, spd * 0.8f, mkp, rat, rat, thr, thr + 2.0f, 0.1f, 0.f);
 
         for (int sample = 0; sample < block.getNumSamples(); sample++)
         {
@@ -48,7 +45,6 @@ public:
             float midResultL = 0.0f;
             float highResultL = 0.0f;
             highCrossOver.processSample(0, notLowL, midResultL, highResultL);
-
 
             float lowResultR = 0.0f;
             float notLowR = 0.0f;
@@ -101,8 +97,7 @@ private:
 
     SmoothParam threshold;
     SmoothParam ratio;
-    SmoothParam attack;
-    SmoothParam release;
+    SmoothParam speed;
     SmoothParam makeup;
 
     AudioBuffer<float> lowBuffer;

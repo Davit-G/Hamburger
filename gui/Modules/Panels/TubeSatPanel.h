@@ -12,7 +12,7 @@ public:
         tubeTone(p, "TUBE TONE", "tubeTone"), 
         grungeAmt(p, "GRUNGE", "grungeAmt"),
         grungeTone(p, "GRUNGE TONE", "grungeTone"), 
-        drive(p, "DRIVE", "saturationAmount")
+        drive(p, "DRIVE", "saturationAmount", ParamUnits::percent)
         
     {
         auto laf = new KnobLAF(juce::Colours::yellowgreen);

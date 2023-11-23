@@ -10,7 +10,7 @@ class ErosionPanel : public Panel
 public:
     ErosionPanel(AudioPluginAudioProcessor &p) : Panel(p, "EROSION"),
         erosionAmt(p, "AMOUNT", "noiseAmount"),
-        erosionFreq(p, "FREQ", "noiseFrequency"),
+        erosionFreq(p, "FREQ", "noiseFrequency", ParamUnits::hz),
         erosionQ(p, "Q", "noiseQ")
     {
         auto laf = new KnobLAF(juce::Colours::yellowgreen);

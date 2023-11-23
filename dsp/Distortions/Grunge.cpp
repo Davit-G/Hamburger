@@ -34,6 +34,8 @@ void Grunge::prepare(dsp::ProcessSpec& spec) {
 
 void Grunge::processBlock(dsp::AudioBlock<float>& block) {
     TRACE_EVENT("dsp", "Grunge::processBlock");
+    if (amount.getRaw() == 0.0f) return;
+
 	amount.update();
     tone.update();
 
@@ -45,7 +47,7 @@ void Grunge::processBlock(dsp::AudioBlock<float>& block) {
 
     for (int i = 0; i < block.getNumSamples(); i++) {
         float fbKnobAmt = amount.getNextValue();
-        float fbAmt = - (fbKnobAmt * fbKnobAmt) + 2 * fbKnobAmt;
+        float fbAmt = - (fbKnobAmt * fbKnobAmt) + 2.0f * fbKnobAmt;
 
         float sampleL = block.getSample(0, i);
         float sampleR = block.getSample(1, i);
