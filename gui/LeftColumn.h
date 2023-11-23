@@ -4,6 +4,7 @@
 #include "Modules/Module.h"
 #include "Modules/Panels/MBCompPanel.h"
 #include "Modules/Panels/MSCompPanel.h"
+#include "Modules/Panels/StereoCompPanel.h"
 #include "Modules/Panels/ErosionPanel.h"
 #include "Modules/Panels/SizzlePanel.h"
 #include "Modules/Panels/ReductionPanel.h"
@@ -20,6 +21,7 @@ public:
         // panel with elements already inside
         std::vector<std::unique_ptr<Panel>> companderPanels;
         // ORDERING IS VERY IMPORTANT
+        companderPanels.push_back(std::make_unique<StereoCompPanel>(p));
         companderPanels.push_back(std::make_unique<MBCompPanel>(p));
         companderPanels.push_back(std::make_unique<MSCompPanel>(p));
         compander = std::make_unique<Module>(p, "COMP", "compressionOn", "compressionType", std::move(companderPanels));

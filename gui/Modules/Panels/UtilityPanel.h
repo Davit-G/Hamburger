@@ -21,7 +21,7 @@ public:
     }
 
     void resized() {
-        auto bounds = getLocalBounds().reduced(20);
+        auto bounds = getLocalBounds();
         auto top = bounds.removeFromLeft(bounds.getWidth() / 3);
         auto mid = bounds.removeFromLeft(bounds.getWidth() / 2);
         auto bot = bounds;
