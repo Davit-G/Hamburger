@@ -44,9 +44,6 @@ public:
 
     void paint(juce::Graphics &g) override
     {
-        // g.setColour(juce::Colours::black);
-        // g.drawRect(getLocalBounds(), 1);
-
         Path p;
         p.addRoundedRectangle(getLocalBounds().reduced(4).toFloat(), 15.0f);
         g.setColour(juce::Colour::fromRGBA(0, 0, 0, 200));
@@ -61,6 +58,7 @@ public:
 
         header.items.clear();
         header.items.add(FlexItem(*enabledButton).withMinWidth(15.0f).withMargin(7.5f));
+
         if (modulePanels.size() == 1)
         {
             header.items.add(FlexItem(titleLabel).withMinWidth(120.0f));
@@ -69,6 +67,7 @@ public:
         {
             header.items.add(FlexItem(categorySelector).withMinWidth(200.0f));
         }
+        
         header.performLayout(titleBounds);
 
         for (auto &panel : modulePanels)

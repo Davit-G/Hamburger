@@ -39,8 +39,8 @@ public:
     }
 
 private:
-    std::unique_ptr<Module> eq;
-    std::unique_ptr<Module> utility;
+    std::unique_ptr<Module> eq = nullptr;
+    std::unique_ptr<Module> utility = nullptr;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(UtilColumn)
 };

@@ -3,33 +3,6 @@
 
 #include <cmath>
 
-static dsp::SIMDRegister<float> vectanh(dsp::SIMDRegister<float> x) noexcept
-{
-	auto x2 = x * x;
-	auto numerator = x * (x2 * (x2 * (x2 + 378) + 17325) + 135135);
-	auto denominator = x2 * (x2 * (x2 * 28 + 3150) + 62370) + 135135;
-
-	auto ting = dsp::SIMDRegister<float>(0.0f); 
-	for (int i = 0; i < ting.size(); i++)
-	{
-		ting[i] = numerator[i] / denominator[i];
-	}
-	return ting;
-}
-
-static dsp::SIMDRegister<float> vecexp(dsp::SIMDRegister<float> x) noexcept
-{
-	auto numerator = x * (x * (x * (x + 20) + 180) + 840) + 1680;
-	auto denominator = x * (x * (x * (x - 20) + 180 - 840) + 1680);
-
-	auto ting = dsp::SIMDRegister<float>(0.0f); 
-	for (int i = 0; i < ting.size(); i++)
-	{
-		ting[i] = numerator[i] / denominator[i];
-	}
-	return ting;
-}
-
 template <typename SampleType>
 class ClassAValve
 {
@@ -62,11 +35,9 @@ public:
 	{
 		// --- low shelf
 		*lowShelvingFilter.state = juce::dsp::IIR::ArrayCoefficients<float>::makeLowShelf(sampleRate, lowFrequencyShelf_Hz, 0.707f, juce::Decibels::decibelsToGain(lowFrequencyShelfGain_dB));
-		
 
 		// --- output HPF
 		*dcBlockingFilter.state = juce::dsp::IIR::ArrayCoefficients<float>::makeHighPass(sampleRate, dcBlockingLF_Hz, 0.707f);
-		
 
 		// --- LPF (upper edge), technically supposed to be second order
 		auto upperBandwidthFilterCoeffs = juce::dsp::IIR::ArrayCoefficients<float>::makeFirstOrderLowPass(sampleRate, millerHF_Hz);
@@ -76,11 +47,9 @@ public:
 
 	void processBlock(const dsp::ProcessContextReplacing<SampleType> &context)
 	{
-		// TRACE_DSP();
 		auto inputBlock = context.getInputBlock();
 		auto outputBlock = context.getOutputBlock();
 		auto channels = outputBlock.getNumChannels();
-
 
 		for (int ch = 0; ch < channels; ++ch)
 		{
@@ -98,7 +67,6 @@ public:
 		upperBandwidthFilter1stOrder.process(context); // --- HF Edge
 		upperBandwidthFilter2ndOrder.process(context);
 		outputBlock.multiplyBy(-outputGain); // --- (5) final output scaling and inversion
-
 	}
 
 	float lowFrequencyShelf_Hz = 10.0f; // using defaults from will pirkle
@@ -122,12 +90,10 @@ public:
 	SampleType processAudioSampleOld(SampleType xn, int channel = 0)
 	{
 		float yn = 0.0f;
-
-		// TRACE_EVENT_BEGIN("dsp", "valve grid conduction check");
+		
 		xn *= inputGain;				   // --- input scaling
 		xn = doValveGridConductionOld(xn); // grid conduction check, must be done prior to waveshaping
 
-		// TRACE_EVENT_BEGIN("dsp", "lossy integrator dc offset");
 		// float dcOffset = (lossyIntegrator).processAudioSample(dsp::SIMDRegister<float>(xn)).get(0); // detect the DC offset that the clipping may have caused
 		float dcOffset = lossyIntegrator[channel].processAudioSample(xn); // detect the DC offset that the clipping may have caused
 		dcOffset = fmin(dcOffset, 0.0f);

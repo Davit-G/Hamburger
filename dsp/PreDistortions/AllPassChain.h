@@ -9,9 +9,8 @@ public:
         allPassFrequency(treeState, "allPassFreq"), 
         allPassQ(treeState, "allPassQ"), 
         allPassAmount(treeState, "allPassAmount") {}
-    ~AllPassChain(){
 
-    }
+    ~AllPassChain() {}
 
     template <typename SampleType>
     auto prepareChannelPointers (const dsp::AudioBlock<SampleType>& block)
@@ -109,7 +108,7 @@ private:
     float oldAllPassFreq = 0.0;
     float oldAllPassQ = 0.0;
     float oldAllPassAmount = 0.0;
-    
+
     float oldSampleRate;
 
     constexpr auto registerSize = dsp::SIMDRegister<float>::size();

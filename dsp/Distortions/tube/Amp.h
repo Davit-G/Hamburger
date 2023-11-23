@@ -8,9 +8,7 @@ class Amp
 public:
     Amp(juce::AudioProcessorValueTreeState &treeState) : 
         tubeTone(treeState, "tubeTone"),
-        drive(treeState, "saturationAmount")
-    {
-    }
+        drive(treeState, "saturationAmount") {}
 
     ~Amp() {}
 

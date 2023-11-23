@@ -110,12 +110,12 @@ AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::createP
     params.add(std::make_unique<AudioParameterChoice>("oversamplingFactor", "Oversampling Factor", params::oversamplingFactor.categories, 0));
 
     params.add(std::make_unique<AudioParameterFloat>("compSpeed", "Comp Speed", 0.0f, 500.0f, 100.f));
+    params.add(std::make_unique<AudioParameterFloat>("comBandTilt", "Comp Band Tilt", 0.0f, 500.0f, 100.f));
     params.add(std::make_unique<AudioParameterFloat>("compThreshold", "Comp Threshold", -48.0f, 0.0f, -35.f));
     params.add(std::make_unique<AudioParameterFloat>("compRatio", "Comp Ratio", 1.0f, 10.0f, 3.5f));
     params.add(std::make_unique<AudioParameterFloat>("compOut", "Comp Makeup", -24.0f, 24.0f, 0.f));
 
     params.add(std::make_unique<AudioParameterChoice>("primaryDistortionType", "Dist Type", params::distortion.categories, 0));
-    // params.add(std::make_unique<AudioParameterChoice>("preDistortionType", "Pre-Dist Type", params::preDistortionTypes.categories, 0));
     params.add(std::make_unique<AudioParameterChoice>("noiseDistortionType", "Noise Type", params::noiseTypes.categories, 0));
     params.add(std::make_unique<AudioParameterChoice>("compressionType", "Comp Type", params::dynamics.categories, 0));
 
@@ -127,7 +127,6 @@ AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::createP
 
     params.add(std::make_unique<AudioParameterFloat>("grungeAmt", "Grunge Amt", 0.0f, 1.0f, 0.0f));
     params.add(std::make_unique<AudioParameterFloat>("grungeTone", "Grunge Tone", 0.0f, 1.0f, 0.5f));
-    // using new layout system
 
     // primary distortions
     params.add(std::make_unique<AudioParameterFloat>("saturationAmount", "Saturation", 0.0f, 100.0f, 0.f));
