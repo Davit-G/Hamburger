@@ -1,9 +1,0 @@
-before:
-
-average tube distortion time in whatever unit:
-3300009.4137931033
-
-
-after fixing usage of both floats and doubles in code:
-tube distortion time:
-3245909.2884615385            (basically negligible)
