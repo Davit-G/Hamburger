@@ -4,7 +4,6 @@
 #include "../Panel.h"
 #include "../../Knob.h"
 #include "PanelNames.h"
-#include "../../LookAndFeel/Palette.h" 
 
 class TubeSatPanel : public Panel
 {

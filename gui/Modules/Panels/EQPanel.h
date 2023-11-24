@@ -1,11 +1,6 @@
 #pragma once
 
- 
-
 #include "../Panel.h"
-#include "../../LookAndFeel/KnobLAF.h"
-
-#include "../../LookAndFeel/Palette.h" 
 
 class EQPanel : public Panel
 {

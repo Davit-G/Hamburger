@@ -5,8 +5,6 @@
 #include "../../Knob.h"
 #include "PanelNames.h"
 
-#include "../../LookAndFeel/Palette.h"
-
 class ClassicSatPanel : public Panel
 {
 public:

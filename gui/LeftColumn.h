@@ -12,6 +12,7 @@
 #include "Modules/Panels/EmptyPanel.h"
 #include "Modules/Panels/AllPassPanel.h"
 
+#include "LookAndFeel/Palette.h"
 
 class LeftColumn : public juce::Component
 {

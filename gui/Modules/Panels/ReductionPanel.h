@@ -4,7 +4,6 @@
 
 #include "../Panel.h"
 #include "PanelNames.h"
-#include "../../LookAndFeel/Palette.h" 
 
 class ReductionPanel : public Panel
 {

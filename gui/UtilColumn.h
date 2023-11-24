@@ -1,11 +1,10 @@
 #pragma once
-
  
 #include "Modules/Module.h"
 
 #include "Modules/Panels/EQPanel.h"
 #include "Modules/Panels/UtilityPanel.h"
-
+#include "LookAndFeel/Palette.h"
 
 class UtilColumn : public juce::Component
 {

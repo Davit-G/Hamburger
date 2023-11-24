@@ -1,10 +1,7 @@
 #pragma once
 
- 
-
 #include "../Panel.h"
 #include "PanelNames.h"
-#include "../../LookAndFeel/Palette.h" 
 
 class AllPassPanel : public Panel
 {
@@ -19,11 +16,6 @@ public:
         addAndMakeVisible(freq);
         addAndMakeVisible(q);
     }
-
-    // void paint(juce::Graphics &g) override
-    // {
-    //     // g.fillAll(juce::Colours::green);
-    // }
 
     void resized() override {
         // three, in a row

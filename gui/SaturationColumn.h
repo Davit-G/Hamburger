@@ -1,9 +1,11 @@
- 
+#pragma once 
 
 #include "Modules/Module.h"
 
 #include "Modules/Panels/ClassicSatPanel.h"
 #include "Modules/Panels/TubeSatPanel.h"
+
+#include "LookAndFeel/Palette.h"
 
 class SaturationColumn : public juce::Component
 {

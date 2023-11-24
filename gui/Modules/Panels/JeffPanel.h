@@ -1,10 +1,7 @@
 #pragma once
 
- 
-
 #include "../Panel.h"
 #include "PanelNames.h"
-#include "../../LookAndFeel/Palette.h" 
 
 class JeffPanel : public Panel
 {
