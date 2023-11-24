@@ -1,7 +1,10 @@
 #pragma once
-
-#include <JuceHeader.h>
+ 
 #include <cmath>
+#include <JuceHeader.h>
+
+using namespace juce;
+
 
 class Curves {
 public:

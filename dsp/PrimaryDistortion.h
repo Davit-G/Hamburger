@@ -1,6 +1,6 @@
 #pragma once
 
-#include <JuceHeader.h>
+ 
 
 #include "Distortions/SoftClipper.h"
 #include "Distortions/PattyFuzz.h"
@@ -91,7 +91,7 @@ public:
 
         // init iir filter
         iirFilter.reset();
-        *iirFilter.state = *dsp::IIR::Coefficients<float>::makeHighPass(spec.sampleRate, 5.0f, 0.707f);
+        *iirFilter.state = dsp::IIR::ArrayCoefficients<float>::makeHighPass(spec.sampleRate, 5.0f, 0.707f);
         iirFilter.prepare(spec);
 
         setSampleRate(spec.sampleRate);

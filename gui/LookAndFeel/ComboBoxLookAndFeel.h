@@ -1,6 +1,6 @@
 #pragma once
 
-#include <JuceHeader.h>
+ 
 
 class ComboBoxLookAndFeel : public juce::LookAndFeel_V4
 {

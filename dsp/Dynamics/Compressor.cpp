@@ -1,6 +1,6 @@
 #include "Compressor.h"
 #include "Curves.h"
-#include <JuceHeader.h>
+ 
 
 void Compressor::prepare(dsp::ProcessSpec& spec)
 {
@@ -12,7 +12,7 @@ void Compressor::processBlock(dsp::AudioBlock<float>& dryBuffer)
     TRACE_DSP();
     float makeupGain = juce::Decibels::decibelsToGain(makeup_dB);
 
-    for (int sample = 0; sample < dryBuffer.getNumSamples(); sample++)
+    for (size_t sample = 0; sample < dryBuffer.getNumSamples(); sample++)
     {
         float leftSample = dryBuffer.getSample(0, sample);
         float rightSample = dryBuffer.getSample(1, sample);

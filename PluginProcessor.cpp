@@ -1,10 +1,9 @@
 #include "PluginProcessor.h"
 #include "./gui/PluginEditor.h"
-
-#include <JuceHeader.h>
-#include "gui/Modules/Panels/PanelNames.h"
-
+ 
 using namespace juce;
+
+#include "gui/Modules/Panels/PanelNames.h"
 
 #include <chrono>
 #include <ctime>

@@ -1,6 +1,4 @@
-#include <JuceHeader.h>
 #include "LossyIntegrator.h"
-
 
 void LossyIntegrator::prepare(dsp::ProcessSpec &spec)
 {

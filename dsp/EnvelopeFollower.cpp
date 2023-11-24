@@ -1,6 +1,7 @@
 
 #include "EnvelopeFollower.h"
 #include <cmath> // std::abs
+
 #include <JuceHeader.h>
 
 float EnvelopeFollower::processSample(float xn)
@@ -70,7 +71,7 @@ float EnvelopeFollower::processSampleStereo(float xL, float xR)
     return 20.0f * log10(currEnvelope);
 }
 
-void EnvelopeFollower::prepare(dsp::ProcessSpec& spec)
+void EnvelopeFollower::prepare(juce::dsp::ProcessSpec& spec)
 {
     // set correct sample rate information
     setSampleRate(spec.sampleRate);

@@ -8,7 +8,6 @@
   ==============================================================================
 */
 
-#include <JuceHeader.h>
 #include "Fuzz.h"
 
 //==============================================================================
@@ -28,7 +27,7 @@ void Fuzz::processBlock(dsp::AudioBlock<float>& block) {
 	TRACE_EVENT("dsp", "Fuzz::processBlock");
 	bias.update();
 
-	for (int sample = 0; sample < block.getNumSamples(); sample++) {
+	for (int sample = 0; sample < static_cast<int>(block.getNumSamples()); sample++) {
 		auto envelope = follower.processSampleStereo(block.getSample(0, sample), block.getSample(1, sample));
 
 		float biasAmt = bias.get() * 1.4f;

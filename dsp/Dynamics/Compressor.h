@@ -3,6 +3,7 @@
 #include "../EnvelopeFollower.h"
 
 #include <JuceHeader.h>
+using namespace juce;
 
 enum CompressionType {
     EXPANDER,

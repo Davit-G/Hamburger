@@ -9,7 +9,7 @@
 */
 
 #pragma once
-#include <JuceHeader.h>
+ 
 #include "../SmoothParam.h"
 
 class Redux : public Component

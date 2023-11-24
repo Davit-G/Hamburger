@@ -1,4 +1,5 @@
 #pragma once
+
 #include <JuceHeader.h>
 
 /* Only for use with floats / knobs, not categorical parameters */

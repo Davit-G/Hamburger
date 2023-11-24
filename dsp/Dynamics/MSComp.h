@@ -2,7 +2,7 @@
 
 #include "../EnvelopeFollower.h"
 
-#include <JuceHeader.h>
+ 
 
 // mid side compression
 class MSComp
@@ -19,6 +19,8 @@ public:
 
     void processBlock(dsp::AudioBlock<float> &block)
     {
+        TRACE_DSP();
+
         speed.update();
         makeup.update();
         tilt.update();

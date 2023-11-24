@@ -1,6 +1,6 @@
 #include "Erosion.h"
 
-#include <JuceHeader.h>
+ 
 
 void Erosion::processBlock(dsp::AudioBlock<float>& block)
 {

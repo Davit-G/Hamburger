@@ -1,5 +1,5 @@
 
-#include <JuceHeader.h>
+ 
 
 class Gain
 {
@@ -9,7 +9,7 @@ public:
         // initialise gain to 1.0
         gain = 1.0f;
     }
-    
+
     ~Gain() {}
 
     void setGain(float newGain)

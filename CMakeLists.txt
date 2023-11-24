@@ -116,24 +116,12 @@ target_compile_definitions("${BaseTargetName}" PUBLIC
 # Conversion to binary-data will happen when your target is built.
 
 juce_add_binary_data("${BaseTargetName}BinaryData" HEADER_NAME BinaryData.h NAMESPACE BinaryData SOURCES
-    Assets/hamburgernew13.png
-    Assets/saturation_knob_min.png
-    Assets/sizzleknob_min.png
-    Assets/mix_min.png
-    Assets/ingain_min.png
-    Assets/ingain2_min.png
-    Assets/outgain_min.png
-    Assets/knob_min.png
     Assets/poweron.png
     Assets/poweroff.png
     Assets/Quicksand.ttf
     Assets/Questrial-Regular.ttf
-    Assets/Quicksand-Bold.ttf
-    Assets/Quicksand-SemiBold.ttf
     Assets/tick.png
-    Assets/knobShadow2.png
     Assets/bg3.jpg
-    Assets/fire.jpg
 )
 set_target_properties("${BaseTargetName}BinaryData" PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
 

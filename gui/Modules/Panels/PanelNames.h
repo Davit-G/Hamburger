@@ -1,5 +1,5 @@
 #pragma once
-#include <JuceHeader.h>
+ 
 
 #include "../Panel.h"
 
@@ -40,4 +40,4 @@ namespace params {
     static const PanelInfo dynamics = {
         "DYNAMICS", "", StringArray({"STEREO", "OTT", "MID-SIDE"})
     };
-};
+}

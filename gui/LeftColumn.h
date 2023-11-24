@@ -1,6 +1,6 @@
 #pragma once
 
-#include <JuceHeader.h>
+ 
 #include "Modules/Module.h"
 #include "Modules/Panels/MBCompPanel.h"
 #include "Modules/Panels/MSCompPanel.h"
@@ -60,8 +60,8 @@ public:
         auto bounds = getLocalBounds();
         auto height = bounds.getHeight();
 
-        compander->setBounds(bounds.removeFromTop(height / 2.f));
-        noise->setBounds(bounds.removeFromBottom(height / 4.f));
+        compander->setBounds(bounds.removeFromTop(height / 2));
+        noise->setBounds(bounds.removeFromBottom(height / 4));
         allpass->setBounds(bounds);
     }
 

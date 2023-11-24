@@ -79,8 +79,6 @@ private:
 
     juce::AudioParameterChoice *oversamplingFactor = nullptr;
 
-    int oldOversamplingFactor = -1;
-
     juce::AudioParameterFloat *emphasis[3];
     juce::AudioParameterFloat *emphasisFreq[3];
     float prevEmphasis[3] = {0.f, 0.f, 0.f};
@@ -95,8 +93,6 @@ private:
     dsp::ProcessorDuplicator<dsp::IIR::Filter<float>, dsp::IIR::Coefficients<float>> peakFilterAfter[3];
 
     float filterFrequencies[3] = {62.0f, 1220.0f, 9000.0f};
-
-    // double oversampledSampleRate;
 
     dsp::Gain<float> inputGain;
     dsp::Gain<float> outputGain;

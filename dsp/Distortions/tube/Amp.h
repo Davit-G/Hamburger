@@ -1,4 +1,4 @@
-#include <JuceHeader.h>
+ 
 #include "Valve.h"
 
 #include "../../SmoothParam.h"

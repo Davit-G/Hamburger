@@ -1,8 +1,8 @@
 #pragma once
 
-#include <JuceHeader.h>
+ 
 
-// #include "./AllPassChain.h"
+// #include "./AllPassChain.h"   // might want to reintroduce with "quality" setting
 // #include "./SIMDAllPassChain.h"
 #include "SVFAllPassChain.h"
 

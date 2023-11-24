@@ -1,5 +1,5 @@
 #pragma once
-#include <Juceheader.h>
+ 
 #include "../SmoothParam.h"
 #include <cmath>
 

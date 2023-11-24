@@ -1,5 +1,5 @@
 #pragma once
-#include <JuceHeader.h>
+ 
 
 class LightButton : public juce::Button {
     // this class is a button that renders either one of two images

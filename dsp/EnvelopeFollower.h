@@ -1,6 +1,9 @@
 #pragma once
 #include <cmath> // std::abs
+
 #include <JuceHeader.h>
+
+using namespace juce;
 
 class EnvelopeFollower
 {

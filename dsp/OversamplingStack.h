@@ -1,5 +1,5 @@
 
-#include <JuceHeader.h>
+ 
 
 class OversamplingStack { // TODO: implement this into the program
 public:

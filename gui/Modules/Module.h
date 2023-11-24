@@ -1,6 +1,6 @@
 #pragma once
 
-#include <JuceHeader.h>
+ 
 #include "../../PluginProcessor.h"
 #include "LightButton.h"
 #include "../LookAndFeel/ComboBoxLookAndFeel.h"
@@ -67,7 +67,7 @@ public:
         {
             header.items.add(FlexItem(categorySelector).withMinWidth(200.0f));
         }
-        
+
         header.performLayout(titleBounds);
 
         for (auto &panel : modulePanels)
@@ -110,7 +110,7 @@ private:
 
     void setCategoryText(juce::String moduleName)
     {
-        auto index = categorySelector.getSelectedItemIndex();
+        size_t index = categorySelector.getSelectedItemIndex();
         if (index != -1)
         {
             auto panelName = modulePanels[index]->getName();

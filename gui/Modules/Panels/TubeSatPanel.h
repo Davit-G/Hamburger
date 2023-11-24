@@ -1,6 +1,6 @@
 #pragma once
 
-#include <JuceHeader.h>
+ 
 #include "../Panel.h"
 #include "../../Knob.h"
 #include "PanelNames.h"

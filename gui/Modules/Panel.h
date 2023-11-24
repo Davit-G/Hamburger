@@ -1,7 +1,6 @@
 #pragma once
 
-#include <JuceHeader.h>
-#include "../Knob.h"
+ 
 
 class Panel : public juce::Component
 {

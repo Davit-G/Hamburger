@@ -2,7 +2,7 @@
 
 #include "../EnvelopeFollower.h"
 
-#include <JuceHeader.h>
+ 
 
 class MBComp
 {
@@ -19,6 +19,8 @@ public:
 
     void processBlock(dsp::AudioBlock<float> &block)
     {
+        TRACE_DSP();
+
         speed.update();
         makeup.update();
         tilt.update();
@@ -95,7 +97,9 @@ public:
     }
 
 private:
-    double sampleRate;
+    Compressor compressor1;
+    Compressor compressor2;
+    Compressor compressor3;
 
     SmoothParam threshold;
     SmoothParam ratio;
@@ -115,8 +119,4 @@ private:
 
     dsp::LinkwitzRileyFilter<float> lowCrossOver;
     dsp::LinkwitzRileyFilter<float> highCrossOver;
-
-    Compressor compressor1;
-    Compressor compressor2;
-    Compressor compressor3;
 };

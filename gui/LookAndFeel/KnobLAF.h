@@ -1,5 +1,5 @@
 #pragma once
-#include <JuceHeader.h>
+ 
 
 
 class KnobLAF : public juce::LookAndFeel_V4
@@ -69,7 +69,7 @@ public:
         float xOffset = std::sin(toAngle) * arcRadius;
         float yOffset = -std::cos(toAngle) * arcRadius;
 
-        marker.setStart(xOffset * 0.8 + bounds.getCentreX(), yOffset * 0.8 + bounds.getCentreY());
+        marker.setStart(xOffset * 0.8f + bounds.getCentreX(), yOffset * 0.8f + bounds.getCentreY());
         marker.setEnd(xOffset + bounds.getCentreX(), yOffset + bounds.getCentreY());
         
         Path p;

@@ -2,7 +2,7 @@
 
 #include "../EnvelopeFollower.h"
 
-#include <JuceHeader.h>
+ 
 
 class StereoComp
 {
@@ -19,6 +19,8 @@ public:
 
     void processBlock(dsp::AudioBlock<float> &block)
     {
+        TRACE_DSP();
+
         speed.update();
         makeup.update();
         sLink.update();
@@ -46,7 +48,7 @@ public:
             float bothGain = compressorBoth.processOneSampleGainStereo(leftSample, rightSample);
 
             // left right stereo link. tlt is between 0 and 1
-            float stereoLinkGain = stereoLink * bothGain * 2.0f;
+            float stereoLinkGain = stereoLink * bothGain;
             float leftGainOut = leftGain * (1.0f - stereoLink) + stereoLinkGain;
             float rightGainOut = rightGain * (1.0f - stereoLink) + stereoLinkGain;
 

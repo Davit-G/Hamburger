@@ -1,7 +1,8 @@
-#include <JuceHeader.h>
+#pragma once 
 #include "LossyIntegrator.h"
 
 #include <cmath>
+#include <JuceHeader.h>
 
 template <typename SampleType>
 class ClassAValve
@@ -90,7 +91,7 @@ public:
 	SampleType processAudioSampleOld(SampleType xn, int channel = 0)
 	{
 		float yn = 0.0f;
-		
+
 		xn *= inputGain;				   // --- input scaling
 		xn = doValveGridConductionOld(xn); // grid conduction check, must be done prior to waveshaping
 

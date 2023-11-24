@@ -1,13 +1,11 @@
 #include "Amp.h"
-#include <JuceHeader.h>
 
 void Amp::prepare(dsp::ProcessSpec &spec)
 {
     tubeTone.prepare(spec);
 
     inputHighPass.reset();
-    juce::dsp::IIR::Coefficients<float>::Ptr inputHighPassCoefficients = juce::dsp::IIR::Coefficients<float>::makeHighPass(spec.sampleRate, 20.0f);
-    inputHighPass.state = *inputHighPassCoefficients;
+    *inputHighPass.state = juce::dsp::IIR::ArrayCoefficients<float>::makeHighPass(spec.sampleRate, 20.0f);
 
     inputHighPass.prepare(spec);    
 
@@ -84,7 +82,7 @@ void Amp::processBlock(dsp::AudioBlock<float> &block)
     inputHighPass.process(dsp::ProcessContextReplacing<float>(block));
     TRACE_EVENT_END("dsp");
 
-    // step 2: apply gain
+    // step 2: apply gain 
     block.multiplyBy(inputGain);
 
     // left channel

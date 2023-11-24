@@ -9,7 +9,7 @@
 */
 
 #include "Redux.h"
-#include <JuceHeader.h>
+ 
 
 //==============================================================================
 Redux::Redux(juce::AudioProcessorValueTreeState &treeState) : downsample(treeState, "downsampleFreq"),
@@ -31,7 +31,7 @@ void Redux::prepare(dsp::ProcessSpec &spec)
 
 	for (int i = 0; i < 4; i++)
 	{
-		*antialiasingFilter[i].state = *dsp::IIR::Coefficients<float>::makeLowPass(sampleRate, 7000.0f, 1.0f);
+		*antialiasingFilter[i].state = dsp::IIR::ArrayCoefficients<float>::makeLowPass(sampleRate, 7000.0f, 1.0f);
 		antialiasingFilter[i].reset();
 		antialiasingFilter[i].prepare(spec);
 	}

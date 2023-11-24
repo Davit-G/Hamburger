@@ -1,6 +1,6 @@
 #pragma once
 
-#include <JuceHeader.h>
+ 
 #include "Modules/Module.h"
 
 #include "Modules/Panels/EQPanel.h"

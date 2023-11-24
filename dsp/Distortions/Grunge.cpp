@@ -8,7 +8,7 @@
   ==============================================================================
 */
 
-#include <JuceHeader.h>
+ 
 #include "Grunge.h"
 
 //==============================================================================
@@ -26,8 +26,8 @@ void Grunge::prepare(dsp::ProcessSpec& spec) {
     delayLine.setDelay(1);
     dcBlockerL.prepare(spec);
     dcBlockerR.prepare(spec);
-    dcBlockerL.coefficients = juce::dsp::IIR::Coefficients<float>::makeHighPass(spec.sampleRate, 24.0f);
-    dcBlockerR.coefficients = juce::dsp::IIR::Coefficients<float>::makeHighPass(spec.sampleRate, 24.0f);
+    *dcBlockerL.coefficients = juce::dsp::IIR::ArrayCoefficients<float>::makeHighPass(spec.sampleRate, 24.0f);
+    *dcBlockerR.coefficients = juce::dsp::IIR::ArrayCoefficients<float>::makeHighPass(spec.sampleRate, 24.0f);
 
     this->sampleRate = spec.sampleRate;
 }
@@ -40,10 +40,10 @@ void Grunge::processBlock(dsp::AudioBlock<float>& block) {
     tone.update();
 
     float toneFloat = tone.getRaw() * 55.0f + 5.0f;
-    auto dcCoeffs = juce::dsp::IIR::Coefficients<float>::makeHighPass(sampleRate, toneFloat);
+    auto dcCoeffs = juce::dsp::IIR::ArrayCoefficients<float>::makeHighPass(sampleRate, toneFloat);
 
-    dcBlockerL.coefficients = dcCoeffs;
-    dcBlockerR.coefficients = dcCoeffs;
+    *dcBlockerL.coefficients = dcCoeffs;
+    *dcBlockerR.coefficients = dcCoeffs;
 
     for (int i = 0; i < block.getNumSamples(); i++) {
         float fbKnobAmt = amount.getNextValue();

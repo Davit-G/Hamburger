@@ -1,6 +1,6 @@
 #pragma once
 
-#include <JuceHeader.h>
+ 
 #include "../Panel.h"
 #include "../../Knob.h"
 #include "PanelNames.h"
@@ -36,7 +36,7 @@ public:
         biasKnob.setBounds(bounds.removeFromLeft(width));
         fuzzKnob.setBounds(bounds);
     }
-    
+
 private:
     ParamKnob satKnob;
     ParamKnob biasKnob;

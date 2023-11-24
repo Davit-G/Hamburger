@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../PluginProcessor.h"
-#include <JuceHeader.h>
+ 
 #include "LookAndFeel/KnobLAF.h"
 
 // enum of units, with strings attached to them
