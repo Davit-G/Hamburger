@@ -12,7 +12,7 @@ class Module : public juce::Component
 public:
     Module(AudioPluginAudioProcessor &processor, const std::string &moduleName, const std::string buttonAttachmentId, std::string categoryAttachmentId, std::vector<std::unique_ptr<Panel>> panels)
         : modulePanels(std::move(panels)),
-          powerOffImage(juce::ImageCache::getFromMemory(BinaryData::poweroff_png, BinaryData::poweroff_pngSize)),
+          powerOffImage(juce::ImageCache::getFromMemory(BinaryData::poweroff_png, BinaryData::poweroff_pngSize)), // yes it's using imageCache but stop constructing new instances! unify somehow
           powerOnImage(juce::ImageCache::getFromMemory(BinaryData::poweron_png, BinaryData::poweron_pngSize))
     {
         setupHeader();
@@ -32,10 +32,16 @@ public:
         }
         // categorySelector.setSelectedItemIndex(0);
 
-        enabledButton = std::make_unique<LightButton>(processor, powerOffImage, powerOnImage);
-        attachment = std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment>(processor.treeState, buttonAttachmentId, *enabledButton);
-
-        addAndMakeVisible(enabledButton.get());
+        if (buttonAttachmentId != "")
+        {
+            enabledButton = std::make_unique<LightButton>(processor, powerOffImage, powerOnImage);
+            attachment = std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment>(processor.treeState, buttonAttachmentId, *enabledButton);
+            addAndMakeVisible(enabledButton.get());
+        }
+        else
+        {
+            enabledButton = nullptr;
+        }
 
         setCategoryText(moduleName);
     }
@@ -57,7 +63,8 @@ public:
         titleBounds.reduce(10, 0);
 
         header.items.clear();
-        header.items.add(FlexItem(*enabledButton).withMinWidth(15.0f).withMargin(7.5f));
+        if (enabledButton != nullptr)
+            header.items.add(FlexItem(*enabledButton).withMinWidth(15.0f).withMargin(7.5f));
 
         if (modulePanels.size() == 1)
         {

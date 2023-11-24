@@ -6,9 +6,9 @@ class EQPanel : public Panel
 {
 public:
     EQPanel(AudioPluginAudioProcessor &p) : Panel(p, "EMPHASIS"),
-                                            lowFreq(p, "FREQ", "emphasisLowFreq", ParamUnits::hz),
-                                            midFreq(p, "FREQ", "emphasisMidFreq", ParamUnits::hz),
-                                            highFreq(p, "FREQ", "emphasisHighFreq", ParamUnits::hz),
+                                            lowFreq(p, "LOW", "emphasisLowFreq", ParamUnits::hz),
+                                            midFreq(p, "MID", "emphasisMidFreq", ParamUnits::hz),
+                                            highFreq(p, "HIGH", "emphasisHighFreq", ParamUnits::hz),
                                             lowGain(p, "GAIN", "emphasisLowGain", ParamUnits::db),
                                             midGain(p, "GAIN", "emphasisMidGain", ParamUnits::db),
                                             highGain(p, "GAIN", "emphasisHighGain", ParamUnits::db)

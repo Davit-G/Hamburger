@@ -1,6 +1,6 @@
 #pragma once
 
- 
+constexpr auto registerSize = dsp::SIMDRegister<float>::size();
 
 class AllPassChain
 {
@@ -27,6 +27,7 @@ public:
     void processBlock(dsp::AudioBlock<float> &block)
     {
         TRACE_EVENT("dsp", "AllPassChain::processBlock");
+        
         allPassAmount.update();
         allPassFrequency.update();
         allPassQ.update();
@@ -105,13 +106,16 @@ private:
     SmoothParam allPassQ;
     SmoothParam allPassAmount;
 
+    template <typename T>
+    static T *toBasePointer(dsp::SIMDRegister<T> *r) noexcept { return reinterpret_cast<T *>(r); }
+    using Format = AudioData::Format<AudioData::Float32, AudioData::NativeEndian>;
+
     float oldAllPassFreq = 0.0;
     float oldAllPassQ = 0.0;
     float oldAllPassAmount = 0.0;
 
     float oldSampleRate;
 
-    constexpr auto registerSize = dsp::SIMDRegister<float>::size();
     dsp::ProcessorDuplicator<dsp::IIR::Filter<dsp::SIMDRegister<float>>, dsp::IIR::Coefficients<float>> iir[50];
 
     dsp::AudioBlock<dsp::SIMDRegister<float>> interleaved;

@@ -25,7 +25,7 @@ static std::map<ParamUnits, juce::String> unitStrings = {
 class ParamKnob : public juce::Component
 {
 public:
-    ParamKnob(AudioPluginAudioProcessor &p, juce::String name, juce::String attachmentID, ParamUnits unit = ParamUnits::none): processorRef(p) {
+    ParamKnob(AudioPluginAudioProcessor &p, juce::String knobName, juce::String attachmentID, ParamUnits knobUnit = ParamUnits::none): processorRef(p), kName(knobName), unit(knobUnit) {
         knobAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(processorRef.treeState, attachmentID, knob);
         jassert(knobAttachment);
 
@@ -35,24 +35,26 @@ public:
         knob.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
         knob.setRange(knobParamRange.start, knobParamRange.end);
 
-        knob.onDragStart = [this, unit] { 
+        setName(knobName);
+
+        knob.onDragStart = [this] { 
             // display the parameter value as the text instead of the parameter name
             this->isDragging = true;
-            this->label.setText(juce::String(this->knob.getValue(), 2) + unitStrings[unit], juce::dontSendNotification);
+            this->label.setText(juce::String(this->knob.getValue(), 2) + unitStrings[this->unit], juce::dontSendNotification);
         };
 
         // when value is changing, set it to what the knob is, but only if we're dragging
-        knob.onValueChange = [this, unit] {
+        knob.onValueChange = [this] {
             if (this->isDragging) {
                 
-                this->label.setText(juce::String(this->knob.getValue(), 2) + unitStrings[unit], juce::dontSendNotification);
+                this->label.setText(juce::String(this->knob.getValue(), 2) + unitStrings[this->unit], juce::dontSendNotification);
             }
         };
 
-        knob.onDragEnd = [this, name] { 
+        knob.onDragEnd = [this] { 
             // display the parameter name as the text again
             this->isDragging = false;
-            this->label.setText(name, juce::dontSendNotification);
+            this->label.setText(this->kName, juce::dontSendNotification);
         };
 
         addAndMakeVisible(knob);
@@ -62,7 +64,7 @@ public:
         label.setFont(KnobLAF::getTheFont(14.0f));
         addAndMakeVisible(label);
 
-        label.setText(name, juce::dontSendNotification);
+        label.setText(kName, juce::dontSendNotification);
     }
 
     ~ParamKnob() override {
@@ -88,6 +90,9 @@ private:
 
     Slider knob;
     Label label;
+
+    juce::String kName;
+    ParamUnits unit;
 
     bool isDragging = false;
 

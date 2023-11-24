@@ -103,7 +103,7 @@ void StateVariableFilter<SampleType>::snapToZero() noexcept // NOSONAR (cannot b
 
 template <typename T>
 static T *toBasePointer(dsp::SIMDRegister<T> *r) noexcept { return reinterpret_cast<T *>(r); }
-constexpr auto registerSize = dsp::SIMDRegister<float>::size();
+constexpr auto simdRegSize = dsp::SIMDRegister<float>::size();
 using Format = AudioData::Format<AudioData::Float32, AudioData::NativeEndian>;
 
 class SVFAllPassChain
@@ -117,7 +117,7 @@ public:
     auto prepareChannelPointers(const dsp::AudioBlock<SampleType> &block)
     {
         // pads the input channels with zero buffers if the number of channels is less than the register size
-        std::array<SampleType *, registerSize> result{};
+        std::array<SampleType *, simdRegSize> result{};
 
         for (size_t ch = 0; ch < result.size(); ++ch)
             result[ch] = (ch < block.getNumChannels() ? block.getChannelPointer(ch) : zero.getChannelPointer(ch));
@@ -141,9 +141,9 @@ public:
 
         AudioData::interleaveSamples(AudioData::NonInterleavedSource<Format>{
                                          inChannels.data(),
-                                         registerSize,
+                                         simdRegSize,
                                      },
-                                     AudioData::InterleavedDest<Format>{toBasePointer(interleavedSubBlock.getChannelPointer(0)), registerSize}, numSamples);
+                                     AudioData::InterleavedDest<Format>{toBasePointer(interleavedSubBlock.getChannelPointer(0)), simdRegSize}, numSamples);
 
         dsp::ProcessContextReplacing<dsp::SIMDRegister<float>> newCtx(interleavedSubBlock);
 
@@ -174,8 +174,8 @@ public:
 
         auto outChannels = prepareChannelPointers(context.getOutputBlock());
 
-        AudioData::deinterleaveSamples(AudioData::InterleavedSource<Format>{toBasePointer(interleavedSubBlock.getChannelPointer(0)), registerSize},
-                                       AudioData::NonInterleavedDest<Format>{outChannels.data(), registerSize},
+        AudioData::deinterleaveSamples(AudioData::InterleavedSource<Format>{toBasePointer(interleavedSubBlock.getChannelPointer(0)), simdRegSize},
+                                       AudioData::NonInterleavedDest<Format>{outChannels.data(), simdRegSize},
                                        numSamples);
     }
 

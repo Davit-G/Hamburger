@@ -40,4 +40,8 @@ namespace params {
     static const PanelInfo dynamics = {
         "DYNAMICS", "", StringArray({"STEREO", "OTT", "MID-SIDE"})
     };
+
+    static const PanelInfo quality = {
+        "QUALITY", "", StringArray({"FAST", "STANDARD", "HIGH"})
+    };
 }

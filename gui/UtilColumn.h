@@ -4,6 +4,7 @@
 
 #include "Modules/Panels/EQPanel.h"
 #include "Modules/Panels/UtilityPanel.h"
+#include "Modules/Panels/SettingsPanel.h"
 #include "LookAndFeel/Palette.h"
 
 class UtilColumn : public juce::Component
@@ -25,6 +26,11 @@ public:
         utility = std::make_unique<Module>(p, "UTILITY", "hamburgerEnabled", "", std::move(utilityPanels));
         utility->setLookAndFeel(&utilityLookAndFeel);
         addAndMakeVisible(utility.get());
+
+        std::vector<std::unique_ptr<Panel>> settingsPanels;
+        settingsPanels.push_back(std::make_unique<SettingsPanel>(p));
+        settings = std::make_unique<Module>(p, "SETTINGS", "", "", std::move(settingsPanels));
+        addAndMakeVisible(settings.get());
     }
 
     ~UtilColumn() override{}
@@ -35,11 +41,13 @@ public:
 
         eq->setBounds(bounds.removeFromTop(height * 0.5));
         utility->setBounds(bounds.removeFromBottom(height * 0.25));
+        settings->setBounds(bounds);
     }
 
 private:
     std::unique_ptr<Module> eq = nullptr;
     std::unique_ptr<Module> utility = nullptr;
+    std::unique_ptr<Module> settings = nullptr;
 
     KnobLAF eqLookAndFeel = KnobLAF(Palette::colours[2]);
     KnobLAF utilityLookAndFeel = KnobLAF(juce::Colours::whitesmoke);
