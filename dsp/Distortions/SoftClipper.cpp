@@ -1,5 +1,7 @@
 #include "SoftClipper.h"
 
+// todo: Soft clipping is very expensive and also unintuitive, replace with something else.
+
 template <typename T>
 int sgn(T val)
 {

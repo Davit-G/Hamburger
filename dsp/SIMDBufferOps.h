@@ -17,17 +17,23 @@ struct SizeTraits<xsimd::batch<T>> {
     static int getSize() { return xsimd::batch<T>::size; }
 };
 
-/*
-Operations to interleave, deinterleave, and convert between. Might happen a few times so might as well get it out of the way.
-Accepts a SIMDType, which can be a juce::SIMDRegister<T> or xsimd::batch<T> type.
-
-Hopefully we can interleave and deinterleave only once, and have the relevant stuff do it's processing in the interleaved domain.
-*/
 
 
 template <typename T, typename SIMDType>
 static T *toBasePointer(SIMDType *r) noexcept { return reinterpret_cast<T *>(r); }
 
+/*
+Operations to interleave, deinterleave, and convert between regular blocks and SIMD compatible ones. 
+Accepts a SIMDType, which can be a juce::SIMDRegister<T> or xsimd::batch<T> type.
+
+Interleaving is used when facilitating horizontal SIMD optimisation. 
+As an example, if you have two channels and a SIMD register of 4, the intuition is that interleaving should (?) organise a SIMD register like:
+L, R, 0, 0
+This is per sample. Now it seems like the 0 and 0 at the end there isnt doing anything particularly interesting :/
+What if we wrote a custom interleave / deinterleave implementation that uses those up too?
+
+Hopefully we can interleave and deinterleave only once, and have the relevant stuff do it's processing in the interleaved domain.
+*/
 template <typename SIMDType, typename SampleType>
 class SIMDBufferOps
 {
@@ -44,7 +50,7 @@ public:
     auto prepareChannelPointers(const dsp::AudioBlock<SampleType> &block)
     {
         // pads the input channels with zero buffers if the number of channels is less than the register size
-        std::array<SampleType *, simdRegSize> result{};
+        std::array<SampleType *, getRegisterSize()> result{};
 
         for (size_t ch = 0; ch < result.size(); ++ch)
             result[ch] = (ch < block.getNumChannels() ? block.getChannelPointer(ch) : zero.getChannelPointer(ch));

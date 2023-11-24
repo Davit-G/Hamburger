@@ -191,10 +191,8 @@ void AudioPluginAudioProcessor::prepareToPlay(double sampleRate, int samplesPerB
     // update coeffs IF WE NEED TO
     for (int i = 0; i < 3; i++)
     {
-        // if (eqGainValue != prevEmphasis[i]) {    // TODOOOOOOOO
         *peakFilterBefore[i].state = dsp::IIR::ArrayCoefficients<float>::makePeakFilter(spec.sampleRate, filterFrequencies[i], 0.5f, 1.0f);
         *peakFilterAfter[i].state = dsp::IIR::ArrayCoefficients<float>::makePeakFilter(spec.sampleRate, filterFrequencies[i], 0.5f, 1.0f);
-        // }
         prevEmphasis[i] = 0;
     }
 
@@ -279,7 +277,7 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
 
             // DBG("EQ GAIN VALUE: " << eqGainValue);
             double grabbedSampleRate = getSampleRate();
-            if (eqGainValue != prevEmphasis[i]) {    // TODO: only update if changed
+            if (eqGainValue != prevEmphasis[i]) {
                 *peakFilterBefore[i].state = dsp::IIR::ArrayCoefficients<float>::makePeakFilter(grabbedSampleRate, eqFreqValue, 0.5f, Decibels::decibelsToGain(-eqGainValue));
                 *peakFilterAfter[i].state = dsp::IIR::ArrayCoefficients<float>::makePeakFilter(grabbedSampleRate, eqFreqValue, 0.5f, Decibels::decibelsToGain(eqGainValue));
             }
