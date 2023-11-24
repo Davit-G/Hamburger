@@ -1,5 +1,5 @@
 # Hamburger FX Plugin
-The code in this repo is licensed under the GNU General Public License v3. All assets (images, audio) are licensed under CC BY-NC-SA 4.0. Message me before redistributing my works.
+The code in this repo is licensed under the GNU General Public License v3. All assets (images, audio) are licensed under CC BY-NC-SA 4.0. Message me before redistributing my works [here](https://aviaryaudio.com/contact).
 
 # JUCE v7.x
 JUCE is licensed under the GNU General Public License v3 for this project. See [JUCE's end user license agreement](https://juce.com/juce-7-license/)
