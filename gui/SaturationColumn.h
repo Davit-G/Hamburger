@@ -16,6 +16,9 @@ public:
         // code is weird so order of panels compared to order of DSP processing matters
         // TODO: fix this later
 
+        // todo: add waveshapey distortion effects for distortion type, rename that to classic
+        // and add rectification to it?
+
         auto classic = std::make_unique<ClassicSatPanel>(p);
         classic->setLookAndFeel(&saturationLAF);
         panels.push_back(std::move(classic));

@@ -8,6 +8,9 @@
 #include "MSComp.h"
 #include "StereoComp.h"
 
+// todo: add compander class, omfg imagine multiband compander
+// todo: add gate?
+
 class Dynamics
 {
 public:
