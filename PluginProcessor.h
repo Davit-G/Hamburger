@@ -10,6 +10,8 @@
 #include "dsp/PreDistortions/PreDistortion.h"
 #include "dsp/Dynamics/Dynamics.h"
 
+#include "dsp/SIMDBufferOps.h"
+
 // profiling
 #include <melatonin_perfetto/melatonin_perfetto.h>
 

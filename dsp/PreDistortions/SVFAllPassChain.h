@@ -248,12 +248,12 @@ private:
 
     StateVariableFilter<SIMDReg> svf[50];
 
-    SmoothParam allPassFrequency;
-    SmoothParam allPassQ;
-    SmoothParam allPassAmount;
-
     dsp::AudioBlock<SIMDReg> interleaved;
     dsp::AudioBlock<float> zero;
 
     HeapBlock<char> interleavedBlockData, zeroData;
+    
+    SmoothParam allPassFrequency;
+    SmoothParam allPassQ;
+    SmoothParam allPassAmount;
 };

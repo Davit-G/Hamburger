@@ -41,11 +41,14 @@ void SoftClip::processBlock(dsp::AudioBlock<float>& block) {
     {
         float saturationAmount = saturationKnob.getNextValue() * 0.01;
 
+        float knee = (saturationAmount + 0.05) * 80.0f;
+        float multX = 1.f + saturationAmount * 5.0f;
+
         float xn = block.getSample(0, sample);
-        block.setSample(0, sample, softClipper(xn * (1.f + saturationAmount * 5.0f), 0.9f, 0.2f, (saturationAmount + 0.05) * 20.0f));
+        block.setSample(0, sample, softClipper(xn * multX, 0.9f, 0.2f, knee));
 
         xn = block.getSample(1, sample);
-        block.setSample(1, sample, softClipper(xn * (1.f + saturationAmount * 5.0f), 0.9f, 0.2f, (saturationAmount + 0.05) * 20.0f));
+        block.setSample(1, sample, softClipper(xn * multX, 0.9f, 0.2f, knee));
     }
 }
 
@@ -71,7 +74,7 @@ float SoftClip::softClipper(float x, float threshold, float knee, float ratio = 
     }
     else
     {
-        output = x + ((1 / ratio - 1) * pow((x - threshold + knee * 0.5), 2) / (2 * knee));
+        output = x + ((1.0f / ratio - 1.0f) * pow((x - threshold + knee * 0.5f), 2.0f) / (2.0f * knee));
     }
 
     return output * sign; // return it to the original sign afterwards

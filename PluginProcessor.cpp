@@ -1,6 +1,6 @@
 #include "PluginProcessor.h"
 #include "./gui/PluginEditor.h"
- 
+
 using namespace juce;
 
 #include "gui/Modules/Panels/PanelNames.h"
@@ -11,13 +11,8 @@ using namespace juce;
 //==============================================================================
 AudioPluginAudioProcessor::AudioPluginAudioProcessor()
     : AudioProcessor(BusesProperties()
-#if !JucePlugin_IsMidiEffect
-#if !JucePlugin_IsSynth
                          .withInput("Input", juce::AudioChannelSet::stereo(), true)
-#endif
-                         .withOutput("Output", juce::AudioChannelSet::stereo(), true)
-#endif
-                         ),
+                         .withOutput("Output", juce::AudioChannelSet::stereo(), true)),
       treeState(*this, nullptr, "PARAMETER", createParameterLayout()),
       dynamics(treeState),
       dryWetMixer(30),
@@ -61,7 +56,7 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
 
     oversamplingFactor = dynamic_cast<juce::AudioParameterChoice *>(treeState.getParameter("oversamplingFactor"));
     jassert(oversamplingFactor);
-    
+
     enableEmphasis = dynamic_cast<juce::AudioParameterBool *>(treeState.getParameter("emphasisOn"));
     jassert(enableEmphasis);
 
@@ -156,72 +151,23 @@ const juce::String AudioPluginAudioProcessor::getName() const
     return JucePlugin_Name;
 }
 
-bool AudioPluginAudioProcessor::acceptsMidi() const
-{
-#if JucePlugin_WantsMidiInput
-    return true;
-#else
-    return false;
-#endif
-}
-
-bool AudioPluginAudioProcessor::producesMidi() const
-{
-#if JucePlugin_ProducesMidiOutput
-    return true;
-#else
-    return false;
-#endif
-}
-
-bool AudioPluginAudioProcessor::isMidiEffect() const
-{
-#if JucePlugin_IsMidiEffect
-    return true;
-#else
-    return false;
-#endif
-}
-
-double AudioPluginAudioProcessor::getTailLengthSeconds() const
-{
-    return 0.0;
-}
-
-int AudioPluginAudioProcessor::getNumPrograms()
-{
-    return 1; // NB: some hosts don't cope very well if you tell them there are 0 programs,
-              // so this should be at least 1, even if you're not really implementing programs.
-}
-
-int AudioPluginAudioProcessor::getCurrentProgram()
-{
-    return 0;
-}
-
-void AudioPluginAudioProcessor::setCurrentProgram(int index)
-{
-    juce::ignoreUnused(index);
-}
-
+bool AudioPluginAudioProcessor::acceptsMidi() const { return false; }
+bool AudioPluginAudioProcessor::producesMidi() const { return false; }
+bool AudioPluginAudioProcessor::isMidiEffect() const { return false; }
+double AudioPluginAudioProcessor::getTailLengthSeconds() const { return 0.0; }
+int AudioPluginAudioProcessor::getNumPrograms() { return 1; } // some daws dont cope well etc etc, report 1 even if we dont have programs
+int AudioPluginAudioProcessor::getCurrentProgram() { return 0; }
+void AudioPluginAudioProcessor::setCurrentProgram(int index) { juce::ignoreUnused(index); }
 const juce::String AudioPluginAudioProcessor::getProgramName(int index)
 {
     juce::ignoreUnused(index);
     return {};
 }
-
-void AudioPluginAudioProcessor::changeProgramName(int index, const juce::String &newName)
-{
-    juce::ignoreUnused(index, newName);
-}
+void AudioPluginAudioProcessor::changeProgramName(int index, const juce::String &newName) { juce::ignoreUnused(index, newName); }
 
 //==============================================================================
 void AudioPluginAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
 {
-    // TRACE_DSP();
-    // Use this method as the place to do any pre-playback
-    // initialisation that you need..
-    
     dsp::ProcessSpec spec;
     spec.sampleRate = sampleRate;
     spec.maximumBlockSize = samplesPerBlock;
@@ -273,10 +219,6 @@ void AudioPluginAudioProcessor::releaseResources()
 
 bool AudioPluginAudioProcessor::isBusesLayoutSupported(const BusesLayout &layouts) const
 {
-#if JucePlugin_IsMidiEffect
-    juce::ignoreUnused(layouts);
-    return true;
-#else
     // This is the place where you check if the layout is supported.
     // In this template code we only support mono or stereo.
     // Some plugin hosts, such as certain GarageBand versions, will only
@@ -284,14 +226,10 @@ bool AudioPluginAudioProcessor::isBusesLayoutSupported(const BusesLayout &layout
     if (layouts.getMainOutputChannelSet() != juce::AudioChannelSet::mono() && layouts.getMainOutputChannelSet() != juce::AudioChannelSet::stereo())
         return false;
 
-        // This checks if the input layout matches the output layout
-#if !JucePlugin_IsSynth
     if (layouts.getMainOutputChannelSet() != layouts.getMainInputChannelSet())
         return false;
-#endif
 
     return true;
-#endif
 }
 
 void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
@@ -313,18 +251,7 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear(i, 0, buffer.getNumSamples());
 
-    // This is the place where you'd normally do the guts of your plugin's
-    // audio processing...
-    // Make sure to reset the state if your inner loop is processing
-    // the samples and the outer loop is handling the channels.
-    // Alternatively, you can process the samples with the channels
-    // interleaved by keeping the same state.
-
-    if (hamburgerEnabledButton->get() == false)
-    {
-        // DBG("Hamburger is disabled");
-        return;
-    }
+    if (hamburgerEnabledButton->get() == false) return;
 
     TRACE_EVENT_BEGIN("dsp", "audio block from buffer");
     dsp::AudioBlock<float> block(buffer);
@@ -338,10 +265,7 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
     inputGain.setGainDecibels(gainAmount);
     inputGain.process(context);
 
-    {
-        TRACE_EVENT("dsp", "dry/wet push");
-        dryWetMixer.pushDrySamples(block);
-    }
+    dryWetMixer.pushDrySamples(block);
 
     bool emphasisOn = enableEmphasis->get();
     if (emphasisOn)
@@ -355,10 +279,10 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
 
             // DBG("EQ GAIN VALUE: " << eqGainValue);
             double grabbedSampleRate = getSampleRate();
-            // if (eqGainValue != prevEmphasis[i]) {    // TODO: only update if changed
-            *peakFilterBefore[i].state = dsp::IIR::ArrayCoefficients<float>::makePeakFilter(grabbedSampleRate, eqFreqValue, 0.5f, Decibels::decibelsToGain(-eqGainValue));
-            *peakFilterAfter[i].state = dsp::IIR::ArrayCoefficients<float>::makePeakFilter(grabbedSampleRate, eqFreqValue, 0.5f, Decibels::decibelsToGain(eqGainValue));
-            // }
+            if (eqGainValue != prevEmphasis[i]) {    // TODO: only update if changed
+                *peakFilterBefore[i].state = dsp::IIR::ArrayCoefficients<float>::makePeakFilter(grabbedSampleRate, eqFreqValue, 0.5f, Decibels::decibelsToGain(-eqGainValue));
+                *peakFilterAfter[i].state = dsp::IIR::ArrayCoefficients<float>::makePeakFilter(grabbedSampleRate, eqFreqValue, 0.5f, Decibels::decibelsToGain(eqGainValue));
+            }
             prevEmphasis[i] = eqGainValue;
         }
 
@@ -372,7 +296,6 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
     {
         TRACE_EVENT("dsp", "companding");
         dynamics.processBlock(block);
-        // TRACE_EVENT_END("dsp", "companding");
     }
     // oversampling
     // bool oversamplingOn = enableOversampling->get();
