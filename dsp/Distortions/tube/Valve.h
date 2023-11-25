@@ -104,7 +104,7 @@ public:
 		//     *negative* values so meters should be aware
 		// dcOffsetDetected = fabs(dcOffset * dcShiftCoefficient);
 
-		yn = doValveEmulationOld(xn, dcOffsetDetected);
+		yn = doValveEmulationOld(xn, dcOffset * dcShiftCoefficient);
 
 		return yn;
 	}

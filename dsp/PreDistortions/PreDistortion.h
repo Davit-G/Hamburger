@@ -10,7 +10,7 @@ class PreDistortion
 {
 public:
     PreDistortion(juce::AudioProcessorValueTreeState &state) {
-        quality = dynamic_cast<juce::AudioParameterChoice *>(state.getParameter("qualityFactor")); jassert(distoType);
+        quality = dynamic_cast<juce::AudioParameterChoice *>(state.getParameter("qualityFactor")); jassert(quality);
         preDistortionEnabled = dynamic_cast<juce::AudioParameterBool *>(state.getParameter("preDistortionEnabled")); jassert(preDistortionEnabled);
 
         allPassChain = std::make_unique<AllPassChain>(state);
@@ -25,12 +25,14 @@ public:
         if (preDistortionEnabled->get() == false) return;
 
         // todo: replace with enum?
-        if (qualitySetting == 0) {
-            // allPassChain->processBlock(block);
-        }
-        else if (qualitySetting == 1) {
+        // if (qualitySetting == 0) {
+        //     // allPassChain->processBlock(block);
+        // }
+        // else if (qualitySetting == 1) {
+
+        // } else {
+        // }
             svfAllPass->processBlock(block);
-        }   
     }
 
     void prepare(dsp::ProcessSpec& spec) {
