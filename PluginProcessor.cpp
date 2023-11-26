@@ -136,7 +136,7 @@ AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::createP
     params.add(std::make_unique<AudioParameterFloat>("downsampleJitter", "Dwnsmpl Jitter", 0.0f, 1.0f, 0.f));
     params.add(std::make_unique<AudioParameterFloat>("bitReduction", "Dwnsmpl Bits", 1.0f, 32.0f, 32.f));
 
-    params.add(std::make_unique<AudioParameterFloat>("tubeTone", "Tube Tone", -1.0f, 1.0f, -0.2f));
+    params.add(std::make_unique<AudioParameterFloat>("tubeTone", "Tube Tone", -1.0f, 1.0f, 1.0f));
 
     params.add(std::make_unique<AudioParameterFloat>("allPassFreq", "AllPass Frequency", NormalisableRange<float>(20.0f, 20000.0f, 0.f, 0.25f), 400.0f));
     params.add(std::make_unique<AudioParameterFloat>("allPassQ", "AllPass Q", 0.01f, 1.41f, 0.1f));
@@ -249,7 +249,8 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear(i, 0, buffer.getNumSamples());
 
-    if (hamburgerEnabledButton->get() == false) return;
+    if (hamburgerEnabledButton->get() == false)
+        return;
 
     TRACE_EVENT_BEGIN("dsp", "audio block from buffer");
     dsp::AudioBlock<float> block(buffer);
@@ -274,14 +275,15 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
         {
             float eqGainValue = emphasis[i]->get();
             float eqFreqValue = emphasisFreq[i]->get();
-
-            // DBG("EQ GAIN VALUE: " << eqGainValue);
+            
             double grabbedSampleRate = getSampleRate();
-            if (eqGainValue != prevEmphasis[i]) {
+            if (eqGainValue != prevEmphasis[i] || eqFreqValue != prevEmphasisFreq[i])
+            {
                 *peakFilterBefore[i].state = dsp::IIR::ArrayCoefficients<float>::makePeakFilter(grabbedSampleRate, eqFreqValue, 0.5f, Decibels::decibelsToGain(-eqGainValue));
                 *peakFilterAfter[i].state = dsp::IIR::ArrayCoefficients<float>::makePeakFilter(grabbedSampleRate, eqFreqValue, 0.5f, Decibels::decibelsToGain(eqGainValue));
+                prevEmphasis[i] = eqGainValue;
+                prevEmphasisFreq[i] = eqFreqValue;
             }
-            prevEmphasis[i] = eqGainValue;
         }
 
         for (int i = 0; i < 3; i++)

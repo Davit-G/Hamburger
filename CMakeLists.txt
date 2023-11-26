@@ -40,7 +40,7 @@ add_subdirectory(JUCE)                    # If you've put JUCE in a subdirectory
 # Check the readme at `docs/CMake API.md` in the JUCE repo for the full list.
 
 juce_add_plugin("${BaseTargetName}"
-    # VERSION ...                               # Set this if the plugin version is different to the project version
+    VERSION 0.3                               # Set this if the plugin version is different to the project version
     # ICON_BIG ...                              # ICON_* arguments specify a path to an image file to use as an icon for the Standalone
     # ICON_SMALL ...
     COMPANY_NAME AviaryAudio                          # Specify the name of the plugin's author
@@ -55,7 +55,7 @@ juce_add_plugin("${BaseTargetName}"
     PLUGIN_CODE Hmb2                            # A unique four-character plugin id with exactly one upper-case character
                                                 # GarageBand 10.3 requires the first letter to be upper-case, and the remaining letters to be lower-case
     FORMATS VST3 Standalone                  # The formats to build. Other valid formats are: AAX Unity VST AU AUv3
-    PRODUCT_NAME "HamburgerV3.0.3"  # The name of the final executable, which can differ from the target name
+    PRODUCT_NAME "HamburgerV0.3"  # The name of the final executable, which can differ from the target name
     VST3_CATEGORIES Fx Distortion Fx Dynamics 
 )
 

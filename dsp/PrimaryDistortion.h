@@ -59,7 +59,7 @@ public:
             // TRACE_EVENT_END("dsp", "classic");
             break;
         }
-        case 1: {// tube
+        default: {// tube
             // TRACE_EVENT_BEGIN("dsp", "tube");
             TRACE_EVENT("dsp", "tube");
             grunge->processBlock(block);
@@ -67,16 +67,6 @@ public:
             // TRACE_EVENT_END("dsp", "tube");
             break;
         }
-        case 2: // wavefolding
-            break;
-        case 3: // fuzz
-            break;
-        case 4: // tube
-            break;
-        case 5:
-            break;
-        default:
-            break;
         }
     }
 

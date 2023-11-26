@@ -5,7 +5,6 @@ Fuzz::Fuzz(juce::AudioProcessorValueTreeState& treeState) : bias(treeState, "bia
 
 Fuzz::~Fuzz() {}
 
-
 void Fuzz::prepare(dsp::ProcessSpec& spec) {
 	follower.prepare(spec);
 	bias.prepare(spec);
@@ -20,7 +19,7 @@ void Fuzz::processBlock(dsp::AudioBlock<float>& block) {
 	for (int sample = 0; sample < static_cast<int>(block.getNumSamples()); sample++) {
 		auto envelope = follower.processSampleStereo(block.getSample(0, sample), block.getSample(1, sample));
 
-		float biasAmt = bias.get() * 1.4f;
+		float biasAmt = bias.get() * 3.0f;
 		
 		float x = block.getSample(0, sample) + envelope * biasAmt;
 		block.setSample(0, sample, x / (1 + fabs(x)));

@@ -13,7 +13,7 @@
 //==============================================================================
 Sizzle::Sizzle(juce::AudioProcessorValueTreeState& treeState)
 :
-envelopeDetector(false),
+envelopeDetector(true),
 noiseAmount(treeState, "noiseAmount") {}
 
 Sizzle::~Sizzle()
@@ -24,9 +24,9 @@ Sizzle::~Sizzle()
 void Sizzle::prepare(dsp::ProcessSpec& spec) {
 	noiseAmount.prepare(spec);
 
+	envelopeDetector.setAttackTime(40);
+	envelopeDetector.setReleaseTime(40);
 	envelopeDetector.prepare(spec);
-	envelopeDetector.setAttackTime(10);
-	envelopeDetector.setReleaseTime(10);
 }
 
 void Sizzle::processBlock(dsp::AudioBlock<float>& block) {
@@ -40,10 +40,11 @@ void Sizzle::processBlock(dsp::AudioBlock<float>& block) {
 	for (int sample = 0; sample < block.getNumSamples(); sample++) {
 		float nextSizzle = noiseAmount.getNextValue() * 0.01f;
 
-		float envelope = juce::Decibels::decibelsToGain(envelopeDetector.processSampleStereo(leftDryData[sample], rightDryData[sample]));
+		float envelope = envelopeDetector.processSampleStereo(leftDryData[sample], rightDryData[sample]);
+		float envelopeGain = juce::Decibels::decibelsToGain(envelope);
 
-		rightDryData[sample] = newSizzleFunction(rightDryData[sample], nextSizzle, envelope);
-		leftDryData[sample] = newSizzleFunction(leftDryData[sample], nextSizzle, envelope);
+		rightDryData[sample] = newSizzleV3(rightDryData[sample], nextSizzle, envelopeGain);
+		leftDryData[sample] = newSizzleV3(leftDryData[sample], nextSizzle, envelopeGain);
 
 	}
 }

@@ -84,7 +84,7 @@ private:
     juce::AudioParameterFloat *emphasis[3];
     juce::AudioParameterFloat *emphasisFreq[3];
     float prevEmphasis[3] = {0.f, 0.f, 0.f};
-    // float prevEmphasisFreq[3] = {0.f, 0.f, 0.f};
+    float prevEmphasisFreq[3] = {0.f, 0.f, 0.f};
 
     PreDistortion preDistortionSelection;
     PrimaryDistortion distortionTypeSelection;

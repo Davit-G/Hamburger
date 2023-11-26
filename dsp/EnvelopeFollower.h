@@ -24,18 +24,18 @@ public:
 
 	void setAttackTime(float attack_in_ms)
 	{
-		if (attackTime_mSec != attack_in_ms) { // saving performance
+		// if (attackTime_mSec != attack_in_ms) { // saving performance
 			attackTime_mSec = attack_in_ms;
 			attackTime = exp(AUDIO_ENVELOPE_ANALOG_TC / (attack_in_ms * sampleRate * 0.001f));
-		}
+		// }
 	}
 
 	void setReleaseTime(float release_in_ms)
 	{
-		if (releaseTime_mSec != release_in_ms) { // saving performance
+		// if (releaseTime_mSec != release_in_ms) { // saving performance
 			releaseTime_mSec = release_in_ms;
 			releaseTime = exp(AUDIO_ENVELOPE_ANALOG_TC / (release_in_ms * sampleRate * 0.001f));
-		}
+		// }
 	}
 	
 	void setSampleRate(float sampleRateIn) {

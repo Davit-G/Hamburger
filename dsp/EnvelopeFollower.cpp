@@ -25,10 +25,10 @@ float EnvelopeFollower::processSample(float xn)
     lastEnvelope = currEnvelope;
     currEnvelope = pow(currEnvelope, 0.5f);
 
-    // if (!useLog) // just skip the log stuff for now, make it into var later
-    // {
-    //     return currEnvelope;
-    // }
+    if (!useLog) // just skip the log stuff for now, make it into var later
+    {
+        return currEnvelope;
+    }
 
     // --- setup for log( )
     if (currEnvelope <= 0.0f)
@@ -42,7 +42,7 @@ float EnvelopeFollower::processSampleStereo(float xL, float xR)
     // full wave rectify stereo signal and sum
     float input = (abs(xL) + abs(xR)) * 0.5f;
 
-    // input *= input; // square signal for RMS
+    input *= input; // square signal for RMS
     
     // pick between rising or falling value
     float currEnvelope = 0.0f;
@@ -58,10 +58,10 @@ float EnvelopeFollower::processSampleStereo(float xL, float xR)
     lastEnvelope = currEnvelope; // store envelope for future
     currEnvelope = pow(currEnvelope, 0.5f); // then some random RMS bullshittery
 
-    // if (!useLog) // just skip the log stuff for now, make it into var later
-    // {
-    //     return currEnvelope;
-    // }
+    if (!useLog) // just skip the log stuff for now, make it into var later
+    {
+        return currEnvelope;
+    }
 
     // --- setup for log( )
     if (currEnvelope <= 0.0f)

@@ -46,11 +46,19 @@ public:
 
 	float newSizzleFunction(float inputSample, float nextSizzle, float envelope)
 	{
-
 		float audioClipped = std::fmin(1.f, std::fmax(0.f, inputSample));
 		float amt = powf(audioClipped, 2.0f) - 2.0f * audioClipped + 1.0f;
 
 		return inputSample + (random.nextFloat() * ((nextSizzle * envelope * amt) * 0.5f)); // nextSizzle * (nextSizzle / 2)
+	}
+
+	float newSizzleV3(float inputSample, float nextSizzle, float envelope)
+	{
+		float sign = inputSample < 0 ? -1.0f : 1.0f;
+		float rectifiedSample = fabs(inputSample);
+		float sizzleLevel = nextSizzle * 4.0f * pow(fmax(envelope - rectifiedSample, 0.0f), 1.6f);
+
+		return inputSample + (sizzleLevel * random.nextFloat()) * sign;
 	}
 
 private:
