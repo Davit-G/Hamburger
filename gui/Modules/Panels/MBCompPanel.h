@@ -6,7 +6,7 @@
 class MBCompPanel : public Panel
 {
 public:
-    MBCompPanel(AudioPluginAudioProcessor &p) : Panel(p, "MULTIBAND"),
+    MBCompPanel(AudioPluginAudioProcessor &p) : Panel(p, "M-BAND"),
                                                    threshold(p, "THRES", "compThreshold", ParamUnits::db),
                                                    ratio(p, "RATIO", "compRatio"),
                                                    tilt(p, "TILT", "compBandTilt", ParamUnits::db),

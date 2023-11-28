@@ -8,17 +8,17 @@
   ==============================================================================
 */
 
- 
 #include "Grunge.h"
 
 //==============================================================================
-Grunge::Grunge(juce::AudioProcessorValueTreeState& treeState) :
-    amount(treeState, "grungeAmt"),
-    tone(treeState, "grungeTone") 
-{}
+Grunge::Grunge(juce::AudioProcessorValueTreeState &treeState) : amount(treeState, "grungeAmt"),
+                                                                tone(treeState, "grungeTone")
+{
+}
 
-void Grunge::prepare(dsp::ProcessSpec& spec) {
-	amount.prepare(spec);
+void Grunge::prepare(dsp::ProcessSpec &spec)
+{
+    amount.prepare(spec);
     tone.prepare(spec);
 
     delayLine.prepare(spec);
@@ -32,11 +32,13 @@ void Grunge::prepare(dsp::ProcessSpec& spec) {
     this->sampleRate = spec.sampleRate;
 }
 
-void Grunge::processBlock(dsp::AudioBlock<float>& block) {
+void Grunge::processBlock(dsp::AudioBlock<float> &block)
+{
     TRACE_EVENT("dsp", "Grunge::processBlock");
-    if (amount.getRaw() == 0.0f) return;
+    if (amount.getRaw() == 0.0f)
+        return;
 
-	amount.update();
+    amount.update();
     tone.update();
 
     float toneFloat = tone.getRaw() * 55.0f + 5.0f;
@@ -45,9 +47,10 @@ void Grunge::processBlock(dsp::AudioBlock<float>& block) {
     *dcBlockerL.coefficients = dcCoeffs;
     *dcBlockerR.coefficients = dcCoeffs;
 
-    for (int i = 0; i < block.getNumSamples(); i++) {
-        float fbKnobAmt = amount.getNextValue();
-        float fbAmt = - (fbKnobAmt * fbKnobAmt) + 2.0f * fbKnobAmt;
+    for (int i = 0; i < block.getNumSamples(); i++)
+    {
+        float fbKnobAmt = amount.getNextValue() * 0.975f;
+        float fbAmt = -(fbKnobAmt * fbKnobAmt) + 2.0f * fbKnobAmt;
 
         float sampleL = block.getSample(0, i);
         float sampleR = block.getSample(1, i);
@@ -58,10 +61,13 @@ void Grunge::processBlock(dsp::AudioBlock<float>& block) {
         float fbSampleL = delaySampleL * fbAmt;
         float fbSampleR = delaySampleR * fbAmt;
 
-        delayLine.pushSample(0, dcBlockerL.processSample(sampleL + fbSampleR));
-        delayLine.pushSample(1, dcBlockerR.processSample(sampleR + fbSampleL));
+        float dcBlockerLRes = dcBlockerL.processSample(sampleL + fbSampleR);
+        float dcBlockerRRes = dcBlockerR.processSample(sampleR + fbSampleL);
 
-        block.setSample(0, i, sampleL + delaySampleL);
-        block.setSample(1, i, sampleR + delaySampleR);
+        delayLine.pushSample(0, dcBlockerLRes);
+        delayLine.pushSample(1, dcBlockerRRes);
+
+        block.setSample(0, i, dsp::FastMathApproximations::tanh((sampleL + delaySampleL)* 0.2f) * 5.0f);
+        block.setSample(1, i, dsp::FastMathApproximations::tanh((sampleR + delaySampleR)* 0.2f) * 5.0f);
     }
 }

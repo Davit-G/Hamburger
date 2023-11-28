@@ -29,12 +29,6 @@ public:
         // setResizable(true, true);
 
         setPaintingIsUnclipped(true);
-
-        // // open the inspector window
-// inspector.setVisible(true); 
-
-// // enable the inspector
-// inspector.toggle(true);
     }
 
     ~EditorV2() override {}

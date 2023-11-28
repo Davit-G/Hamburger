@@ -11,6 +11,7 @@
 #include "Modules/Panels/JeffPanel.h"
 #include "Modules/Panels/EmptyPanel.h"
 #include "Modules/Panels/AllPassPanel.h"
+#include "Modules/Panels/GrungePanel.h"
 
 #include "LookAndFeel/Palette.h"
 
@@ -36,16 +37,17 @@ public:
         noisePanels.push_back(std::make_unique<ReductionPanel>(p));
         noisePanels.push_back(std::make_unique<JeffPanel>(p));
 
-        noise = std::make_unique<Module>(p, "NOISE", "noiseDistortionEnabled", "noiseDistortionType", std::move(noisePanels));
+        noise = std::make_unique<Module>(p, "", "noiseDistortionEnabled", "noiseDistortionType", std::move(noisePanels));
         noise->setLookAndFeel(&knobLAF1);
         addAndMakeVisible(noise.get());
 
-        std::vector<std::unique_ptr<Panel>> allpassPanels;
+        std::vector<std::unique_ptr<Panel>> preDistortionPanels;
         // ORDERING IS VERY IMPORTANT
-        allpassPanels.push_back(std::make_unique<AllPassPanel>(p));
-        allpass = std::make_unique<Module>(p, "ALLPASS", "preDistortionEnabled", "", std::move(allpassPanels));
-        allpass->setLookAndFeel(&knobLAF2);
-        addAndMakeVisible(allpass.get());
+        preDistortionPanels.push_back(std::make_unique<AllPassPanel>(p));
+        preDistortionPanels.push_back(std::make_unique<GrungePanel>(p));
+        preDistortion = std::make_unique<Module>(p, "", "preDistortionEnabled", "", std::move(preDistortionPanels));
+        preDistortion->setLookAndFeel(&knobLAF2);
+        addAndMakeVisible(preDistortion.get());
 
     }
 
@@ -62,7 +64,7 @@ public:
 
         compander->setBounds(bounds.removeFromTop(height / 2));
         noise->setBounds(bounds.removeFromBottom(height / 4));
-        allpass->setBounds(bounds);
+        preDistortion->setBounds(bounds);
     }
 
 private:
@@ -70,7 +72,7 @@ private:
 
     std::unique_ptr<Module> compander = nullptr;
     std::unique_ptr<Module> noise = nullptr;
-    std::unique_ptr<Module> allpass = nullptr;
+    std::unique_ptr<Module> preDistortion = nullptr;
 
     KnobLAF knobLAF1 = KnobLAF(Palette::colours[1]);
     KnobLAF knobLAF2 = KnobLAF(Palette::colours[2]);

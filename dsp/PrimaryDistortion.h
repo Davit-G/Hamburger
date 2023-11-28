@@ -4,7 +4,6 @@
 #include "Distortions/PattyFuzz.h"
 #include "Distortions/Fuzz.h"
 #include "Distortions/Cooked.h"
-#include "Distortions/Grunge.h"
 #include "Distortions/PhaseDist.h"
 
 #include "Distortions/tube/Amp.h"
@@ -26,7 +25,6 @@ public:
         fold = std::make_unique<Cooked>(state);
         patty = std::make_unique<PattyFuzz>(state);
         fuzz = std::make_unique<Fuzz>(state);
-        grunge = std::make_unique<Grunge>(state);
         tubeAmp = std::make_unique<Amp>(state);
         phaseDist = std::make_unique<PhaseDist>(state);
     }
@@ -49,7 +47,6 @@ public:
         { // classic
 
             TRACE_EVENT("dsp", "classic");
-            grunge->processBlock(block);
             patty->processBlock(block);
             fuzz->processBlock(block);
             softClipper->processBlock(block);
@@ -59,7 +56,6 @@ public:
         case 1:
         { // tube
             TRACE_EVENT("dsp", "tube");
-            grunge->processBlock(block);
             tubeAmp->processBlock(block);
             break;
         }
@@ -82,7 +78,6 @@ public:
         fold->prepare(spec);
         patty->prepare(spec);
         fuzz->prepare(spec);
-        grunge->prepare(spec);
         tubeAmp->prepare(spec);
         phaseDist->prepare(spec);
 
@@ -109,7 +104,6 @@ private:
     std::unique_ptr<Cooked> fold = nullptr;
     std::unique_ptr<PattyFuzz> patty = nullptr;
     std::unique_ptr<Fuzz> fuzz = nullptr;
-    std::unique_ptr<Grunge> grunge = nullptr;
     std::unique_ptr<Amp> tubeAmp = nullptr;
     std::unique_ptr<PhaseDist> phaseDist = nullptr;
 

@@ -9,14 +9,10 @@ class TubeSatPanel : public Panel
 {
 public:
     TubeSatPanel(AudioPluginAudioProcessor &p) : Panel(p, "TUBE"), 
-        tubeTone(p, "TUBE TONE", "tubeTone"), 
-        grungeAmt(p, "GRUNGE", "grungeAmt"),
-        grungeTone(p, "GRUNGE TONE", "grungeTone"), 
+        tubeTone(p, "TUBE TONE", "tubeTone"),
         drive(p, "DRIVE", "saturationAmount", ParamUnits::percent)
     {
         addAndMakeVisible(tubeTone);
-        addAndMakeVisible(grungeTone);
-        addAndMakeVisible(grungeAmt);
         addAndMakeVisible(drive);
     }
 
@@ -25,14 +21,10 @@ public:
         auto bounds = getLocalBounds();
         drive.setBounds(bounds.removeFromTop(bounds.getHeight() / 1.5f).reduced(10));
 
-        auto width = bounds.getWidth() / 3;
-        grungeAmt.setBounds(bounds.removeFromLeft(width));
-        grungeTone.setBounds(bounds.removeFromLeft(width));
+        auto width = bounds.getWidth() / 1;
         tubeTone.setBounds(bounds.removeFromLeft(width));
     }
 
     ParamKnob tubeTone;
-    ParamKnob grungeTone;
-    ParamKnob grungeAmt;
     ParamKnob drive;
 };

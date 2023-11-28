@@ -125,11 +125,15 @@ private:
 
     void setCategoryText(juce::String moduleName)
     {
-        size_t index = categorySelector.getSelectedItemIndex();
-        if (index != -1)
-        {
-            auto panelName = modulePanels[index]->getName();
-            categorySelector.setText(panelName + " " + moduleName);
+        if (categoryAttachment == nullptr) {
+            categorySelector.setText(moduleName);
+        } else {
+            size_t index = categorySelector.getSelectedItemIndex();
+            if (index != -1)
+            {
+                auto panelName = modulePanels[index]->getName();
+                categorySelector.setText(panelName + " " + moduleName);
+            }
         }
     }
 

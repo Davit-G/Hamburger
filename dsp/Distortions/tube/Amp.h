@@ -1,4 +1,4 @@
- 
+// heavily inspired by will pirkle
 #include "Valve.h"
 
 #include "../../SmoothParam.h"
