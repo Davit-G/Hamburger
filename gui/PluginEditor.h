@@ -19,7 +19,7 @@ public:
                                              saturationColumn(p),
                                              utilColumn(p)
     {
-        setSize(800, 400);
+        setSize(800, 500);
 
         addAndMakeVisible(leftColumn);
         addAndMakeVisible(saturationColumn);

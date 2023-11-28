@@ -15,11 +15,12 @@ TRACE_EVENT("dsp", "Erosion::processBlock");
         delayLine.pushSample(1, block.getSample(1, i));
     }
 
+    float erosionFreqVal = erosionFrequency.getRaw();
     // get the current value of the saturation knob to figure out how much to multiply a random value by
-    float saturationAmount = erosionAmount.getRaw() * 0.1f;
+    float saturationAmount = erosionAmount.getRaw() * 0.001f * (oldSampleRate / erosionFreqVal);
 
     // todo: replace all coefficient creation with ArrayCoefficients to avoid allocation
-    *iirFilter.coefficients = dsp::IIR::ArrayCoefficients<float>::makeBandPass(oldSampleRate, erosionFrequency.getRaw(), erosionQ.getRaw());
+    *iirFilter.coefficients = dsp::IIR::ArrayCoefficients<float>::makeBandPass(oldSampleRate, erosionFreqVal, erosionQ.getRaw());
 
     // now with the filtered values, multiply them by the saturation amount
 

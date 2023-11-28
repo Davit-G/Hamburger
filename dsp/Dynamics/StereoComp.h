@@ -38,6 +38,8 @@ public:
         compressorR.updateUpDown(spd, spd * 0.8f, mkp, rat, rat, thr, thr + 2.0f, 0.1f, 0.f);
         compressorBoth.updateUpDown(spd, spd * 0.8f, mkp, rat, rat, thr, thr + 2.0f, 0.1f, 0.f);
 
+        float autoGain = juce::Decibels::decibelsToGain(-thr * (rat * 0.05f)); // kinda borked
+
         for (int sample = 0; sample < block.getNumSamples(); sample++)
         {
             float leftSample = block.getSample(0, sample);
@@ -52,8 +54,8 @@ public:
             float leftGainOut = leftGain * (1.0f - stereoLink) + stereoLinkGain;
             float rightGainOut = rightGain * (1.0f - stereoLink) + stereoLinkGain;
 
-            block.setSample(0, sample, leftGainOut * leftSample);
-            block.setSample(1, sample, rightGainOut * rightSample);
+            block.setSample(0, sample, leftGainOut * leftSample * autoGain);
+            block.setSample(1, sample, rightGainOut * rightSample * autoGain);
         }
     }
 
