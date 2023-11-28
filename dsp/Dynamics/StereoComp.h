@@ -38,7 +38,7 @@ public:
         compressorR.updateUpDown(spd, spd * 0.8f, mkp, rat, rat, thr, thr + 2.0f, 0.1f, 0.f);
         compressorBoth.updateUpDown(spd, spd * 0.8f, mkp, rat, rat, thr, thr + 2.0f, 0.1f, 0.f);
 
-        float autoGain = juce::Decibels::decibelsToGain(-thr * (rat * 0.05f)); // kinda borked
+        float autoGain = juce::Decibels::decibelsToGain(-thr * (rat * 0.03f)); // kinda borked
 
         for (int sample = 0; sample < block.getNumSamples(); sample++)
         {

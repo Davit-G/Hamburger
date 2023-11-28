@@ -38,6 +38,8 @@ public:
         compressor2.updateUpDown(spd, spd * 0.8f, mkp, rat, rat, thr, thr + 2.0f, 0.1f, 0.f);
         compressor3.updateUpDown(spd, spd * 0.8f, mkp, rat, rat, thr + tlt, thr + 2.0f - tlt, 0.1f, 0.f);
 
+        float autoGain = juce::Decibels::decibelsToGain(-thr * (rat * 0.03f));
+
         for (int sample = 0; sample < block.getNumSamples(); sample++)
         {
             float leftSample = block.getSample(0, sample);
@@ -72,6 +74,7 @@ public:
         block.copyFrom(lowBlock);
         block.addProductOf(midBlock, 1.0f);
         block.addProductOf(highBlock, 1.0f);
+        block.multiplyBy(autoGain);
     }
 
     void prepare(dsp::ProcessSpec &spec)

@@ -9,7 +9,7 @@ class MSCompPanel : public Panel
 {
 public:
     MSCompPanel(AudioPluginAudioProcessor &p) : Panel(p, "MIDSIDE"),
-                                                   threshold(p, "THRESHOLD", "compThreshold", ParamUnits::db),
+                                                   threshold(p, "THRES", "compThreshold", ParamUnits::db),
                                                    ratio(p, "RATIO", "compRatio"),
                                                    tilt(p, "TILT", "compBandTilt", ParamUnits::db),
                                                    attack(p, "SPEED", "compSpeed", ParamUnits::ms),
