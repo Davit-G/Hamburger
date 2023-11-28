@@ -11,7 +11,6 @@ public:
         freq(p, "FREQ", "allPassFreq", ParamUnits::hz),
         q(p, "Q", "allPassQ")
     {
-
         addAndMakeVisible(amount);
         addAndMakeVisible(freq);
         addAndMakeVisible(q);

@@ -1,7 +1,5 @@
 #pragma once
 
- 
-
 class Palette
 {
 public:

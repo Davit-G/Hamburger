@@ -1,12 +1,11 @@
 #pragma once
 
- 
-
 #include "Distortions/SoftClipper.h"
 #include "Distortions/PattyFuzz.h"
 #include "Distortions/Fuzz.h"
 #include "Distortions/Cooked.h"
 #include "Distortions/Grunge.h"
+#include "Distortions/PhaseDist.h"
 
 #include "Distortions/tube/Amp.h"
 
@@ -29,6 +28,7 @@ public:
         fuzz = std::make_unique<Fuzz>(state);
         grunge = std::make_unique<Grunge>(state);
         tubeAmp = std::make_unique<Amp>(state);
+        phaseDist = std::make_unique<PhaseDist>(state);
     }
 
     ~PrimaryDistortion() {}
@@ -40,37 +40,43 @@ public:
 
         if (distortionEnabled->get() == false)
             return;
-        
+
         auto context = dsp::ProcessContextReplacing<float>(block);
 
         switch (distoTypeIndex)
         {
-        case 0: {// classic
-            // fold->processBlock(block);
-            // patty->processBlock(block);
+        case 0:
+        { // classic
 
-            // TRACE_EVENT_BEGIN("dsp", "classic");
             TRACE_EVENT("dsp", "classic");
             grunge->processBlock(block);
             patty->processBlock(block);
             fuzz->processBlock(block);
             softClipper->processBlock(block);
             iirFilter.process(context); // hpf afterwards to remove bias
-            // TRACE_EVENT_END("dsp", "classic");
             break;
         }
-        default: {// tube
-            // TRACE_EVENT_BEGIN("dsp", "tube");
+        case 1:
+        { // tube
             TRACE_EVENT("dsp", "tube");
             grunge->processBlock(block);
             tubeAmp->processBlock(block);
-            // TRACE_EVENT_END("dsp", "tube");
             break;
+        }
+        case 2:
+        { // waveshaper style
+            TRACE_EVENT("dsp", "waveshaper");
+            break;
+        }
+        case 3:
+        { // phase distortion
+            TRACE_EVENT("dsp", "phase");
+            phaseDist->processBlock(block);
         }
         }
     }
 
-    void prepare(dsp::ProcessSpec& spec)
+    void prepare(dsp::ProcessSpec &spec)
     {
         softClipper->prepare(spec);
         fold->prepare(spec);
@@ -78,6 +84,7 @@ public:
         fuzz->prepare(spec);
         grunge->prepare(spec);
         tubeAmp->prepare(spec);
+        phaseDist->prepare(spec);
 
         // init iir filter
         iirFilter.reset();
@@ -104,6 +111,7 @@ private:
     std::unique_ptr<Fuzz> fuzz = nullptr;
     std::unique_ptr<Grunge> grunge = nullptr;
     std::unique_ptr<Amp> tubeAmp = nullptr;
+    std::unique_ptr<PhaseDist> phaseDist = nullptr;
 
     dsp::ProcessorDuplicator<dsp::IIR::Filter<float>, dsp::IIR::Coefficients<float>> iirFilter;
 

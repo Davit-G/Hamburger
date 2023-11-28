@@ -23,7 +23,7 @@ public:
     Font getComboBoxFont()
     {
         auto font = Font(Typeface::createSystemTypefaceFor(BinaryData::QuestrialRegular_ttf, BinaryData::QuestrialRegular_ttfSize));
-        font.setSizeAndStyle(18, font.getAvailableStyles()[0], 1, 0);
+        font.setSizeAndStyle(14, font.getAvailableStyles()[0], 1, 0);
 
         auto styles = font.getAvailableStyles();
         // DBG(styles[1]);
@@ -33,8 +33,13 @@ public:
     Font getPopupMenuFont()
     {
         auto font = Font(Typeface::createSystemTypefaceFor(BinaryData::QuestrialRegular_ttf, BinaryData::QuestrialRegular_ttfSize));
-        font.setSizeAndStyle(32, font.getAvailableStyles()[0], 1, 0);
+        font.setSizeAndStyle(14, font.getAvailableStyles()[0], 1, 0);
         return font;
+    }
+
+    Font getLabelFont(Label &label) override
+    {
+        return getComboBoxFont();
     }
 
     // Path getTickShape(float height)

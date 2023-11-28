@@ -1,25 +1,20 @@
 #pragma once
 
- 
 #include "../Panel.h"
 #include "../../Knob.h"
 #include "PanelNames.h"
 
-class ClassicSatPanel : public Panel
+class WaveshaperPanel : public Panel
 {
 public:
-    ClassicSatPanel(AudioPluginAudioProcessor &p) : Panel(p, "GRILL"), 
+    WaveshaperPanel(AudioPluginAudioProcessor &p) : Panel(p, "WAVESHAPER"), 
         satKnob(p, "SATURATION", "saturationAmount", ParamUnits::percent),
-        biasKnob(p, "BIAS", "bias"),
-        fuzzKnob(p, "FUZZ", "fuzz"),
-        grungeAmountKnob(p, "GRUNGE", "grungeAmt"),
-        grungeToneKnob(p, "TONE", "grungeTone")
+        biasKnob(p, "FOLD", "bias"),
+        fuzzKnob(p, "ETC", "fuzz")
     {
         addAndMakeVisible(satKnob);
         addAndMakeVisible(biasKnob);
         addAndMakeVisible(fuzzKnob);
-        addAndMakeVisible(grungeToneKnob);
-        addAndMakeVisible(grungeAmountKnob);
     }
 
     void resized() override
@@ -28,8 +23,6 @@ public:
         satKnob.setBounds(bounds.removeFromTop(bounds.getHeight() / 1.5f).reduced(10));
 
         auto width = bounds.getWidth() / 4;
-        grungeAmountKnob.setBounds(bounds.removeFromLeft(width));
-        grungeToneKnob.setBounds(bounds.removeFromLeft(width));
         biasKnob.setBounds(bounds.removeFromLeft(width));
         fuzzKnob.setBounds(bounds);
     }
@@ -38,6 +31,4 @@ private:
     ParamKnob satKnob;
     ParamKnob biasKnob;
     ParamKnob fuzzKnob;
-    ParamKnob grungeAmountKnob;
-    ParamKnob grungeToneKnob;
 };

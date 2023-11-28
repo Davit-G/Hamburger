@@ -6,6 +6,7 @@ Cooked.cpp
 SoftClipper.cpp
 HardClip.cpp
 Grunge.cpp
+PhaseDist.cpp
 )
 
 add_subdirectory(tube)

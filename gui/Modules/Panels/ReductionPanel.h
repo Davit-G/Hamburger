@@ -8,7 +8,7 @@
 class ReductionPanel : public Panel
 {
 public:
-    ReductionPanel(AudioPluginAudioProcessor &p, juce::String name) : Panel(p, name),
+    ReductionPanel(AudioPluginAudioProcessor &p) : Panel(p, "BIT"),
                                                    downSample(p, "RATE", "downsampleFreq", ParamUnits::hz),
                                                    bitReduction(p, "BITS", "bitReduction"),
                                                    jitter(p, "GRIT", "downsampleJitter")

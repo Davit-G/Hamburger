@@ -9,8 +9,7 @@ using namespace juce;
 #include <ctime>
 
 //==============================================================================
-AudioPluginAudioProcessor::AudioPluginAudioProcessor()
-    : AudioProcessor(BusesProperties()
+AudioPluginAudioProcessor::AudioPluginAudioProcessor() : AudioProcessor(BusesProperties()
                          .withInput("Input", juce::AudioChannelSet::stereo(), true)
                          .withOutput("Output", juce::AudioChannelSet::stereo(), true)),
       treeState(*this, nullptr, "PARAMETER", createParameterLayout()),
@@ -106,7 +105,7 @@ AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::createP
 
     params.add(std::make_unique<AudioParameterFloat>("compSpeed", "Comp Speed", 0.0f, 500.0f, 100.f));
     params.add(std::make_unique<AudioParameterFloat>("compBandTilt", "Comp Band Tilt", -12.0f, 12.0f, 0.f));
-    params.add(std::make_unique<AudioParameterFloat>("compSLink", "Stereo Link", 0.0f, 100.0f, 100.f));
+    params.add(std::make_unique<AudioParameterFloat>("compStereoLink", "Stereo Link", 0.0f, 100.0f, 100.f));
     params.add(std::make_unique<AudioParameterFloat>("compThreshold", "Comp Threshold", -48.0f, 0.0f, -35.f));
     params.add(std::make_unique<AudioParameterFloat>("compRatio", "Comp Ratio", 1.0f, 10.0f, 3.5f));
     params.add(std::make_unique<AudioParameterFloat>("compOut", "Comp Makeup", -24.0f, 24.0f, 0.f));
@@ -119,6 +118,7 @@ AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::createP
     params.add(std::make_unique<AudioParameterFloat>("fuzzShape", "Fuzz Shape", 0.0f, 100.0f, 50.0f));
     params.add(std::make_unique<AudioParameterFloat>("sizzle", "Sizzle", 0.0f, 100.0f, 0.0f));
     params.add(std::make_unique<AudioParameterFloat>("fold", "Fold", 0.0f, 100.0f, 0.0f));
+    
     params.add(std::make_unique<AudioParameterFloat>("bias", "Bias", -1.0f, 1.0f, 0.0f));
 
     params.add(std::make_unique<AudioParameterFloat>("grungeAmt", "Grunge Amt", 0.0f, 1.0f, 0.0f));
@@ -126,6 +126,8 @@ AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::createP
 
     // primary distortions
     params.add(std::make_unique<AudioParameterFloat>("saturationAmount", "Saturation", 0.0f, 100.0f, 0.f));
+
+    params.add(std::make_unique<AudioParameterFloat>("phaseDistTone", "Phase Distortion Tone", NormalisableRange<float>(20.0f, 20000.0f, 0.f, 0.25f), 20000.0f));
 
     // noise distortions
     params.add(std::make_unique<AudioParameterFloat>("noiseAmount", "Noise Amt", 0.0f, 100.0f, 0.f));

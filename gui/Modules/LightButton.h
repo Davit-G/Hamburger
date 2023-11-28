@@ -10,7 +10,7 @@ public:
     : onImage(aonImage), offImage(aoffImage), Button("thing")
     {
         // attachment = std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment>(processorRef.treeState, "attachmentID", *this);
-
+        juce::ignoreUnused(p);
         setClickingTogglesState(true);
 
         // setToggleState(ge, juce::dontSendNotification);

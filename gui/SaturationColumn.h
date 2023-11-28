@@ -4,6 +4,8 @@
 
 #include "Modules/Panels/ClassicSatPanel.h"
 #include "Modules/Panels/TubeSatPanel.h"
+#include "Modules/Panels/PhaseDistPanel.h"
+#include "Modules/Panels/WaveshaperPanel.h"
 
 #include "LookAndFeel/Palette.h"
 
@@ -11,6 +13,7 @@ class SaturationColumn : public juce::Component
 {
 public:
     SaturationColumn(AudioPluginAudioProcessor &p) {
+
         std::vector<std::unique_ptr<Panel>> panels;
         // ORDERING IS VERY IMPORTANT
         // code is weird so order of panels compared to order of DSP processing matters
@@ -26,6 +29,14 @@ public:
         auto tube = std::make_unique<TubeSatPanel>(p);
         tube->setLookAndFeel(&tubeSatLAF);
         panels.push_back(std::move(tube));
+
+        auto waveshape = std::make_unique<WaveshaperPanel>(p);
+        waveshape->setLookAndFeel(&tubeSatLAF);
+        panels.push_back(std::move(waveshape));
+
+        auto phase = std::make_unique<PhaseDistPanel>(p);
+        phase->setLookAndFeel(&tubeSatLAF);
+        panels.push_back(std::move(phase));
 
         saturation = std::make_unique<Module>(p, "SATURATION", "primaryDistortionEnabled", "primaryDistortionType", std::move(panels));
         addAndMakeVisible(saturation.get());

@@ -26,7 +26,7 @@ namespace params {
     };
 
     static const PanelInfo distortion = {
-        "DISTORTION", "", StringArray({"GRILL", "TUBE", "WAVESHAPER"})
+        "DISTORTION", "", StringArray({"GRILL", "TUBE", "WAVESHAPER", "PHASE"})
     };
 
     static const PanelInfo preDistortionTypes = {
@@ -34,7 +34,7 @@ namespace params {
     };
 
     static const PanelInfo noiseTypes = {
-        "NOISE", "", StringArray({"SIZZLE", "EROSION", "REDUCE", "SMOOTHREDUCE", "JEFF"})
+        "NOISE", "", StringArray({"SIZZLE", "EROSION", "REDUCE", "JEFF"})
     };
 
     static const PanelInfo dynamics = {

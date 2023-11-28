@@ -100,6 +100,7 @@ target_compile_definitions("${BaseTargetName}" PUBLIC
 	JUCE_USE_LAME_AUDIO_FORMAT=0
 	JUCE_USE_WINDOWS_MEDIA_FORMAT=0
 	JUCE_VST3_CAN_REPLACE_VST2=0
+    JUCE_ENABLE_REPAINT_DEBUGGING=0
 	JUCE_USE_CURL=0
 	JUCE_LOAD_CURL_SYMBOLS_LAZILY=1
 	JUCE_STRICT_REFCOUNTEDPOINTER=1
@@ -148,6 +149,13 @@ GIT_TAG origin/master)
 
 FetchContent_MakeAvailable (xsimd)
 
+Include (FetchContent)
+FetchContent_Declare (melatonin_inspector
+  GIT_REPOSITORY https://github.com/sudara/melatonin_inspector.git
+  GIT_TAG origin/main
+  SOURCE_DIR ${CMAKE_CURRENT_BINARY_DIR}/melatonin_inspector)
+FetchContent_MakeAvailable (melatonin_inspector)
+
 
 
 
@@ -165,6 +173,7 @@ target_link_libraries("${BaseTargetName}"
         "${BaseTargetName}BinaryData"
         Melatonin::Perfetto
         xsimd
+        melatonin_inspector
     PUBLIC
         juce::juce_recommended_config_flags
         juce::juce_recommended_lto_flags

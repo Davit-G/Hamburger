@@ -1,50 +1,64 @@
 /*
   ==============================================================================
 
-    Sizzle.cpp
-    Created: 13 Jun 2021 6:32:32pm
-    Author:  DavZ
+	Sizzle.cpp
+	Created: 13 Jun 2021 6:32:32pm
+	Author:  DavZ
 
   ==============================================================================
 */
- 
+
 #include "Sizzle.h"
 
 //==============================================================================
-Sizzle::Sizzle(juce::AudioProcessorValueTreeState& treeState)
-:
-envelopeDetector(true),
-noiseAmount(treeState, "noiseAmount") {}
+Sizzle::Sizzle(juce::AudioProcessorValueTreeState &treeState)
+	: envelopeDetector(true),
+	  noiseAmount(treeState, "noiseAmount"),
+	  filterTone(treeState, "noiseFrequency"),
+	  filterQ(treeState, "noiseQ") {}
 
 Sizzle::~Sizzle()
 {
 }
 
+void Sizzle::prepare(dsp::ProcessSpec &spec)
+{
+	this->sampleRate = spec.sampleRate;
 
-void Sizzle::prepare(dsp::ProcessSpec& spec) {
+
 	noiseAmount.prepare(spec);
+	filterTone.prepare(spec);
+	filterQ.prepare(spec);
 
 	envelopeDetector.setAttackTime(40);
 	envelopeDetector.setReleaseTime(40);
 	envelopeDetector.prepare(spec);
+
+	*filter.coefficients = dsp::IIR::ArrayCoefficients<float>::makeBandPass(spec.sampleRate, 10000.0f, 0.707f);
+	filter.prepare(spec);
 }
 
-void Sizzle::processBlock(dsp::AudioBlock<float>& block) {
+void Sizzle::processBlock(dsp::AudioBlock<float> &block)
+{
 	TRACE_EVENT("dsp", "Sizzle::processBlock");
 	noiseAmount.update();
-	if (noiseAmount.getRaw() == 0) return;
+	if (noiseAmount.getRaw() == 0)
+		return;
 
 	auto rightDryData = block.getChannelPointer(1);
 	auto leftDryData = block.getChannelPointer(0);
 
-	for (int sample = 0; sample < block.getNumSamples(); sample++) {
+	*filter.coefficients = dsp::IIR::ArrayCoefficients<float>::makeBandPass(sampleRate, filterTone.getRaw(), filterQ.getRaw());
+
+	for (int sample = 0; sample < block.getNumSamples(); sample++)
+	{
 		float nextSizzle = noiseAmount.getNextValue() * 0.01f;
+		float filtRandFloat = filter.processSample(random.nextFloat() * 2.0f - 1.0f);
 
 		float envelope = envelopeDetector.processSampleStereo(leftDryData[sample], rightDryData[sample]);
 		float envelopeGain = juce::Decibels::decibelsToGain(envelope);
 
-		rightDryData[sample] = newSizzleV3(rightDryData[sample], nextSizzle, envelopeGain);
-		leftDryData[sample] = newSizzleV3(leftDryData[sample], nextSizzle, envelopeGain);
-
+		rightDryData[sample] = newSizzleV3(rightDryData[sample], nextSizzle, envelopeGain, filtRandFloat);
+		leftDryData[sample] = newSizzleV3(leftDryData[sample], nextSizzle, envelopeGain, filtRandFloat);
 	}
 }

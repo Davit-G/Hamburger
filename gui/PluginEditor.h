@@ -7,6 +7,8 @@
 #include "SaturationColumn.h"
 #include "UtilColumn.h"
 
+#include "melatonin_inspector/melatonin_inspector.h"
+
 using namespace juce;
 
 class EditorV2 : public juce::AudioProcessorEditor
@@ -17,18 +19,28 @@ public:
                                              saturationColumn(p),
                                              utilColumn(p)
     {
-        setSize(1000, 500);
+        setSize(800, 400);
 
         addAndMakeVisible(leftColumn);
         addAndMakeVisible(saturationColumn);
         addAndMakeVisible(utilColumn);
+
+        setOpaque(true);
+        // setResizable(true, true);
+
+        setPaintingIsUnclipped(true);
+
+        // // open the inspector window
+// inspector.setVisible(true); 
+
+// // enable the inspector
+// inspector.toggle(true);
     }
 
-    ~EditorV2() override{}
+    ~EditorV2() override {}
 
     void paint(juce::Graphics &g) override
     {
-        auto image = ImageCache::getFromMemory(BinaryData::bg3_jpg, BinaryData::bg3_jpgSize);
         g.drawImage(image, getLocalBounds().toFloat());
     }
 
@@ -49,6 +61,10 @@ private:
     LeftColumn leftColumn;
     SaturationColumn saturationColumn;
     UtilColumn utilColumn;
+
+    juce::Image image = ImageCache::getFromMemory(BinaryData::bg3_jpg, BinaryData::bg3_jpgSize);
+
+    // melatonin::Inspector inspector { *this };
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(EditorV2)
 };

@@ -1,5 +1,4 @@
 #pragma once
-
  
 #include "../../PluginProcessor.h"
 #include "LightButton.h"
@@ -19,6 +18,8 @@ public:
         setupPanels(moduleName);
         setupTitleLabel(moduleName);
         setupCategorySelector(moduleName);
+
+        setPaintingIsUnclipped(true);
 
 
         if (categoryAttachmentId != "")
@@ -50,9 +51,10 @@ public:
 
     void paint(juce::Graphics &g) override
     {
+        // g.fillAll(juce::Colour::fromRGB(0, 0, 0));
         Path p;
         p.addRoundedRectangle(getLocalBounds().reduced(4).toFloat(), 15.0f);
-        g.setColour(juce::Colour::fromRGBA(0, 0, 0, 200));
+        g.setColour(juce::Colour::fromRGB(0, 0, 0));
         g.fillPath(p);
     }
 
@@ -62,17 +64,23 @@ public:
         auto titleBounds = bounds.removeFromTop(30);
         titleBounds.reduce(10, 0);
 
+        auto extraSpace = 0.0f;
+
         header.items.clear();
-        if (enabledButton != nullptr)
+        if (enabledButton != nullptr) {
             header.items.add(FlexItem(*enabledButton).withMinWidth(15.0f).withMargin(7.5f));
+            extraSpace = 15.0f + 7.5f;
+        }
+        
+        auto titleFont = titleLabel.getFont();
 
         if (modulePanels.size() == 1)
         {
-            header.items.add(FlexItem(titleLabel).withMinWidth(120.0f));
+            header.items.add(FlexItem(titleLabel).withMinWidth( titleFont.getStringWidth(titleLabel.getText()) * 1.1f));
         }
         else
         {
-            header.items.add(FlexItem(categorySelector).withMinWidth(200.0f));
+            header.items.add(FlexItem(categorySelector).withMinWidth( titleFont.getStringWidth(categorySelector.getText()) * 1.4f + extraSpace));
         }
 
         header.performLayout(titleBounds);
@@ -134,6 +142,7 @@ private:
             if (selection != -1)
             {
                 setScreen(selection);
+                this->resized();
             }
         };
 

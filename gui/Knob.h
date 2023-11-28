@@ -13,14 +13,20 @@ enum class ParamUnits {
     percent
 };
 
-// a map on all strings to their corresponding units
-static std::map<ParamUnits, juce::String> unitStrings = {
-    {ParamUnits::none, ""},
-    {ParamUnits::hz, "Hz"},
-    {ParamUnits::ms, "ms"},
-    {ParamUnits::db, "dB"},
-    {ParamUnits::percent, "%"}
-};
+juce::String createParamString(float value, ParamUnits unit) {
+    switch (unit) {
+        case ParamUnits::hz:
+            return juce::String(value, 1, false) + " Hz";
+        case ParamUnits::ms:
+            return juce::String(value, 1, false) + " ms";
+        case ParamUnits::db:
+            return juce::String(value, 1, false) + " dB";
+        case ParamUnits::percent:
+            return juce::String(value, 2, false) + " %";
+        default:
+            return juce::String(value, 2, false);
+    }
+}
 
 class ParamKnob : public juce::Component
 {
@@ -35,19 +41,25 @@ public:
         knob.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
         knob.setRange(knobParamRange.start, knobParamRange.end);
 
+        knob.setPaintingIsUnclipped(true);
+
+        setPaintingIsUnclipped(true);
+        setBufferedToImage(true);
+
         setName(knobName);
 
         knob.onDragStart = [this] { 
             // display the parameter value as the text instead of the parameter name
             this->isDragging = true;
-            this->label.setText(juce::String(this->knob.getValue(), 2) + unitStrings[this->unit], juce::dontSendNotification);
+            this->label.setText(createParamString(this->knob.getValue(), this->unit), juce::dontSendNotification);
         };
 
         // when value is changing, set it to what the knob is, but only if we're dragging
         knob.onValueChange = [this] {
             if (this->isDragging) {
-                
-                this->label.setText(juce::String(this->knob.getValue(), 2) + unitStrings[this->unit], juce::dontSendNotification);
+                this->label.setText(createParamString(this->knob.getValue(), this->unit), juce::dontSendNotification);
+            } else {
+                this->label.setText(this->kName, juce::dontSendNotification);
             }
         };
 
@@ -58,13 +70,82 @@ public:
         };
 
         addAndMakeVisible(knob);
-        
+
         label.setColour(juce::Label::textColourId, juce::Colours::white);
         label.setJustificationType(juce::Justification::centredTop);
-        label.setFont(KnobLAF::getTheFont(14.0f));
+        label.setFont(KnobLAF::getTheFont(12.0f));
         addAndMakeVisible(label);
 
         label.setText(kName, juce::dontSendNotification);
+    }
+
+    void drawRotaryBG(juce::Graphics &g, int x, int y, int width, int height, float sliderPos,
+                          const float rotaryStartAngle, const float rotaryEndAngle)
+    {
+        auto outline = knob.findColour(Slider::rotarySliderOutlineColourId);
+        auto fill = knob.findColour(Slider::rotarySliderFillColourId);
+        auto thumb = knob.findColour(Slider::thumbColourId);
+        auto knobColour = knob.findColour(Slider::rotarySliderFillColourId);
+
+        auto bounds = Rectangle<int>(x, y, width, height).toFloat().reduced(5.0f);
+
+        auto radius = jmin(bounds.getWidth(), bounds.getHeight()) / 2.0f;
+        auto toAngle = rotaryStartAngle + sliderPos * (rotaryEndAngle - rotaryStartAngle);
+        auto lineW = jmin(8.0f, radius * 0.5f);
+        auto arcRadius = radius - lineW * 0.5f;
+
+        // g.setColour(outline);
+        
+        auto size = std::min(width, height);
+
+        // the knob background
+        // g.fillEllipse(Rectangle<float>(size, size).reduced(5.0f).withCentre(bounds.getCentre()));
+
+        // some circles or something
+        // g.setColour(knobColour);
+
+        // g.drawEllipse(Rectangle<float>(size, size).reduced(7.0f).withCentre(bounds.getCentre()), 1.0f);
+        // g.drawEllipse(Rectangle<float>(size, size).reduced(12.0f).withCentre(bounds.getCentre()), 2.0f);
+        // g.drawEllipse(Rectangle<float>(size, size).reduced(20.0f).withCentre(bounds.getCentre()), 4.0f);   
+        // the marker for where the knob is
+        // capsule shaped, so maybe thick line going outwards, with rounded caps at the end
+        Line<float> marker;
+
+        float xOffset = std::sin(toAngle) * arcRadius;
+        float yOffset = -std::cos(toAngle) * arcRadius;
+
+        marker.setStart(xOffset * 0.8f + bounds.getCentreX(), yOffset * 0.8f + bounds.getCentreY());
+        marker.setEnd(xOffset + bounds.getCentreX(), yOffset + bounds.getCentreY());
+        
+        Path p;
+        p.addLineSegment(marker, radius * 0.08f);
+        g.setColour(thumb);
+        g.strokePath(p, PathStrokeType(radius * 0.08f, PathStrokeType::JointStyle::curved, PathStrokeType::EndCapStyle::rounded));
+        
+    }
+
+    void paint(juce::Graphics &g) override
+    {
+        // auto bounds = getLocalBounds();
+        // drawRotarySlider(g, bounds.getX(), bounds.getY(), bounds.getWidth(), bounds.getHeight(), knob.valueToProportionOfLength(knob.getValue()), 0.0f, 1.0f);
+        auto outline = knob.findColour(Slider::rotarySliderOutlineColourId);
+        auto knobColour = knob.findColour(Slider::rotarySliderFillColourId);
+
+        auto bounds = Rectangle<int>(knobBounds).toFloat().reduced(5.0f);
+
+        g.setColour(outline);
+        
+        auto size = std::min(knobBounds.getWidth(), knobBounds.getHeight());
+
+        // the knob background
+        g.fillEllipse(Rectangle<float>(size, size).reduced(5.0f).withCentre(bounds.getCentre()));
+
+        // some circles or something
+        g.setColour(knobColour);
+
+        // g.drawEllipse(Rectangle<float>(size, size).reduced(7.0f).withCentre(bounds.getCentre()), 1.0f);
+        g.drawEllipse(Rectangle<float>(size, size).reduced(12.0f).withCentre(bounds.getCentre()), 2.0f);
+        g.drawEllipse(Rectangle<float>(size, size).reduced(20.0f).withCentre(bounds.getCentre()), 4.0f);
     }
 
     ~ParamKnob() override {
@@ -73,15 +154,13 @@ public:
 
     void resized() override
     {
-        auto bounds = getLocalBounds();
-        label.setBounds(bounds.removeFromBottom(20));
-        knob.setBounds(bounds);
-    }
+        auto amt = knob.valueToProportionOfLength(knob.getValue());
 
-    void paint(juce::Graphics &g) override
-    {
-        // g.setColour(juce::Colours::white);
-        // g.drawRect(getLocalBounds(), 1);
+        auto bounds = getLocalBounds();
+        label.setBounds(bounds.removeFromBottom(18));
+        knob.setBounds(bounds);
+
+        knobBounds = bounds;
     }
 
 private:
@@ -90,6 +169,8 @@ private:
 
     Slider knob;
     Label label;
+
+    juce::Rectangle<int> knobBounds;
 
     juce::String kName;
     ParamUnits unit;

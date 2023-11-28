@@ -1,4 +1,5 @@
- 
+#pragma once
+
 
 #include "./Noise/Sizzle.h"
 #include "./Noise/Erosion.h"
@@ -30,7 +31,6 @@ public:
     {
         int distoTypeIndex = distoType->getIndex();
 
-
         if (noiseEnabled->get() != true) return;
 
         switch (distoTypeIndex)
@@ -50,13 +50,7 @@ public:
             redux->processBlock(block);
             break;
             }
-        case 3: // smooth downsampling
-            { TRACE_EVENT("dsp", "smooth redux");
-            redux->antiAliasingStep(block);
-            redux->processBlock(block);
-            break;
-            }
-        case 4: // asperity
+        case 3: // asperity
             { TRACE_EVENT("dsp", "asperity");
             jeff->processBlock(block);
             break;

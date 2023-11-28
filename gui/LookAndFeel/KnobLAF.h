@@ -9,6 +9,7 @@ public:
         setColour(Slider::rotarySliderOutlineColourId, juce::Colours::black);
         setColour(Slider::rotarySliderFillColourId, juce::Colours::white);
         setColour(Slider::thumbColourId, juce::Colours::whitesmoke);
+        setColour(Slider::rotarySliderFillColourId, color);
     }
 
     static Font getTheFont(int fontSize = 16) {
@@ -20,24 +21,27 @@ public:
     }
 
     Font getLabelFont(Label& label) override {
-        return getTheFont(16);
+        juce::ignoreUnused(label);
+        return getTheFont(14);
     }
 
     Font getComboBoxFont(ComboBox& box) override
     {
-        return getTheFont(16);
+        juce::ignoreUnused(box);
+        return getTheFont(14);
     }
 
     Font getPopupMenuFont() override
     {
-        return getTheFont(32);
+        return getTheFont(16);
     }
 
     void drawRotarySlider(juce::Graphics &g, int x, int y, int width, int height, float sliderPos,
                           const float rotaryStartAngle, const float rotaryEndAngle, juce::Slider &slider) override
     {
-        auto outline = slider.findColour(Slider::rotarySliderOutlineColourId);
-        auto fill = slider.findColour(Slider::rotarySliderFillColourId);
+
+        // auto outline = slider.findColour(Slider::rotarySliderOutlineColourId);
+        // auto fill = slider.findColour(Slider::rotarySliderFillColourId);
         auto thumb = slider.findColour(Slider::thumbColourId);
 
         auto bounds = Rectangle<int>(x, y, width, height).toFloat().reduced(5.0f);
@@ -47,19 +51,19 @@ public:
         auto lineW = jmin(8.0f, radius * 0.5f);
         auto arcRadius = radius - lineW * 0.5f;
 
-        g.setColour(outline);
+        // g.setColour(outline);
         
-        auto size = std::min(width, height);
+        // auto size = std::min(width, height);
 
         // the knob background
-        g.fillEllipse(Rectangle<float>(size, size).reduced(5.0f).withCentre(bounds.getCentre()));
+        // g.fillEllipse(Rectangle<float>(size, size).reduced(5.0f).withCentre(bounds.getCentre()));
 
         // some circles or something
-        g.setColour(knobColour);
+        // g.setColour(knobColour);
 
         // g.drawEllipse(Rectangle<float>(size, size).reduced(7.0f).withCentre(bounds.getCentre()), 1.0f);
-        g.drawEllipse(Rectangle<float>(size, size).reduced(12.0f).withCentre(bounds.getCentre()), 2.0f);
-        g.drawEllipse(Rectangle<float>(size, size).reduced(20.0f).withCentre(bounds.getCentre()), 4.0f);
+        // g.drawEllipse(Rectangle<float>(size, size).reduced(12.0f).withCentre(bounds.getCentre()), 2.0f);
+        // g.drawEllipse(Rectangle<float>(size, size).reduced(20.0f).withCentre(bounds.getCentre()), 4.0f);
 
         
         // the marker for where the knob is

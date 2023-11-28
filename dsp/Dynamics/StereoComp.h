@@ -12,7 +12,7 @@ public:
                                                         compressorBoth(CompressionType::COMPRESSOR),
                                                         threshold(state, "compThreshold"),
                                                         ratio(state, "compRatio"),
-                                                        sLink(state, "compSLink"), // should be stereo link
+                                                        sLink(state, "compStereoLink"), // should be stereo link
                                                         speed(state, "compSpeed"),
                                                         makeup(state, "compOut") {}
     ~StereoComp() {}

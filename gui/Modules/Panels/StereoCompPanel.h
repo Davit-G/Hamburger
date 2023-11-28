@@ -9,9 +9,9 @@ class StereoCompPanel : public Panel
 {
 public:
     StereoCompPanel(AudioPluginAudioProcessor &p) : Panel(p, "STEREO"),
-                                                   threshold(p, "THRESHOLD", "compThreshold", ParamUnits::db),
+                                                   threshold(p, "THRES", "compThreshold", ParamUnits::db),
                                                    ratio(p, "RATIO", "compRatio"),
-                                                   tilt(p, "S-LINK", "compSLink", ParamUnits::percent),
+                                                   tilt(p, "S-LNK", "compStereoLink", ParamUnits::percent),
                                                    attack(p, "SPEED", "compSpeed", ParamUnits::ms),
                                                    makeup(p, "GAIN", "compOut", ParamUnits::db)
     {

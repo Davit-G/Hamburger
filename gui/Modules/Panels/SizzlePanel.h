@@ -9,16 +9,25 @@ class SizzlePanel : public Panel
 {
 public:
     SizzlePanel(AudioPluginAudioProcessor &p) : Panel(p, "SIZZLE"),
-    sizzleKnob(p, "SIZZLE", "noiseAmount") {
-
+    sizzleKnob(p, "SIZZLE", "noiseAmount"),
+    sizzleFreq(p, "FREQ", "noiseFrequency"),
+    sizzleQ(p, "Q", "noiseQ") {
         addAndMakeVisible(sizzleKnob);
+        addAndMakeVisible(sizzleFreq);
+        addAndMakeVisible(sizzleQ);
     }
 
     void resized() override
     {
-        sizzleKnob.setBounds(getLocalBounds());
+        auto bounds = getLocalBounds();
+        auto width = bounds.getWidth() / 3;
+        sizzleKnob.setBounds(bounds.removeFromLeft(width));
+        sizzleFreq.setBounds(bounds.removeFromLeft(width));
+        sizzleQ.setBounds(bounds);
     }
 
 private:
     ParamKnob sizzleKnob;
+    ParamKnob sizzleFreq;
+    ParamKnob sizzleQ;
 };
