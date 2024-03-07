@@ -1,0 +1,9 @@
+make tube sat brighter, more controllable (done brightness?)
+make different tube modes, replicate dc behaviour better
+remove stereo comp, use in separate plugin
+
+sizzle is weird fix the noise release, and add more natural white noise mode
+make grill saturation soft clipping more controllable (threshold instead of amt param)
+visual volume indicator?
+
+make separate grunge panel but call it prefilter? and add resonant LP and notch?

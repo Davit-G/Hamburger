@@ -7,7 +7,7 @@ class EQPanel : public Panel
 public:
     EQPanel(AudioPluginAudioProcessor &p) : Panel(p, "EMPHASIS"),
                                             lowFreq(p, "LOW", "emphasisLowFreq", ParamUnits::hz),
-                                            midFreq(p, "MID", "emphasisMidFreq", ParamUnits::hz),
+                                             midFreq(p, "MID", "emphasisMidFreq", ParamUnits::hz),
                                             highFreq(p, "HIGH", "emphasisHighFreq", ParamUnits::hz),
                                             lowGain(p, "GAIN", "emphasisLowGain", ParamUnits::db),
                                             midGain(p, "GAIN", "emphasisMidGain", ParamUnits::db),
@@ -18,7 +18,7 @@ public:
         addAndMakeVisible(midFreq);
         addAndMakeVisible(highFreq);
         addAndMakeVisible(lowGain);
-        addAndMakeVisible(midGain);
+        addAndMakeVisible(midGain); //
         addAndMakeVisible(highGain);
     }
 

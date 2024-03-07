@@ -30,8 +30,8 @@ void Sizzle::prepare(dsp::ProcessSpec &spec)
 	filterTone.prepare(spec);
 	filterQ.prepare(spec);
 
-	envelopeDetector.setAttackTime(40);
-	envelopeDetector.setReleaseTime(40);
+	envelopeDetector.setAttackTime(6);
+	envelopeDetector.setReleaseTime(2);
 	envelopeDetector.prepare(spec);
 
 	*filter.coefficients = dsp::IIR::ArrayCoefficients<float>::makeBandPass(spec.sampleRate, 10000.0f, 0.707f);

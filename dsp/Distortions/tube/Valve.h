@@ -38,7 +38,7 @@ public:
 		*lowShelvingFilter.state = juce::dsp::IIR::ArrayCoefficients<float>::makeLowShelf(sampleRate, lowFrequencyShelf_Hz, 0.707f, juce::Decibels::decibelsToGain(lowFrequencyShelfGain_dB));
 
 		// --- output HPF
-		*dcBlockingFilter.state = juce::dsp::IIR::ArrayCoefficients<float>::makeHighPass(sampleRate, dcBlockingLF_Hz, 0.707f);
+		*dcBlockingFilter.state = juce::dsp::IIR::ArrayCoefficients<float>::makeFirstOrderHighPass(sampleRate, dcBlockingLF_Hz);
 
 		// --- LPF (upper edge), technically supposed to be second order
 		auto upperBandwidthFilterCoeffs = juce::dsp::IIR::ArrayCoefficients<float>::makeFirstOrderLowPass(sampleRate, millerHF_Hz);
@@ -66,7 +66,7 @@ public:
 		dcBlockingFilter.process(context);			  // --- remove DC
 		lowShelvingFilter.process(context);			  // --- LF Shelf
 		upperBandwidthFilter1stOrder.process(context); // --- HF Edge
-		upperBandwidthFilter2ndOrder.process(context);
+		// upperBandwidthFilter2ndOrder.process(context);
 		outputBlock.multiplyBy(-outputGain); // --- (5) final output scaling and inversion
 	}
 
