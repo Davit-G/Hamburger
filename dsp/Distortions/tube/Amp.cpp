@@ -33,7 +33,7 @@ void Amp::calculateCoefficients()
 
     auto biasAmt = bias.getRaw() * 60.0f;
 
-    auto inGain = 0.7f + driv;
+    auto inGain = 1.f + driv * 0.5f;
     auto outGain = 1.1f;
 
     auto blend = drive.getRaw() * 0.005f;
@@ -46,7 +46,7 @@ void Amp::calculateCoefficients()
     // so not a big deal, just mentioning it tho
     triode1.lowFrequencyShelf_Hz = lowFreqShelfHz;
     triode1.lowFrequencyShelfGain_dB = loShelfGain;
-    triode1.millerHF_Hz = JUCE_LIVE_CONSTANT(20000.0f);
+    triode1.millerHF_Hz = 22000.0f;
     triode1.dcBlockingLF_Hz = JUCE_LIVE_CONSTANT(12.0f);
     triode1.outputGain = outGain;
     triode1.dcShiftCoefficient = biasAmt;
@@ -55,14 +55,14 @@ void Amp::calculateCoefficients()
     triode2.lowFrequencyShelf_Hz = lowFreqShelfHz;
     triode2.lowFrequencyShelfGain_dB = loShelfGain;
     triode2.inputGain = inGain;
-    triode2.millerHF_Hz = 7000.0f + 6000.0f * tubeTone.getRaw();
+    triode2.millerHF_Hz = 9000.0f + 8000.0f * tubeTone.getRaw();
     triode2.dcBlockingLF_Hz = JUCE_LIVE_CONSTANT(16.0f);
     triode2.outputGain = outGain;
     triode2.dcShiftCoefficient = biasAmt;
 
     triode3.lowFrequencyShelf_Hz = lowFreqShelfHz;
     triode3.lowFrequencyShelfGain_dB = loShelfGain;
-    triode3.millerHF_Hz = 9000.0f + 6000.0f * tubeTone.getRaw();
+    triode3.millerHF_Hz = 9000.0f + 8000.0f * tubeTone.getRaw();
     // triode3.millerHF_Hz = 20000.0;
     triode3.inputGain = inGain;
     triode3.dcBlockingLF_Hz = JUCE_LIVE_CONSTANT(10.0f);
@@ -72,9 +72,9 @@ void Amp::calculateCoefficients()
     triode4.lowFrequencyShelf_Hz = lowFreqShelfHz;
     triode4.lowFrequencyShelfGain_dB = loShelfGain;
     // trioesL[3].millerHF_Hz = 6400.0;
-    triode4.millerHF_Hz = 8000.0f + 5000.0f * tubeTone.getRaw();
+    triode4.millerHF_Hz = 9000.0f + 8000.0f * tubeTone.getRaw();
     triode4.dcBlockingLF_Hz = JUCE_LIVE_CONSTANT(6.0f);
-    triode4.outputGain = pow(10.0f, JUCE_LIVE_CONSTANT(-12.0f) / 20.0f);
+    triode4.outputGain = pow(10.0f, (-drive.getRaw() * 0.01f * 7.f) / 20.0f);
     triode4.dcShiftCoefficient = biasAmt * 0.3f;
 
     for (int i = 0; i < 4; i++)

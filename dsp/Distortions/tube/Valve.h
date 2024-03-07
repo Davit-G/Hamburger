@@ -108,7 +108,9 @@ public:
 
 		auto yn = doValveEmulationOld(xn, dcOffset * dcShiftCoefficient);
 
-		yn = yn * blend + (og * (1.0f - blend));
+		float clippedBlend = fmin(0.5, blend) * 2.0f;
+
+		yn = yn * clippedBlend + (og * (1.0f - clippedBlend));
 
 		return yn;
 	}
