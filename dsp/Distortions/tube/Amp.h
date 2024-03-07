@@ -8,7 +8,9 @@ class Amp
 public:
     Amp(juce::AudioProcessorValueTreeState &treeState) : 
         tubeTone(treeState, "tubeTone"),
-        drive(treeState, "saturationAmount") {}
+        drive(treeState, "saturationAmount"),
+        bias(treeState, "bias")
+        {}
 
     ~Amp() {}
 
@@ -28,6 +30,7 @@ private:
 
     SmoothParam tubeTone;
     SmoothParam drive;
+    SmoothParam bias;
 
     float sampleRate = 44100.0f;
 

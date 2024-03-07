@@ -67,7 +67,7 @@ void Grunge::processBlock(dsp::AudioBlock<float> &block)
         delayLine.pushSample(0, dcBlockerLRes);
         delayLine.pushSample(1, dcBlockerRRes);
 
-        block.setSample(0, i, dsp::FastMathApproximations::tanh((sampleL + delaySampleL)* 0.2f) * 5.0f);
-        block.setSample(1, i, dsp::FastMathApproximations::tanh((sampleR + delaySampleR)* 0.2f) * 5.0f);
+        block.setSample(0, i, dsp::FastMathApproximations::tanh((sampleL + delaySampleL)* 0.1f) * 10.0f);
+        block.setSample(1, i, dsp::FastMathApproximations::tanh((sampleR + delaySampleR)* 0.1f) * 10.0f);
     }
 }

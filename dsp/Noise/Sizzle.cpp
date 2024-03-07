@@ -48,12 +48,14 @@ void Sizzle::processBlock(dsp::AudioBlock<float> &block)
 	auto rightDryData = block.getChannelPointer(1);
 	auto leftDryData = block.getChannelPointer(0);
 
-	*filter.coefficients = dsp::IIR::ArrayCoefficients<float>::makeBandPass(sampleRate, filterTone.getRaw(), filterQ.getRaw());
+	auto sizzleFreq = filterTone.getRaw();
+
+	*filter.coefficients = dsp::IIR::ArrayCoefficients<float>::makeLowPass(sampleRate, sizzleFreq, 0.707f);
 
 	for (int sample = 0; sample < block.getNumSamples(); sample++)
 	{
-		float nextSizzle = noiseAmount.getNextValue() * 0.01f;
-		float filtRandFloat = filter.processSample(random.nextFloat() * 2.0f - 1.0f);
+		float nextSizzle = noiseAmount.getNextValue() * 0.02f;
+		float filtRandFloat = filter.processSample(random.nextFloat() * 2.0f - 1.0f) * 0.5f + 0.5f;
 
 		float envelope = envelopeDetector.processSampleStereo(leftDryData[sample], rightDryData[sample]);
 		float envelopeGain = juce::Decibels::decibelsToGain(envelope);

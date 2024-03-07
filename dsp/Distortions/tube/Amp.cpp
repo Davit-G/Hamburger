@@ -35,7 +35,7 @@ void Amp::calculateCoefficients()
     triode1.millerHF_Hz = JUCE_LIVE_CONSTANT(20000.0f);
     triode1.dcBlockingLF_Hz = JUCE_LIVE_CONSTANT(12.0f);
     triode1.outputGain = pow(10.0f, JUCE_LIVE_CONSTANT(-1.0f) / 20.0f);
-    triode1.dcShiftCoefficient = JUCE_LIVE_CONSTANT(1.0f);
+    triode1.dcShiftCoefficient = bias.getRaw() * 60.0f;
     triode1.inputGain = driv + 0.3f;
 
     triode2.lowFrequencyShelf_Hz = JUCE_LIVE_CONSTANT(10.0f);
@@ -44,7 +44,7 @@ void Amp::calculateCoefficients()
     triode2.millerHF_Hz = 7000.0f + 6000.0f * tubeTone.getRaw();
     triode2.dcBlockingLF_Hz = JUCE_LIVE_CONSTANT(16.0f);
     triode2.outputGain = pow(10.0f, JUCE_LIVE_CONSTANT(+2.0f) / 20.0f);
-    triode2.dcShiftCoefficient = JUCE_LIVE_CONSTANT(2.10f);
+    triode2.dcShiftCoefficient = bias.getRaw() * 60.0f;
 
     triode3.lowFrequencyShelf_Hz = JUCE_LIVE_CONSTANT(10.0f);
     triode3.lowFrequencyShelfGain_dB = JUCE_LIVE_CONSTANT(-10.0f);
@@ -53,7 +53,7 @@ void Amp::calculateCoefficients()
     triode3.inputGain = driv + 0.8f;
     triode3.dcBlockingLF_Hz = JUCE_LIVE_CONSTANT(10.0f);
     triode3.outputGain = pow(10.0f, JUCE_LIVE_CONSTANT(+4.0f) / 20.0f);
-    triode3.dcShiftCoefficient = JUCE_LIVE_CONSTANT(0.50f);
+    triode3.dcShiftCoefficient = bias.getRaw() * 60.0f;
 
     triode4.lowFrequencyShelf_Hz = JUCE_LIVE_CONSTANT(10.0f);
     triode4.lowFrequencyShelfGain_dB = JUCE_LIVE_CONSTANT(-10.0f);
@@ -61,7 +61,7 @@ void Amp::calculateCoefficients()
     triode4.millerHF_Hz = 8000.0f + 5000.0f * tubeTone.getRaw();
     triode4.dcBlockingLF_Hz = JUCE_LIVE_CONSTANT(6.0f);
     triode4.outputGain = pow(10.0f, JUCE_LIVE_CONSTANT(-12.0f) / 20.0f);
-    triode4.dcShiftCoefficient = JUCE_LIVE_CONSTANT(0.52f);
+    triode4.dcShiftCoefficient = bias.getRaw() * 20.0f;
 
     for (int i = 0; i < 4; i++)
     {
