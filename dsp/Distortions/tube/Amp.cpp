@@ -55,14 +55,14 @@ void Amp::calculateCoefficients()
     triode2.lowFrequencyShelf_Hz = lowFreqShelfHz;
     triode2.lowFrequencyShelfGain_dB = loShelfGain;
     triode2.inputGain = inGain;
-    triode2.millerHF_Hz = 9000.0f + 8000.0f * tubeTone.getRaw();
+    triode2.millerHF_Hz = 10000.0f + 9000.0f * tubeTone.getRaw();
     triode2.dcBlockingLF_Hz = JUCE_LIVE_CONSTANT(16.0f);
     triode2.outputGain = outGain;
     triode2.dcShiftCoefficient = biasAmt;
 
     triode3.lowFrequencyShelf_Hz = lowFreqShelfHz;
     triode3.lowFrequencyShelfGain_dB = loShelfGain;
-    triode3.millerHF_Hz = 9000.0f + 8000.0f * tubeTone.getRaw();
+    triode3.millerHF_Hz = 10000.0f + 9000.0f * tubeTone.getRaw();
     // triode3.millerHF_Hz = 20000.0;
     triode3.inputGain = inGain;
     triode3.dcBlockingLF_Hz = JUCE_LIVE_CONSTANT(10.0f);
@@ -72,7 +72,7 @@ void Amp::calculateCoefficients()
     triode4.lowFrequencyShelf_Hz = lowFreqShelfHz;
     triode4.lowFrequencyShelfGain_dB = loShelfGain;
     // trioesL[3].millerHF_Hz = 6400.0;
-    triode4.millerHF_Hz = 9000.0f + 8000.0f * tubeTone.getRaw();
+    triode4.millerHF_Hz = 10000.0f + 9000.0f * tubeTone.getRaw();
     triode4.dcBlockingLF_Hz = JUCE_LIVE_CONSTANT(6.0f);
     triode4.outputGain = pow(10.0f, (-drive.getRaw() * 0.01f * 7.f) / 20.0f);
     triode4.dcShiftCoefficient = biasAmt * 0.3f;
