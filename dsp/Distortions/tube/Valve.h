@@ -85,13 +85,15 @@ public:
 	float dcShiftCoefficient = 1.0f;
 	float waveshaperSaturation = 2.0f;
 
+	float blend = 1.0f; // from 0 to 1
+
 	float dcOffsetDetected = 0.0f;
 
 	// --- do the valve emulation
 	SampleType processAudioSampleOld(SampleType xn, int channel = 0)
 	{
-		float yn = 0.0f;
 
+		auto og = xn;
 		xn *= inputGain;				   // --- input scaling
 		xn = doValveGridConductionOld(xn); // grid conduction check, must be done prior to waveshaping
 
@@ -104,7 +106,9 @@ public:
 		//     *negative* values so meters should be aware
 		// dcOffsetDetected = fabs(dcOffset * dcShiftCoefficient);
 
-		yn = doValveEmulationOld(xn, dcOffset * dcShiftCoefficient);
+		auto yn = doValveEmulationOld(xn, dcOffset * dcShiftCoefficient);
+
+		yn = yn * blend + (og * (1.0f - blend));
 
 		return yn;
 	}
