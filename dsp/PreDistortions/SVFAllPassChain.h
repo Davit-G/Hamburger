@@ -60,7 +60,7 @@ public:
     }
 
 private:
-    NumericType two = (NumericType)2;
+    NumericType two = 2;
 
     double sampleRate = 44100.0;
 
@@ -149,7 +149,7 @@ public:
 
         updateAllCoefficients(sampleRate, allPassFrequency.getRaw(), allPassQ.getRaw());
 
-        float allPassAmt = fmin(allPassAmount.getRaw(), 49.0f);
+        float allPassAmt = fmin(allPassAmount.getRaw(), 50.0f);
 
         TRACE_EVENT_BEGIN("dsp", "SVFAllPassChain loop");
 
@@ -214,24 +214,27 @@ public:
 
         const float k0 = (1.0f / resonance);
         const SIMDReg k0cast = (SIMDReg)k0;
-
         const float gk = g0 + k0;
-        const SIMDReg gkCast = (SIMDReg)gk;
 
-        const SIMDReg a1 = (SIMDReg)(1.0f / (g0 * gk + 1.0f));
-        const SIMDReg a2 = g0cast * a1;
-        const SIMDReg a3 = g0cast * a2;
-        const SIMDReg ak = (gkCast * a1);
+        const float a1 = 1.0f / (g0 * gk + 1.0f);
+        const float a2 = g0 * a1;
+        const float a3 = g0 * a2;
+        const float ak = gk * a1;
+
+        const SIMDReg a1cast = (SIMDReg)a1;
+        const SIMDReg a2cast = (SIMDReg)a2;
+        const SIMDReg a3cast = (SIMDReg)a3;
+        const SIMDReg akcast = (SIMDReg)ak;
 
         for (int i = 0; i < 50; i++)
         {
             auto &svf_ref = this->svf[i];
             svf_ref.g0 = g0cast;
             svf_ref.k0 = k0cast;
-            svf_ref.a1 = a1;
-            svf_ref.a2 = a2;
-            svf_ref.a3 = a3;
-            svf_ref.ak = ak;
+            svf_ref.a1 = a1cast;
+            svf_ref.a2 = a2cast;
+            svf_ref.a3 = a3cast;
+            svf_ref.ak = akcast;
         }
 
         oldFreq = cutoff;

@@ -83,9 +83,9 @@ AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::createP
     params.add(std::make_unique<AudioParameterFloat>("emphasisMidGain", "Emphasis Mid Gain", -18.0f, 18.0f, 0.f));
     params.add(std::make_unique<AudioParameterFloat>("emphasisHighGain", "Emphasis Hi Gain", -18.0f, 18.0f, 0.f));
 
-    params.add(std::make_unique<AudioParameterFloat>("emphasisLowFreq", "Emphasis Low Frequency", NormalisableRange<float>(30.0f, 200.0f, 0.f, 0.25f), 62.0f));
-    params.add(std::make_unique<AudioParameterFloat>("emphasisMidFreq", "Emphasis Mid Frequency", NormalisableRange<float>(500.0f, 3000.0f, 0.f, 0.25f), 1220.0f));
-    params.add(std::make_unique<AudioParameterFloat>("emphasisHighFreq", "Emphasis Hi Frequency", NormalisableRange<float>(6000.0f, 18000.0f, 0.f, 0.25f), 9000.0f));
+    params.add(std::make_unique<AudioParameterFloat>("emphasisLowFreq", "Emphasis Low Frequency", NormalisableRange<float>(10.0f, 200.0f, 0.f, 0.35f), 62.0f));
+    params.add(std::make_unique<AudioParameterFloat>("emphasisMidFreq", "Emphasis Mid Frequency", NormalisableRange<float>(300.0f, 3000.0f, 0.f, 0.4f), 1220.0f));
+    params.add(std::make_unique<AudioParameterFloat>("emphasisHighFreq", "Emphasis Hi Frequency", NormalisableRange<float>(5000.0f, 18000.0f, 0.f, 0.4f), 9000.0f));
 
     params.add(std::make_unique<AudioParameterBool>("compandingOn", "Compander On", false));
     params.add(std::make_unique<AudioParameterBool>("compressionOn", "Compressor On", true));

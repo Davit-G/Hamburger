@@ -41,7 +41,7 @@ public:
 		*dcBlockingFilter.state = juce::dsp::IIR::ArrayCoefficients<float>::makeFirstOrderHighPass(sampleRate, dcBlockingLF_Hz);
 
 		// --- LPF (upper edge), technically supposed to be second order
-		auto upperBandwidthFilterCoeffs = juce::dsp::IIR::ArrayCoefficients<float>::makeFirstOrderLowPass(sampleRate, millerHF_Hz);
+		auto upperBandwidthFilterCoeffs = juce::dsp::IIR::ArrayCoefficients<float>::makeLowPass(sampleRate, millerHF_Hz, 0.89f);
 		*upperBandwidthFilter1stOrder.state = upperBandwidthFilterCoeffs;
 		*upperBandwidthFilter2ndOrder.state = upperBandwidthFilterCoeffs;
 	}
@@ -83,6 +83,7 @@ public:
 	float clipPointNegative = -1.5f;
 	float gridConductionThreshold = 1.5f;
 	float dcShiftCoefficient = 1.0f;
+	float dcShiftAdditional = 0.0f;
 	float waveshaperSaturation = 2.0f;
 
 	float blend = 1.0f; // from 0 to 1
@@ -94,7 +95,7 @@ public:
 	{
 
 		auto og = xn;
-		xn *= inputGain;				   // --- input scaling
+		xn *= inputGain + dcShiftAdditional;				   // --- input scaling
 		xn = doValveGridConductionOld(xn); // grid conduction check, must be done prior to waveshaping
 
 		// float dcOffset = (lossyIntegrator).processAudioSample(dsp::SIMDRegister<float>(xn)).get(0); // detect the DC offset that the clipping may have caused
