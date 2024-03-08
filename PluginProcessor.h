@@ -10,6 +10,8 @@
 #include "dsp/PreDistortions/PreDistortion.h"
 #include "dsp/Dynamics/Dynamics.h"
 
+#include "gui/Modules/Scope.h"
+
 #include "dsp/SIMDBufferOps.h"
 
 // profiling
@@ -61,7 +63,8 @@ public:
 
     juce::StringArray oversamplingFactorChoices = {"1x", "2x", "4x", "8x", "16x"};
 
-    
+    AudioBufferQueue<float>& getAudioBufferQueueL() noexcept        { return audioBufferQueueL; }
+    AudioBufferQueue<float>& getAudioBufferQueueR() noexcept        { return audioBufferQueueR; }
 
 private:
     // juce::AudioParameterFloat *knobValue = nullptr;
@@ -105,6 +108,10 @@ private:
     dsp::Oversampling<float> oversampling;
 
     OversamplingStack oversamplingStack;
+
+    AudioBufferQueue<float> audioBufferQueueL;
+    AudioBufferQueue<float> audioBufferQueueR;
+    ScopeDataCollector<float> scopeDataCollector { audioBufferQueueL, audioBufferQueueR };
 
     #if PERFETTO // if we have the profiling
         std::unique_ptr<perfetto::TracingSession> tracingSession;

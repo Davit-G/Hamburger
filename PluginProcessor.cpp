@@ -367,6 +367,8 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
         dryWetMixer.setWetMixProportion(mixKnob->get() * 0.01f);
 
         dryWetMixer.mixWetSamples(block);
+
+        scopeDataCollector.process (buffer.getReadPointer (0), buffer.getReadPointer (1), (size_t) buffer.getNumSamples());
     }
 }
 

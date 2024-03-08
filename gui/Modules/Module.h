@@ -1,5 +1,5 @@
 #pragma once
- 
+
 #include "../../PluginProcessor.h"
 #include "LightButton.h"
 #include "../LookAndFeel/ComboBoxLookAndFeel.h"
@@ -9,18 +9,22 @@
 class Module : public juce::Component
 {
 public:
-    Module(AudioPluginAudioProcessor &processor, const std::string &moduleName, const std::string buttonAttachmentId, std::string categoryAttachmentId, std::vector<std::unique_ptr<Panel>> panels)
+    Module(AudioPluginAudioProcessor &processor, const std::string &moduleName, const std::string buttonAttachmentId, std::string categoryAttachmentId, std::vector<std::unique_ptr<Panel>> panels, bool noHeader = false)
         : modulePanels(std::move(panels)),
           powerOffImage(juce::ImageCache::getFromMemory(BinaryData::poweroff_png, BinaryData::poweroff_pngSize)), // yes it's using imageCache but stop constructing new instances! unify somehow
           powerOnImage(juce::ImageCache::getFromMemory(BinaryData::poweron_png, BinaryData::poweron_pngSize))
     {
-        setupHeader();
-        setupPanels(moduleName);
-        setupTitleLabel(moduleName);
-        setupCategorySelector(moduleName);
+        this->noHeader = noHeader;
+
+        if (!noHeader)
+        {
+            setupHeader();
+            setupTitleLabel(moduleName);
+            setupCategorySelector(moduleName);
+        }
+            setupPanels(moduleName);
 
         setPaintingIsUnclipped(true);
-
 
         if (categoryAttachmentId != "")
         {
@@ -61,26 +65,37 @@ public:
     void resized() override
     {
         auto bounds = getLocalBounds().reduced(8);
+
+        if (noHeader) {
+            for (auto &panel : modulePanels)
+            {
+                panel->setBounds(bounds);
+            }
+            return;
+        }
+
+
         auto titleBounds = bounds.removeFromTop(30);
         titleBounds.reduce(10, 0);
 
         auto extraSpace = 0.0f;
 
         header.items.clear();
-        if (enabledButton != nullptr) {
+        if (enabledButton != nullptr)
+        {
             header.items.add(FlexItem(*enabledButton).withMinWidth(15.0f).withMargin(7.5f));
             extraSpace = 15.0f + 7.5f;
         }
-        
+
         auto titleFont = titleLabel.getFont();
 
         if (modulePanels.size() == 1)
         {
-            header.items.add(FlexItem(titleLabel).withMinWidth( titleFont.getStringWidth(titleLabel.getText()) * 1.1f));
+            header.items.add(FlexItem(titleLabel).withMinWidth(titleFont.getStringWidth(titleLabel.getText()) * 1.1f));
         }
         else
         {
-            header.items.add(FlexItem(categorySelector).withMinWidth( titleFont.getStringWidth(categorySelector.getText()) * 1.4f + extraSpace));
+            header.items.add(FlexItem(categorySelector).withMinWidth(titleFont.getStringWidth(categorySelector.getText()) * 1.4f + extraSpace));
         }
 
         header.performLayout(titleBounds);
@@ -125,9 +140,12 @@ private:
 
     void setCategoryText(juce::String moduleName)
     {
-        if (categoryAttachment == nullptr) {
+        if (categoryAttachment == nullptr)
+        {
             categorySelector.setText(moduleName);
-        } else {
+        }
+        else
+        {
             size_t index = categorySelector.getSelectedItemIndex();
             if (index != -1)
             {
@@ -177,6 +195,8 @@ private:
     juce::FlexBox header;
     ComboBoxLookAndFeel comboBoxLook;
     juce::Label titleLabel;
+
+    bool noHeader;
 
     juce::Image powerOffImage;
     juce::Image powerOnImage;

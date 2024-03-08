@@ -15,6 +15,7 @@ public:
     ~Amp() {}
 
     void calculateCoefficients();
+
     void prepare(dsp::ProcessSpec& spec);
     void processBlock(dsp::AudioBlock<float> &block);
 

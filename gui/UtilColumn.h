@@ -29,7 +29,7 @@ public:
 
         std::vector<std::unique_ptr<Panel>> settingsPanels;
         settingsPanels.push_back(std::make_unique<SettingsPanel>(p));
-        settings = std::make_unique<Module>(p, "SETTINGS", "", "", std::move(settingsPanels));
+        settings = std::make_unique<Module>(p, "SETTINGS", "", "", std::move(settingsPanels), true);
         addAndMakeVisible(settings.get());
     }
 

@@ -3,32 +3,39 @@
 #include "../Panel.h"
 #include "PanelNames.h"
 
+#include "../Scope.h"
+
 class SettingsPanel : public Panel
 {
 public:
-    SettingsPanel(AudioPluginAudioProcessor &p) : Panel(p, "SETTINGS"), 
-    qualityOption("QUALITY")
+    SettingsPanel(AudioPluginAudioProcessor &p) : Panel(p, "SETTINGS"),
+                                                  // qualityOption("QUALITY")
+                                                  scope(p.getAudioBufferQueueL(), p.getAudioBufferQueueR())
     {
-        qualityOption.addItem("LOW", 1);
-        qualityOption.addItem("MEDIUM", 2);
-        qualityOption.addItem("HIGH", 3);
-        qualityOption.setSelectedId(2);
-        setLookAndFeel(new ComboBoxLookAndFeel());
-        addAndMakeVisible(qualityOption);
+        // qualityOption.addItem("LOW", 1);
+        // qualityOption.addItem("MEDIUM", 2);
+        // qualityOption.addItem("HIGH", 3);
+        // qualityOption.setSelectedId(2);
+        // setLookAndFeel(new ComboBoxLookAndFeel());
+        // addAndMakeVisible(qualityOption);
 
-        qualityAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment>(p.treeState, "qualityFactor", qualityOption);
+        addAndMakeVisible (scope);
+
+        // qualityAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment>(p.treeState, "qualityFactor", qualityOption);
     }
 
-    void resized() override {
+    void resized() override
+    {
         // three, in a row
         auto bounds = getLocalBounds();
-        qualityOption.setBounds(bounds);
+        scope.setBounds(bounds);
+        // qualityOption.setBounds(bounds);
     }
 
 private:
+    // ComboBox qualityOption;
 
-    ComboBox qualityOption;
+    Scope<float> scope;
     // attachment for quality option
-    std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment> qualityAttachment = nullptr;
-
+    // std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment> qualityAttachment = nullptr;
 };
