@@ -30,9 +30,9 @@ public:
         tube->setLookAndFeel(&tubeSatLAF);
         panels.push_back(std::move(tube));
 
-        auto waveshape = std::make_unique<WaveshaperPanel>(p);
-        waveshape->setLookAndFeel(&tubeSatLAF);
-        panels.push_back(std::move(waveshape));
+        // auto waveshape = std::make_unique<WaveshaperPanel>(p);
+        // waveshape->setLookAndFeel(&tubeSatLAF);
+        // panels.push_back(std::move(waveshape));
 
         auto phase = std::make_unique<PhaseDistPanel>(p);
         phase->setLookAndFeel(&tubeSatLAF);

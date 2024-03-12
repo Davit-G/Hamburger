@@ -92,6 +92,7 @@ target_compile_features("${BaseTargetName}" PUBLIC cxx_std_17)
 # definitions, pick unique names that are unlikely to collide! This is a standard CMake command.
 
 target_compile_definitions("${BaseTargetName}" PUBLIC
+    PERFETTO=0
 	JUCE_DISPLAY_SPLASH_SCREEN=0
     JUCE_REPORT_APP_USAGE=0
 	JUCE_USE_FLAC=0
