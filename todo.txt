@@ -5,7 +5,6 @@ add more natural white noise mode
 - make grill saturation soft clipping more controllable
 - display information on scope like clipping thresholds (displaying 0db at the moment)
 visual volume indicator?
-erosion gets quiet when freq is higher
 make allpass stack changed params smoother
 add oversampling again ( D: )
 support other sample rates / more channels?
