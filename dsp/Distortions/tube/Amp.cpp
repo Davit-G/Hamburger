@@ -75,7 +75,7 @@ void Amp::calculateCoefficients()
 
     // trioesL[3].millerHF_Hz = 6400.0;
     triode4.millerHF_Hz = 10000.0f + 9900.0f * tubeTone.getRaw();
-    triode4.outputGain = pow(10.0f, (-drive.getRaw() * 0.01f * 12.f) / 20.0f);
+    triode4.outputGain = pow(10.0f, (-drive.getRaw() * 0.01f * 18.f) / 20.0f);
     triode4.dcShiftCoefficient = biasAmt;
 
     for (int i = 0; i < 4; i++)

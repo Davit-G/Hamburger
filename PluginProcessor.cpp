@@ -242,6 +242,9 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
     auto totalNumInputChannels = getTotalNumInputChannels();
     auto totalNumOutputChannels = getTotalNumOutputChannels();
 
+    if (totalNumInputChannels == 0) return;
+    if (totalNumOutputChannels == 0) return;
+
     // In case we have more outputs than inputs, this code clears any output
     // channels that didn't contain input data, (because these aren't
     // guaranteed to be empty - they may contain garbage).
@@ -359,8 +362,9 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
         emphasisCompensationGain.setGainDecibels(-eqCompensation);
         emphasisCompensationGain.process(context);
 
-        // where the expander used to be
-        // rip tho :(
+        // before output gain
+        scopeDataCollector.process (buffer.getReadPointer (0), buffer.getReadPointer (1), (size_t) buffer.getNumSamples());
+        
         outputGain.setGainDecibels(outputGainKnob->get());
         outputGain.process(context);
 
@@ -368,7 +372,6 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
 
         dryWetMixer.mixWetSamples(block);
 
-        scopeDataCollector.process (buffer.getReadPointer (0), buffer.getReadPointer (1), (size_t) buffer.getNumSamples());
     }
 }
 

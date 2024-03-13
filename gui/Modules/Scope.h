@@ -161,10 +161,16 @@ public:
 
         auto scopeRect = juce::Rectangle<SampleType>{SampleType(0), SampleType(0), w, h};
 
+        g.setColour(juce::Colours::grey);
+        plot(originLineData.data(), 2, g, scopeRect, SampleType(0.4), h / 2);
+        plot(originLineData.data(), 2, g, scopeRect, SampleType(-0.4), h / 2);
+
+
         g.setColour(juce::Colours::yellow);
-        plot(sampleDataL.data(), sampleDataL.size(), g, scopeRect, SampleType(0.3), h / 2);
+        plot(sampleDataL.data(), sampleDataL.size(), g, scopeRect, SampleType(0.4), h / 2);
         g.setColour(juce::Colours::lime);
-        plot(sampleDataR.data(), sampleDataR.size(), g, scopeRect, SampleType(0.3), h / 2);
+        plot(sampleDataR.data(), sampleDataR.size(), g, scopeRect, SampleType(0.4), h / 2);
+
     
     }
 
@@ -178,6 +184,8 @@ private:
     Queue &audioBufferQueueR;
     std::array<SampleType, Queue::bufferSize> sampleDataL;
     std::array<SampleType, Queue::bufferSize> sampleDataR;
+
+    std::array<SampleType, 2> originLineData = {SampleType(1), SampleType(1)};
 
     juce::dsp::FFT fft{Queue::order};
     using WindowFun = juce::dsp::WindowingFunction<SampleType>;
