@@ -7,5 +7,11 @@ display information on scope like clipping thresholds
 visual volume indicator?
 erosion gets quiet when freq is higher
 make allpass stack changed params smoother
+add oversampling again ( D: )
+support other sample rates / more channels?
 add clap support
 mac notarisation and codesigning
+
+
+ONCE DSP HAS BEEN FINALISED:
+svgs or images on knobs to show interesting visuals
