@@ -12,6 +12,10 @@ public:
         setColour(Slider::rotarySliderFillColourId, color);
     }
 
+    ~KnobLAF() {
+        
+    }
+
     static Font getTheFont(int fontSize = 16) {
         auto font = Font(Typeface::createSystemTypefaceFor(BinaryData::QuestrialRegular_ttf, BinaryData::QuestrialRegular_ttfSize));
         font.setSizeAndStyle(fontSize, font.getAvailableStyles()[0], 1, 0);

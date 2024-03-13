@@ -6,7 +6,7 @@ class AudioBufferQueue
 {
 public:
     //==============================================================================
-    static constexpr size_t order = 10;
+    static constexpr size_t order = 9;
     static constexpr size_t bufferSize = 1U << order;
     static constexpr size_t numBuffers = 5;
 
@@ -161,19 +161,11 @@ public:
 
         auto scopeRect = juce::Rectangle<SampleType>{SampleType(0), SampleType(0), w, h};
 
-        if (viewSpectrum)
-        {
-            g.setColour(juce::Colours::white);
-            auto spectrumRect = juce::Rectangle<SampleType>{SampleType(0), 0, w, h};
-            plot(scopeData.data(), scopeData.size(), g, spectrumRect);
-        }
-        else
-        {
-            g.setColour(juce::Colours::yellow);
-            plot(sampleDataL.data(), sampleDataL.size(), g, scopeRect, SampleType(0.3), h / 2);
-            g.setColour(juce::Colours::lime);
-            plot(sampleDataR.data(), sampleDataR.size(), g, scopeRect, SampleType(0.3), h / 2);
-        }
+        g.setColour(juce::Colours::yellow);
+        plot(sampleDataL.data(), sampleDataL.size(), g, scopeRect, SampleType(0.3), h / 2);
+        g.setColour(juce::Colours::lime);
+        plot(sampleDataR.data(), sampleDataR.size(), g, scopeRect, SampleType(0.3), h / 2);
+    
     }
 
     //==============================================================================
@@ -200,39 +192,39 @@ private:
         audioBufferQueueL.pop(sampleDataL.data());
         audioBufferQueueR.pop(sampleDataR.data());
 
-        juce::FloatVectorOperations::copy(spectrumData.data(), sampleDataL.data(), (int)sampleDataL.size());
+        // juce::FloatVectorOperations::copy(spectrumData.data(), sampleDataL.data(), (int)sampleDataL.size());
 
-        auto fftSize = (size_t)fft.getSize();
+        // auto fftSize = (size_t)fft.getSize();
 
-        jassert(spectrumData.size() == 2 * fftSize);
-        windowFun.multiplyWithWindowingTable(spectrumData.data(), fftSize);
-        fft.performFrequencyOnlyForwardTransform(spectrumData.data());
+        // jassert(spectrumData.size() == 2 * fftSize);
+        // windowFun.multiplyWithWindowingTable(spectrumData.data(), fftSize);
+        // fft.performFrequencyOnlyForwardTransform(spectrumData.data());
 
-        static constexpr auto mindB = SampleType(-156);
-        static constexpr auto maxdB = SampleType(6);
+        // static constexpr auto mindB = SampleType(-156);
+        // static constexpr auto maxdB = SampleType(6);
 
-        for (int i = 0; i < spectrumData.size(); ++i) {
-            auto skewedProportionX = 1.0f - std::exp (std::log (1.0f - (float) i / (float) spectrumData.size()) * 0.05f);
+        // for (int i = 0; i < spectrumData.size(); ++i) {
+        //     auto skewedProportionX = 1.0f - std::exp (std::log (1.0f - (float) i / (float) spectrumData.size()) * 0.05f);
             
-            auto newTing = skewedProportionX * spectrumData.size() * 0.5f;
+        //     auto newTing = skewedProportionX * spectrumData.size() * 0.5f;
 
-            const float prev = floor(newTing);
-            const float next = ceil(newTing);
-            const float interp = newTing - prev;
-            const float val = spectrumData[prev] * (1 - interp) + spectrumData[next] * interp;
+        //     const float prev = floor(newTing);
+        //     const float next = ceil(newTing);
+        //     const float interp = newTing - prev;
+        //     const float val = spectrumData[prev] * (1 - interp) + spectrumData[next] * interp;
 
-            auto ting = juce::jlimit(mindB, maxdB, juce::Decibels::gainToDecibels(val) - juce::Decibels::gainToDecibels((SampleType)fftSize));
-            scopeData[i] = juce::jmap(
-                ting, 
-                mindB, 
-                maxdB, 
-                SampleType(0), 
-                SampleType(1)
-                );
+        //     auto ting = juce::jlimit(mindB, maxdB, juce::Decibels::gainToDecibels(val) - juce::Decibels::gainToDecibels((SampleType)fftSize));
+        //     scopeData[i] = juce::jmap(
+        //         ting, 
+        //         mindB, 
+        //         maxdB, 
+        //         SampleType(0), 
+        //         SampleType(1)
+        //         );
             
-        }
+        // }
 
-        repaint();
+        repaint(getLocalBounds());
     }
 
     //==============================================================================

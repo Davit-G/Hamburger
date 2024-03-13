@@ -51,8 +51,6 @@ public:
 
     }
 
-    ~LeftColumn() override{}
-
     void paint(Graphics &g) override
     {
         juce::ignoreUnused(g);
@@ -70,13 +68,13 @@ public:
 private:
     std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> enableButtonAttachment = nullptr;
 
-    std::unique_ptr<Module> compander = nullptr;
-    std::unique_ptr<Module> noise = nullptr;
-    std::unique_ptr<Module> preDistortion = nullptr;
-
     KnobLAF knobLAF1 = KnobLAF(Palette::colours[1]);
     KnobLAF knobLAF2 = KnobLAF(Palette::colours[2]);
     KnobLAF knobLAF3 = KnobLAF(Palette::colours[3]);
+
+    std::unique_ptr<Module> compander = nullptr;
+    std::unique_ptr<Module> noise = nullptr;
+    std::unique_ptr<Module> preDistortion = nullptr;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(LeftColumn)
 };

@@ -60,14 +60,14 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor() : AudioProcessor(BusesPro
     jassert(enableEmphasis);
 
 #if PERFETTO
-    MelatoninPerfetto::get().beginSession(300000);
+    // MelatoninPerfetto::get().beginSession(300000);
 #endif
 }
 
 AudioPluginAudioProcessor::~AudioPluginAudioProcessor()
 {
 #if PERFETTO
-    MelatoninPerfetto::get().endSession();
+    // MelatoninPerfetto::get().endSession();
 #endif
 }
 

@@ -107,6 +107,7 @@ public:
     }
 
     std::unique_ptr<LightButton> enabledButton = nullptr;
+    ComboBoxLookAndFeel comboBoxLook;
     juce::ComboBox categorySelector;
 
 private:
@@ -193,7 +194,6 @@ private:
     std::vector<std::unique_ptr<Panel>> modulePanels;
 
     juce::FlexBox header;
-    ComboBoxLookAndFeel comboBoxLook;
     juce::Label titleLabel;
 
     bool noHeader;

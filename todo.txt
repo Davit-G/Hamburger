@@ -3,6 +3,7 @@ remove stereo compression
 
 add more natural white noise mode
 make grill saturation soft clipping more controllable (threshold instead of amt param)
+display information on scope
 visual volume indicator?
 
 make separate grunge panel but call it prefilter? and add resonant LP and notch?

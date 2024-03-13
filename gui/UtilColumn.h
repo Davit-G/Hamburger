@@ -33,8 +33,6 @@ public:
         addAndMakeVisible(settings.get());
     }
 
-    ~UtilColumn() override{}
-
     void resized() override{
         auto bounds = getLocalBounds();
         auto height = bounds.getHeight();
@@ -45,12 +43,12 @@ public:
     }
 
 private:
+    KnobLAF eqLookAndFeel = KnobLAF(Palette::colours[2]);
+    KnobLAF utilityLookAndFeel = KnobLAF(juce::Colours::whitesmoke);
+
     std::unique_ptr<Module> eq = nullptr;
     std::unique_ptr<Module> utility = nullptr;
     std::unique_ptr<Module> settings = nullptr;
-
-    KnobLAF eqLookAndFeel = KnobLAF(Palette::colours[2]);
-    KnobLAF utilityLookAndFeel = KnobLAF(juce::Colours::whitesmoke);
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(UtilColumn)
 };

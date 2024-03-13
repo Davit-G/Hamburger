@@ -22,11 +22,11 @@ public:
         // todo: add waveshapey distortion effects for distortion type, rename that to classic
         // and add rectification to it?
 
-        auto classic = std::make_unique<ClassicSatPanel>(p);
+        classic = std::make_unique<ClassicSatPanel>(p);
         classic->setLookAndFeel(&saturationLAF);
         panels.push_back(std::move(classic));
 
-        auto tube = std::make_unique<TubeSatPanel>(p);
+        tube = std::make_unique<TubeSatPanel>(p);
         tube->setLookAndFeel(&tubeSatLAF);
         panels.push_back(std::move(tube));
 
@@ -34,15 +34,13 @@ public:
         // waveshape->setLookAndFeel(&tubeSatLAF);
         // panels.push_back(std::move(waveshape));
 
-        auto phase = std::make_unique<PhaseDistPanel>(p);
+        phase = std::make_unique<PhaseDistPanel>(p);
         phase->setLookAndFeel(&tubeSatLAF);
         panels.push_back(std::move(phase));
 
         saturation = std::make_unique<Module>(p, "SATURATION", "primaryDistortionEnabled", "primaryDistortionType", std::move(panels));
         addAndMakeVisible(saturation.get());
     }
-
-    ~SaturationColumn() override {}
 
     void resized() override{
         auto bounds = getLocalBounds();
@@ -54,6 +52,10 @@ public:
 private:
     KnobLAF saturationLAF = KnobLAF(Palette::colours[0]);
     KnobLAF tubeSatLAF = KnobLAF(Palette::colours[4]);
+
+    std::unique_ptr<Panel> classic = nullptr;
+    std::unique_ptr<Panel> tube = nullptr;
+    std::unique_ptr<Panel> phase = nullptr;
 
     std::unique_ptr<Module> saturation;
 

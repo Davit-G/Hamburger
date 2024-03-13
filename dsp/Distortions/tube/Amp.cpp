@@ -28,8 +28,8 @@ void Amp::calculateCoefficients()
     auto &triode3 = triodes[2];
     auto &triode4 = triodes[3];
 
-    auto lowFreqShelfHz = JUCE_LIVE_CONSTANT(9.0f);
-    auto loShelfGain = JUCE_LIVE_CONSTANT(-6.0f);
+    auto lowFreqShelfHz = (9.0f);
+    auto loShelfGain = (-6.0f);
 
     auto biasAmt = bias.getRaw() * 2.0f;
 
@@ -43,13 +43,13 @@ void Amp::calculateCoefficients()
         // triodes[i].blend = blend;
         // triodes[i].blend = blend * 4;
         triodes[i].waveshaperSaturation = 0.01f + drive.getRaw() * 0.03;
-        triodes[i].clipPointPositive = JUCE_LIVE_CONSTANT(4.0f);
-        triodes[i].clipPointNegative = JUCE_LIVE_CONSTANT(-1.5f);
-        triodes[i].gridConductionThreshold = JUCE_LIVE_CONSTANT(1.1f);
-        triodes[i].dcShiftCoefficient = JUCE_LIVE_CONSTANT(1.2f);
+        triodes[i].clipPointPositive = 4.0f;
+        triodes[i].clipPointNegative = (-1.5f);
+        triodes[i].gridConductionThreshold = (1.1f);
+        triodes[i].dcShiftCoefficient = (1.2f);
         triodes[i].lowFrequencyShelf_Hz = lowFreqShelfHz;
         triodes[i].lowFrequencyShelfGain_dB = loShelfGain;
-        triodes[i].dcBlockingLF_Hz = JUCE_LIVE_CONSTANT(6.0f);
+        triodes[i].dcBlockingLF_Hz = (6.0f);
     }
 
     // the divisions in this code would all be calculated at compile time
