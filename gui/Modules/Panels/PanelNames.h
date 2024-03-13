@@ -26,7 +26,7 @@ namespace params {
     };
 
     static const PanelInfo distortion = {
-        "DISTORTION", "", StringArray({"GRILL", "TUBE", "WAVESHAPER", "PHASE"})
+        "DISTORTION", "", StringArray({"GRILL", "TUBE", "PHASE"})
     };
 
     static const PanelInfo preDistortionTypes = {
