@@ -9,6 +9,7 @@
 #include "dsp/NoiseDistortions.h"
 #include "dsp/PreDistortions/PreDistortion.h"
 #include "dsp/Dynamics/Dynamics.h"
+#include "dsp/Distortions/PostClip.h"
 
 #include "gui/Modules/Scope.h"
 
@@ -93,6 +94,7 @@ private:
     PrimaryDistortion distortionTypeSelection;
     NoiseDistortions noiseDistortionSelection;
     Dynamics dynamics;
+    PostClip postClip;
 
     dsp::ProcessorDuplicator<dsp::IIR::Filter<float>, dsp::IIR::Coefficients<float>> peakFilterBefore[3];
     dsp::ProcessorDuplicator<dsp::IIR::Filter<float>, dsp::IIR::Coefficients<float>> peakFilterAfter[3];

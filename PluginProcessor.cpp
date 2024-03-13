@@ -14,6 +14,7 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor() : AudioProcessor(BusesPro
                          .withOutput("Output", juce::AudioChannelSet::stereo(), true)),
       treeState(*this, nullptr, "PARAMETER", createParameterLayout()),
       dynamics(treeState),
+      postClip(treeState),
       dryWetMixer(30),
       distortionTypeSelection(treeState),
       noiseDistortionSelection(treeState),
@@ -96,6 +97,7 @@ AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::createP
     params.add(std::make_unique<AudioParameterBool>("preDistortionEnabled", "Pre-Dist Enabled", true));
     params.add(std::make_unique<AudioParameterBool>("primaryDistortionEnabled", "Dist Enabled", true));
     params.add(std::make_unique<AudioParameterBool>("noiseDistortionEnabled", "Noise Enabled", true));
+    params.add(std::make_unique<AudioParameterBool>("postClipEnabled", "SoftClip Enabled", true));
 
     params.add(std::make_unique<AudioParameterBool>("hamburgerEnabled", "Enabled", true));
     params.add(std::make_unique<AudioParameterBool>("autoGain", "Auto Gain", false));
@@ -123,6 +125,9 @@ AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::createP
 
     params.add(std::make_unique<AudioParameterFloat>("grungeAmt", "Grunge Amt", 0.0f, 1.0f, 0.0f));
     params.add(std::make_unique<AudioParameterFloat>("grungeTone", "Grunge Tone", 0.0f, 1.0f, 0.5f));
+
+    params.add(std::make_unique<AudioParameterFloat>("postClipGain", "SoftClip Gain", -18.0f, 18.0f, 0.f));
+    params.add(std::make_unique<AudioParameterFloat>("postClipKnee", "SoftClip Knee", 0.0f, 5.0f, 2.f));
 
     // primary distortions
     params.add(std::make_unique<AudioParameterFloat>("saturationAmount", "Saturation", 0.0f, 100.0f, 0.f));
@@ -199,6 +204,8 @@ void AudioPluginAudioProcessor::prepareToPlay(double sampleRate, int samplesPerB
     }
 
     oversamplingStack.prepare(spec);
+
+    postClip.prepare(spec);
 
     // float totalLatency = oversamplingStack.getLatencySamples();
     // // DBG("Total Latency: " << totalLatency);
@@ -361,6 +368,8 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
         float eqCompensation = (prevEmphasis[0] + prevEmphasis[1] + prevEmphasis[2]) * 0.3333333f * 0.4f;
         emphasisCompensationGain.setGainDecibels(-eqCompensation);
         emphasisCompensationGain.process(context);
+
+        postClip.processBlock(block);
 
         // before output gain
         scopeDataCollector.process (buffer.getReadPointer (0), buffer.getReadPointer (1), (size_t) buffer.getNumSamples());

@@ -6,6 +6,7 @@
 #include "Modules/Panels/TubeSatPanel.h"
 #include "Modules/Panels/PhaseDistPanel.h"
 #include "Modules/Panels/WaveshaperPanel.h"
+#include "Modules/Panels/PostClipPanel.h"
 
 #include "LookAndFeel/Palette.h"
 
@@ -40,13 +41,23 @@ public:
 
         saturation = std::make_unique<Module>(p, "SATURATION", "primaryDistortionEnabled", "primaryDistortionType", std::move(panels));
         addAndMakeVisible(saturation.get());
+
+        std::vector<std::unique_ptr<Panel>> clipPanel;
+
+        postClipPanel = std::make_unique<PostClipPanel>(p);
+        postClipPanel->setLookAndFeel(&tubeSatLAF);
+        clipPanel.push_back(std::move(postClipPanel));
+
+        postClip = std::make_unique<Module>(p, "CLIPPER", "postClipEnabled", "", std::move(clipPanel));
+        addAndMakeVisible(postClip.get());
     }
 
     void resized() override{
         auto bounds = getLocalBounds();
-        // auto height = bounds.getHeight();
+        auto height = bounds.getHeight();
 
-        saturation->setBounds(bounds);
+        saturation->setBounds(bounds.removeFromTop(height * 3/4));
+        postClip->setBounds(bounds.removeFromRight(bounds.getWidth() / 2));
     }
 
 private:
@@ -56,8 +67,10 @@ private:
     std::unique_ptr<Panel> classic = nullptr;
     std::unique_ptr<Panel> tube = nullptr;
     std::unique_ptr<Panel> phase = nullptr;
+    std::unique_ptr<Panel> postClipPanel = nullptr;
 
     std::unique_ptr<Module> saturation;
+    std::unique_ptr<Module> postClip;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SaturationColumn)
 };
