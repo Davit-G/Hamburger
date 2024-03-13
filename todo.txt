@@ -14,4 +14,4 @@ mac notarisation and codesigning
 
 
 ONCE DSP HAS BEEN FINALISED:
-svgs or images on knobs to show interesting visuals
+svgs or images on knobs to show interesting visuals?

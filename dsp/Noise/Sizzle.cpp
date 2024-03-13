@@ -50,7 +50,8 @@ void Sizzle::processBlock(dsp::AudioBlock<float> &block)
 
 	auto sizzleFreq = filterTone.getRaw();
 
-	*filter.coefficients = dsp::IIR::ArrayCoefficients<float>::makeLowPass(sampleRate, sizzleFreq, 0.707f);
+	if (filterTone.isChanged())
+		*filter.coefficients = dsp::IIR::ArrayCoefficients<float>::makeLowPass(sampleRate, sizzleFreq, 0.707f);
 
 	for (int sample = 0; sample < block.getNumSamples(); sample++)
 	{

@@ -137,7 +137,7 @@ public:
     {
         sampleDataL.fill(SampleType(0));
         sampleDataR.fill(SampleType(0));
-        setFramesPerSecond(30);
+        setFramesPerSecond(60);
     }
 
     void mouseDown(const juce::MouseEvent &event) override
