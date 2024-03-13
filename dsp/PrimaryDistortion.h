@@ -51,8 +51,6 @@ public:
             fuzz->processBlock(block);
             softClipper->processBlock(block);
             softClipper->processBlock(block);
-            softClipper->processBlock(block);
-            softClipper->processBlock(block);
             iirFilter.process(context); // hpf afterwards to remove bias
             break;
         }
