@@ -161,21 +161,20 @@ FetchContent_Declare (xsimd
 
 FetchContent_MakeAvailable (xsimd)
 
-FetchContent_Declare (VS_JUST_MY_CODE_DEBUGGING 
-GIT_REPOSITORY https://github.com/xtensor-stack/xsimd.git
-GIT_TAG origin/master)
-
-FetchContent_MakeAvailable (xsimd)
-
-Include (FetchContent)
 FetchContent_Declare (melatonin_inspector
   GIT_REPOSITORY https://github.com/sudara/melatonin_inspector.git
   GIT_TAG origin/main
   SOURCE_DIR ${CMAKE_CURRENT_BINARY_DIR}/melatonin_inspector)
 FetchContent_MakeAvailable (melatonin_inspector)
 
+FetchContent_Declare (clap-juce-extensions
+  GIT_REPOSITORY https://github.com/free-audio/clap-juce-extensions.git
+  GIT_TAG origin/main)
+FetchContent_MakeAvailable (clap-juce-extensions)
 
-
+clap_juce_extensions_plugin(TARGET "${BaseTargetName}"
+CLAP_ID "com.aviary.hamburger_v0.3"
+CLAP_FEATURES effect "distortion analog compressor" audio-effect)
 
 # `target_link_libraries` links libraries and JUCE modules to other libraries or executables. Here,
 # we're linking our executable target to the `juce::juce_audio_utils` module. Inter-module
