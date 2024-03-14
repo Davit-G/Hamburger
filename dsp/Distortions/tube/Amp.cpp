@@ -55,19 +55,19 @@ void Amp::calculateCoefficients()
     // the divisions in this code would all be calculated at compile time
     // so not a big deal, just mentioning it tho
 
-    triode1.millerHF_Hz = 22000.0f;
+    triode1.millerHF_Hz = 20000.0f;
     triode1.outputGain = outGain;
     triode1.dcShiftAdditional = biasAmt;
     triode1.dcShiftCoefficient = biasAmt;
     triode1.inputGain = driv + 0.3f;
 
     triode2.inputGain = inGain;
-    triode2.millerHF_Hz = 10000.0f + 9900.0f * tubeTone.getRaw();
+    triode2.millerHF_Hz = 19000.0f;
     triode2.outputGain = outGain;
     triode2.dcShiftAdditional = biasAmt;
     triode2.dcShiftCoefficient = 1.f + biasAmt;
 
-    triode3.millerHF_Hz = 10000.0f + 9900.0f * tubeTone.getRaw();
+    triode3.millerHF_Hz = 9000.0f + 7900.0f * tubeTone.getRaw();
     // triode3.millerHF_Hz = 20000.0;
     triode3.inputGain = inGain;
     triode3.outputGain = outGain;

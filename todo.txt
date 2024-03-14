@@ -1,6 +1,7 @@
 make different tube modes, replicate / improve bias dc behaviour better
 add gate
 add smooth rectifier
+post filtering (filtered tone sounds better than regular one? idk)
 add more sizzly sizzle mode
 visual volume indicator? (vu meter and/or bars for peak / lufs)
 make allpass stack changed params smoother
