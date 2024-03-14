@@ -22,7 +22,8 @@ public:
             setupTitleLabel(moduleName);
             setupCategorySelector(moduleName);
         }
-            setupPanels(moduleName);
+
+        setupPanels(moduleName);
 
         setPaintingIsUnclipped(true);
 
@@ -34,8 +35,9 @@ public:
         else
         {
             setScreen(0);
+            categorySelector.setSelectedItemIndex(0);
+            
         }
-        // categorySelector.setSelectedItemIndex(0);
 
         if (buttonAttachmentId != "")
         {
@@ -66,14 +68,14 @@ public:
     {
         auto bounds = getLocalBounds().reduced(8);
 
-        if (noHeader) {
+        if (noHeader)
+        {
             for (auto &panel : modulePanels)
             {
                 panel->setBounds(bounds);
             }
             return;
         }
-
 
         auto titleBounds = bounds.removeFromTop(30);
         titleBounds.reduce(10, 0);
@@ -133,26 +135,27 @@ private:
         titleLabel.setText(moduleName, juce::dontSendNotification);
         titleLabel.setFont(comboBoxLook.getComboBoxFont());
         titleLabel.setColour(juce::Label::textColourId, juce::Colours::white);
-        if (modulePanels.size() == 1)
-        {
+        // if (modulePanels.size() == 1)
+        // {
             addAndMakeVisible(titleLabel);
-        }
+        // }
     }
 
     void setCategoryText(juce::String moduleName)
     {
-        if (categoryAttachment == nullptr)
+        size_t index = categorySelector.getSelectedItemIndex();
+        if (index != -1)
         {
-            categorySelector.setText(moduleName);
+            auto panelName = modulePanels[index]->getName();
+            if (moduleName == "") {
+                categorySelector.setText(panelName);
+            } else {
+                categorySelector.setText(panelName + " " + moduleName);
+            }
         }
         else
         {
-            size_t index = categorySelector.getSelectedItemIndex();
-            if (index != -1)
-            {
-                auto panelName = modulePanels[index]->getName();
-                categorySelector.setText(panelName + " " + moduleName);
-            }
+            categorySelector.setText(moduleName);
         }
     }
 
@@ -195,6 +198,7 @@ private:
 
     juce::FlexBox header;
     juce::Label titleLabel;
+    std::string moduleNameTitle;
 
     bool noHeader;
 
