@@ -16,10 +16,12 @@ public:
     {
         gain = newGain;
     }
+    
     float getGain()
     {
         return gain;
     }
+
     float process(float input)
     {
         return input * gain;

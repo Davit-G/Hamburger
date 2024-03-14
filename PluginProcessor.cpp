@@ -18,7 +18,8 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor() : AudioProcessor(BusesPro
       dryWetMixer(30),
       distortionTypeSelection(treeState),
       noiseDistortionSelection(treeState),
-      preDistortionSelection(treeState)
+      preDistortionSelection(treeState),
+      simdGain(treeState)
 {
     treeState.state = ValueTree("savedParams");
 
@@ -206,6 +207,7 @@ void AudioPluginAudioProcessor::prepareToPlay(double sampleRate, int samplesPerB
     oversamplingStack.prepare(spec);
 
     postClip.prepare(spec);
+    simdGain.prepare(spec);
 
     // float totalLatency = oversamplingStack.getLatencySamples();
     // // DBG("Total Latency: " << totalLatency);
@@ -274,7 +276,9 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
     // Some computation here
     auto gainAmount = inputGainKnob->get();
     inputGain.setGainDecibels(gainAmount);
-    inputGain.process(context);
+    // inputGain.process(context);
+    
+    xsimd::dispatch<xsimd::arch_list<xsimd::best_arch>>(SIMDGain::process{})(block, juce::Decibels::decibelsToGain(gainAmount));
 
     dryWetMixer.pushDrySamples(block);
 
