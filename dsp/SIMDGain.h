@@ -29,6 +29,8 @@ public:
 
             batch gainD(gain);
 
+            batch::size;
+
             int iters = block.getNumSamples() / batch::size;
             int remainder = block.getNumSamples() & batch::size;
 
@@ -49,8 +51,8 @@ public:
                 auto rPtr = remainderDataZeroes.getReadPointer(1);
 
                 // put that all into a batch
-                batch remainderDataL = xsimd::load_unaligned(lPtr);
-                batch remainderDataR = xsimd::load_unaligned(rPtr);
+                batch remainderDataL = xsimd::load_unaligned<Arch, float>(lPtr);
+                batch remainderDataR = xsimd::load_unaligned<Arch, float>(rPtr);
                 // do the multiply
                 remainderDataL *= gainD;
                 remainderDataR *= gainD;
