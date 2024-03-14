@@ -8,3 +8,4 @@ mac notarisation and codesigning / github actions builds
 
 ONCE DSP HAS BEEN FINALISED:
 svgs or images on knobs to show interesting visuals?
+add hamburger logo
