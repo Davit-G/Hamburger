@@ -95,7 +95,9 @@ public:
 	{
 
 		auto og = xn;
-		xn *= inputGain + dcShiftAdditional;				   // --- input scaling
+		xn *= inputGain;
+
+		// xn = (abs(dcShiftAdditional) + 1)*(dcShiftAdditional * - (xn * xn) + xn);
 		xn = doValveGridConductionOld(xn); // grid conduction check, must be done prior to waveshaping
 
 		// float dcOffset = (lossyIntegrator).processAudioSample(dsp::SIMDRegister<float>(xn)).get(0); // detect the DC offset that the clipping may have caused
@@ -109,9 +111,9 @@ public:
 
 		auto yn = doValveEmulationOld(xn, dcOffset * dcShiftCoefficient);
 
-		float clippedBlend = fmin(0.5, blend) * 2.0f;
+		// float clippedBlend = fmin(0.5, blend) * 2.0f;
 
-		yn = yn * clippedBlend + (og * (1.0f - clippedBlend));
+		// yn = yn * clippedBlend + (og * (1.0f - clippedBlend));
 
 		return yn;
 	}
@@ -135,35 +137,29 @@ public:
 		xn += variableDCOffset; // --- add the offset detected
 		float yn = 0.0f;
 
-		// --- NOTE: the whole transfer function is shifted so that the normal
-		//           DC operating point is 0.0 to prevent massive
-		//           clicks at the beginning of a selection due to the temporary DC offset
-		//           that occurs before the HPF can react
-		//
-
-		if (xn > gridConductionThreshold) // +1.5 is where grid conduction starts
+		if (xn > gridConductionThreshold)
 		{
 			if (xn > clipPointPositive)
 				yn = clipPointPositive;
 			else
 			{
-				xn -= gridConductionThreshold; // --- scaling to get into the first quadrant for Arraya @ (0,0)
+				xn -= gridConductionThreshold;
 
 				float cpPosSub = clipPointPositive - gridConductionThreshold;
 
 				if (clipPointPositive > 1.0f)
-					xn /= cpPosSub; // --- note that the signal should be clipped/compressed prior to calling this
+					xn /= cpPosSub;
 
 				yn = xn * (1.5f) * (1.0f - (xn * xn) * 0.333333333f);
-				yn *= cpPosSub;				   // --- scale by clip point positive
-				yn += gridConductionThreshold; // --- undo scaling
+				yn *= cpPosSub;
+				yn += gridConductionThreshold;
 			}
 		}
-		else if (xn > 0.0f) // --- ultra linear region
+		else if (xn > 0.0f)
 		{
-			yn = xn; // --- fundamentally linear region of 3/2 power law
+			yn = xn; 
 		}
-		else // botom portion is tanh( ) waveshaper - EXPERIMENT!!
+		else 
 		{
 			if (xn < clipPointNegative)
 				yn = clipPointNegative;
@@ -175,7 +171,7 @@ public:
 					xn /= absCPNegative;
 
 				yn = dsp::FastMathApproximations::tanh(waveshaperSaturation * xn) /
-					 dsp::FastMathApproximations::tanh(waveshaperSaturation); // --- the waveshaper
+					 dsp::FastMathApproximations::tanh(waveshaperSaturation);
 
 				yn *= absCPNegative; // --- undo clip normalize
 			}

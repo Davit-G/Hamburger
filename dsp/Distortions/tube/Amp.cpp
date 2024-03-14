@@ -33,7 +33,7 @@ void Amp::calculateCoefficients()
 
     auto biasAmt = bias.getRaw() * 2.0f;
 
-    auto inGain = 1.f + driv * 0.5f;
+    auto inGain = 1.f + driv * 0.4f;
     auto outGain = 1.1f;
 
     auto blend = drive.getRaw() * 0.005f;
@@ -65,6 +65,7 @@ void Amp::calculateCoefficients()
     triode2.millerHF_Hz = 10000.0f + 9900.0f * tubeTone.getRaw();
     triode2.outputGain = outGain;
     triode2.dcShiftAdditional = biasAmt;
+    triode2.dcShiftCoefficient = 1.f + biasAmt;
 
     triode3.millerHF_Hz = 10000.0f + 9900.0f * tubeTone.getRaw();
     // triode3.millerHF_Hz = 20000.0;
@@ -76,7 +77,7 @@ void Amp::calculateCoefficients()
     // trioesL[3].millerHF_Hz = 6400.0;
     triode4.millerHF_Hz = 10000.0f + 9900.0f * tubeTone.getRaw();
     triode4.outputGain = pow(10.0f, (-drive.getRaw() * 0.01f * 18.f) / 20.0f);
-    triode4.dcShiftCoefficient = biasAmt;
+    triode4.dcShiftCoefficient = biasAmt * 1.5f;
 
     for (int i = 0; i < 4; i++)
     {
@@ -102,13 +103,14 @@ void Amp::processBlock(dsp::AudioBlock<float> &block)
 
     // left channel
     TRACE_EVENT_BEGIN("dsp", "tubes");
+    // block.add(bias.getRaw() * 3.0f);
 
     triodes[0].processBlock(block); // step 3: triode 1
     block.multiplyBy(driveGain);    // step 4: drive the signal
 
     // step 5: triode 2 and 3 and etc, go nuts
     triodes[1].processBlock(block);
-    triodes[2].processBlock(block);
+    // triodes[2].processBlock(block);
     triodes[3].processBlock(block);
 
     block.multiplyBy(tubeCompress);
