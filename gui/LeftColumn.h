@@ -37,7 +37,7 @@ public:
         noisePanels.push_back(std::make_unique<ReductionPanel>(p));
         noisePanels.push_back(std::make_unique<JeffPanel>(p));
 
-        noise = std::make_unique<Module>(p, "", "noiseDistortionEnabled", "noiseDistortionType", std::move(noisePanels));
+        noise = std::make_unique<Module>(p, "NOISE", "noiseDistortionEnabled", "noiseDistortionType", std::move(noisePanels));
         noise->setLookAndFeel(&knobLAF1);
         addAndMakeVisible(noise.get());
 
