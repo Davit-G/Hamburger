@@ -1,9 +1,6 @@
 make different tube modes, replicate / improve bias dc behaviour better
-remove stereo compression
-
 add more natural white noise mode
-- make grill saturation soft clipping more controllable
-visual volume indicator?
+- visual volume indicator? (vu meter and/or bars for peak / lufs)
 make allpass stack changed params smoother
 add oversampling again ( D: )
 support other sample rates / more channels?
