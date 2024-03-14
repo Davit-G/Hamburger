@@ -10,6 +10,5 @@ support other sample rates / more channels?
 add clap support
 mac notarisation and codesigning
 
-
 ONCE DSP HAS BEEN FINALISED:
 svgs or images on knobs to show interesting visuals?
