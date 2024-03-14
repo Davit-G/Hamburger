@@ -47,7 +47,7 @@ public:
         { // classic
 
             TRACE_EVENT("dsp", "classic");
-            // patty->processBlock(block);
+            patty->processBlock(block);
             fuzz->processBlock(block);
             softClipper->processBlock(block);
             softClipper->processBlock(block);

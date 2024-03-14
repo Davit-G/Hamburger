@@ -1,11 +1,13 @@
 make different tube modes, replicate / improve bias dc behaviour better
-add more natural white noise mode
+add gate
+add smooth rectifier
+add more sizzly sizzle mode
 visual volume indicator? (vu meter and/or bars for peak / lufs)
 make allpass stack changed params smoother
-add oversampling again ( D: )
+add oversampling again :( 
 support other sample rates / more channels?
 mac notarisation and codesigning / github actions builds
 
-ONCE DSP HAS BEEN FINALISED:
+ONCE DSP and layout HAS BEEN FINALISED:
 svgs or images on knobs to show interesting visuals?
 add hamburger logo
