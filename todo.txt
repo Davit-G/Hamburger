@@ -1,5 +1,5 @@
-make different tube modes, replicate / improve bias dc behaviour better
-add gate
+add more waveshaper stuff to grill
+replicate / improve bias dc behaviour better
 add smooth rectifier
 post filtering (filtered tone sounds better than regular one? idk)
 add more sizzly sizzle mode
@@ -11,4 +11,5 @@ mac notarisation and codesigning / github actions builds
 
 ONCE DSP and layout HAS BEEN FINALISED:
 svgs or images on knobs to show interesting visuals?
+update UI, make bg look better, more iconic, but not too cheesy
 add hamburger logo

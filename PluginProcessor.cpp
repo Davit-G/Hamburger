@@ -122,6 +122,8 @@ AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::createP
     params.add(std::make_unique<AudioParameterFloat>("sizzle", "Sizzle", 0.0f, 100.0f, 0.0f));
     params.add(std::make_unique<AudioParameterFloat>("fold", "Fold", 0.0f, 100.0f, 0.0f));
     
+    params.add(std::make_unique<AudioParameterFloat>("gateAmt", "Gate Amt", 0.0f, 1.0f, 0.f));
+    
     params.add(std::make_unique<AudioParameterFloat>("bias", "Bias", -1.0f, 1.0f, 0.0f));
 
     params.add(std::make_unique<AudioParameterFloat>("grungeAmt", "Grunge Amt", 0.0f, 1.0f, 0.0f));
@@ -277,7 +279,7 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
     auto gainAmount = inputGainKnob->get();
     inputGain.setGainDecibels(gainAmount);
     // inputGain.process(context);
-    
+
     xsimd::dispatch<xsimd::arch_list<xsimd::best_arch>>(SIMDGain::process{})(block, juce::Decibels::decibelsToGain(gainAmount));
 
     dryWetMixer.pushDrySamples(block);

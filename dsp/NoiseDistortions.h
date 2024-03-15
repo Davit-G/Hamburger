@@ -5,6 +5,7 @@
 #include "./Noise/Erosion.h"
 #include "./Noise/Redux.h"
 #include "./Noise/Jeff.h"
+#include "./Distortions/HarshGate.h"
 
 #include "SmoothParam.h"
 
@@ -23,6 +24,7 @@ public:
         erosion = std::make_unique<Erosion>(state);
         redux = std::make_unique<Redux>(state);
         jeff = std::make_unique<Jeff>(state);
+        gate = std::make_unique<HarshGate>(state);
         
     }
     ~NoiseDistortions(){}
@@ -50,9 +52,10 @@ public:
             redux->processBlock(block);
             break;
             }
-        case 3: // asperity
-            { TRACE_EVENT("dsp", "asperity");
+        case 3: // jeff
+            { TRACE_EVENT("dsp", "jeff");
             jeff->processBlock(block);
+            gate->processBlock(block);
             break;
             }
         default:
@@ -83,6 +86,7 @@ private:
     std::unique_ptr<Erosion> erosion = nullptr;
     std::unique_ptr<Redux> redux = nullptr;
     std::unique_ptr<Jeff> jeff = nullptr;
+    std::unique_ptr<HarshGate> gate = nullptr;
 
     float sampleRate;
 

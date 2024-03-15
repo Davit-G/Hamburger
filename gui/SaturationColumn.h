@@ -7,6 +7,10 @@
 #include "Modules/Panels/PhaseDistPanel.h"
 #include "Modules/Panels/WaveshaperPanel.h"
 #include "Modules/Panels/PostClipPanel.h"
+#include "Modules/Panels/ErosionPanel.h"
+#include "Modules/Panels/SizzlePanel.h"
+#include "Modules/Panels/ReductionPanel.h"
+#include "Modules/Panels/JeffPanel.h"
 
 #include "LookAndFeel/Palette.h"
 
@@ -50,6 +54,17 @@ public:
 
         postClip = std::make_unique<Module>(p, "CLIPPER", "postClipEnabled", "", std::move(clipPanel));
         addAndMakeVisible(postClip.get());
+
+        std::vector<std::unique_ptr<Panel>> noisePanels;
+        // ORDERING IS VERY IMPORTANT
+        noisePanels.push_back(std::make_unique<SizzlePanel>(p));
+        noisePanels.push_back(std::make_unique<ErosionPanel>(p));
+        noisePanels.push_back(std::make_unique<ReductionPanel>(p));
+        noisePanels.push_back(std::make_unique<JeffPanel>(p));
+
+        noise = std::make_unique<Module>(p, "NOISE", "noiseDistortionEnabled", "noiseDistortionType", std::move(noisePanels));
+        noise->setLookAndFeel(&knobLAF1);
+        addAndMakeVisible(noise.get());
     }
 
     void resized() override{
@@ -58,17 +73,20 @@ public:
 
         saturation->setBounds(bounds.removeFromTop(height * 3/4));
         postClip->setBounds(bounds.removeFromRight(bounds.getWidth() / 2));
+        noise->setBounds(bounds);
     }
 
 private:
     KnobLAF saturationLAF = KnobLAF(Palette::colours[0]);
     KnobLAF tubeSatLAF = KnobLAF(Palette::colours[4]);
+    KnobLAF knobLAF1 = KnobLAF(Palette::colours[1]);
 
     std::unique_ptr<Panel> classic = nullptr;
     std::unique_ptr<Panel> tube = nullptr;
     std::unique_ptr<Panel> phase = nullptr;
     std::unique_ptr<Panel> postClipPanel = nullptr;
 
+    std::unique_ptr<Module> noise = nullptr;
     std::unique_ptr<Module> saturation;
     std::unique_ptr<Module> postClip;
 

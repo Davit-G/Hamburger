@@ -7,16 +7,21 @@ class JeffPanel : public Panel
 {
 public:
     JeffPanel(AudioPluginAudioProcessor &p) : Panel(p, "JEFF"),
-    knob(p, "JEFF", "noiseAmount") {
-
+    knob(p, "JEFF", "noiseAmount"),
+    gate(p, "GATE", "gateAmt")
+    {
         addAndMakeVisible(knob);
+        addAndMakeVisible(gate);
     }
 
     void resized() override
     {
-        knob.setBounds(getLocalBounds());
+        auto bounds = getLocalBounds();
+        knob.setBounds(bounds.removeFromLeft(bounds.getWidth() / 2));
+        gate.setBounds(bounds);
     }
 
 private:
     ParamKnob knob;
+    ParamKnob gate;
 };
