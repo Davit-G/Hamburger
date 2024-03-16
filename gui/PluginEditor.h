@@ -35,7 +35,7 @@ public:
 
     void paint(juce::Graphics &g) override
     {
-        g.drawImage(image, getLocalBounds().toFloat(), RectanglePlacement::centred);
+        g.drawImage(image, getLocalBounds().toFloat(), RectanglePlacement::fillDestination);
     }
 
     void resized() override
