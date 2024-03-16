@@ -14,20 +14,27 @@ cmake_minimum_required(VERSION 3.15)
 project(Hamburger VERSION 0.3.0)
 
 set(BaseTargetName Hamburger)
+set(PluginName "HamburgerV0.3")
 set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
+set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+if(APPLE)
+	set (CMAKE_OSX_DEPLOYMENT_TARGET "11.0" CACHE STRING "Minimum OS X deployment version" FORCE)
+	set (CMAKE_OSX_ARCHITECTURES "arm64" CACHE INTERNAL "")
+endif()
 
 
 include(CheckCXXCompilerFlag)
-CHECK_CXX_COMPILER_FLAG("-march=native" COMPILER_OPT_ARCH_NATIVE_SUPPORTED)
-if (COMPILER_OPT_ARCH_NATIVE_SUPPORTED)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native")
+if (APPLE) 
+    CHECK_CXX_COMPILER_FLAG("-march=native" COMPILER_OPT_ARCH_NATIVE_SUPPORTED)
+    if (COMPILER_OPT_ARCH_NATIVE_SUPPORTED)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native")
+    endif()
 else()
     CHECK_CXX_COMPILER_FLAG("/arch:AVX2" COMPILER_OPT_ARCH_AVX2_SUPPORTED)
     if (COMPILER_OPT_ARCH_AVX2_SUPPORTED)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /arch:AVX2")
     endif()
 endif()
-
 
 
 
@@ -54,6 +61,17 @@ add_subdirectory(JUCE)                    # If you've put JUCE in a subdirectory
 # the formats specified by the FORMATS arguments. This function accepts many optional arguments.
 # Check the readme at `docs/CMake API.md` in the JUCE repo for the full list.
 
+if(APPLE)
+    set(outdir "../build_mac")
+else()
+    if(UNIX)
+        set(outdir "../build_linux")
+    else()
+        set(outdir "../build_windows")
+    endif()
+endif()
+
+
 juce_add_plugin("${BaseTargetName}"
     VERSION 0.3                               # Set this if the plugin version is different to the project version
     # ICON_BIG ...                              # ICON_* arguments specify a path to an image file to use as an icon for the Standalone
@@ -65,14 +83,24 @@ juce_add_plugin("${BaseTargetName}"
     IS_MIDI_EFFECT FALSE                 # Is this plugin a MIDI effect?
     # EDITOR_WANTS_KEYBOARD_FOCUS TRUE/FALSE    # Does the editor need keyboard focus?
     COPY_PLUGIN_AFTER_BUILD TRUE        # Should the plugin be installed to a default location after building?
-    VST3_COPY_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../builds
-    PLUGIN_MANUFACTURER_CODE Davy               # A four-character manufacturer id with at least one upper-case character
+    VST3_COPY_DIR "${outdir}"
+	VST_COPY_DIR "${outdir}"
+	AU_COPY_DIR "${outdir}"
+    PLUGIN_MANUFACTURER_CODE AVRY               # A four-character manufacturer id with at least one upper-case character
     PLUGIN_CODE Hmb2                            # A unique four-character plugin id with exactly one upper-case character
                                                 # GarageBand 10.3 requires the first letter to be upper-case, and the remaining letters to be lower-case
-    FORMATS VST3 Standalone                  # The formats to build. Other valid formats are: AAX Unity VST AU AUv3
-    PRODUCT_NAME "HamburgerV0.3"  # The name of the final executable, which can differ from the target name
+    FORMATS VST3 Standalone AU                  # The formats to build. Other valid formats are: AAX Unity VST AU AUv3
+    PRODUCT_NAME "${PluginName}"  # The name of the final executable, which can differ from the target name
     VST3_CATEGORIES Fx Distortion Fx Dynamics 
 )
+
+
+# add_custom_command(
+#         TARGET ${BaseTargetName} POST_BUILD
+#         COMMAND ${CMAKE_COMMAND} -E copy
+#                 ${CMAKE_SOURCE_DIR}/${build_path}/${BaseTargetName}_artefacts/Release/CLAP/${PluginName}.clap
+#                 ${CMAKE_SOURCE_DIR}/${build_path}/${PluginName}.clap)
+
 
 # `juce_generate_juce_header` will create a JuceHeader.h for a given target, which will be generated
 # into your build tree. This should be included with `#include <JuceHeader.h>`. The include path for
@@ -92,9 +120,7 @@ target_sources("${BaseTargetName}"
         PluginProcessor.cpp
         )
 
-
 add_subdirectory(dsp)
-
 
 target_compile_features("${BaseTargetName}" PUBLIC cxx_std_17)
 
@@ -122,6 +148,8 @@ target_compile_definitions("${BaseTargetName}" PUBLIC
 	JUCE_USE_CURL=0
 	JUCE_LOAD_CURL_SYMBOLS_LAZILY=1
 	JUCE_STRICT_REFCOUNTEDPOINTER=1
+    JUCE_BUILD_EXTRAS=0
+    JUCE_BUILD_EXAMPLES=0
 	JUCE_WEB_BROWSER=0
 	JUCE_USE_WIN_WEBVIEW2=0
 	JUCE_USE_CAMERA=0)

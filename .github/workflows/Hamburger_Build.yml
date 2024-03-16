@@ -1,0 +1,200 @@
+name: Hamburger Build
+
+env:
+  PLUG: Hamburger
+  NOSPACE: Hamburger
+
+on:
+  push:
+    paths:
+      - '*'
+  pull_request:
+    paths:
+      - '*'
+    branches:
+      - master
+
+jobs:
+  build:
+    name: build
+    strategy:
+      matrix:
+        include:
+        - {
+            name: "Win64",
+            os: windows-latest,
+            compiler: "Visual Studio 17 2022",
+            folder: "build_windows"
+          }
+        - {
+            name: "Linux",
+            os: ubuntu-20.04,
+            compiler: "Unix Makefiles",
+            folder: "build_linux"
+          }
+        - {
+            name: "Mac",
+            os: macos-13,
+            compiler: "Xcode",
+            folder: "build_mac"
+          }
+    runs-on: ${{ matrix.os }}
+    concurrency: build_${{ matrix.os }}
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: (linux) install juce dependencies
+      if: startsWith(matrix.os, 'ubuntu')
+      id: juce_dependencies
+      run: | 
+        sudo apt-get update
+        sudo apt-get install g++ libasound2-dev libjack-jackd2-dev ladspa-sdk libcurl4-openssl-dev libfreetype6-dev libx11-dev libxcomposite-dev libxcursor-dev libxcursor-dev libxext-dev libxinerama-dev libxrandr-dev libxrender-dev libwebkit2gtk-4.0-dev libglu1-mesa-dev mesa-common-dev
+
+    - name: cache stuff
+      id: cache_stuff
+      uses: actions/cache@v3
+      with:
+        path: "${{matrix.folder}}"
+        key: "${{matrix.folder}}"
+
+    - name: (mac) select xcode version
+      if: startsWith(matrix.os, 'macos')
+      id: xcode_version
+      run: |
+        sudo xcode-select -s '/Applications/Xcode_15.1.app/Contents/Developer'
+
+    - name: (mac) import certificates
+      if: startsWith(matrix.os, 'macos')
+      id: import_certificates
+      uses: apple-actions/import-codesign-certs@v2
+      with:
+        keychain: burger_keychain
+        keychain-password: ${{ secrets.KEYCHAIN_PASSWORD }}
+        p12-file-base64: ${{ secrets.DEV_ID_APP_CERT }}
+        p12-password: ${{ secrets.DEV_ID_APP_PASSWORD }}
+
+    - name: (windows) configure
+      if: startsWith(matrix.os, 'windows')
+      id: configure_windows
+      run: |
+        cmake -B "${{matrix.folder}}" -G "${{matrix.compiler}}" -T host=x64 -A x64
+
+    - name: (unix) configure
+      if: ${{ !startsWith(matrix.os, 'windows') }}
+      id: configure
+      run: |
+        cmake -B "${{matrix.folder}}" -G "${{matrix.compiler}}"
+
+    - name: build
+      id: build
+      run: |
+        cmake --build "${{matrix.folder}}" --config Release --target ${{env.NOSPACE}}_VST3
+        cmake --build "${{matrix.folder}}" --config Release --target ${{env.NOSPACE}}_CLAP
+
+    - name: (mac) build
+      if: startsWith(matrix.os, 'macos')
+      id: build_mac
+      run: |
+        cmake --build "${{matrix.folder}}" --config Release --target ${{env.NOSPACE}}_AU
+
+    - name: (windows) package
+      if: startsWith(matrix.os, 'windows')
+      id: package_windows
+      run: |
+        mv "${{matrix.folder}}/${{env.PLUG}}.vst3/Contents/x86_64-win/${{env.PLUG}}.vst3" "${{env.PLUG}}.vst3"
+        rm -r "${{matrix.folder}}/${{env.PLUG}}.vst3"
+        mv "${{env.PLUG}}.vst3" "${{matrix.folder}}/${{env.PLUG}}.vst3"
+        mv "${{matrix.folder}}/${{env.NOSPACE}}_artefacts/Release/CLAP/${{env.PLUG}}.clap" "${{matrix.folder}}/${{env.PLUG}}.clap"
+
+    - name: (linux) package
+      if: startsWith(matrix.os, 'ubuntu')
+      id: package_linux
+      run: |
+        mv "${{matrix.folder}}/${{env.NOSPACE}}_artefacts/CLAP/${{env.PLUG}}.clap" "${{matrix.folder}}/${{env.PLUG}}.clap"
+
+    - name: (mac) package
+      if: startsWith(matrix.os, 'macos')
+      id: package_mac
+      run: |
+        mv "${{matrix.folder}}/${{env.NOSPACE}}_artefacts/Release/CLAP/${{env.PLUG}}.clap" "${{matrix.folder}}/${{env.PLUG}}.clap"
+
+    - name: (mac) code signing
+      if: startsWith(matrix.os, 'macos')
+      id: code_signing
+      run: |
+        codesign --force -s "${{ secrets.DEVELOPER_ID_APPLICATION }}" -v "${{ matrix.folder }}/${{ env.PLUG }}.vst3" --deep --strict --options=runtime --timestamp
+        codesign --force -s "${{ secrets.DEVELOPER_ID_APPLICATION }}" -v "${{ matrix.folder }}/${{ env.PLUG }}.clap" --deep --strict --options=runtime --timestamp
+        codesign --force -s "${{ secrets.DEVELOPER_ID_APPLICATION }}" -v "${{ matrix.folder }}/${{ env.PLUG }}.component" --deep --strict --options=runtime --timestamp
+        zip -r "${{ matrix.folder }}/${{ env.PLUG }}_vst3.zip" "${{ matrix.folder }}/${{ env.PLUG }}.vst3"
+        zip -r "${{ matrix.folder }}/${{ env.PLUG }}_clap.zip" "${{ matrix.folder }}/${{ env.PLUG }}.clap"
+        zip -r "${{ matrix.folder }}/${{ env.PLUG }}_au.zip" "${{ matrix.folder }}/${{ env.PLUG }}.component"
+        rm -r "${{ matrix.folder }}/${{ env.PLUG }}.vst3"
+        rm -r "${{ matrix.folder }}/${{ env.PLUG }}.clap"
+        rm -r "${{ matrix.folder }}/${{ env.PLUG }}.component"
+        xcrun notarytool submit "${{ matrix.folder }}/${{ env.PLUG }}_vst3.zip" --apple-id ${{ secrets.NOTARIZATION_USERNAME }} --password ${{ secrets.NOTARIZATION_PASSWORD }} --team-id ${{ secrets.TEAM_ID }} --wait
+        xcrun notarytool submit "${{ matrix.folder }}/${{ env.PLUG }}_clap.zip" --apple-id ${{ secrets.NOTARIZATION_USERNAME }} --password ${{ secrets.NOTARIZATION_PASSWORD }} --team-id ${{ secrets.TEAM_ID }} --wait
+        xcrun notarytool submit "${{ matrix.folder }}/${{ env.PLUG }}_au.zip" --apple-id ${{ secrets.NOTARIZATION_USERNAME }} --password ${{ secrets.NOTARIZATION_PASSWORD }} --team-id ${{ secrets.TEAM_ID }} --wait
+        unzip "${{ matrix.folder }}/${{ env.PLUG }}_vst3.zip"
+        unzip "${{ matrix.folder }}/${{ env.PLUG }}_clap.zip"
+        unzip "${{ matrix.folder }}/${{ env.PLUG }}_au.zip"
+        rm "${{ matrix.folder }}/${{ env.PLUG }}_vst3.zip"
+        rm "${{ matrix.folder }}/${{ env.PLUG }}_clap.zip"
+        rm "${{ matrix.folder }}/${{ env.PLUG }}_au.zip"
+        xcrun stapler staple "${{ matrix.folder }}/${{ env.PLUG }}.vst3"
+        xcrun stapler staple "${{ matrix.folder }}/${{ env.PLUG }}.clap"
+        xcrun stapler staple "${{ matrix.folder }}/${{ env.PLUG }}.component"
+
+    # - name: (mac) auval
+    #   if: startsWith(matrix.os, 'macos')
+    #   id: auval
+    #   run: |
+    #     sudo cp -R -f "Setup/${{ matrix.folder }}/paid/${{ env.PLUG }}.component" "/Library/Audio/Plug-Ins/Components/${{ env.PLUG }}.component"
+    #     killall -9 AudioComponentRegistrar
+    #     auval -a
+    #     auval -strict -v aufx Prsm Ured
+
+    - name: (windows) build installer
+      if: startsWith(matrix.os, 'windows')
+      id: installer_windows
+      run: |
+        cd Setup
+        iscc "innosetup.iss" "/DPluginName=${{env.PLUG}}"
+        mkdir "${{matrix.folder}}/Manual install"
+        mv "${{matrix.folder}}/*.*" "${{matrix.folder}}/Manual install/"
+        mv "Output/${{env.PLUG}} Installer.exe" "${{matrix.folder}}"
+
+    - name: (mac) import installer certificates
+      if: startsWith(matrix.os, 'macos')
+      id: import_installer_certificates
+      uses: apple-actions/import-codesign-certs@v2
+      with:
+        keychain: burger_keychain
+        keychain-password: ${{ secrets.KEYCHAIN_PASSWORD }}
+        p12-file-base64: ${{ secrets.DEV_ID_INSTALL_CERT }}
+        p12-password: ${{ secrets.DEV_ID_INSTALL_PASSWORD }}
+        create-keychain: false
+
+    - name: (mac) build installer
+      if: startsWith(matrix.os, 'macos')
+      id: installer_mac
+      run: |
+        cd Setup
+        chmod +rx "./assets/scripts/postinstall"
+        pkgbuild --install-location "/Library/Audio/Plug-Ins/Components" --identifier "com.aviaryaudio.${{env.NOSPACE}}-au.pkg" --scripts "./assets/scripts" --version 1.1.1 --component "${{matrix.folder}}/${{env.PLUG}}.component" "${{env.NOSPACE}}-au.pkg"
+        pkgbuild --install-location "/Library/Audio/Plug-Ins/VST3/AviaryAudio" --identifier "com.aviaryaudio.${{env.NOSPACE}}-vst3.pkg" --version 1.1.1 --component "${{matrix.folder}}/${{env.PLUG}}.vst3" "${{env.NOSPACE}}-vst3.pkg"
+        pkgbuild --install-location "/Library/Audio/Plug-Ins/CLAP/AviaryAudio" --identifier "com.aviaryaudio.${{env.NOSPACE}}-clap.pkg" --version 1.1.1 --component "${{matrix.folder}}/${{env.PLUG}}.clap" "${{env.NOSPACE}}-clap.pkg"
+        python3 productbuild.py --pluginname "${{env.PLUG}}"
+        productbuild --timestamp --sign "${{ secrets.DEVELOPER_ID_INSTALLER }}" --distribution "${{env.PLUG}}.xml" --resources "./assets/" "${{env.PLUG}} Installer.pkg"
+        xcrun notarytool submit "${{env.PLUG}} Installer.pkg" --apple-id ${{ secrets.NOTARIZATION_USERNAME }} --password ${{ secrets.NOTARIZATION_PASSWORD }} --team-id ${{ secrets.TEAM_ID }} --wait
+        xcrun stapler staple "${{env.PLUG}} Installer.pkg"
+        mkdir -p "${{matrix.folder}}/Manual install"
+        mv "${{matrix.folder}}/${{env.PLUG}}.component" "${{matrix.folder}}/Manual install/"
+        mv "${{matrix.folder}}/${{env.PLUG}}.vst3" "${{matrix.folder}}/Manual install/"
+        mv "${{matrix.folder}}/${{env.PLUG}}.clap" "${{matrix.folder}}/Manual install/"
+        mv "${{env.PLUG}} Installer.pkg" "${{matrix.folder}}"
+
+    - uses: actions/upload-artifact@v3
+      with:
+        name: ${{env.PLUG}} ${{ matrix.name }}
+        path: ${{matrix.folder}}
