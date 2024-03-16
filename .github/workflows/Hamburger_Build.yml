@@ -61,7 +61,8 @@ jobs:
     - name: create directories
       id: create_dirs
       run: |
-        mkdir "gh_artifacts/Manual install"
+        mkdir "./gh_artifacts/Manual install"
+        mkdir "./gh_artifacts/"
 
     - name: (mac) select xcode version
       if: startsWith(matrix.os, 'macos')

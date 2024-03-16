@@ -146,7 +146,7 @@ target_compile_features("${BaseTargetName}" PUBLIC cxx_std_17)
 # of compile definitions to switch certain features on/off, so if there's a particular feature you
 # need that's not on by default, check the module header for the correct flag to set here. These
 # definitions will be visible both to your code, and also the JUCE module code, so for new
-# definitions, pick unique names that are unlikely to collide! This is a standard CMake command.
+# definitions, pick unique names that are unlikely to collide! This is a standard CMake command
 
 target_compile_definitions("${BaseTargetName}" PUBLIC
     PERFETTO=0
