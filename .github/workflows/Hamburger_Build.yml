@@ -106,12 +106,13 @@ jobs:
         rm -r "${{matrix.folder}}/${{env.PLUG}}.vst3"
         mv "${{env.PLUG}}.vst3" "${{matrix.folder}}/${{env.PLUG}}.vst3"
         mv "${{matrix.folder}}/${{env.NOSPACE}}_artefacts/Release/CLAP/${{env.PLUG}}.clap" "${{matrix.folder}}/${{env.PLUG}}.clap"
+        rm -r "${{matrix.folder}}/${{env.NOSPACE}}_artefacts/Release/CLAP/${{env.PLUG}}.clap"
 
     - name: (linux) package
       if: startsWith(matrix.os, 'ubuntu')
       id: package_linux
       run: |
-        mv "${{matrix.folder}}/${{env.NOSPACE}}_artefacts/CLAP/${{env.PLUG}}.clap" "${{matrix.folder}}/gh_artifacts/${{env.PLUG}}.clap"
+        mv "${{matrix.folder}}/${{env.NOSPACE}}_artefacts/CLAP/${{env.PLUG}}.clap" "gh_artifacts/${{env.PLUG}}.clap"
 
     - name: (mac) package
       if: startsWith(matrix.os, 'macos')
@@ -160,9 +161,9 @@ jobs:
       run: |
         cd setup
         iscc "innosetup.iss" "/DPluginName=${{env.PLUG}}"
-        mkdir "../${{matrix.folder}}/Manual install"
-        mv "${{matrix.folder}}/*.*" "../${{matrix.folder}}/Manual install/"
-        mv "Output/${{env.PLUG}} Installer.exe" "../${{matrix.folder}}/gh_artifacts"
+        mkdir "../Manual install"
+        mv "${{matrix.folder}}/*.*" "../Manual install/"
+        mv "Output/${{env.PLUG}} Installer.exe" "../gh_artifacts/"
 
     - name: (mac) import installer certificates
       if: startsWith(matrix.os, 'macos')
@@ -188,13 +189,13 @@ jobs:
         productbuild --timestamp --sign "${{ secrets.DEVELOPER_ID_INSTALLER }}" --distribution "${{env.PLUG}}.xml" --resources "./assets/" "${{env.PLUG}} Installer.pkg"
         xcrun notarytool submit "${{env.PLUG}} Installer.pkg" --apple-id ${{ secrets.NOTARIZATION_USERNAME }} --password ${{ secrets.NOTARIZATION_PASSWORD }} --team-id ${{ secrets.TEAM_ID }} --wait
         xcrun stapler staple "${{env.PLUG}} Installer.pkg"
-        mkdir -p "${{matrix.folder}}/Manual install"
-        mv "${{matrix.folder}}/${{env.PLUG}}.component" "${{matrix.folder}}/Manual install/"
-        mv "${{matrix.folder}}/${{env.PLUG}}.vst3" "${{matrix.folder}}/Manual install/"
-        mv "${{matrix.folder}}/${{env.PLUG}}.clap" "${{matrix.folder}}/Manual install/"
-        mv "${{env.PLUG}} Installer.pkg" "../${{matrix.folder}}/gh_artifacts"
+        mkdir -p "../gh_artifacts/Manual install"
+        mv "${{matrix.folder}}/${{env.PLUG}}.component" "../gh_artifacts/Manual install/"
+        mv "${{matrix.folder}}/${{env.PLUG}}.vst3" "../gh_artifacts/Manual install/"
+        mv "${{matrix.folder}}/${{env.PLUG}}.clap" "../gh_artifacts/Manual install/"
+        mv "${{env.PLUG}} Installer.pkg" "../gh_artifacts"
 
     - uses: actions/upload-artifact@v3
       with:
         name: ${{env.PLUG}} ${{ matrix.name }}
-        path: "${{matrix.folder}}/gh_artifacts"
+        path: "gh_artifacts"
