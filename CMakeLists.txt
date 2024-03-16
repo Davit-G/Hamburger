@@ -75,7 +75,7 @@ FetchContent_MakeAvailable(JUCE)
 # (AudioPluginExample here). This target is a normal CMake target, but has a lot of extra properties set
 # up by default. As well as this shared code static library, this function adds targets for each of
 # the formats specified by the FORMATS arguments. This function accepts many optional arguments.
-# Check the readme at `docs/CMake API.md` in the JUCE repo for the full list.
+# Check the readme at `docs/CMake API.md` in the JUCE repo for the full list..
 
 if(APPLE)
     set(outdir "../build_mac")

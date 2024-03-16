@@ -80,7 +80,7 @@ jobs:
       run: |
         cmake -B "${{matrix.folder}}" -G "${{matrix.compiler}}" -T host=x64 -A x64
 
-    - name: (unix) configure
+    - name: (unix  mac / linux) configure
       if: ${{ !startsWith(matrix.os, 'windows') }}
       id: configure
       run: |
@@ -111,7 +111,7 @@ jobs:
       if: startsWith(matrix.os, 'ubuntu')
       id: package_linux
       run: |
-        mv "${{matrix.folder}}/${{env.NOSPACE}}_artefacts/CLAP/${{env.PLUG}}.clap" "${{matrix.folder}}/${{env.PLUG}}.clap"
+        mv "${{matrix.folder}}/${{env.NOSPACE}}_artefacts/CLAP/${{env.PLUG}}.clap" "${{matrix.folder}}/gh_artifacts/${{env.PLUG}}.clap"
 
     - name: (mac) package
       if: startsWith(matrix.os, 'macos')
@@ -160,9 +160,9 @@ jobs:
       run: |
         cd setup
         iscc "innosetup.iss" "/DPluginName=${{env.PLUG}}"
-        mkdir "${{matrix.folder}}/Manual install"
-        mv "${{matrix.folder}}/*.*" "${{matrix.folder}}/Manual install/"
-        mv "Output/${{env.PLUG}} Installer.exe" "${{matrix.folder}}"
+        mkdir "../${{matrix.folder}}/Manual install"
+        mv "${{matrix.folder}}/*.*" "../${{matrix.folder}}/Manual install/"
+        mv "Output/${{env.PLUG}} Installer.exe" "../${{matrix.folder}}/gh_artifacts"
 
     - name: (mac) import installer certificates
       if: startsWith(matrix.os, 'macos')
@@ -192,9 +192,9 @@ jobs:
         mv "${{matrix.folder}}/${{env.PLUG}}.component" "${{matrix.folder}}/Manual install/"
         mv "${{matrix.folder}}/${{env.PLUG}}.vst3" "${{matrix.folder}}/Manual install/"
         mv "${{matrix.folder}}/${{env.PLUG}}.clap" "${{matrix.folder}}/Manual install/"
-        mv "${{env.PLUG}} Installer.pkg" "${{matrix.folder}}"
+        mv "${{env.PLUG}} Installer.pkg" "../${{matrix.folder}}/gh_artifacts"
 
     - uses: actions/upload-artifact@v3
       with:
         name: ${{env.PLUG}} ${{ matrix.name }}
-        path: ${{matrix.folder}}
+        path: "${{matrix.folder}}/gh_artifacts"
