@@ -15,10 +15,12 @@ cmake_minimum_required(VERSION 3.15)
 # `project()` command. `project()` sets up some helpful variables that describe source/binary
 # directories, and the current project version. This is a standard CMake command.
 
-project(Hamburger VERSION 0.3.0)
+set(ProjectVersion 0.4.0)
+set(PluginName "Hamburger")
+
+project(Hamburger VERSION "${ProjectVersion}")
 
 set(BaseTargetName Hamburger)
-set(PluginName "HamburgerV0.3")
 set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 if(APPLE)
@@ -87,7 +89,7 @@ endif()
 
 
 juce_add_plugin("${BaseTargetName}"
-    VERSION 0.3                               # Set this if the plugin version is different to the project version
+    VERSION "${ProjectVersion}"                             # Set this if the plugin version is different to the project version
     # ICON_BIG ...                              # ICON_* arguments specify a path to an image file to use as an icon for the Standalone
     # ICON_SMALL ...
     COMPANY_NAME AviaryAudio                          # Specify the name of the plugin's author
@@ -218,7 +220,7 @@ FetchContent_Declare (clap-juce-extensions
 FetchContent_MakeAvailable (clap-juce-extensions)
 
 clap_juce_extensions_plugin(TARGET "${BaseTargetName}"
-CLAP_ID "com.aviary.hamburger_v0.3"
+CLAP_ID "com.aviary.${PluginName}_v${ProjectVersion}"
 CLAP_FEATURES effect "distortion analog compressor" audio-effect)
 
 # `target_link_libraries` links libraries and JUCE modules to other libraries or executables. Here,
