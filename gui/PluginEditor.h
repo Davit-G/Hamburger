@@ -56,7 +56,7 @@ private:
     SaturationColumn saturationColumn;
     UtilColumn utilColumn;
 
-    juce::Image image = ImageCache::getFromMemory(BinaryData::bg3_jpg, BinaryData::bg3_jpgSize);
+    juce::Image image = ImageCache::getFromMemory(BinaryData::bg4_jpg, BinaryData::bg4_jpgSize);
 
     // melatonin::Inspector inspector { *this };
 
