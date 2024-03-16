@@ -31,10 +31,10 @@ WizardSmallImageFile=assets\{#PluginName}.bmp
 
 
 [Files]
-Source: "build_windows\{#Version}\{#PluginName}.vst3"; DestDir: "{commoncf64}\VST3\AviaryAudio\"; Components: VST3; Flags: ignoreversion
-Source: "build_windows\{#Version}\{#PluginName}.clap"; DestDir: {code:GetDir|0}; Components: CLAP; Flags: ignoreversion
+Source: "build_windows\{#PluginName}.vst3"; DestDir: "{commoncf64}\VST3\AviaryAudio\"; Components: VST3; Flags: ignoreversion
+Source: "build_windows\{#PluginName}.clap"; DestDir: {code:GetDir|0}; Components: CLAP; Flags: ignoreversion
 #ifdef Standalone
-Source: "build_windows\{#Version}\{#PluginName}.exe"; DestDir: {code:GetDir|1}; Components: Standalone; Flags: ignoreversion
+Source: "build_windows\{#PluginName}.exe"; DestDir: {code:GetDir|1}; Components: Standalone; Flags: ignoreversion
 #endif
 #ifdef OtherData
 Source: "build_windows\other\{#PluginName}\*.*"; DestDir: "{commoncf64}\VST3\AviaryAudio\{#PluginName}"; Components: VST3; Flags: recursesubdirs onlyifdoesntexist
