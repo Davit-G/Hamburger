@@ -8,8 +8,8 @@ make allpass stack changed params smoother
 add oversampling again :( 
 support other sample rates / more channels?
 mac notarisation and codesigning / github actions builds
+add specific juce versions in cmakelists instead of same repo BS
 
 ONCE DSP and layout HAS BEEN FINALISED:
 svgs or images on knobs to show interesting visuals?
-update UI, make bg look better, more iconic, but not too cheesy
 make a credits panel that shows up on the entire screen

@@ -35,7 +35,7 @@ public:
 
     void paint(juce::Graphics &g) override
     {
-        g.drawImage(image, getLocalBounds().toFloat());
+        g.drawImage(image, getLocalBounds().toFloat(), RectanglePlacement::centred);
     }
 
     void resized() override
@@ -57,8 +57,6 @@ private:
     UtilColumn utilColumn;
 
     juce::Image image = ImageCache::getFromMemory(BinaryData::bg4_jpg, BinaryData::bg4_jpgSize);
-
-    // melatonin::Inspector inspector { *this };
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(EditorV2)
 };
