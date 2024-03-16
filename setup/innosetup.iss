@@ -15,6 +15,7 @@ DefaultGroupName=AviaryAudio
 DisableReadyPage=false
 DisableWelcomePage=no
 LanguageDetectionMethod=uilanguage
+OutputDir=./Output
 OutputBaseFilename={#PluginName} Installer
 SetupIconFile=assets\icon.ico
 ShowLanguageDialog=no
@@ -27,6 +28,7 @@ VersionInfoVersion=1.0
 WizardImageFile=assets\{#PluginName}.bmp
 WizardImageStretch=false
 WizardSmallImageFile=assets\{#PluginName}.bmp
+
 
 [Files]
 Source: "build_windows\{#Version}\{#PluginName}.vst3"; DestDir: "{commoncf64}\VST3\AviaryAudio\"; Components: VST3; Flags: ignoreversion

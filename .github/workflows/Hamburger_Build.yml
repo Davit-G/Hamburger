@@ -149,7 +149,7 @@ jobs:
     #   if: startsWith(matrix.os, 'macos')
     #   id: auval
     #   run: |
-    #     sudo cp -R -f "Setup/${{ matrix.folder }}/paid/${{ env.PLUG }}.component" "/Library/Audio/Plug-Ins/Components/${{ env.PLUG }}.component"
+    #     sudo cp -R -f "setup/${{ matrix.folder }}/paid/${{ env.PLUG }}.component" "/Library/Audio/Plug-Ins/Components/${{ env.PLUG }}.component"
     #     killall -9 AudioComponentRegistrar
     #     auval -a
     #     auval -strict -v aufx Prsm Ured
@@ -158,7 +158,7 @@ jobs:
       if: startsWith(matrix.os, 'windows')
       id: installer_windows
       run: |
-        cd Setup
+        cd setup
         iscc "innosetup.iss" "/DPluginName=${{env.PLUG}}"
         mkdir "${{matrix.folder}}/Manual install"
         mv "${{matrix.folder}}/*.*" "${{matrix.folder}}/Manual install/"
@@ -179,7 +179,7 @@ jobs:
       if: startsWith(matrix.os, 'macos')
       id: installer_mac
       run: |
-        cd Setup
+        cd setup
         chmod +rx "./assets/scripts/postinstall"
         pkgbuild --install-location "/Library/Audio/Plug-Ins/Components" --identifier "com.aviaryaudio.${{env.NOSPACE}}-au.pkg" --scripts "./assets/scripts" --version 1.1.1 --component "${{matrix.folder}}/${{env.PLUG}}.component" "${{env.NOSPACE}}-au.pkg"
         pkgbuild --install-location "/Library/Audio/Plug-Ins/VST3/AviaryAudio" --identifier "com.aviaryaudio.${{env.NOSPACE}}-vst3.pkg" --version 1.1.1 --component "${{matrix.folder}}/${{env.PLUG}}.vst3" "${{env.NOSPACE}}-vst3.pkg"
