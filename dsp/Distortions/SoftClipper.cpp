@@ -27,12 +27,11 @@ void SoftClip::processBlock(dsp::AudioBlock<float>& block) {
         float saturationAmount = saturationKnob.getNextValue() * 0.01 + 0.00000001f;
 
         float knee = (saturationAmount + 0.05) * 80.0f;
-        float multX = 1.f + saturationAmount * 5.0f;
 
         float xn = block.getSample(0, sample);
-        block.setSample(0, sample, atanWaveShaper(xn, saturationAmount * 10.0f));
+        block.setSample(0, sample, atanWaveShaper(xn, saturationAmount * 20.0f));
 
         xn = block.getSample(1, sample);
-        block.setSample(1, sample, atanWaveShaper(xn, saturationAmount * 10.0f));
+        block.setSample(1, sample, atanWaveShaper(xn, saturationAmount * 20.0f));
     }
 }

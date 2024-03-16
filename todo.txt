@@ -12,4 +12,4 @@ mac notarisation and codesigning / github actions builds
 ONCE DSP and layout HAS BEEN FINALISED:
 svgs or images on knobs to show interesting visuals?
 update UI, make bg look better, more iconic, but not too cheesy
-add hamburger logo
+make a credits panel that shows up on the entire screen

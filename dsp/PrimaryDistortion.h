@@ -49,8 +49,10 @@ public:
             TRACE_EVENT("dsp", "classic");
             patty->processBlock(block);
             fuzz->processBlock(block);
+
+            fold->processBlock(block);
             softClipper->processBlock(block);
-            softClipper->processBlock(block);
+
             iirFilter.process(context); // hpf afterwards to remove bias
             break;
         }
