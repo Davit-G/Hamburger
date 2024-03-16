@@ -15,7 +15,7 @@ cmake_minimum_required(VERSION 3.15)
 # `project()` command. `project()` sets up some helpful variables that describe source/binary
 # directories, and the current project version. This is a standard CMake command.
 
-set(ProjectVersion 0.4.0)
+set(ProjectVersion 0.4)
 set(PluginName "Hamburger")
 
 project(Hamburger VERSION "${ProjectVersion}")
