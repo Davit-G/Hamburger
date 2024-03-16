@@ -119,8 +119,8 @@ jobs:
       if: startsWith(matrix.os, 'ubuntu')
       id: package_linux
       run: |
-        mv "${{matrix.folder}}/${{env.NOSPACE}}_artefacts/CLAP/${{env.PLUG}}.clap" "gh_artifacts/Manual Install/${{env.PLUG}}.clap"
-        mv "${{matrix.folder}}/${{env.PLUG}}.vst3" "gh_artifacts/Manual Install/${{env.PLUG}}.vst3"
+        mv "./${{matrix.folder}}/${{env.NOSPACE}}_artefacts/CLAP/${{env.PLUG}}.clap" "./gh_artifacts/Manual Install/${{env.PLUG}}.clap"
+        mv "./${{matrix.folder}}/${{env.PLUG}}.vst3" "./gh_artifacts/Manual Install/${{env.PLUG}}.vst3"
 
     - name: (mac) package
       if: startsWith(matrix.os, 'macos')
