@@ -161,7 +161,7 @@ jobs:
         cd setup
         iscc "innosetup.iss" "/DPluginName=${{env.PLUG}}"
         mkdir "../Manual install"
-        mv "${{matrix.folder}}/*.*" "../Manual install/"
+        mv "../${{matrix.folder}}/*.*" "../gh_artifacts/Manual install/"
         mv "Output/${{env.PLUG}} Installer.exe" "../gh_artifacts/"
 
     - name: (mac) import installer certificates
