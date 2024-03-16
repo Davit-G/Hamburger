@@ -105,7 +105,7 @@ jobs:
         mv "${{matrix.folder}}/${{env.PLUG}}.vst3/Contents/x86_64-win/${{env.PLUG}}.vst3" "${{env.PLUG}}.vst3"
         rm -r "${{matrix.folder}}/${{env.PLUG}}.vst3"
         mv "${{env.PLUG}}.vst3" "${{matrix.folder}}/${{env.PLUG}}.vst3"
-        mv -f "${{matrix.folder}}/${{env.NOSPACE}}_artefacts/Release/CLAP/${{env.PLUG}}.clap" "${{matrix.folder}}/${{env.PLUG}}.clap"
+        mv -Force "${{matrix.folder}}/${{env.NOSPACE}}_artefacts/Release/CLAP/${{env.PLUG}}.clap" "${{matrix.folder}}/${{env.PLUG}}.clap"
 
     - name: (linux) package
       if: startsWith(matrix.os, 'ubuntu')
