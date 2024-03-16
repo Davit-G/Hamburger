@@ -8,6 +8,7 @@
 #include "Modules/Panels/EmptyPanel.h"
 #include "Modules/Panels/AllPassPanel.h"
 #include "Modules/Panels/GrungePanel.h"
+#include "Modules/Panels/LogoPanel.h"
 
 #include "LookAndFeel/Palette.h"
 
@@ -36,6 +37,11 @@ public:
         preDistortion->setLookAndFeel(&knobLAF2);
         addAndMakeVisible(preDistortion.get());
 
+        std::vector<std::unique_ptr<Panel>> logoPanels;
+        logoPanels.push_back(std::make_unique<LogoPanel>(p));
+        logo = std::make_unique<Module>(p, "CREDITS", "", "", std::move(logoPanels), true);
+        addAndMakeVisible(logo.get());
+
     }
 
     void paint(Graphics &g) override
@@ -47,8 +53,9 @@ public:
         auto bounds = getLocalBounds();
         auto height = bounds.getHeight();
 
-        compander->setBounds(bounds.removeFromTop(height / 2));
+        logo->setBounds(bounds.removeFromTop(height / 4));
         preDistortion->setBounds(bounds.removeFromBottom(height / 4));
+        compander->setBounds(bounds);
     }
 
 private:
@@ -59,6 +66,7 @@ private:
 
     std::unique_ptr<Module> compander = nullptr;
     std::unique_ptr<Module> preDistortion = nullptr;
+    std::unique_ptr<Module> logo = nullptr;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(LeftColumn)
 };

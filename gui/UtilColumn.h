@@ -37,9 +37,9 @@ public:
         auto bounds = getLocalBounds();
         auto height = bounds.getHeight();
 
-        eq->setBounds(bounds.removeFromTop(height * 0.5));
-        utility->setBounds(bounds.removeFromBottom(height * 0.25));
-        settings->setBounds(bounds);
+        settings->setBounds(bounds.removeFromTop(height / 4));
+        utility->setBounds(bounds.removeFromBottom(height / 4));
+        eq->setBounds(bounds);
     }
 
 private:
