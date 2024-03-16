@@ -111,6 +111,7 @@ jobs:
       if: startsWith(matrix.os, 'ubuntu')
       id: package_linux
       run: |
+        mkdir "gh_artifacts/"
         mv "${{matrix.folder}}/${{env.NOSPACE}}_artefacts/CLAP/${{env.PLUG}}.clap" "gh_artifacts/${{env.PLUG}}.clap"
 
     - name: (mac) package
@@ -160,7 +161,7 @@ jobs:
       run: |
         cd setup
         iscc "innosetup.iss" "/DPluginName=${{env.PLUG}}"
-        mkdir "../Manual install"
+        mkdir "../gh_artifacts/Manual install"
         mv "../${{matrix.folder}}/*.*" "../gh_artifacts/Manual install/"
         mv "Output/${{env.PLUG}} Installer.exe" "../gh_artifacts/"
 
