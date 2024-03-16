@@ -57,6 +57,11 @@ jobs:
       with:
         path: "${{matrix.folder}}"
         key: "${{matrix.folder}}"
+    
+    - name: create directories
+      id: create_dirs
+      run: |
+        mkdir "gh_artifacts/Manual install"
 
     - name: (mac) select xcode version
       if: startsWith(matrix.os, 'macos')
@@ -106,13 +111,15 @@ jobs:
         rm -r "${{matrix.folder}}/${{env.PLUG}}.vst3"
         mv "${{env.PLUG}}.vst3" "${{matrix.folder}}/${{env.PLUG}}.vst3"
         mv -Force "${{matrix.folder}}/${{env.NOSPACE}}_artefacts/Release/CLAP/${{env.PLUG}}.clap" "${{matrix.folder}}/${{env.PLUG}}.clap"
+        cp "${{matrix.folder}}/${{env.PLUG}}.clap" "gh_artifacts/Manual Install/${{env.PLUG}}.clap"
+        cp "${{matrix.folder}}/${{env.PLUG}}.vst3" "gh_artifacts/Manual Install/${{env.PLUG}}.vst3"
 
     - name: (linux) package
       if: startsWith(matrix.os, 'ubuntu')
       id: package_linux
       run: |
-        mkdir "gh_artifacts/"
-        mv "${{matrix.folder}}/${{env.NOSPACE}}_artefacts/CLAP/${{env.PLUG}}.clap" "gh_artifacts/${{env.PLUG}}.clap"
+        mv "${{matrix.folder}}/${{env.NOSPACE}}_artefacts/CLAP/${{env.PLUG}}.clap" "gh_artifacts/Manual Install/${{env.PLUG}}.clap"
+        mv "${{matrix.folder}}/${{env.PLUG}}.vst3" "gh_artifacts/Manual Install/${{env.PLUG}}.vst3"
 
     - name: (mac) package
       if: startsWith(matrix.os, 'macos')
@@ -161,8 +168,6 @@ jobs:
       run: |
         cd setup
         iscc "innosetup.iss" "/DPluginName=${{env.PLUG}}"
-        mkdir "../gh_artifacts/Manual install"
-        mv "../${{matrix.folder}}/*.*" "../gh_artifacts/Manual install/"
         mv "Output/${{env.PLUG}} Installer.exe" "../gh_artifacts/"
 
     - name: (mac) import installer certificates
