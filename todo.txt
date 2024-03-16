@@ -9,7 +9,6 @@ add oversampling again :(
 support other sample rates / more channels?
 mac notarisation and codesigning / github actions builds
 
-add specific juce versions in cmakelists instead of same repo BS
 lv2 / au? ask for help on that
 
 ONCE DSP and layout HAS BEEN FINALISED:

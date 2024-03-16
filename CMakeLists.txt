@@ -1,5 +1,9 @@
 # Hamburger Plugin CMakeLists.txt
 
+include (FetchContent)
+Set(FETCHCONTENT_QUIET FALSE)
+
+
 # The first line of any CMake project should be a call to `cmake_minimum_required`, which checks
 # that the installed CMake will be able to understand the following CMakeLists, and ensures that
 # CMake's behaviour is compatible with the named version. This is a standard CMake command, so more
@@ -37,6 +41,16 @@ else()
 endif()
 
 
+FetchContent_Declare(
+	JUCE
+	GIT_REPOSITORY https://github.com/juce-framework/JUCE.git
+	GIT_TAG 7.0.10
+	GIT_PROGRESS TRUE
+    GIT_SHALLOW 1
+)
+
+FetchContent_MakeAvailable(JUCE)
+
 
 # If you've installed JUCE somehow (via a package manager, or directly using the CMake install
 # target), you'll need to tell this project that it depends on the installed copy of JUCE. If you've
@@ -45,7 +59,7 @@ endif()
 
 # find_package(JUCE CONFIG REQUIRED)        # If you've installed JUCE to your system
 # or
-add_subdirectory(JUCE)                    # If you've put JUCE in a subdirectory called JUCE
+# add_subdirectory(JUCE)                    # If you've put JUCE in a subdirectory called JUCE
 
 # If you are building a VST2 or AAX plugin, CMake needs to be told where to find these SDKs on your
 # system. This setup should be done before calling `juce_add_plugin`.
@@ -178,7 +192,7 @@ set_target_properties("${BaseTargetName}BinaryData" PROPERTIES POSITION_INDEPEND
 
 # Melatonin profiling
 
-include (FetchContent)
+
 
 FetchContent_Declare (melatonin_perfetto
   GIT_REPOSITORY https://github.com/sudara/melatonin_perfetto.git
