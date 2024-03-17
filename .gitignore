@@ -8,3 +8,7 @@ cmake-build-debug
 JUCE
 
 *.bat
+
+build_mac
+build_windows
+build_linux

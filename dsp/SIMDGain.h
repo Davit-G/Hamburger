@@ -59,7 +59,7 @@ public:
 
                 // put back into extra buffer
                 remainderDataL.store_unaligned(remainderDataZeroes.getWritePointer(0));
-                remainderDataR.store_unaligned(remainderDataZeroes.getWritePointer(0));
+                remainderDataR.store_unaligned(remainderDataZeroes.getWritePointer(1));
 
                 // take data needed from extra buffer back into regular buffer
                 for (int i = 0; i < remainder; i++) {
