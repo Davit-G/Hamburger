@@ -44,15 +44,15 @@ endif()
 
 
 if (MSVC)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /fp:fast")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /fp:fast")
 elseif (CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ffast-math")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ffast-math")
 endif()
 
 if (MSVC)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Ox")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Ox")
 elseif (CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Ofast")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Ofast")
 endif()
 
 
@@ -233,7 +233,7 @@ FetchContent_Declare (clap-juce-extensions
 FetchContent_MakeAvailable (melatonin_perfetto xsimd melatonin_inspector clap-juce-extensions)
 
 clap_juce_extensions_plugin(TARGET "${BaseTargetName}"
-CLAP_ID "com.aviary.${PluginName}"
+CLAP_ID "com.AviaryAudio.${PluginName}"
 CLAP_FEATURES effect "distortion analog compressor" audio-effect)
 
 # `target_link_libraries` links libraries and JUCE modules to other libraries or executables. Here,

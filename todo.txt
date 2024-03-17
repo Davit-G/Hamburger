@@ -1,4 +1,5 @@
 add more waveshaper stuff to grill
+tilt knob on tube which tilts freq
 replicate / improve bias dc behaviour better
 add smooth rectifier
 post filtering (filtered tone sounds better than regular one? idk)
@@ -7,7 +8,8 @@ visual volume indicator? (vu meter and/or bars for peak / lufs)
 make allpass stack changed params smoother
 add oversampling again :( 
 support other sample rates / more channels?
-mac notarisation and codesigning / github actions builds
+check back on mac notarisation and codesigning
+performance optimisations
 
 lv2 / au? ask for help on that
 
