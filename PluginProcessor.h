@@ -13,9 +13,8 @@
 
 #include "gui/Modules/Scope.h"
 
-#include "dsp/SIMDBufferOps.h"
 #include "xsimd/xsimd.hpp"
-#include "dsp/SIMDGain.h"
+// #include "dsp/SIMDGain.h"
 
 // profiling
 #include <melatonin_perfetto/melatonin_perfetto.h>
@@ -98,7 +97,7 @@ private:
     Dynamics dynamics;
     PostClip postClip;
 
-    SIMDGain simdGain;
+    // SIMDGain simdGain;
 
     dsp::ProcessorDuplicator<dsp::IIR::Filter<float>, dsp::IIR::Coefficients<float>> peakFilterBefore[3];
     dsp::ProcessorDuplicator<dsp::IIR::Filter<float>, dsp::IIR::Coefficients<float>> peakFilterAfter[3];

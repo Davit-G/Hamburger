@@ -18,16 +18,16 @@ cmake_minimum_required(VERSION 3.15)
 set(ProjectVersion 0.4)
 set(PluginName "Hamburger")
 
-project(Hamburger VERSION "${ProjectVersion}")
 
 set(BaseTargetName Hamburger)
 set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 if(APPLE)
-	set (CMAKE_OSX_DEPLOYMENT_TARGET "11.0" CACHE STRING "Minimum OS X deployment version" FORCE)
-	set (CMAKE_OSX_ARCHITECTURES "arm64;x86_64" CACHE INTERNAL "")
+# set (CMAKE_OSX_DEPLOYMENT_TARGET "11.0" CACHE STRING "Minimum OS X deployment version" FORCE)
+# set (CMAKE_OSX_ARCHITECTURES "arm64" CACHE INTERNAL "")
 endif()
 
+project(Hamburger VERSION "${ProjectVersion}")
 
 include(CheckCXXCompilerFlag)
 if (APPLE) 
@@ -239,7 +239,7 @@ target_link_libraries("${BaseTargetName}"
         "${BaseTargetName}BinaryData"
         Melatonin::Perfetto
         xsimd
-        melatonin_inspector
+        # melatonin_inspector
     PUBLIC
         juce::juce_recommended_config_flags
         juce::juce_recommended_lto_flags
