@@ -8,6 +8,8 @@ Hamburger is a distortion plugin with inbuilt dynamics controls and equalisation
 
 If you need control over your distortion tone, you can carve and refine your sound resulting in extremely unique timbres. Compress and shape the dynamics of your sound before distorting to make your synths and instruments punchy and juicy. You can provide subtle flare, texture and grit to a sound that didn't have one. You can also hit the pedal to the metal, go crazy with the knobs and enter sonic territories that other distortion plugins would be TERRIFIED to enter.
 
+Hamburger is supported for Windows, Linux and very soon both native silicon and intel MacOS devices, in VST3 / CLAP / AU formats.
+
 https://aviaryaudio.com/plugins/hamburgerv2
 
 Audio demos coming soon :D
