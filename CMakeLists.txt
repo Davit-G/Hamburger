@@ -23,7 +23,7 @@ set(BaseTargetName Hamburger)
 set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 if(APPLE)
-# set (CMAKE_OSX_DEPLOYMENT_TARGET "11.0" CACHE STRING "Minimum OS X deployment version" FORCE)
+set (CMAKE_OSX_DEPLOYMENT_TARGET "11.0" CACHE STRING "Minimum OS X deployment version" FORCE)
 # set (CMAKE_OSX_ARCHITECTURES "arm64" CACHE INTERNAL "")
 endif()
 
@@ -202,27 +202,23 @@ FetchContent_Declare (melatonin_perfetto
   GIT_REPOSITORY https://github.com/sudara/melatonin_perfetto.git
   GIT_TAG origin/main)
 
-FetchContent_MakeAvailable (melatonin_perfetto)
-
 FetchContent_Declare (xsimd 
     GIT_REPOSITORY https://github.com/xtensor-stack/xsimd.git
     GIT_TAG origin/master)
-
-FetchContent_MakeAvailable (xsimd)
 
 FetchContent_Declare (melatonin_inspector
   GIT_REPOSITORY https://github.com/sudara/melatonin_inspector.git
   GIT_TAG origin/main
   SOURCE_DIR ${CMAKE_CURRENT_BINARY_DIR}/melatonin_inspector)
-FetchContent_MakeAvailable (melatonin_inspector)
 
 FetchContent_Declare (clap-juce-extensions
   GIT_REPOSITORY https://github.com/free-audio/clap-juce-extensions.git
   GIT_TAG origin/main)
-FetchContent_MakeAvailable (clap-juce-extensions)
+
+FetchContent_MakeAvailable (melatonin_perfetto xsimd melatonin_inspector clap-juce-extensions)
 
 clap_juce_extensions_plugin(TARGET "${BaseTargetName}"
-CLAP_ID "com.aviary.${PluginName}_v${ProjectVersion}"
+CLAP_ID "com.aviary.${PluginName}"
 CLAP_FEATURES effect "distortion analog compressor" audio-effect)
 
 # `target_link_libraries` links libraries and JUCE modules to other libraries or executables. Here,
