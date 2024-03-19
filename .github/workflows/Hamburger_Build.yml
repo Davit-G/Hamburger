@@ -211,4 +211,4 @@ jobs:
     - uses: actions/upload-artifact@v3
       with:
         name: ${{env.PLUG}} ${{ matrix.name }}
-        path: "gh_artifacts"
+        path: "./gh_artifacts"
