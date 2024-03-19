@@ -8,7 +8,7 @@ Should
 
 visual volume indicator? (vu meter and/or bars for peak / lufs)
 give tube more character
-
+antialiasing on logo
 
 Would be nice
 
