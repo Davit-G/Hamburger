@@ -198,8 +198,8 @@ jobs:
         pkgbuild --install-location "/Library/Audio/Plug-Ins/VST3/AviaryAudio" --identifier "com.aviaryaudio.${{env.NOSPACE}}-vst3.pkg" --version 1.1.1 --component "${{matrix.folder}}/${{env.PLUG}}.vst3" "${{env.NOSPACE}}-vst3.pkg"
         pkgbuild --install-location "/Library/Audio/Plug-Ins/CLAP/AviaryAudio" --identifier "com.aviaryaudio.${{env.NOSPACE}}-clap.pkg" --version 1.1.1 --component "${{matrix.folder}}/${{env.PLUG}}.clap" "${{env.NOSPACE}}-clap.pkg"
         pkgbuild --install-location "/Library/Audio/Plug-Ins/Components" --identifier "com.aviaryaudio.${{env.NOSPACE}}-au.pkg" --scripts "./assets/scripts" --version 1.1.1 --component "${{matrix.folder}}/${{env.PLUG}}.component" "${{env.NOSPACE}}-au.pkg"
-        python3 productbuild.py --pluginname "${{env.PLUG}}"
-        productbuild --timestamp --sign "${{ secrets.DEVELOPER_ID_INSTALLER }}" --distribution "${{env.PLUG}}.xml" --resources "./assets/" "${{env.PLUG}} Installer.pkg"
+        python3 ./setup/productbuild.py --pluginname "${{env.PLUG}}"
+        productbuild --timestamp --sign "${{ secrets.DEVELOPER_ID_INSTALLER }}" --distribution "/${{env.PLUG}}.xml" --resources "./setup/assets/" "${{env.PLUG}} Installer.pkg"
         xcrun notarytool submit "${{env.PLUG}} Installer.pkg" --apple-id ${{ secrets.NOTARIZATION_USERNAME }} --password ${{ secrets.NOTARIZATION_PASSWORD }} --team-id ${{ secrets.TEAM_ID }} --wait
         xcrun stapler staple "${{env.PLUG}} Installer.pkg"
         mkdir -p "../gh_artifacts/Manual Install"
