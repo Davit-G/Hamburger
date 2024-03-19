@@ -32,18 +32,18 @@ jobs:
             compiler: "Unix Makefiles",
             folder: "build_linux"
           }
-        # - {
-        #     name: "Mac Intel (x86_64)",
-        #     os: macos-13,
-        #     compiler: "Xcode",
-        #     folder: "build_mac"
-        #   }
-        # - {
-        #     name: "Mac Native Silicon (arm64)",
-        #     os: macos-14,
-        #     compiler: "Xcode",
-        #     folder: "build_mac",
-        #   }
+        - {
+            name: "Mac Intel (x86_64)",
+            os: macos-13,
+            compiler: "Xcode",
+            folder: "build_mac"
+          }
+        - {
+            name: "Mac Native Silicon (arm64)",
+            os: macos-14,
+            compiler: "Xcode",
+            folder: "build_mac",
+          }
     runs-on: ${{ matrix.os }}
     concurrency: build_${{ matrix.os }}
 
