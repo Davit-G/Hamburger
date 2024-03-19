@@ -244,7 +244,7 @@ CLAP_FEATURES effect "distortion analog compressor" audio-effect)
 
 target_link_libraries("${BaseTargetName}"
     PRIVATE
-        # AudioPluginData          # If we'd created a binary data target, we'd link to it here
+        # AudioPluginData           # If we'd created a binary data target, we'd link to it here
         juce::juce_dsp
         juce::juce_audio_utils
         "${BaseTargetName}BinaryData"

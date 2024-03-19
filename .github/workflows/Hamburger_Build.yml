@@ -202,11 +202,11 @@ jobs:
         productbuild --timestamp --sign "${{ secrets.DEVELOPER_ID_INSTALLER }}" --distribution "./${{env.PLUG}}.xml" --resources "./setup/assets/" "${{env.PLUG}} Installer.pkg"
         xcrun notarytool submit "${{env.PLUG}} Installer.pkg" --apple-id ${{ secrets.NOTARIZATION_USERNAME }} --password ${{ secrets.NOTARIZATION_PASSWORD }} --team-id ${{ secrets.TEAM_ID }} --wait
         xcrun stapler staple "${{env.PLUG}} Installer.pkg"
-        mkdir -p "../gh_artifacts/Manual Install"
-        mv "${{matrix.folder}}/${{env.PLUG}}.component" "../gh_artifacts/Manual Install/"
-        mv "${{matrix.folder}}/${{env.PLUG}}.vst3" "../gh_artifacts/Manual Install/"
-        mv "${{matrix.folder}}/${{env.PLUG}}.clap" "../gh_artifacts/Manual Install/"
-        mv "${{env.PLUG}} Installer.pkg" "../gh_artifacts"
+        mkdir -p "./gh_artifacts/Manual Install"
+        mv "${{matrix.folder}}/${{env.PLUG}}.component" "./gh_artifacts/Manual Install/"
+        mv "${{matrix.folder}}/${{env.PLUG}}.vst3" "./gh_artifacts/Manual Install/"
+        mv "${{matrix.folder}}/${{env.PLUG}}.clap" "./gh_artifacts/Manual Install/"
+        mv "${{env.PLUG}} Installer.pkg" "./gh_artifacts"
 
     - uses: actions/upload-artifact@v3
       with:
