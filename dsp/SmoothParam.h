@@ -13,7 +13,7 @@ public:
     }
 
     void prepare(dsp::ProcessSpec& spec) {
-        smoothedParam.reset(spec.sampleRate, 0.05);
+        smoothedParam.reset(spec.sampleRate, 0.01);
         smoothedParam.setCurrentAndTargetValue(param->get());
     }
 
