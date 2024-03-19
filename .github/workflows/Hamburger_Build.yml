@@ -39,7 +39,7 @@ jobs:
         #     folder: "build_mac"
         #   }
         - {
-            name: "MacOS (Universal x86_64/arm64)",
+            name: "MacOS (Universal)",
             os: macos-14,
             compiler: "Xcode",
             folder: "build_mac",
