@@ -11,8 +11,6 @@ support other sample rates / more channels?
 check back on mac notarisation and codesigning
 performance optimisations
 
-lv2 / au? ask for help on that
-
 ONCE DSP and layout HAS BEEN FINALISED:
 svgs or images on knobs to show interesting visuals?
 make a credits panel that shows up on the entire screen
