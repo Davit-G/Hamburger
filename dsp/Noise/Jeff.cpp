@@ -34,9 +34,11 @@ void Jeff::processBlock(dsp::AudioBlock<float>& block) {
 		float nextJeff = amount.get() * 0.01f;
 
 		auto x = rightDryData[sample];
-		rightDryData[sample] = x + (x * nextJeff * sin(x * nextJeff * 125.6f)) * 0.2f;
+		auto a = x * nextJeff;
+		rightDryData[sample] = x + (a * sin(a * 125.6f)) * 0.2f;
 
 		x = leftDryData[sample];
-		leftDryData[sample] = x + (x * nextJeff * sin(x * nextJeff * 125.6f)) * 0.2f;
+		a = x * nextJeff;
+		leftDryData[sample] = x + (a * sin(a * 125.6f)) * 0.2f;
 	}
 }

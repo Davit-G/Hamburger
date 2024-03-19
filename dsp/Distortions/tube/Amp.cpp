@@ -58,21 +58,21 @@ void Amp::calculateCoefficients()
     triode1.millerHF_Hz = 20000.0f;
     triode1.outputGain = outGain;
     triode1.dcShiftAdditional = biasAmt;
-    triode1.dcShiftCoefficient = biasAmt;
+    triode1.dcShiftCoefficient = 1.0f;
     triode1.inputGain = driv + 0.3f;
 
     triode2.inputGain = inGain;
     triode2.millerHF_Hz = 19000.0f;
     triode2.outputGain = outGain;
     triode2.dcShiftAdditional = biasAmt;
-    triode2.dcShiftCoefficient = 1.f + biasAmt;
+    triode2.dcShiftCoefficient = 1.2f;
 
     triode3.millerHF_Hz = 9000.0f + 7900.0f * tubeTone.getRaw();
     // triode3.millerHF_Hz = 20000.0;
     triode3.inputGain = inGain;
     triode3.outputGain = outGain;
-    triode3.dcShiftAdditional = biasAmt;
-    triode3.dcShiftCoefficient = 3.f;
+    // triode3.dcShiftAdditional = biasAmt;
+    triode3.dcShiftCoefficient = 1.f;
 
     // trioesL[3].millerHF_Hz = 6400.0;
     triode4.millerHF_Hz = 10000.0f + 9900.0f * tubeTone.getRaw();

@@ -91,7 +91,7 @@ public:
 	float dcOffsetDetected = 0.0f;
 
 	// --- do the valve emulation
-	SampleType processAudioSampleOld(SampleType xn, int channel = 0)
+	SampleType processAudioSampleOld(SampleType xn, int channel)
 	{
 
 		auto og = xn;
