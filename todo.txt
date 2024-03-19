@@ -2,7 +2,7 @@ Must
 
 performance optimisations
 check back on mac notarisation and codesigning
-
+pluginval
 
 Should
 
