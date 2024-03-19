@@ -5,7 +5,7 @@
 #include "Distortions/Fuzz.h"
 #include "Distortions/Cooked.h"
 #include "Distortions/PhaseDist.h"
-
+#include "./Noise/Jeff.h"
 #include "Distortions/tube/Amp.h"
 
 #include <melatonin_perfetto/melatonin_perfetto.h>
@@ -24,6 +24,7 @@ public:
         softClipper = std::make_unique<SoftClip>(state);
         fold = std::make_unique<Cooked>(state);
         patty = std::make_unique<PattyFuzz>(state);
+        jeff = std::make_unique<Jeff>(state);
         fuzz = std::make_unique<Fuzz>(state);
         tubeAmp = std::make_unique<Amp>(state);
         phaseDist = std::make_unique<PhaseDist>(state);
@@ -59,6 +60,7 @@ public:
         case 1:
         { // tube
             TRACE_EVENT("dsp", "tube");
+            jeff->processBlock(block);
             tubeAmp->processBlock(block);
             break;
         }
@@ -83,6 +85,8 @@ public:
         fuzz->prepare(spec);
         tubeAmp->prepare(spec);
         phaseDist->prepare(spec);
+        jeff->prepare(spec);
+
 
         // init iir filter
         iirFilter.reset();
@@ -106,6 +110,7 @@ private:
     std::unique_ptr<SoftClip> softClipper = nullptr;
     std::unique_ptr<Cooked> fold = nullptr;
     std::unique_ptr<PattyFuzz> patty = nullptr;
+    std::unique_ptr<Jeff> jeff = nullptr;
     std::unique_ptr<Fuzz> fuzz = nullptr;
     std::unique_ptr<Amp> tubeAmp = nullptr;
     std::unique_ptr<PhaseDist> phaseDist = nullptr;

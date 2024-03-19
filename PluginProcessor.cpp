@@ -137,6 +137,7 @@ AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::createP
 
     params.add(std::make_unique<AudioParameterFloat>("phaseDistTone", "Phase Distortion Tone", NormalisableRange<float>(20.0f, 20000.0f, 0.f, 0.25f), 20000.0f));
 
+    params.add(std::make_unique<AudioParameterFloat>("jeffAmount", "Tube Jeff Amt", 0.0f, 100.0f, 0.f));
     // noise distortions
     params.add(std::make_unique<AudioParameterFloat>("noiseAmount", "Noise Amt", 0.0f, 100.0f, 0.f));
     params.add(std::make_unique<AudioParameterFloat>("noiseFrequency", "Noise Freq", NormalisableRange<float>(20.0f, 20000.0f, 0.f, 0.25f), 4000.0f));

@@ -4,7 +4,7 @@
 #include "./Noise/Sizzle.h"
 #include "./Noise/Erosion.h"
 #include "./Noise/Redux.h"
-#include "./Noise/Jeff.h"
+
 #include "./Distortions/HarshGate.h"
 
 #include "SmoothParam.h"
@@ -23,7 +23,6 @@ public:
         sizzle = std::make_unique<Sizzle>(state);
         erosion = std::make_unique<Erosion>(state);
         redux = std::make_unique<Redux>(state);
-        jeff = std::make_unique<Jeff>(state);
         gate = std::make_unique<HarshGate>(state);
         
     }
@@ -53,11 +52,13 @@ public:
             break;
             }
         case 3: // jeff
-            { TRACE_EVENT("dsp", "jeff");
-            jeff->processBlock(block);
+            { TRACE_EVENT("dsp", "gate");
             gate->processBlock(block);
             break;
             }
+        case 4: {
+            sizzle->processBlockOG(block);
+        }
         default:
             break;
         }
@@ -67,7 +68,6 @@ public:
     {
         sizzle->prepare(spec);
         erosion->prepare(spec);
-        jeff->prepare(spec);
         redux->prepare(spec);
     }
 
@@ -85,7 +85,6 @@ private:
     std::unique_ptr<Sizzle> sizzle = nullptr;
     std::unique_ptr<Erosion> erosion = nullptr;
     std::unique_ptr<Redux> redux = nullptr;
-    std::unique_ptr<Jeff> jeff = nullptr;
     std::unique_ptr<HarshGate> gate = nullptr;
 
     float sampleRate;

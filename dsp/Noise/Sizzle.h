@@ -10,6 +10,7 @@ public:
 	~Sizzle();
 
 	void processBlock(dsp::AudioBlock<float>& block);
+	void processBlockOG(dsp::AudioBlock<float>& block);
 	void prepare(dsp::ProcessSpec& spec);
 
 	void setSampleRate(float sampleRate) { envelopeDetector.setSampleRate(sampleRate);}

@@ -34,7 +34,7 @@ namespace params {
     };
 
     static const PanelInfo noiseTypes = {
-        "NOISE", "", StringArray({"SIZZLE", "EROSION", "BIT", "JEFF"})
+        "NOISE", "", StringArray({"SIZZLE", "EROSION", "BIT", "JEFF", "SIZZLE_OG"})
     };
 
     static const PanelInfo dynamics = {

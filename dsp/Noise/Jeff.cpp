@@ -12,7 +12,7 @@
 #include "Jeff.h"
 
 //==============================================================================
-Jeff::Jeff(juce::AudioProcessorValueTreeState& treeState) : amount(treeState, "noiseAmount") {}
+Jeff::Jeff(juce::AudioProcessorValueTreeState& treeState) : amount(treeState, "jeffAmount") {}
 
 Jeff::~Jeff()
 {

@@ -31,3 +31,22 @@ private:
     ParamKnob sizzleFreq;
     ParamKnob sizzleQ;
 };
+
+class SizzleOGPanel : public Panel
+{
+public:
+    SizzleOGPanel(AudioPluginAudioProcessor &p) : Panel(p, "FIZZ"),
+    sizzleKnob(p, "FIZZLE", "noiseAmount")
+    {
+        addAndMakeVisible(sizzleKnob);
+    }
+
+    void resized() override
+    {
+        auto bounds = getLocalBounds();
+        sizzleKnob.setBounds(bounds);
+    }
+
+private:
+    ParamKnob sizzleKnob;
+};
