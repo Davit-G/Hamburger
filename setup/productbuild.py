@@ -19,9 +19,6 @@ def execute():
     if pluginname == "":
         print("No --pluginname argument provided")
         return
-    if pluginname == "" or version == "":
-        print("No --version argument provided")
-        return
     
     version_tag = ""
     file = open(pluginname+".xml","w")
