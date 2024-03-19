@@ -12,7 +12,6 @@ give tube more character
 
 Would be nice
 
-add oversampling again :( 
 add more waveshaper stuff to grill
 support other sample rates / more channels?
 post filtering (filtered tone sounds better than regular one? idk)

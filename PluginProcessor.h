@@ -13,6 +13,8 @@
 
 #include "gui/Modules/Scope.h"
 
+#include "dsp/Fifo.h"
+
 // #include "xsimd/xsimd.hpp"
 // #include "dsp/SIMDGain.h"
 
@@ -109,10 +111,6 @@ private:
     dsp::Gain<float> emphasisCompensationGain;
 
     dsp::DryWetMixer<float> dryWetMixer;
-
-    dsp::Oversampling<float> oversampling;
-
-    OversamplingStack oversamplingStack;
 
     AudioBufferQueue<float> audioBufferQueueL;
     AudioBufferQueue<float> audioBufferQueueR;

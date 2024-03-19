@@ -103,8 +103,8 @@ AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::createP
     params.add(std::make_unique<AudioParameterBool>("hamburgerEnabled", "Enabled", true));
     params.add(std::make_unique<AudioParameterBool>("autoGain", "Auto Gain", false));
 
-    params.add(std::make_unique<AudioParameterChoice>("oversamplingFactor", "Oversampling Factor", params::oversamplingFactor.categories, 0));
-    params.add(std::make_unique<AudioParameterChoice>("qualityFactor", "Quality", params::quality.categories, 0));
+    // params.add(std::make_unique<AudioParameterChoice>("oversamplingFactor", "Oversampling Factor", params::oversamplingFactor.categories, 0));
+    // params.add(std::make_unique<AudioParameterChoice>("qualityFactor", "Quality", params::quality.categories, 0));
 
     params.add(std::make_unique<AudioParameterFloat>("compSpeed", "Comp Speed", 0.0f, 500.0f, 100.f));
     params.add(std::make_unique<AudioParameterFloat>("compBandTilt", "Comp Band Tilt", -12.0f, 12.0f, 0.f));
@@ -246,6 +246,8 @@ bool AudioPluginAudioProcessor::isBusesLayoutSupported(const BusesLayout &layout
 void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
                                              juce::MidiBuffer &midiMessages)
 {
+    if (hamburgerEnabledButton->get() == false)
+        return;
 
     juce::ignoreUnused(midiMessages);
 
@@ -262,11 +264,9 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
     // This is here to avoid people getting screaming feedback
     // when they first compile a plugin, but obviously you don't need to keep
     // this code if your algorithm always overwrites all the output channels.
+    
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear(i, 0, buffer.getNumSamples());
-
-    if (hamburgerEnabledButton->get() == false)
-        return;
 
     TRACE_EVENT_BEGIN("dsp", "audio block from buffer");
     dsp::AudioBlock<float> block(buffer);
@@ -315,27 +315,6 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
         TRACE_EVENT("dsp", "companding");
         dynamics.processBlock(block);
     }
-    // oversampling
-    // bool oversamplingOn = enableOversampling->get();
-    // i'd like to believe that changing the oversampling type mid-calculation will not affect it,
-    // as long as it doesnt happen after this line and before the line where the oversampling is processed down again
-
-    // int oversampleAmount = oversamplingFactor->getIndex();
-
-    // int newSamplingRate = getSampleRate() * pow(2, oversampleAmount);
-    {
-        TRACE_EVENT("dsp", "oversampling config");
-
-        // dryWetMixer.setWetLatency(oversamplingStack.getLatencySamples());
-
-        // oversamplingStack.setOversamplingFactor(oversampleAmount);
-        // if (oldOversamplingFactor != oversampleAmount)
-        // {
-        //     // DBG("Oversampling changed to " << oversampleAmount);
-        //     oldOversamplingFactor = oversampleAmount;
-        //     setLatencySamples(oversamplingStack.getLatencySamples());
-        // }
-    }
 
     {
         TRACE_EVENT("dsp", "noise distortion");
@@ -354,11 +333,6 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
         distortionTypeSelection.processBlock(block);
     }
 
-    // oversampling
-    // oversamplingStack.processSamplesDown(block);
-
-    // tone with filter
-    // here goes the second emphasis EQ before the expander
     if (emphasisOn)
     {
         TRACE_EVENT("dsp", "emphasis EQ after");
