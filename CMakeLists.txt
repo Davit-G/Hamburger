@@ -24,7 +24,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 if(APPLE)
 set (CMAKE_OSX_DEPLOYMENT_TARGET "11.0" CACHE STRING "Minimum OS X deployment version" FORCE)
-# set (CMAKE_OSX_ARCHITECTURES "arm64" CACHE INTERNAL "")
+set (CMAKE_OSX_ARCHITECTURES "arm64;x86_64" CACHE INTERNAL "")
 endif()
 
 project(Hamburger VERSION "${ProjectVersion}")
