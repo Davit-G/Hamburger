@@ -206,8 +206,6 @@ void AudioPluginAudioProcessor::prepareToPlay(double sampleRate, int samplesPerB
         prevEmphasis[i] = 0;
     }
 
-    oversamplingStack.prepare(spec);
-
     postClip.prepare(spec);
     // simdGain.prepare(spec);
 

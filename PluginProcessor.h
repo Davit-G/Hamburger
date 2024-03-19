@@ -2,7 +2,6 @@
 
 #include <JuceHeader.h>
 
-#include "dsp/Gain.h"
 #include "dsp/OversamplingStack.h"
 
 #include "dsp/PrimaryDistortion.h"
