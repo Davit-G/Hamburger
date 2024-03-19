@@ -240,7 +240,7 @@ CLAP_FEATURES effect "distortion analog compressor" audio-effect)
 # we're linking our executable target to the `juce::juce_audio_utils` module. Inter-module
 # dependencies are resolved automatically, so `juce_core`, `juce_events` and so on will also be
 # linked automatically. If we'd generated a binary data target above, we would need to link to it
-# here too. This is a standard CMake command.  
+# here too. This is a standard CMake command.
 
 target_link_libraries("${BaseTargetName}"
     PRIVATE
