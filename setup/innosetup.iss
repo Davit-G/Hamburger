@@ -17,7 +17,7 @@ DisableWelcomePage=no
 LanguageDetectionMethod=uilanguage
 OutputDir=./Output
 OutputBaseFilename={#PluginName} Installer
-SetupIconFile=assets\icon.ico
+SetupIconFile=assets\miniburger.ico
 ShowLanguageDialog=no
 VersionInfoCompany=AviaryAudio
 VersionInfoCopyright=AviaryAudio
@@ -25,9 +25,9 @@ VersionInfoDescription={#PluginName}
 VersionInfoProductName={#PluginName}
 VersionInfoProductVersion=1.0
 VersionInfoVersion=1.0
-WizardImageFile=assets\{#PluginName}.bmp
+WizardImageFile=assets\Hamburger.bmp
 WizardImageStretch=false
-WizardSmallImageFile=assets\{#PluginName}.bmp
+WizardSmallImageFile=assets\miniburger.bmp
 
 
 [Files]
