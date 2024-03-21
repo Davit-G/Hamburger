@@ -49,7 +49,7 @@ void Amp::calculateCoefficients()
         triodes[i].dcShiftCoefficient = (1.2f);
         triodes[i].lowFrequencyShelf_Hz = lowFreqShelfHz;
         triodes[i].lowFrequencyShelfGain_dB = loShelfGain;
-        triodes[i].dcBlockingLF_Hz = (6.0f);
+        triodes[i].dcBlockingLF_Hz = (5.0f);
     }
 
     // the divisions in this code would all be calculated at compile time
@@ -77,7 +77,7 @@ void Amp::calculateCoefficients()
     // trioesL[3].millerHF_Hz = 6400.0;
     triode4.millerHF_Hz = 10000.0f + 9900.0f * tubeTone.getRaw();
     triode4.outputGain = pow(10.0f, (-drive.getRaw() * 0.01f * 18.f) / 20.0f);
-    triode4.dcShiftCoefficient = biasAmt * 1.5f;
+    triode4.dcShiftCoefficient = 1.2f;
 
     for (int i = 0; i < 4; i++)
     {

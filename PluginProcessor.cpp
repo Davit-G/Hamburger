@@ -55,8 +55,8 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor() : AudioProcessor(BusesPro
 
     // freqShiftFreq = dynamic_cast<juce::AudioParameterFloat *>(treeState.getParameter("frequencyShiftFreq")); jassert(freqShiftFreq);
 
-    oversamplingFactor = dynamic_cast<juce::AudioParameterChoice *>(treeState.getParameter("oversamplingFactor"));
-    jassert(oversamplingFactor);
+    // oversamplingFactor = dynamic_cast<juce::AudioParameterChoice *>(treeState.getParameter("oversamplingFactor"));
+    // jassert(oversamplingFactor);
 
     enableEmphasis = dynamic_cast<juce::AudioParameterBool *>(treeState.getParameter("emphasisOn"));
     jassert(enableEmphasis);
@@ -85,19 +85,16 @@ AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::createP
     params.add(std::make_unique<AudioParameterFloat>("emphasisMidGain", "Emphasis Mid Gain", -18.0f, 18.0f, 0.f));
     params.add(std::make_unique<AudioParameterFloat>("emphasisHighGain", "Emphasis Hi Gain", -18.0f, 18.0f, 0.f));
 
-    params.add(std::make_unique<AudioParameterFloat>("emphasisLowFreq", "Emphasis Low Frequency", NormalisableRange<float>(10.0f, 200.0f, 0.f, 0.35f), 62.0f));
-    params.add(std::make_unique<AudioParameterFloat>("emphasisMidFreq", "Emphasis Mid Frequency", NormalisableRange<float>(300.0f, 3000.0f, 0.f, 0.4f), 1220.0f));
-    params.add(std::make_unique<AudioParameterFloat>("emphasisHighFreq", "Emphasis Hi Frequency", NormalisableRange<float>(5000.0f, 18000.0f, 0.f, 0.4f), 9000.0f));
+    params.add(std::make_unique<AudioParameterFloat>("emphasisLowFreq", "Emphasis Low Frequency", NormalisableRange<float>(20.0f, 20000.0f, 0.f, 0.25f), 62.0f));
+    params.add(std::make_unique<AudioParameterFloat>("emphasisMidFreq", "Emphasis Mid Frequency", NormalisableRange<float>(20.0f, 20000.0f, 0.f, 0.25f), 1220.0f));
+    params.add(std::make_unique<AudioParameterFloat>("emphasisHighFreq", "Emphasis Hi Frequency", NormalisableRange<float>(20.0f, 20000.0f, 0.f, 0.25f), 9000.0f));
 
-    params.add(std::make_unique<AudioParameterBool>("compandingOn", "Compander On", false));
-    params.add(std::make_unique<AudioParameterBool>("compressionOn", "Compressor On", true));
-    params.add(std::make_unique<AudioParameterBool>("expansionOn", "Expander On", false));
+    params.add(std::make_unique<AudioParameterBool>("compressionOn", "Compressor On", false));
     params.add(std::make_unique<AudioParameterBool>("emphasisOn", "Emphasis EQ On", true));
-    params.add(std::make_unique<AudioParameterBool>("shifterOn", "Emphasis Shifter On", true));
 
     params.add(std::make_unique<AudioParameterBool>("preDistortionEnabled", "Pre-Dist Enabled", true));
     params.add(std::make_unique<AudioParameterBool>("primaryDistortionEnabled", "Dist Enabled", true));
-    params.add(std::make_unique<AudioParameterBool>("noiseDistortionEnabled", "Noise Enabled", true));
+    params.add(std::make_unique<AudioParameterBool>("noiseDistortionEnabled", "Noise Enabled", false));
     params.add(std::make_unique<AudioParameterBool>("postClipEnabled", "SoftClip Enabled", true));
 
     params.add(std::make_unique<AudioParameterBool>("hamburgerEnabled", "Enabled", true));
@@ -141,7 +138,7 @@ AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::createP
     // noise distortions
     params.add(std::make_unique<AudioParameterFloat>("noiseAmount", "Noise Amt", 0.0f, 100.0f, 0.f));
     params.add(std::make_unique<AudioParameterFloat>("noiseFrequency", "Noise Freq", NormalisableRange<float>(20.0f, 20000.0f, 0.f, 0.25f), 4000.0f));
-    params.add(std::make_unique<AudioParameterFloat>("noiseQ", "Noise Q", 0.1f, 3.0f, 0.7f));
+    params.add(std::make_unique<AudioParameterFloat>("noiseQ", "Noise Q", 0.1f, 1.5f, 0.2f));
 
     params.add(std::make_unique<AudioParameterFloat>("downsampleFreq", "Dwnsmpl Freq", NormalisableRange<float>(200.0f, 40000.0f, 0.f, 0.25f), 40000.0f));
     params.add(std::make_unique<AudioParameterFloat>("downsampleJitter", "Dwnsmpl Jitter", 0.0f, 1.0f, 0.f));
