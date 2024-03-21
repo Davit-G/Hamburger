@@ -39,7 +39,7 @@ public:
 
         knob.setSliderStyle(juce::Slider::RotaryVerticalDrag);
         knob.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
-        knob.setRange(knobParamRange.start, knobParamRange.end);
+        knob.setRange(knobParamRange.start, knobParamRange.end, 0.001);
 
         knob.setPaintingIsUnclipped(true);
 

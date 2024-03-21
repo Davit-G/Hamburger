@@ -15,10 +15,8 @@ public:
     {
 
         addAndMakeVisible(lowFreq);
-        addAndMakeVisible(midFreq);
         addAndMakeVisible(highFreq);
         addAndMakeVisible(lowGain);
-        addAndMakeVisible(midGain); //
         addAndMakeVisible(highGain);
     }
 
@@ -29,15 +27,13 @@ public:
         using Track = Grid::TrackInfo;
 
         grid.templateRows = {Track(fr(1)), Track(fr(1))};
-        grid.templateColumns = {Track(fr(1)), Track(fr(1)), Track(fr(1))};
+        grid.templateColumns = {Track(fr(1)), Track(fr(1))};
 
         grid.items = {
             GridItem(lowFreq).withArea(1, 1),
-            GridItem(midFreq).withArea(1, 2),
-            GridItem(highFreq).withArea(1, 3),
+            GridItem(highFreq).withArea(1, 2),
             GridItem(lowGain).withArea(2, 1),
-            GridItem(midGain).withArea(2, 2),
-            GridItem(highGain).withArea(2, 3)
+            GridItem(highGain).withArea(2, 2)
         };
 
         grid.performLayout(bounds);

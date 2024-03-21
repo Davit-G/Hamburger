@@ -11,13 +11,13 @@ public:
     StereoCompPanel(AudioPluginAudioProcessor &p) : Panel(p, "LR"),
                                                    threshold(p, "THRES", "compThreshold", ParamUnits::db),
                                                    ratio(p, "RATIO", "compRatio"),
-                                                   tilt(p, "S-LNK", "compStereoLink", ParamUnits::percent),
+                                                //    tilt(p, "S-LNK", "compStereoLink", ParamUnits::percent),
                                                    attack(p, "SPEED", "compSpeed", ParamUnits::ms),
                                                    makeup(p, "GAIN", "compOut", ParamUnits::db)
     {
         addAndMakeVisible(threshold);
         addAndMakeVisible(ratio);
-        addAndMakeVisible(tilt);
+        // addAndMakeVisible(tilt);
         addAndMakeVisible(attack);
         addAndMakeVisible(makeup);
     }
@@ -34,7 +34,7 @@ public:
 
         grid.items = {
             GridItem(threshold).withArea(1, 1),
-            GridItem(tilt).withArea(1, 2),
+            // GridItem(tilt).withArea(1, 2),
             GridItem(ratio).withArea(1, 3),
             GridItem(attack).withArea(2, 1),
             GridItem(makeup).withArea(2, 3)};
@@ -47,7 +47,7 @@ private:
 
     ParamKnob threshold;
     ParamKnob ratio;
-    ParamKnob tilt;
+    // ParamKnob tilt;
     ParamKnob attack;
     ParamKnob makeup;
 };

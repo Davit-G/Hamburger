@@ -45,7 +45,7 @@ void Amp::calculateCoefficients()
         triodes[i].waveshaperSaturation = 0.01f + drive.getRaw() * 0.03;
         triodes[i].clipPointPositive = 4.0f;
         triodes[i].clipPointNegative = (-1.5f);
-        triodes[i].gridConductionThreshold = (1.1f);
+        triodes[i].gridConductionThreshold = (1.5f);
         triodes[i].dcShiftCoefficient = (1.2f);
         triodes[i].lowFrequencyShelf_Hz = lowFreqShelfHz;
         triodes[i].lowFrequencyShelfGain_dB = loShelfGain;
@@ -55,19 +55,21 @@ void Amp::calculateCoefficients()
     // the divisions in this code would all be calculated at compile time
     // so not a big deal, just mentioning it tho
 
-    triode1.millerHF_Hz = 20000.0f;
+    auto skewedTone = powf(tubeTone.getRaw(), 3.0f);
+
+    triode1.millerHF_Hz = fmin(16000.0f + 8000.0f * skewedTone, 21000.0f);
     triode1.outputGain = outGain;
     triode1.dcShiftAdditional = biasAmt;
-    triode1.dcShiftCoefficient = 1.0f;
-    triode1.inputGain = driv + 0.3f;
+    triode1.dcShiftCoefficient = 1.0f + biasAmt;
+    triode1.inputGain = 1.0f + driv * 0.4f;
 
     triode2.inputGain = inGain;
-    triode2.millerHF_Hz = 19000.0f;
+    triode2.millerHF_Hz = fmin(6000.0f + 7900.0f * skewedTone, 21000.0f);
     triode2.outputGain = outGain;
     triode2.dcShiftAdditional = biasAmt;
     triode2.dcShiftCoefficient = 1.2f;
 
-    triode3.millerHF_Hz = 9000.0f + 7900.0f * tubeTone.getRaw();
+    triode3.millerHF_Hz = fmin(9000.0f + 7900.0f * skewedTone, 21000.0f);
     // triode3.millerHF_Hz = 20000.0;
     triode3.inputGain = inGain;
     triode3.outputGain = outGain;
@@ -75,7 +77,7 @@ void Amp::calculateCoefficients()
     triode3.dcShiftCoefficient = 1.f;
 
     // trioesL[3].millerHF_Hz = 6400.0;
-    triode4.millerHF_Hz = 10000.0f + 9900.0f * tubeTone.getRaw();
+    triode4.millerHF_Hz = 21000.0f;
     triode4.outputGain = pow(10.0f, (-drive.getRaw() * 0.01f * 18.f) / 20.0f);
     triode4.dcShiftCoefficient = 1.2f;
 

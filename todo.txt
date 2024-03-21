@@ -28,12 +28,8 @@ make a credits panel that shows up on the entire screen
 feedback:
 
 Antialiasing on hamburger logo is ham
-Make proper tube tone before the distortion
-Reduce the range of the bias knob (negative values nah man)
-Emphasis eq panel isnt intuitive, replace with two peaks across the entire band, and separate them with a divider, and add a label on the top for band 1 band 2 or smth
+Emphasis eq panel isnt intuitive, separate eq bits with a divider, and add a label on the top for band 1 band 2 or smth
 Mix knob on bit noise and gate noise
-q range above halfway is useless (1/value)
-s-link useless
 breaks on multiple channels
 
 

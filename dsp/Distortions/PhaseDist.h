@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../SmoothParam.h"
+#include "WaveShapers.h"
 
 //==============================================================================
 /*
@@ -17,6 +18,7 @@ public:
 private:
     SmoothParam amount;
     SmoothParam tone;
+    SmoothParam normalise;
 
     float sampleRate;
 

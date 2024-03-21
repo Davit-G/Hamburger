@@ -12,7 +12,7 @@ public:
         tubeTone(p, "TUBE TONE", "tubeTone"),
         bias(p, "BIAS", "bias"),
         jeff(p, "JEFF", "jeffAmount"),
-        drive(p, "DRIVE", "saturationAmount", ParamUnits::percent)
+        drive(p, "DRIVE", "tubeAmount", ParamUnits::percent)
     {
         addAndMakeVisible(tubeTone);
         addAndMakeVisible(drive);

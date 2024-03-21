@@ -4,8 +4,9 @@
 
 //==============================================================================
 PhaseDist::PhaseDist(juce::AudioProcessorValueTreeState& treeState) : 
-	amount(treeState, "saturationAmount"),
-	tone(treeState, "phaseDistTone") 
+	amount(treeState, "phaseAmount"),
+	tone(treeState, "phaseDistTone"),
+	normalise(treeState, "phaseDistNormalise")
 	{};
 
 void PhaseDist::prepare(dsp::ProcessSpec& spec) {
@@ -13,6 +14,7 @@ void PhaseDist::prepare(dsp::ProcessSpec& spec) {
 
 	amount.prepare(spec);
 	tone.prepare(spec);
+	normalise.prepare(spec);
 
 	*filter.state = dsp::IIR::ArrayCoefficients<float>::makeLowPass(spec.sampleRate, 20000.0f, 0.707f);
 	filter.prepare(spec);
@@ -25,6 +27,7 @@ void PhaseDist::processBlock(dsp::AudioBlock<float>& block) {
 	TRACE_EVENT("dsp", "PhaseDist::processBlock");
 	amount.update();
 	tone.update();
+	normalise.update();
 
 	// we want to move to the delay line
 	for (int i = 0; i < block.getNumSamples(); i++) {
@@ -45,7 +48,9 @@ void PhaseDist::processBlock(dsp::AudioBlock<float>& block) {
 
 		float mono = (fmin(left, right) + fmax(left, right)) / 2.0f;
 
-		auto phaseShiftL = (mono + 2.0f) * amt * 40;
+		float normalised = tanhWaveShaper(mono, normalise.getNextValue() * 10.0f + 0.00001f);
+
+		auto phaseShiftL = (normalised + 2.0f) * amt * 50;
 		// auto phaseShiftR = (right + 2.0f) * amt * 40;
 		
 		auto leftProcessed = delayLine.popSample(0, phaseShiftL);
