@@ -1,33 +1,29 @@
-/*
-  ==============================================================================
-
-    Redux.h
-    Created: 8 Dec 2021 5:01:30pm
-    Author:  DavZ
-
-  ==============================================================================
-*/
-
 #pragma once
- 
+
+#include "juce_core/juce_core.h"
+#include "juce_dsp/juce_dsp.h"
+#include "juce_audio_processors/juce_audio_processors.h"
+
+#include <melatonin_perfetto/melatonin_perfetto.h>
+
 #include "../SmoothParam.h"
 
-class Redux : public Component
+class Redux
 {
 public:
     Redux(juce::AudioProcessorValueTreeState& treeState);
     ~Redux();
 
-    void processBlock(dsp::AudioBlock<float>& block);
-    void prepare(dsp::ProcessSpec& spec);
-    void antiAliasingStep(dsp::AudioBlock<float>& block);
+    void processBlock(juce::dsp::AudioBlock<float>& block);
+    void prepare(juce::dsp::ProcessSpec& spec);
+    void antiAliasingStep(juce::dsp::AudioBlock<float>& block);
 
 private:
     SmoothParam downsample;
     SmoothParam jitter;
     SmoothParam bitReduction;
 
-    dsp::ProcessorDuplicator<dsp::IIR::Filter<float>, dsp::IIR::Coefficients<float>> antialiasingFilter[4];
+    juce::dsp::ProcessorDuplicator<juce::dsp::IIR::Filter<float>, juce::dsp::IIR::Coefficients<float>> antialiasingFilter[4];
 
     float jitterOffsetL = 0.0f;
     float jitterOffsetR = 0.0f;

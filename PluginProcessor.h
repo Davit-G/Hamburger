@@ -1,6 +1,8 @@
 #pragma once
 
-#include <JuceHeader.h>
+#include "juce_core/juce_core.h"
+#include "juce_dsp/juce_dsp.h"
+#include "juce_audio_processors/juce_audio_processors.h"
 
 #include "dsp/OversamplingStack.h"
 
@@ -18,7 +20,7 @@
 // #include "dsp/SIMDGain.h"
 
 // profiling
-// #include <melatonin_perfetto/melatonin_perfetto.h>
+#include <melatonin_perfetto/melatonin_perfetto.h>
 
 //==============================================================================
 class AudioPluginAudioProcessor : public juce::AudioProcessor
@@ -76,6 +78,7 @@ private:
     juce::AudioParameterFloat *outputGainKnob = nullptr;
 
     juce::AudioParameterBool *enableEmphasis = nullptr;
+    juce::AudioParameterInt *hq = nullptr;
     juce::AudioParameterBool *hamburgerEnabledButton = nullptr; // acts as bypass
 
     juce::AudioParameterFloat *emphasisLow = nullptr;
@@ -110,6 +113,11 @@ private:
     dsp::Gain<float> emphasisCompensationGain;
 
     dsp::DryWetMixer<float> dryWetMixer;
+
+    OversamplingStack oversamplingStack;
+    OversamplingStack oversamplingStackPost;
+
+    int oldOversamplingFactor = 0;
 
     AudioBufferQueue<float> audioBufferQueueL;
     AudioBufferQueue<float> audioBufferQueueR;

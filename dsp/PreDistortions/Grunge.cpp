@@ -1,22 +1,11 @@
-/*
-  ==============================================================================
-
-    Patty.cpp
-    Created: 13 Jun 2021 6:45:25pm
-    Author:  DavZ
-
-  ==============================================================================
-*/
-
 #include "Grunge.h"
 
-//==============================================================================
 Grunge::Grunge(juce::AudioProcessorValueTreeState &treeState) : amount(treeState, "grungeAmt"),
                                                                 tone(treeState, "grungeTone")
 {
 }
 
-void Grunge::prepare(dsp::ProcessSpec &spec)
+void Grunge::prepare(juce::dsp::ProcessSpec &spec)
 {
     amount.prepare(spec);
     tone.prepare(spec);
@@ -32,7 +21,7 @@ void Grunge::prepare(dsp::ProcessSpec &spec)
     this->sampleRate = spec.sampleRate;
 }
 
-void Grunge::processBlock(dsp::AudioBlock<float> &block)
+void Grunge::processBlock(juce::dsp::AudioBlock<float> &block)
 {
     TRACE_EVENT("dsp", "Grunge::processBlock");
     if (amount.getRaw() == 0.0f)
@@ -67,7 +56,7 @@ void Grunge::processBlock(dsp::AudioBlock<float> &block)
         delayLine.pushSample(0, dcBlockerLRes);
         delayLine.pushSample(1, dcBlockerRRes);
 
-        block.setSample(0, i, dsp::FastMathApproximations::tanh((sampleL + delaySampleL)* 0.1f * (1 - fbKnobAmt * 0.5f)) * 10.0f);
-        block.setSample(1, i, dsp::FastMathApproximations::tanh((sampleR + delaySampleR)* 0.1f * (1 - fbKnobAmt * 0.5f)) * 10.0f);
+        block.setSample(0, i, juce::dsp::FastMathApproximations::tanh((sampleL + delaySampleL)* 0.1f * (1 - fbKnobAmt * 0.5f)) * 10.0f);
+        block.setSample(1, i, juce::dsp::FastMathApproximations::tanh((sampleR + delaySampleR)* 0.1f * (1 - fbKnobAmt * 0.5f)) * 10.0f);
     }
 }

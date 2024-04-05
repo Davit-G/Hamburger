@@ -3,6 +3,8 @@
 #include "../SmoothParam.h"
 #include "WaveShapers.h"
 
+#include <melatonin_perfetto/melatonin_perfetto.h>
+
 //==============================================================================
 /*
  */
@@ -12,8 +14,8 @@ public:
     PhaseDist(juce::AudioProcessorValueTreeState& treeState);
     ~PhaseDist() {}
 
-    void processBlock(dsp::AudioBlock<float> &block);
-    void prepare(dsp::ProcessSpec& spec);
+    void processBlock(juce::dsp::AudioBlock<float> &block);
+    void prepare(juce::dsp::ProcessSpec& spec);
 
 private:
     SmoothParam amount;
@@ -26,7 +28,7 @@ private:
     juce::dsp::DelayLine<float, juce::dsp::DelayLineInterpolationTypes::Linear> delayLine;
 
     // filter to remove harsh freqs from phase distorted signal
-    dsp::ProcessorDuplicator<dsp::IIR::Filter<float>, dsp::IIR::Coefficients<float>> filter;
+    juce::dsp::ProcessorDuplicator<juce::dsp::IIR::Filter<float>, juce::dsp::IIR::Coefficients<float>> filter;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PhaseDist)
 };

@@ -3,14 +3,18 @@
  
 #include "../SmoothParam.h"
 
+#include "juce_dsp/juce_dsp.h"
+
+#include <melatonin_perfetto/melatonin_perfetto.h>
+
 class PattyFuzz
 {
 public:
 	PattyFuzz(juce::AudioProcessorValueTreeState& treeState);
 	~PattyFuzz();
 
-	void processBlock(dsp::AudioBlock<float>& block);
-	void prepare(dsp::ProcessSpec& spec);
+	void processBlock(juce::dsp::AudioBlock<float>& block);
+	void prepare(juce::dsp::ProcessSpec& spec);
 
 private:
 	SmoothParam amount;

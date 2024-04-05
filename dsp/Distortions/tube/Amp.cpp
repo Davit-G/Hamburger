@@ -1,6 +1,6 @@
 #include "Amp.h"
 
-void Amp::prepare(dsp::ProcessSpec &spec)
+void Amp::prepare(juce::dsp::ProcessSpec &spec)
 {
     tubeTone.prepare(spec);
 
@@ -18,6 +18,7 @@ void Amp::prepare(dsp::ProcessSpec &spec)
 
     calculateCoefficients();
 }
+
 
 void Amp::calculateCoefficients()
 {
@@ -141,7 +142,7 @@ void Amp::calculateCoefficients2()
     }
 }
 
-void Amp::processBlock(dsp::AudioBlock<float> &block)
+void Amp::processBlock(juce::dsp::AudioBlock<float> &block)
 {
     TRACE_EVENT_BEGIN("dsp", "tube coefficients");
     tubeTone.update();

@@ -1,6 +1,6 @@
 #include "LossyIntegrator.h"
 
-void LossyIntegrator::prepare(dsp::ProcessSpec &spec)
+void LossyIntegrator::prepare(juce::dsp::ProcessSpec &spec)
 {
     sampleRate = spec.sampleRate;
     T = 1.0f / sampleRate;
@@ -8,7 +8,7 @@ void LossyIntegrator::prepare(dsp::ProcessSpec &spec)
     integrator_z[1] = 0.0f;
 }
 
-dsp::SIMDRegister<float> LossyIntegrator::processAudioSample(dsp::SIMDRegister<float> xn)
+juce::dsp::SIMDRegister<float> LossyIntegrator::processAudioSample(juce::dsp::SIMDRegister<float> xn)
 {
     auto hpf = (xn - (integrator_z[0] * rho) - integrator_z[1]) * alpha0;
     auto bpf = hpf * alpha + integrator_z[0];
@@ -33,7 +33,7 @@ float LossyIntegrator::processAudioSample(float xn) {
 
 void LossyIntegrator::calculateFilterCoeffs()
 {
-    float g = sampleRate * dsp::FastMathApproximations::tan(wd * T * 0.5f) * T;
+    float g = sampleRate * juce::dsp::FastMathApproximations::tan(wd * T * 0.5f) * T;
 
     alpha0 = 1.0f / (1.0f + g * (2.0f * R + g));
     alpha = g;

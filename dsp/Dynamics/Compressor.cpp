@@ -2,12 +2,12 @@
 #include "Curves.h"
  
 
-void Compressor::prepare(dsp::ProcessSpec& spec)
+void Compressor::prepare(juce::dsp::ProcessSpec& spec)
 {
     envelope.prepare(spec);
 }
 
-void Compressor::processBlock(dsp::AudioBlock<float>& dryBuffer)
+void Compressor::processBlock(juce::dsp::AudioBlock<float>& dryBuffer)
 {
     TRACE_DSP();
     float makeupGain = juce::Decibels::decibelsToGain(makeup_dB);

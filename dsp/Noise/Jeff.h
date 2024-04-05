@@ -1,16 +1,11 @@
-/*
-  ==============================================================================
-
-    Jeff.h
-    Created: 13 Jun 2021 5:57:58pm
-    Author:  DavZ
-
-  ==============================================================================
-*/
-
 #pragma once
 
- 
+#include "juce_core/juce_core.h"
+#include "juce_dsp/juce_dsp.h"
+#include "juce_audio_processors/juce_audio_processors.h"
+
+#include <melatonin_perfetto/melatonin_perfetto.h>
+
 #include "../SmoothParam.h"
 
 //==============================================================================
@@ -22,8 +17,8 @@ public:
 	Jeff(juce::AudioProcessorValueTreeState& treeState);
 	~Jeff();
 
-	void processBlock(dsp::AudioBlock<float>& block);
-	void prepare(dsp::ProcessSpec& spec);
+	void processBlock(juce::dsp::AudioBlock<float>& block);
+	void prepare(juce::dsp::ProcessSpec& spec);
 
 private:
 	SmoothParam amount;

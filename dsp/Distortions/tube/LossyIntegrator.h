@@ -1,8 +1,7 @@
 #pragma once
 
-#include <JuceHeader.h>
-
-using namespace juce;
+#include "juce_core/juce_core.h"
+#include "juce_dsp/juce_dsp.h"
 
 class LossyIntegrator
 {
@@ -10,9 +9,9 @@ public:
 	LossyIntegrator() {}
 	~LossyIntegrator() {}
 
-	void prepare(dsp::ProcessSpec& spec);
+	void prepare(juce::dsp::ProcessSpec& spec);
 	
-	dsp::SIMDRegister<float> processAudioSample(dsp::SIMDRegister<float> xn);
+	juce::dsp::SIMDRegister<float> processAudioSample(juce::dsp::SIMDRegister<float> xn);
 	float processAudioSample(float xn);
 
 	void calculateFilterCoeffs();
@@ -27,7 +26,7 @@ protected:
 	const float R = 0.5f / Q;
 	const float wd = juce::MathConstants<float>::twoPi * fc;
 
-	dsp::SIMDRegister<float> integrator_z[2];						///< state variables
+	juce::dsp::SIMDRegister<float> integrator_z[2];						///< state variables
 
 	float alpha0 = 0.0f;		///< input scalar, correct delay-free loop
 	float alpha = 0.0f;			///< alpha is (wcT/2)

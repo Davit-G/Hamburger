@@ -1,17 +1,5 @@
-/*
-  ==============================================================================
-
-    Jeff.cpp
-    Created: 13 Jun 2021 5:57:58pm
-    Author:  DavZ
-
-  ==============================================================================
-*/
-
- 
 #include "Jeff.h"
 
-//==============================================================================
 Jeff::Jeff(juce::AudioProcessorValueTreeState& treeState) : amount(treeState, "jeffAmount") {}
 
 Jeff::~Jeff()
@@ -19,11 +7,11 @@ Jeff::~Jeff()
 }
 
 
-void Jeff::prepare(dsp::ProcessSpec& spec) {
+void Jeff::prepare(juce::dsp::ProcessSpec& spec) {
 	amount.prepare(spec);
 }
 
-void Jeff::processBlock(dsp::AudioBlock<float>& block) {
+void Jeff::processBlock(juce::dsp::AudioBlock<float>& block) {
 	TRACE_EVENT("dsp", "Jeff::processBlock");
 	amount.update();
 

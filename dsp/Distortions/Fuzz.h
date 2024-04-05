@@ -5,6 +5,8 @@
 
 #include "../EnvelopeFollower.h"
 
+#include <melatonin_perfetto/melatonin_perfetto.h>
+
 class Fuzz
 {
 public:

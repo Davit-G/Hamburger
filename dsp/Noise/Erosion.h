@@ -1,6 +1,10 @@
 #pragma once
 
- 
+#include "juce_core/juce_core.h"
+#include "juce_dsp/juce_dsp.h"
+#include "juce_audio_processors/juce_audio_processors.h"
+
+#include <melatonin_perfetto/melatonin_perfetto.h>
 
 #include "../SmoothParam.h"
 //==============================================================================
@@ -16,8 +20,8 @@ public:
     
     ~Erosion() {}
 
-    void processBlock(dsp::AudioBlock<float>& block);
-    void prepare(dsp::ProcessSpec& spec);
+    void processBlock(juce::dsp::AudioBlock<float>& block);
+    void prepare(juce::dsp::ProcessSpec& spec);
 
 private:
     SmoothParam erosionAmount;
@@ -25,11 +29,11 @@ private:
     SmoothParam erosionQ;
 
     // stereo delay line
-    dsp::DelayLine<float, dsp::DelayLineInterpolationTypes::Linear> delayLine;
+    juce::dsp::DelayLine<float, juce::dsp::DelayLineInterpolationTypes::Linear> delayLine;
 
     // iir filter
     // juce::dsp::IIR::Filter<float> iirFilter;
-    dsp::IIR::Filter<float> iirFilter;
+    juce::dsp::IIR::Filter<float> iirFilter;
 
     // noise generator
     juce::Random random;

@@ -1,7 +1,7 @@
 #pragma once
  
 #include <cmath>
-#include <JuceHeader.h>
+#include "juce_core/juce_core.h"
 
 using namespace juce;
 

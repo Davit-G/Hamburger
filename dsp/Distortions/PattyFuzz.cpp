@@ -17,11 +17,11 @@ PattyFuzz::PattyFuzz(juce::AudioProcessorValueTreeState& treeState) : amount(tre
 PattyFuzz::~PattyFuzz() {}
 
 
-void PattyFuzz::prepare(dsp::ProcessSpec& spec) {
+void PattyFuzz::prepare(juce::dsp::ProcessSpec& spec) {
 	amount.prepare(spec);
 }
 
-void PattyFuzz::processBlock(dsp::AudioBlock<float>& block) {
+void PattyFuzz::processBlock(juce::dsp::AudioBlock<float>& block) {
 	TRACE_EVENT("dsp", "PattyFuzz::processBlock");
 	amount.update();
 
@@ -29,7 +29,7 @@ void PattyFuzz::processBlock(dsp::AudioBlock<float>& block) {
 	auto leftDryData = block.getChannelPointer(0);
 
 	for (int sample = 0; sample < block.getNumSamples(); sample++) {
-		float nextPatty = 1.f - (amount.getNextValue() * 0.01f);
+		float nextPatty = 1.f - (amount.getNextValue() * 0.006f);
 		
 		auto x = rightDryData[sample];
 		if (x > 0) {

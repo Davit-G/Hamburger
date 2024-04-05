@@ -2,7 +2,7 @@
 
  
 
-void Erosion::processBlock(dsp::AudioBlock<float>& block)
+void Erosion::processBlock(juce::dsp::AudioBlock<float>& block)
 {
 TRACE_EVENT("dsp", "Erosion::processBlock");
 
@@ -22,7 +22,7 @@ TRACE_EVENT("dsp", "Erosion::processBlock");
     float q = erosionQ.getRaw();
 
     // todo: replace all coefficient creation with ArrayCoefficients to avoid allocation
-    *iirFilter.coefficients = dsp::IIR::ArrayCoefficients<float>::makeBandPass(oldSampleRate, erosionFreqVal, q);
+    *iirFilter.coefficients = juce::dsp::IIR::ArrayCoefficients<float>::makeBandPass(oldSampleRate, erosionFreqVal, q);
 
     // now with the filtered values, multiply them by the saturation amount
 
@@ -40,7 +40,7 @@ TRACE_EVENT("dsp", "Erosion::processBlock");
     }
 }
 
-void Erosion::prepare(dsp::ProcessSpec& spec)
+void Erosion::prepare(juce::dsp::ProcessSpec& spec)
 {
     // init delay
     erosionAmount.prepare(spec);
@@ -52,7 +52,7 @@ void Erosion::prepare(dsp::ProcessSpec& spec)
     delayLine.setMaximumDelayInSamples(0.1f * spec.sampleRate);
 
     // init iir filter
-    *iirFilter.coefficients = dsp::IIR::ArrayCoefficients<float>::makeBandPass(spec.sampleRate, 880.0, 3.0);
+    *iirFilter.coefficients = juce::dsp::IIR::ArrayCoefficients<float>::makeBandPass(spec.sampleRate, 880.0, 3.0);
 
     iirFilter.prepare(spec);
 

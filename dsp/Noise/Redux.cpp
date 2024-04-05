@@ -1,12 +1,3 @@
-/*
-  ==============================================================================
-
-	Redux.cpp
-	Created: 8 Dec 2021 5:01:30pm
-	Author:  DavZ
-
-  ==============================================================================
-*/
 
 #include "Redux.h"
  
@@ -22,7 +13,7 @@ Redux::~Redux()
 {
 }
 
-void Redux::prepare(dsp::ProcessSpec &spec)
+void Redux::prepare(juce::dsp::ProcessSpec &spec)
 {
 	downsample.prepare(spec);
 	jitter.prepare(spec);
@@ -31,13 +22,13 @@ void Redux::prepare(dsp::ProcessSpec &spec)
 
 	for (int i = 0; i < 4; i++)
 	{
-		*antialiasingFilter[i].state = dsp::IIR::ArrayCoefficients<float>::makeLowPass(sampleRate, 7000.0f, 1.0f);
+		*antialiasingFilter[i].state = juce::dsp::IIR::ArrayCoefficients<float>::makeLowPass(sampleRate, 7000.0f, 1.0f);
 		antialiasingFilter[i].reset();
 		antialiasingFilter[i].prepare(spec);
 	}
 }
 
-void Redux::antiAliasingStep(dsp::AudioBlock<float> &block)
+void Redux::antiAliasingStep(juce::dsp::AudioBlock<float> &block)
 {
 	TRACE_EVENT("dsp", "Redux::antiAliasingStep");
 
@@ -46,7 +37,7 @@ void Redux::antiAliasingStep(dsp::AudioBlock<float> &block)
 	{
 		for (int i = 0; i < 4; i++)
 		{
-			*antialiasingFilter[i].state = *dsp::IIR::Coefficients<float>::makeLowPass(this->sampleRate, fmin(downsample.getRaw() * 2.f - 40.0f, 20000.0), 0.7f);
+			*antialiasingFilter[i].state = *juce::dsp::IIR::Coefficients<float>::makeLowPass(this->sampleRate, fmin(downsample.getRaw() * 2.f - 40.0f, 20000.0), 0.7f);
 		}
 	}
 	for (int i = 0; i < 4; i++)
@@ -55,7 +46,7 @@ void Redux::antiAliasingStep(dsp::AudioBlock<float> &block)
 	}
 }
 
-void Redux::processBlock(dsp::AudioBlock<float> &block)
+void Redux::processBlock(juce::dsp::AudioBlock<float> &block)
 {
 	TRACE_EVENT("dsp", "Redux::processBlock");
 	auto rightDryData = block.getChannelPointer(1);

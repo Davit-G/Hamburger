@@ -1,7 +1,6 @@
 #include "PluginProcessor.h"
 #include "./gui/PluginEditor.h"
 
-using namespace juce;
 
 #include "gui/Modules/Panels/PanelNames.h"
 
@@ -33,6 +32,9 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor() : AudioProcessor(BusesPro
     hamburgerEnabledButton = dynamic_cast<juce::AudioParameterBool *>(treeState.getParameter("hamburgerEnabled"));
     jassert(hamburgerEnabledButton);
 
+    hq = dynamic_cast<juce::AudioParameterInt *>(treeState.getParameter("oversamplingFactor"));
+    jassert(hq);
+
     emphasisLow = dynamic_cast<juce::AudioParameterFloat *>(treeState.getParameter("emphasisLowGain"));
     emphasis[0] = emphasisLow;
     jassert(emphasisLow);
@@ -52,8 +54,6 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor() : AudioProcessor(BusesPro
     emphasisHighFreq = dynamic_cast<juce::AudioParameterFloat *>(treeState.getParameter("emphasisHighFreq"));
     emphasisFreq[2] = emphasisHighFreq;
     jassert(emphasisHighFreq);
-
-    // freqShiftFreq = dynamic_cast<juce::AudioParameterFloat *>(treeState.getParameter("frequencyShiftFreq")); jassert(freqShiftFreq);
 
     // oversamplingFactor = dynamic_cast<juce::AudioParameterChoice *>(treeState.getParameter("oversamplingFactor"));
     // jassert(oversamplingFactor);
@@ -85,9 +85,9 @@ AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::createP
     params.add(std::make_unique<AudioParameterFloat>("emphasisMidGain", "Emphasis Mid Gain", -18.0f, 18.0f, 0.f));
     params.add(std::make_unique<AudioParameterFloat>("emphasisHighGain", "Emphasis Hi Gain", -18.0f, 18.0f, 0.f));
 
-    params.add(std::make_unique<AudioParameterFloat>("emphasisLowFreq", "Emphasis Low Frequency", NormalisableRange<float>(20.0f, 20000.0f, 0.f, 0.25f), 62.0f));
-    params.add(std::make_unique<AudioParameterFloat>("emphasisMidFreq", "Emphasis Mid Frequency", NormalisableRange<float>(20.0f, 20000.0f, 0.f, 0.25f), 1220.0f));
-    params.add(std::make_unique<AudioParameterFloat>("emphasisHighFreq", "Emphasis Hi Frequency", NormalisableRange<float>(20.0f, 20000.0f, 0.f, 0.25f), 9000.0f));
+    params.add(std::make_unique<AudioParameterFloat>("emphasisLowFreq", "Emphasis Low Frequency", juce::NormalisableRange<float>(20.0f, 20000.0f, 0.f, 0.25f), 62.0f));
+    params.add(std::make_unique<AudioParameterFloat>("emphasisMidFreq", "Emphasis Mid Frequency", juce::NormalisableRange<float>(20.0f, 20000.0f, 0.f, 0.25f), 1220.0f));
+    params.add(std::make_unique<AudioParameterFloat>("emphasisHighFreq", "Emphasis Hi Frequency", juce::NormalisableRange<float>(20.0f, 20000.0f, 0.f, 0.25f), 9000.0f));
 
     params.add(std::make_unique<AudioParameterBool>("compressionOn", "Compressor On", false));
     params.add(std::make_unique<AudioParameterBool>("emphasisOn", "Emphasis EQ On", true));
@@ -96,15 +96,16 @@ AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::createP
     params.add(std::make_unique<AudioParameterBool>("primaryDistortionEnabled", "Dist Enabled", true));
     params.add(std::make_unique<AudioParameterBool>("noiseDistortionEnabled", "Noise Enabled", false));
     params.add(std::make_unique<AudioParameterBool>("postClipEnabled", "SoftClip Enabled", true));
-    params.add(std::make_unique<AudioParameterBool>("hqEnabled", "High Quality", false));
+
+    // params.add(std::make_unique<AudioParameterBool>("hqEnabled", "High Quality", true));
 
     params.add(std::make_unique<AudioParameterBool>("hamburgerEnabled", "Enabled", true));
     params.add(std::make_unique<AudioParameterBool>("autoGain", "Auto Gain", false));
 
-    // params.add(std::make_unique<AudioParameterChoice>("oversamplingFactor", "Oversampling Factor", params::oversamplingFactor.categories, 0));
+    params.add(std::make_unique<AudioParameterInt>("oversamplingFactor", "Oversampling Factor", 0, 2, 0));
     // params.add(std::make_unique<AudioParameterChoice>("qualityFactor", "Quality", params::quality.categories, 0));
 
-    params.add(std::make_unique<AudioParameterFloat>("compSpeed", "Comp Speed", NormalisableRange<float>(0.0f, 400.0f, 0.f, 0.25f), 100.f));
+    params.add(std::make_unique<AudioParameterFloat>("compSpeed", "Comp Speed", juce::NormalisableRange<float>(0.0f, 400.0f, 0.f, 0.25f), 100.f));
     params.add(std::make_unique<AudioParameterFloat>("compBandTilt", "Comp Band Tilt", -20.0f, 20.0f, 0.f));
     params.add(std::make_unique<AudioParameterFloat>("compStereoLink", "Stereo Link", 0.0f, 100.0f, 100.f));
     params.add(std::make_unique<AudioParameterFloat>("compThreshold", "Comp Threshold", -48.0f, 0.0f, -35.f));
@@ -128,29 +129,29 @@ AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::createP
     params.add(std::make_unique<AudioParameterFloat>("grungeTone", "Grunge Tone", 0.0f, 1.0f, 0.5f));
 
     params.add(std::make_unique<AudioParameterFloat>("postClipGain", "SoftClip Gain", -18.0f, 18.0f, 0.f));
-    params.add(std::make_unique<AudioParameterFloat>("postClipKnee", "SoftClip Knee", 0.0f, 5.0f, 2.f));
+    params.add(std::make_unique<AudioParameterFloat>("postClipKnee", "SoftClip Knee", 0.0f, 4.0f, 2.f));
 
     // primary distortions
     params.add(std::make_unique<AudioParameterFloat>("saturationAmount", "Grill Saturation", 0.0f, 100.0f, 0.f));
     params.add(std::make_unique<AudioParameterFloat>("tubeAmount", "Tube Saturation", 0.0f, 100.0f, 0.f));
     params.add(std::make_unique<AudioParameterFloat>("phaseAmount", "Phase Saturation", 0.0f, 100.0f, 0.f));
 
-    params.add(std::make_unique<AudioParameterFloat>("phaseDistTone", "Phase Distortion Tone", NormalisableRange<float>(20.0f, 20000.0f, 0.f, 0.25f), 20000.0f));
+    params.add(std::make_unique<AudioParameterFloat>("phaseDistTone", "Phase Distortion Tone", juce::NormalisableRange<float>(20.0f, 20000.0f, 0.f, 0.25f), 20000.0f));
     params.add(std::make_unique<AudioParameterFloat>("phaseDistNormalise", "Phase Normalisation", 0.0f, 1.0f, 0.f));
 
     params.add(std::make_unique<AudioParameterFloat>("jeffAmount", "Tube Jeff Amt", 0.0f, 100.0f, 0.f));
     // noise distortions
     params.add(std::make_unique<AudioParameterFloat>("noiseAmount", "Noise Amt", 0.0f, 100.0f, 0.f));
-    params.add(std::make_unique<AudioParameterFloat>("noiseFrequency", "Noise Freq", NormalisableRange<float>(20.0f, 20000.0f, 0.f, 0.25f), 4000.0f));
+    params.add(std::make_unique<AudioParameterFloat>("noiseFrequency", "Noise Freq", juce::NormalisableRange<float>(20.0f, 20000.0f, 0.f, 0.25f), 4000.0f));
     params.add(std::make_unique<AudioParameterFloat>("noiseQ", "Noise Q", 0.1f, 1.5f, 0.2f));
 
-    params.add(std::make_unique<AudioParameterFloat>("downsampleFreq", "Dwnsmpl Freq", NormalisableRange<float>(200.0f, 40000.0f, 0.f, 0.25f), 40000.0f));
+    params.add(std::make_unique<AudioParameterFloat>("downsampleFreq", "Dwnsmpl Freq", juce::NormalisableRange<float>(200.0f, 40000.0f, 0.f, 0.25f), 40000.0f));
     params.add(std::make_unique<AudioParameterFloat>("downsampleJitter", "Dwnsmpl Jitter", 0.0f, 1.0f, 0.f));
     params.add(std::make_unique<AudioParameterFloat>("bitReduction", "Dwnsmpl Bits", 1.0f, 32.0f, 32.f));
 
     params.add(std::make_unique<AudioParameterFloat>("tubeTone", "Tube Tone", 0.0f, 1.0f, 1.0f));
 
-    params.add(std::make_unique<AudioParameterFloat>("allPassFreq", "AllPass Frequency", NormalisableRange<float>(20.0f, 20000.0f, 0.f, 0.25f), 400.0f));
+    params.add(std::make_unique<AudioParameterFloat>("allPassFreq", "AllPass Frequency", juce::NormalisableRange<float>(20.0f, 20000.0f, 0.f, 0.25f), 400.0f));
     params.add(std::make_unique<AudioParameterFloat>("allPassQ", "AllPass Q", 0.01f, 1.41f, 0.1f));
     params.add(std::make_unique<AudioParameterFloat>("allPassAmount", "AllPass Number", 0.0f, 50.0f, 0.0f));
 
@@ -180,14 +181,10 @@ void AudioPluginAudioProcessor::changeProgramName(int index, const juce::String 
 //==============================================================================
 void AudioPluginAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
 {
-    dsp::ProcessSpec spec;
+    juce::dsp::ProcessSpec spec;
     spec.sampleRate = sampleRate;
     spec.maximumBlockSize = samplesPerBlock;
     spec.numChannels = getTotalNumOutputChannels();
-
-    dryWetMixer.reset();
-    dryWetMixer.prepare(spec);
-    dryWetMixer.setWetLatency(getLatencySamples());
 
     inputGain.prepare(spec);
     outputGain.prepare(spec);
@@ -203,23 +200,37 @@ void AudioPluginAudioProcessor::prepareToPlay(double sampleRate, int samplesPerB
     // update coeffs IF WE NEED TO
     for (int i = 0; i < 3; i++)
     {
-        *peakFilterBefore[i].state = dsp::IIR::ArrayCoefficients<float>::makePeakFilter(spec.sampleRate, filterFrequencies[i], 0.5f, 1.0f);
-        *peakFilterAfter[i].state = dsp::IIR::ArrayCoefficients<float>::makePeakFilter(spec.sampleRate, filterFrequencies[i], 0.5f, 1.0f);
+        *peakFilterBefore[i].state = juce::dsp::IIR::ArrayCoefficients<float>::makePeakFilter(spec.sampleRate, filterFrequencies[i], 0.5f, 1.0f);
+        *peakFilterAfter[i].state = juce::dsp::IIR::ArrayCoefficients<float>::makePeakFilter(spec.sampleRate, filterFrequencies[i], 0.5f, 1.0f);
         prevEmphasis[i] = 0;
     }
 
-    postClip.prepare(spec);
+    oversamplingStack.setOversamplingFactor(hq->get());
+    oversamplingStack.prepare(spec);
+    oversamplingStackPost.setOversamplingFactor(hq->get());
+    oversamplingStackPost.prepare(spec);
     // simdGain.prepare(spec);
 
-    // float totalLatency = oversamplingStack.getLatencySamples();
-    // // DBG("Total Latency: " << totalLatency);
+    float totalLatency = oversamplingStack.getLatencySamples();
+    DBG("Total Latency: " << totalLatency);
     // setLatencySamples((int)std::ceil(totalLatency));
 
+    juce::dsp::ProcessSpec oversampledSpec;
+    oversampledSpec.sampleRate = sampleRate * pow(2, oversamplingStack.getOversamplingFactor());
+    oversampledSpec.maximumBlockSize = samplesPerBlock;
+    oversampledSpec.numChannels = getTotalNumOutputChannels();
+
+    distortionTypeSelection.prepare(oversampledSpec);
+    postClip.prepare(oversampledSpec);
+
     preDistortionSelection.prepare(spec);
-    distortionTypeSelection.prepare(spec);
     noiseDistortionSelection.prepare(spec);
 
     dynamics.prepare(spec);
+
+    dryWetMixer.reset();
+    dryWetMixer.prepare(spec);
+    dryWetMixer.setWetLatency(totalLatency);
 }
 
 void AudioPluginAudioProcessor::releaseResources()
@@ -251,26 +262,38 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
 
     juce::ignoreUnused(midiMessages);
 
+    // int newSamplingRate = getSampleRate() * pow(2, oversampleAmount);
+    {
+        TRACE_EVENT("dsp", "oversampling config");
+
+        dryWetMixer.setWetLatency(oversamplingStack.getLatencySamples());
+
+        int oversampleAmount = hq->get();
+
+        oversamplingStack.setOversamplingFactor(oversampleAmount);
+        if (oldOversamplingFactor != oversampleAmount)
+        {
+            DBG("Oversampling changed to " << oversampleAmount);
+            oldOversamplingFactor = oversampleAmount;
+            prepareToPlay(getSampleRate(), buffer.getNumSamples());
+        }
+    }
+
     juce::ScopedNoDenormals noDenormals;
     auto totalNumInputChannels = getTotalNumInputChannels();
     auto totalNumOutputChannels = getTotalNumOutputChannels();
 
     if (totalNumInputChannels == 0) return;
     if (totalNumOutputChannels == 0) return;
-
-    // In case we have more outputs than inputs, this code clears any output
-    // channels that didn't contain input data, (because these aren't
-    // guaranteed to be empty - they may contain garbage).
-    // This is here to avoid people getting screaming feedback
-    // when they first compile a plugin, but obviously you don't need to keep
-    // this code if your algorithm always overwrites all the output channels.
     
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear(i, 0, buffer.getNumSamples());
 
     TRACE_EVENT_BEGIN("dsp", "audio block from buffer");
-    dsp::AudioBlock<float> block(buffer);
-    dsp::ProcessContextReplacing<float> context(block);
+
+    juce::dsp::AudioBlock<float> block(buffer);
+    juce::dsp::ProcessContextReplacing<float> context(block);
+
     TRACE_EVENT_END("dsp");
     // dry/wet
 
@@ -321,17 +344,20 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
         noiseDistortionSelection.processBlock(block); // TODO: make order changer thingy
     }
 
-    // dsp::AudioBlock<float> oversampledBlock = oversamplingStack.processSamplesUp(block);
 
     {
         TRACE_EVENT("dsp", "pre distortion");
         preDistortionSelection.processBlock(block);
     }
 
+    dsp::AudioBlock<float> oversampledBlock = oversamplingStack.processSamplesUp(block);
+
     {
         TRACE_EVENT("dsp", "primary distortion");
-        distortionTypeSelection.processBlock(block);
+        distortionTypeSelection.processBlock(oversampledBlock);
     }
+
+    oversamplingStack.processSamplesDown(block);
 
     if (emphasisOn)
     {
@@ -349,7 +375,9 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
         emphasisCompensationGain.setGainDecibels(-eqCompensation);
         emphasisCompensationGain.process(context);
 
-        postClip.processBlock(block);
+        dsp::AudioBlock<float> oversampledBlock2 = oversamplingStackPost.processSamplesUp(block);
+        postClip.processBlock(oversampledBlock2);
+        oversamplingStackPost.processSamplesDown(block);
 
         // before output gain
         scopeDataCollector.process (buffer.getReadPointer (0), buffer.getReadPointer (1), (size_t) buffer.getNumSamples());

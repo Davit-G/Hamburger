@@ -1,7 +1,9 @@
 #pragma once
 #include <cmath> // std::abs
 
-#include <JuceHeader.h>
+#include "juce_core/juce_core.h"
+#include "juce_dsp/juce_dsp.h"
+#include "juce_audio_processors/juce_audio_processors.h"
 
 using namespace juce;
 
@@ -20,7 +22,7 @@ public:
 	float processSample(float xn);
 	float processSampleStereo(float xL, float xR);
 
-	void prepare(dsp::ProcessSpec& spec);
+	void prepare(juce::dsp::ProcessSpec& spec);
 
 	void setAttackTime(float attack_in_ms)
 	{

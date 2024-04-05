@@ -18,14 +18,14 @@ PostClip::~PostClip()
 {
 }
 
-void PostClip::prepare(dsp::ProcessSpec &spec)
+void PostClip::prepare(juce::dsp::ProcessSpec &spec)
 {
     gainKnob.prepare(spec);
     kneeKnob.prepare(spec);
 }
 
 /* DONT USE TOGETHER WITH processBlock or smooth value calculations mess up */
-void PostClip::processBlock(dsp::AudioBlock<float> &block)
+void PostClip::processBlock(juce::dsp::AudioBlock<float> &block)
 {
     TRACE_EVENT("dsp", "PostClip::processBlock");
 

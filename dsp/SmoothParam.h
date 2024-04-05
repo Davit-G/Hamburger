@@ -1,6 +1,8 @@
 #pragma once
 
-#include <JuceHeader.h>
+#include "juce_core/juce_core.h"
+#include "juce_audio_processors/juce_audio_processors.h"
+#include "juce_dsp/juce_dsp.h"
 
 /* Only for use with floats / knobs, not categorical parameters */
 class SmoothParam
@@ -12,7 +14,7 @@ public:
         jassert(param); // heads up if the parameter doesn't exist
     }
 
-    void prepare(dsp::ProcessSpec& spec) {
+    void prepare(juce::dsp::ProcessSpec& spec) {
         smoothedParam.reset(spec.sampleRate, 0.01);
         smoothedParam.setCurrentAndTargetValue(param->get());
     }

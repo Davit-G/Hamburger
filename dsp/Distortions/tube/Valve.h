@@ -2,7 +2,8 @@
 #include "LossyIntegrator.h"
 
 #include <cmath>
-#include <JuceHeader.h>
+#include "juce_core/juce_core.h"
+#include "juce_dsp/juce_dsp.h"
 
 template <typename SampleType>
 class ClassAValve
@@ -12,13 +13,10 @@ public:
 	~ClassAValve(void) {}
 
 public:
-	/** reset members to initialized state */
-	void prepare(dsp::ProcessSpec &spec)
+	void prepare(juce::dsp::ProcessSpec &spec)
 	{
-		// --- do any other per-audio-run inits here
 		sampleRate = spec.sampleRate;
 
-		// --- integrators
 		lossyIntegrator[0].calculateFilterCoeffs();
 		lossyIntegrator[0].prepare(spec);
 		lossyIntegrator[1].calculateFilterCoeffs();
@@ -46,7 +44,7 @@ public:
 		*upperBandwidthFilter2ndOrder.state = upperBandwidthFilterCoeffs;
 	}
 
-	void processBlock(const dsp::ProcessContextReplacing<SampleType> &context)
+	void processBlock(const juce::dsp::ProcessContextReplacing<SampleType> &context)
 	{
 		auto inputBlock = context.getInputBlock();
 		auto outputBlock = context.getOutputBlock();
@@ -124,7 +122,7 @@ public:
 		{
 			float clipDelta = xn - gridConductionThreshold;
 			clipDelta = fmax(clipDelta, 0.0f);
-			float compressionFactor = 0.4473253f + 0.5451584f * dsp::FastMathApproximations::exp(-0.3241584f * clipDelta);
+			float compressionFactor = 0.4473253f + 0.5451584f * juce::dsp::FastMathApproximations::exp(-0.3241584f * clipDelta);
 			return compressionFactor * xn;
 		}
 		else
@@ -170,8 +168,8 @@ public:
 				if (clipPointNegative < -1.0f) // --- clip normalize
 					xn /= absCPNegative;
 
-				yn = dsp::FastMathApproximations::tanh(waveshaperSaturation * xn) /
-					 dsp::FastMathApproximations::tanh(waveshaperSaturation);
+				yn = juce::dsp::FastMathApproximations::tanh(waveshaperSaturation * xn) /
+					 juce::dsp::FastMathApproximations::tanh(waveshaperSaturation);
 
 				yn *= absCPNegative; // --- undo clip normalize
 			}
@@ -181,12 +179,12 @@ public:
 	}
 
 private:
-	float sampleRate = 0.0f; ///< sample rate
+	float sampleRate = 44100.0f; ///< sample rate
 
 	LossyIntegrator lossyIntegrator[2];
 
-	dsp::ProcessorDuplicator<dsp::IIR::Filter<SampleType>, dsp::IIR::Coefficients<float>> lowShelvingFilter;
-	dsp::ProcessorDuplicator<dsp::IIR::Filter<SampleType>, dsp::IIR::Coefficients<float>> dcBlockingFilter;
-	dsp::ProcessorDuplicator<dsp::IIR::Filter<SampleType>, dsp::IIR::Coefficients<float>> upperBandwidthFilter1stOrder;
-	dsp::ProcessorDuplicator<dsp::IIR::Filter<SampleType>, dsp::IIR::Coefficients<float>> upperBandwidthFilter2ndOrder;
+	juce::dsp::ProcessorDuplicator<juce::dsp::IIR::Filter<SampleType>, juce::dsp::IIR::Coefficients<float>> lowShelvingFilter;
+	juce::dsp::ProcessorDuplicator<juce::dsp::IIR::Filter<SampleType>, juce::dsp::IIR::Coefficients<float>> dcBlockingFilter;
+	juce::dsp::ProcessorDuplicator<juce::dsp::IIR::Filter<SampleType>, juce::dsp::IIR::Coefficients<float>> upperBandwidthFilter1stOrder;
+	juce::dsp::ProcessorDuplicator<juce::dsp::IIR::Filter<SampleType>, juce::dsp::IIR::Coefficients<float>> upperBandwidthFilter2ndOrder;
 };

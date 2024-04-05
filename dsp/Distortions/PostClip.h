@@ -1,6 +1,8 @@
 #pragma once
 #include "../SmoothParam.h"
 
+#include <melatonin_perfetto/melatonin_perfetto.h>
+
 class PostClip
 {
 public:
@@ -8,8 +10,8 @@ public:
 
     ~PostClip();
 
-    void processBlock(dsp::AudioBlock<float>& block);
-    void prepare(dsp::ProcessSpec& spec);
+    void processBlock(juce::dsp::AudioBlock<float>& block);
+    void prepare(juce::dsp::ProcessSpec& spec);
 
 private:
     SmoothParam gainKnob;

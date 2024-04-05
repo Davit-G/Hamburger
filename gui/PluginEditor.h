@@ -1,7 +1,12 @@
 #pragma once
 
 #include "../PluginProcessor.h"
-#include <JuceHeader.h>
+#include "juce_gui_extra/juce_gui_extra.h"
+#include "juce_gui_basics/juce_gui_basics.h"
+#include "juce_core/juce_core.h"
+#include "juce_audio_processors/juce_audio_processors.h"
+
+#include "BinaryData.h"
 
 #include "LeftColumn.h"
 #include "SaturationColumn.h"
@@ -9,7 +14,6 @@
 
 // #include "melatonin_inspector/melatonin_inspector.h"
 
-using namespace juce;
 
 class EditorV2 : public juce::AudioProcessorEditor
 {
@@ -35,7 +39,7 @@ public:
 
     void paint(juce::Graphics &g) override
     {
-        g.drawImage(image, getLocalBounds().toFloat(), RectanglePlacement::fillDestination);
+        g.drawImage(image, getLocalBounds().toFloat(), juce::RectanglePlacement::fillDestination);
     }
 
     void resized() override
@@ -56,7 +60,7 @@ private:
     SaturationColumn saturationColumn;
     UtilColumn utilColumn;
 
-    juce::Image image = ImageCache::getFromMemory(BinaryData::bg4_jpg, BinaryData::bg4_jpgSize);
+    juce::Image image = juce::ImageCache::getFromMemory(BinaryData::bg4_jpg, BinaryData::bg4_jpgSize);
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(EditorV2)
 };

@@ -9,21 +9,21 @@ PhaseDist::PhaseDist(juce::AudioProcessorValueTreeState& treeState) :
 	normalise(treeState, "phaseDistNormalise")
 	{};
 
-void PhaseDist::prepare(dsp::ProcessSpec& spec) {
+void PhaseDist::prepare(juce::dsp::ProcessSpec& spec) {
 	this->sampleRate = spec.sampleRate;
 
 	amount.prepare(spec);
 	tone.prepare(spec);
 	normalise.prepare(spec);
 
-	*filter.state = dsp::IIR::ArrayCoefficients<float>::makeLowPass(spec.sampleRate, 20000.0f, 0.707f);
+	*filter.state = juce::dsp::IIR::ArrayCoefficients<float>::makeLowPass(spec.sampleRate, 20000.0f, 0.707f);
 	filter.prepare(spec);
 
 	delayLine.setMaximumDelayInSamples(spec.sampleRate);
 	delayLine.prepare(spec);
 };
 
-void PhaseDist::processBlock(dsp::AudioBlock<float>& block) {
+void PhaseDist::processBlock(juce::dsp::AudioBlock<float>& block) {
 	TRACE_EVENT("dsp", "PhaseDist::processBlock");
 	amount.update();
 	tone.update();
@@ -36,8 +36,8 @@ void PhaseDist::processBlock(dsp::AudioBlock<float>& block) {
 	}
 
 	// filter the phase buffer
-	*filter.state = dsp::IIR::ArrayCoefficients<float>::makeLowPass(sampleRate, tone.getRaw(), 0.707f);
-	filter.process(dsp::ProcessContextReplacing<float>(block));
+	*filter.state = juce::dsp::IIR::ArrayCoefficients<float>::makeLowPass(sampleRate, tone.getRaw(), 0.707f);
+	filter.process(juce::dsp::ProcessContextReplacing<float>(block));
 
 	// apply the distortion
 	for (int i = 0; i < block.getNumSamples(); i++) {
@@ -50,7 +50,7 @@ void PhaseDist::processBlock(dsp::AudioBlock<float>& block) {
 
 		float normalised = tanhWaveShaper(mono, normalise.getNextValue() * 10.0f + 0.00001f);
 
-		auto phaseShiftL = (normalised + 2.0f) * amt * 50;
+		auto phaseShiftL = (normalised + 2.0f) * amt * 50 * (sampleRate / 44100.0f);
 		// auto phaseShiftR = (right + 2.0f) * amt * 40;
 		
 		auto leftProcessed = delayLine.popSample(0, phaseShiftL);

@@ -1,5 +1,10 @@
-// heavily inspired by will pirkle
+
 #include "Valve.h"
+#include "juce_core/juce_core.h"
+#include "juce_dsp/juce_dsp.h"
+#include "juce_audio_processors/juce_audio_processors.h"
+
+#include <melatonin_perfetto/melatonin_perfetto.h>
 
 #include "../../SmoothParam.h"
 
@@ -17,8 +22,8 @@ public:
     void calculateCoefficients();
     void calculateCoefficients2();
 
-    void prepare(dsp::ProcessSpec& spec);
-    void processBlock(dsp::AudioBlock<float> &block);
+    void prepare(juce::dsp::ProcessSpec& spec);
+    void processBlock(juce::dsp::AudioBlock<float> &block);
 
     float inputGain = 0.5f;
     float driveGain = 1.0f;

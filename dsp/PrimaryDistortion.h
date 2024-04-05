@@ -8,6 +8,10 @@
 #include "./Noise/Jeff.h"
 #include "Distortions/tube/Amp.h"
 
+#include "juce_core/juce_core.h"
+#include "juce_dsp/juce_dsp.h"
+#include "juce_audio_processors/juce_audio_processors.h"
+
 #include <melatonin_perfetto/melatonin_perfetto.h>
 
 class PrimaryDistortion
@@ -90,7 +94,7 @@ public:
 
         // init iir filter
         iirFilter.reset();
-        *iirFilter.state = dsp::IIR::ArrayCoefficients<float>::makeHighPass(spec.sampleRate, 5.0f, 0.707f);
+        *iirFilter.state = dsp::IIR::ArrayCoefficients<float>::makeFirstOrderHighPass(spec.sampleRate, 5.0f);
         iirFilter.prepare(spec);
 
         setSampleRate(spec.sampleRate);

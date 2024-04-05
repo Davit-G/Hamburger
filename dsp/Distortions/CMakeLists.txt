@@ -5,7 +5,6 @@ PattyFuzz.cpp
 Cooked.cpp
 SoftClipper.cpp
 PostClip.cpp
-HardClip.cpp
 PhaseDist.cpp
 )
 

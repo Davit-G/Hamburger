@@ -2,8 +2,11 @@
 
 #include "../EnvelopeFollower.h"
 
-#include <JuceHeader.h>
-using namespace juce;
+#include "juce_core/juce_core.h"
+#include "juce_dsp/juce_dsp.h"
+#include "juce_audio_processors/juce_audio_processors.h"
+
+#include <melatonin_perfetto/melatonin_perfetto.h>
 
 enum CompressionType {
     EXPANDER,
@@ -21,11 +24,11 @@ public:
     void updateUpDown(float attack, float release, float makeup, float ratioLower, float ratioUpper, float thresholdLower, float thresholdUpper, float kneeWidth, float makeup_dB);
     void updateParameters(float attack, float release, float makeup, float ratio, float threshold, float kneeWidth, float makeup_dB);
 
-    void processBlock(dsp::AudioBlock<float>& dryBuffer);
+    void processBlock(juce::dsp::AudioBlock<float>& dryBuffer);
     float processOneSampleGainStereo(float sampleL, float sampleR);
     float processOneSampleGainMono(float sample);
 
-    void prepare(dsp::ProcessSpec& spec);
+    void prepare(juce::dsp::ProcessSpec& spec);
 
     float attack = 0.0f;
     float release = 0.0f;

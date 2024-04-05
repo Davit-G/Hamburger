@@ -1,20 +1,23 @@
+#pragma once
 
- 
+#include "juce_core/juce_core.h"
+#include "juce_audio_processors/juce_audio_processors.h"
+#include "juce_dsp/juce_dsp.h"
 
-class OversamplingStack { // TODO: implement this into the program
+class OversamplingStack {
 public:
     OversamplingStack() {
         oversamplingArray.clear();
 
-        auto oversamplingDevice = new dsp::Oversampling<float>(2, 1, dsp::Oversampling<float>::filterHalfBandPolyphaseIIR, false);
+        auto oversamplingDevice = new juce::dsp::Oversampling<float>(2, 1, juce::dsp::Oversampling<float>::filterHalfBandPolyphaseIIR, true);
 
         oversamplingArray.add(oversamplingDevice);
         oversamplingArray[0]->clearOversamplingStages();
         oversamplingArray[0]->addDummyOversamplingStage();
 
-        for (int i = 1; i <= 4; i++) {
+        for (int i = 1; i <= 3; i++) {
             // DBG("Adding oversampling stack " << i);
-            oversamplingArray.add(new dsp::Oversampling<float>(2, i, dsp::Oversampling<float>::filterHalfBandPolyphaseIIR, false));
+            oversamplingArray.add(new juce::dsp::Oversampling<float>(2, i, juce::dsp::Oversampling<float>::filterHalfBandPolyphaseIIR, true));
         }
     }
 
@@ -22,7 +25,7 @@ public:
         // oversamplingArray.clear();
     }
 
-    dsp::AudioBlock<float> processSamplesUp(dsp::AudioBlock<float>& block) {
+    juce::dsp::AudioBlock<float> processSamplesUp(juce::dsp::AudioBlock<float>& block) {
         if (oversamplingFactor == 0) { // if there is no oversampling
             return block;
         } else if (oversamplingFactor > oversamplingArray.size()) { // if the oversampling factor is higher than the max stacks we have
@@ -32,11 +35,11 @@ public:
         }
     }
 
-    dsp::AudioBlock<float> processSamplesUpUnchecked(dsp::AudioBlock<float>& block) {
+    juce::dsp::AudioBlock<float> processSamplesUpUnchecked(juce::dsp::AudioBlock<float>& block) {
         return oversamplingArray[oversamplingFactor]->processSamplesUp(block);
     }
 
-    void processSamplesDown(dsp::AudioBlock<float>& block) {
+    void processSamplesDown(juce::dsp::AudioBlock<float>& block) {
         if (oversamplingFactor > oversamplingArray.size()) { // if the oversampling factor is higher than the max stacks we have
             oversamplingArray.getLast()->processSamplesDown(block);
         } else if (oversamplingFactor != 0) {
@@ -52,11 +55,11 @@ public:
         return oversamplingArray[oversamplingFactor]->getLatencyInSamples();
     }
 
-    void processSamplesDownUnchecked(dsp::AudioBlock<float>& block) {
+    void processSamplesDownUnchecked(juce::dsp::AudioBlock<float>& block) {
         oversamplingArray[oversamplingFactor - 1]->processSamplesDown(block);
     }
 
-    void prepare(dsp::ProcessSpec& spec) {
+    void prepare(juce::dsp::ProcessSpec& spec) {
         for (auto& oversampler : oversamplingArray) {
             oversampler->initProcessing(spec.maximumBlockSize);
         }
@@ -65,9 +68,13 @@ public:
     void setOversamplingFactor(int factor) {
         oversamplingFactor = factor;
     }
+
+    int getOversamplingFactor() {
+        return oversamplingFactor;
+    }
 private:
-    juce::OwnedArray<dsp::Oversampling<float>> oversamplingArray;
+    juce::OwnedArray<juce::dsp::Oversampling<float>> oversamplingArray;
 
     // int maxOversamplingFactor = 4;
-    int oversamplingFactor = 1;
+    int oversamplingFactor = 0;
 };
