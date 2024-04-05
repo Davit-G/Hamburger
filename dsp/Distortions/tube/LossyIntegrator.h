@@ -22,8 +22,8 @@ protected:
 	float T = 1.0f / sampleRate;	///<  1 / sample rate
 
 	// random coefficients for coefficient updates
-	const float fc = 5.0f;
-	const float Q = 0.707f;
+	const float fc = 4.0f;
+	const float Q = 0.607f;
 	const float R = 0.5f / Q;
 	const float wd = juce::MathConstants<float>::twoPi * fc;
 

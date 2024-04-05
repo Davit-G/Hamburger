@@ -109,7 +109,7 @@ public:
 		//     *negative* values so meters should be aware
 		// dcOffsetDetected = fabs(dcOffset * dcShiftCoefficient);
 
-		auto yn = doValveEmulationOld(xn, dcOffset * dcShiftCoefficient);
+		auto yn = doValveEmulationOld(xn, dcOffset * dcShiftCoefficient * 0.0f);
 
 		// float clippedBlend = fmin(0.5, blend) * 2.0f;
 

@@ -30,14 +30,14 @@ public:
         using Track = Grid::TrackInfo;
 
         grid.templateRows = {Track(fr(1)), Track(fr(1))};
-        grid.templateColumns = {Track(fr(1)), Track(fr(1)), Track(fr(1))};
+        grid.templateColumns = {Track(fr(1)), Track(fr(1))};
 
         grid.items = {
             GridItem(threshold).withArea(1, 1),
             // GridItem(tilt).withArea(1, 2),
-            GridItem(ratio).withArea(1, 3),
+            GridItem(ratio).withArea(1, 2),
             GridItem(attack).withArea(2, 1),
-            GridItem(makeup).withArea(2, 3)};
+            GridItem(makeup).withArea(2, 2)};
 
         grid.performLayout(bounds);
     }

@@ -28,6 +28,63 @@ void Amp::calculateCoefficients()
     auto &triode3 = triodes[2];
     auto &triode4 = triodes[3];
 
+    auto skewedTone = powf(tubeTone.getRaw(), 3.0f);
+
+    for (int i = 0; i < 4; i++)
+    {
+        // triodes[i].blend = blend * 4;
+        triodes[i].waveshaperSaturation = 0.01f + drive.getRaw() * 0.016;
+    }
+
+    triode1.lowFrequencyShelf_Hz = (10.0f);
+    triode1.lowFrequencyShelfGain_dB = (-10.0f);
+    // triode1.millerHF_Hz = (20000.0f);
+    triode1.millerHF_Hz = fmin(6000.0f + 7900.0f * skewedTone, 21000.0f);
+    triode1.dcBlockingLF_Hz = (12.0f);
+    triode1.outputGain = pow(10.0f, (-1.0f) / 20.0f);
+    triode1.dcShiftCoefficient = (1.0f);
+    triode1.inputGain = driv + 0.3f;
+
+    triode2.lowFrequencyShelf_Hz = (10.0f);
+    triode2.lowFrequencyShelfGain_dB = (-10.0f);
+    // triode2.inputGain = driv + 0.8f;
+    triode2.millerHF_Hz = 7000.0f + 6000.0f * skewedTone;
+    triode2.dcBlockingLF_Hz = (25.0f);
+    triode2.outputGain = pow(10.0f, (+2.0f) / 20.0f);
+    triode2.dcShiftCoefficient = (2.10f);
+
+    triode3.lowFrequencyShelf_Hz = (10.0f);
+    triode3.lowFrequencyShelfGain_dB = (-10.0f);
+    triode3.millerHF_Hz = 9000.0f + 6000.0f * skewedTone;
+    // triode3.millerHF_Hz = 22000.0;
+    // triode3.inputGain = driv + 0.8f;
+    triode3.dcBlockingLF_Hz = (10.0f);
+    triode3.outputGain = pow(10.0f, (+4.0f) / 20.0f);
+    triode3.dcShiftCoefficient = (0.50f);
+
+    triode4.lowFrequencyShelf_Hz = (10.0f);
+    triode4.lowFrequencyShelfGain_dB = (-6.0f);
+    // trioesL[3].millerHF_Hz = 6400.0;
+    triode4.millerHF_Hz = 20000.0f;
+    triode4.dcBlockingLF_Hz = (8.0f);
+    triode4.outputGain = pow(10.0f, (-drive.getRaw() * 0.01f * 24.f - 5.5f) / 20.0f);
+    triode4.dcShiftCoefficient = (0.52f);
+
+    for (int i = 0; i < 4; i++)
+    {
+        triodes[i].calculateCoefficients();
+    }
+}
+
+void Amp::calculateCoefficients2()
+{
+    float driv = drive.getRaw() * 0.02f;
+
+    auto &triode1 = triodes[0];
+    auto &triode2 = triodes[1];
+    auto &triode3 = triodes[2];
+    auto &triode4 = triodes[3];
+
     auto lowFreqShelfHz = (9.0f);
     auto loShelfGain = (-6.0f);
 
@@ -51,9 +108,6 @@ void Amp::calculateCoefficients()
         triodes[i].lowFrequencyShelfGain_dB = loShelfGain;
         triodes[i].dcBlockingLF_Hz = (5.0f);
     }
-
-    // the divisions in this code would all be calculated at compile time
-    // so not a big deal, just mentioning it tho
 
     auto skewedTone = powf(tubeTone.getRaw(), 3.0f);
 
@@ -112,7 +166,7 @@ void Amp::processBlock(dsp::AudioBlock<float> &block)
 
     // step 5: triode 2 and 3 and etc, go nuts
     triodes[1].processBlock(block);
-    // triodes[2].processBlock(block);
+    triodes[2].processBlock(block);
     triodes[3].processBlock(block);
 
     block.multiplyBy(tubeCompress);
