@@ -10,7 +10,8 @@ enum class ParamUnits {
     hz,
     ms,
     db,
-    percent
+    percent,
+    x
 };
 
 juce::String createParamString(float value, ParamUnits unit) {
@@ -23,6 +24,8 @@ juce::String createParamString(float value, ParamUnits unit) {
             return juce::String(value, 1, false) + " dB";
         case ParamUnits::percent:
             return juce::String(value, 2, false) + " %";
+        case ParamUnits::x:
+            return juce::String(value, 0, false) + "x";
         default:
             return juce::String(value, 2, false);
     }
@@ -39,7 +42,12 @@ public:
 
         knob.setSliderStyle(juce::Slider::RotaryVerticalDrag);
         knob.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
-        knob.setRange(knobParamRange.start, knobParamRange.end, 0.001);
+        
+        if (knobUnit == ParamUnits::x) {
+            knob.setRange(knobParamRange.start, knobParamRange.end, 1.0);
+        } else {
+            knob.setRange(knobParamRange.start, knobParamRange.end, 0.001);
+        }
 
         knob.setPaintingIsUnclipped(true);
 

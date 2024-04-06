@@ -5,6 +5,7 @@
 #include "Modules/Panels/EQPanel.h"
 #include "Modules/Panels/UtilityPanel.h"
 #include "Modules/Panels/SettingsPanel.h"
+#include "Modules/Panels/OtherUtils.h"
 #include "LookAndFeel/Palette.h"
 
 class UtilColumn : public juce::Component
@@ -23,7 +24,8 @@ public:
         std::vector<std::unique_ptr<Panel>> utilityPanels;
         // ORDERING IS VERY IMPORTANT
         utilityPanels.push_back(std::make_unique<UtilityPanel>(p));
-        utility = std::make_unique<Module>(p, "UTILITY", "hamburgerEnabled", "", std::move(utilityPanels));
+        utilityPanels.push_back(std::make_unique<OtherUtils>(p));
+        utility = std::make_unique<Module>(p, "", "hamburgerEnabled", "", std::move(utilityPanels));
         utility->setLookAndFeel(&utilityLookAndFeel);
         addAndMakeVisible(utility.get());
 

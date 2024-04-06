@@ -1,6 +1,5 @@
 Must
 
-oversampling
 performance optimisations
 pluginval
 
@@ -13,7 +12,7 @@ antialiasing on logo
 Would be nice
 
 add more waveshaper stuff to grill
-support other sample rates / more channels?
+support more channels?
 post filtering (filtered tone sounds better than regular one? idk)
 replicate / improve bias dc behaviour better
 
