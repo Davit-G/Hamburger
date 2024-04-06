@@ -55,6 +55,9 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor() : AudioProcessor(BusesPro
     emphasisFreq[2] = emphasisHighFreq;
     jassert(emphasisHighFreq);
 
+    clipEnabled = dynamic_cast<juce::AudioParameterBool *>(treeState.getParameter("postClipEnabled"));
+    jassert(clipEnabled);
+
     // oversamplingFactor = dynamic_cast<juce::AudioParameterChoice *>(treeState.getParameter("oversamplingFactor"));
     // jassert(oversamplingFactor);
 
@@ -136,7 +139,7 @@ AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::createP
     params.add(std::make_unique<AudioParameterFloat>("tubeAmount", "Tube Saturation", 0.0f, 100.0f, 0.f));
     params.add(std::make_unique<AudioParameterFloat>("phaseAmount", "Phase Saturation", 0.0f, 100.0f, 0.f));
 
-    params.add(std::make_unique<AudioParameterFloat>("phaseDistTone", "Phase Distortion Tone", juce::NormalisableRange<float>(20.0f, 20000.0f, 0.f, 0.25f), 20000.0f));
+    params.add(std::make_unique<AudioParameterFloat>("phaseDistTone", "Phase Distortion Tone", juce::NormalisableRange<float>(20.0f, 20000.0f, 0.f, 0.25f), 355.0f));
     params.add(std::make_unique<AudioParameterFloat>("phaseDistNormalise", "Phase Normalisation", 0.0f, 1.0f, 0.f));
 
     params.add(std::make_unique<AudioParameterFloat>("jeffAmount", "Tube Jeff Amt", 0.0f, 100.0f, 0.f));
@@ -317,7 +320,7 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
             float eqGainValue = emphasis[i]->get();
             float eqFreqValue = emphasisFreq[i]->get();
             
-            double grabbedSampleRate = getSampleRate();
+            float grabbedSampleRate = getSampleRate();
             if (eqGainValue != prevEmphasis[i] || eqFreqValue != prevEmphasisFreq[i])
             {
                 *peakFilterBefore[i].state = dsp::IIR::ArrayCoefficients<float>::makePeakFilter(grabbedSampleRate, eqFreqValue, 0.5f, Decibels::decibelsToGain(-eqGainValue));
@@ -375,9 +378,13 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
         emphasisCompensationGain.setGainDecibels(-eqCompensation);
         emphasisCompensationGain.process(context);
 
-        dsp::AudioBlock<float> oversampledBlock2 = oversamplingStackPost.processSamplesUp(block);
-        postClip.processBlock(oversampledBlock2);
-        oversamplingStackPost.processSamplesDown(block);
+        if (clipEnabled->get())
+        {
+            dsp::AudioBlock<float> oversampledBlock2 = oversamplingStackPost.processSamplesUp(block);
+            postClip.processBlock(oversampledBlock2);
+            oversamplingStackPost.processSamplesDown(block);
+        }
+
 
         // before output gain
         scopeDataCollector.process (buffer.getReadPointer (0), buffer.getReadPointer (1), (size_t) buffer.getNumSamples());

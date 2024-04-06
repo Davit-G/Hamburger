@@ -29,21 +29,18 @@ void PostClip::processBlock(juce::dsp::AudioBlock<float> &block)
 {
     TRACE_EVENT("dsp", "PostClip::processBlock");
 
-    if (clipEnabled != nullptr && clipEnabled->get())
+    gainKnob.update();
+    kneeKnob.update();
+
+    for (int sample = 0; sample < block.getNumSamples(); sample++)
     {
-        gainKnob.update();
-        kneeKnob.update();
+        float gainAmount = juce::Decibels::decibelsToGain(gainKnob.getNextValue());
+        float kneeAmt = kneeKnob.getNextValue() * 0.5f;
 
-        for (int sample = 0; sample < block.getNumSamples(); sample++)
-        {
-            float gainAmount = juce::Decibels::decibelsToGain(gainKnob.getNextValue());
-            float kneeAmt = kneeKnob.getNextValue() * 0.5f;
+        float xn = block.getSample(0, sample) * gainAmount;
+        block.setSample(0, sample, softClipperFunc(xn, 1.0f, kneeAmt));
 
-            float xn = block.getSample(0, sample) * gainAmount;
-            block.setSample(0, sample, softClipperFunc(xn, 1.0f, kneeAmt));
-
-            xn = block.getSample(1, sample) * gainAmount;
-            block.setSample(1, sample, softClipperFunc(xn, 1.0f, kneeAmt));
-        }
+        xn = block.getSample(1, sample) * gainAmount;
+        block.setSample(1, sample, softClipperFunc(xn, 1.0f, kneeAmt));
     }
 }

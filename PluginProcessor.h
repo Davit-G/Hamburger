@@ -77,6 +77,7 @@ private:
     juce::AudioParameterFloat *mixKnob = nullptr;
     juce::AudioParameterFloat *outputGainKnob = nullptr;
 
+    juce::AudioParameterBool *clipEnabled = nullptr;
     juce::AudioParameterBool *enableEmphasis = nullptr;
     juce::AudioParameterInt *hq = nullptr;
     juce::AudioParameterBool *hamburgerEnabledButton = nullptr; // acts as bypass

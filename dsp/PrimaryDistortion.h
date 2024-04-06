@@ -58,7 +58,31 @@ public:
             fold->processBlock(block);
             softClipper->processBlock(block);
 
-            iirFilter.process(context); // hpf afterwards to remove bias
+            juce::AudioBuffer<double> bufferDouble(block.getNumChannels(), block.getNumSamples());
+            juce::dsp::AudioBlock<double> blockDouble(bufferDouble);
+            
+            
+            for (int channel = 0; channel < block.getNumChannels(); channel++)
+            {
+                for (int sample = 0; sample < block.getNumSamples(); sample++)
+                {
+                    blockDouble.setSample(channel, sample, block.getSample(channel, sample));
+                }
+            }
+
+            auto doubleContext = dsp::ProcessContextReplacing<double>(blockDouble);
+
+            iirFilter.process(doubleContext);
+            
+            for (int channel = 0; channel < block.getNumChannels(); channel++)
+            {
+                for (int sample = 0; sample < block.getNumSamples(); sample++)
+                {
+                    block.setSample(channel, sample, blockDouble.getSample(channel, sample));
+                }
+            }
+            
+            
             break;
         }
         case 1:
@@ -94,7 +118,7 @@ public:
 
         // init iir filter
         iirFilter.reset();
-        *iirFilter.state = dsp::IIR::ArrayCoefficients<float>::makeFirstOrderHighPass(spec.sampleRate, 5.0f);
+        *iirFilter.state = dsp::IIR::ArrayCoefficients<double>::makeFirstOrderHighPass(spec.sampleRate, 8.0f);
         iirFilter.prepare(spec);
 
         setSampleRate(spec.sampleRate);
@@ -119,7 +143,7 @@ private:
     std::unique_ptr<Amp> tubeAmp = nullptr;
     std::unique_ptr<PhaseDist> phaseDist = nullptr;
 
-    dsp::ProcessorDuplicator<dsp::IIR::Filter<float>, dsp::IIR::Coefficients<float>> iirFilter;
+    dsp::ProcessorDuplicator<dsp::IIR::Filter<double>, dsp::IIR::Coefficients<double>> iirFilter;
 
     float sampleRate;
 

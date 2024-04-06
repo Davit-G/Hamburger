@@ -18,18 +18,18 @@ void Fuzz::processBlock(dsp::AudioBlock<float>& block) {
 
 
 	for (int sample = 0; sample < static_cast<int>(block.getNumSamples()); sample++) {
-		// auto envelope = follower.processSampleStereo(block.getSample(0, sample), block.getSample(1, sample));
+		auto envelope = follower.processSampleStereo(block.getSample(0, sample), block.getSample(1, sample));
 
 		float biasAmt = bias.getNextValue() * 3.0f;
 		
-		// float x = block.getSample(0, sample) + envelope * biasAmt;
-		// block.setSample(0, sample, x / (1 + fabs(x)));
+		float x = block.getSample(0, sample) + envelope * biasAmt;
+		block.setSample(0, sample, x / (1 + fabs(x)));
 
-		// x = block.getSample(1, sample) + envelope * biasAmt;
-		// block.setSample(1, sample, x / (1 + fabs(x)));
+		x = block.getSample(1, sample) + envelope * biasAmt;
+		block.setSample(1, sample, x / (1 + fabs(x)));
 
-		// add bias
-		block.setSample(0, sample, block.getSample(0, sample) + biasAmt);
-		block.setSample(1, sample, block.getSample(1, sample) + biasAmt);
+		// // add bias
+		// block.setSample(0, sample, block.getSample(0, sample) + biasAmt);
+		// block.setSample(1, sample, block.getSample(1, sample) + biasAmt);
 	}
 }
