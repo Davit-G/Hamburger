@@ -114,8 +114,8 @@ AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::createP
     params.add(std::make_unique<AudioParameterChoice>("noiseDistortionType", "Noise Type", params::noiseTypes.categories, 0));
     params.add(std::make_unique<AudioParameterChoice>("compressionType", "Comp Type", params::dynamics.categories, 0));
 
-    params.add(std::make_unique<AudioParameterFloat>("fuzz", "Fuzz", 0.0f, 100.0f, 0.0f));
-    params.add(std::make_unique<AudioParameterFloat>("fuzzShape", "Fuzz Shape", 0.0f, 100.0f, 50.0f));
+    params.add(std::make_unique<AudioParameterFloat>("diode", "Diode", 0.0f, 100.0f, 0.0f));
+    // params.add(std::make_unique<AudioParameterFloat>("fuzz", "Fuzz", 0.0f, 100.0f, 0.0f));
     params.add(std::make_unique<AudioParameterFloat>("sizzle", "Sizzle", 0.0f, 100.0f, 0.0f));
     params.add(std::make_unique<AudioParameterFloat>("fold", "Fold", 0.0f, 100.0f, 0.0f));
     

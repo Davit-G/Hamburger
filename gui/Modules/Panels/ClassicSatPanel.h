@@ -11,7 +11,7 @@ public:
     ClassicSatPanel(AudioPluginAudioProcessor &p) : Panel(p, "GRILL"), 
         satKnob(p, "SATURATION", "saturationAmount", ParamUnits::percent),
         biasKnob(p, "BIAS", "bias"),
-        fuzzKnob(p, "FUZZ", "fuzz"),
+        fuzzKnob(p, "DIODE", "diode"),
         cookedKnob(p, "FOLD", "fold")
     {
         addAndMakeVisible(satKnob);

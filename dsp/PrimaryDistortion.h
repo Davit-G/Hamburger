@@ -4,6 +4,7 @@
 #include "Distortions/PattyFuzz.h"
 #include "Distortions/Fuzz.h"
 #include "Distortions/Cooked.h"
+#include "Distortions/DiodeWaveshape.h"
 #include "Distortions/PhaseDist.h"
 #include "./Noise/Jeff.h"
 #include "Distortions/tube/Amp.h"
@@ -32,6 +33,7 @@ public:
         fuzz = std::make_unique<Fuzz>(state);
         tubeAmp = std::make_unique<Amp>(state);
         phaseDist = std::make_unique<PhaseDist>(state);
+        diodeWaveshape = std::make_unique<DiodeWaveshape>(state);
     }
 
     ~PrimaryDistortion() {}
@@ -52,10 +54,11 @@ public:
         { // classic
 
             TRACE_EVENT("dsp", "classic");
-            patty->processBlock(block);
+            // patty->processBlock(block);
             fuzz->processBlock(block);
 
             fold->processBlock(block);
+            diodeWaveshape->processBlock(block);
             softClipper->processBlock(block);
 
             juce::AudioBuffer<double> bufferDouble(block.getNumChannels(), block.getNumSamples());
@@ -114,6 +117,7 @@ public:
         tubeAmp->prepare(spec);
         phaseDist->prepare(spec);
         jeff->prepare(spec);
+        diodeWaveshape->prepare(spec);
 
 
         // init iir filter
@@ -140,6 +144,7 @@ private:
     std::unique_ptr<PattyFuzz> patty = nullptr;
     std::unique_ptr<Jeff> jeff = nullptr;
     std::unique_ptr<Fuzz> fuzz = nullptr;
+    std::unique_ptr<DiodeWaveshape> diodeWaveshape = nullptr;
     std::unique_ptr<Amp> tubeAmp = nullptr;
     std::unique_ptr<PhaseDist> phaseDist = nullptr;
 

@@ -11,7 +11,6 @@ class PattyFuzz
 {
 public:
 	PattyFuzz(juce::AudioProcessorValueTreeState& treeState);
-	~PattyFuzz();
 
 	void processBlock(juce::dsp::AudioBlock<float>& block);
 	void prepare(juce::dsp::ProcessSpec& spec);
