@@ -19,8 +19,7 @@ public:
         setColour(juce::PopupMenu::ColourIds::highlightedTextColourId, juce::Colours::white);
         setColour(juce::ComboBox::arrowColourId, juce::Colours::white);
 
-        questrialFont = std::make_unique<Font>(Font(Typeface::createSystemTypefaceFor(BinaryData::QuestrialRegular_ttf, BinaryData::QuestrialRegular_ttfSize)));
-        questrialFont->setSizeAndStyle(14, questrialFont->getAvailableStyles()[0], 1, 0);
+        questrialFont->setSizeAndStyle(18, questrialFont->getAvailableStyles()[0], 1, 0);
     }
 
     Font getComboBoxFont()
@@ -164,5 +163,7 @@ public:
 
 private:
 
-    std::unique_ptr<Font> questrialFont = nullptr;
+    static const std::unique_ptr<Font> questrialFont;
 };
+
+const std::unique_ptr<juce::Font, std::default_delete<juce::Font>> ComboBoxLookAndFeel::questrialFont = std::make_unique<juce::Font>(juce::Typeface::createSystemTypefaceFor(BinaryData::QuestrialRegular_ttf, BinaryData::QuestrialRegular_ttfSize));

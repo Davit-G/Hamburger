@@ -15,19 +15,16 @@ void Cooked::processBlock(juce::dsp::AudioBlock<float>& block) {
 	TRACE_EVENT("dsp", "Cooked::processBlock");
 	amount.update();
 
-	auto rightDryData = block.getChannelPointer(1);
-	auto leftDryData = block.getChannelPointer(0);
-
 	for (int sample = 0; sample < block.getNumSamples(); sample++) {
 		float nextCooked = amount.getNextValue() * 0.01f;
 
-		//the original waveshaping thing
-		if (nextCooked != 0.f) {
-			auto x = rightDryData[sample] * (nextCooked * 20 + 1);
-			rightDryData[sample] = (4 * (abs(0.25*x + 0.25 - round(0.25*x + 0.25)) - 0.25));
+		for (int channel = 0; channel < block.getNumChannels(); channel++) {
+			auto dryData = block.getChannelPointer(channel);
 
-			x = leftDryData[sample] * (nextCooked * 20 + 1);
-			leftDryData[sample] = (4 * (abs(0.25*x + 0.25 - round(0.25*x + 0.25)) - 0.25));
+			if (nextCooked != 0.f) {
+				auto x = dryData[sample] * (nextCooked * 20 + 1);
+				dryData[sample] = (4 * (abs(0.25*x + 0.25 - round(0.25*x + 0.25)) - 0.25));
+			}
 		}
 	}
 };

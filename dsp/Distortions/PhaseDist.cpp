@@ -51,7 +51,6 @@ void PhaseDist::processBlock(juce::dsp::AudioBlock<float>& block) {
 		float normalised = tanhWaveShaper(mono, normalise.getNextValue() * 10.0f + 0.00001f);
 
 		auto phaseShiftL = (normalised + 2.0f) * amt * 50 * (sampleRate / 44100.0f);
-		// auto phaseShiftR = (right + 2.0f) * amt * 40;
 		
 		auto leftProcessed = delayLine.popSample(0, phaseShiftL);
 		auto rightProcessed = delayLine.popSample(1, phaseShiftL);

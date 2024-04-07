@@ -214,10 +214,6 @@ void AudioPluginAudioProcessor::prepareToPlay(double sampleRate, int samplesPerB
     oversamplingStackPost.prepare(spec);
     // simdGain.prepare(spec);
 
-    float totalLatency = oversamplingStack.getLatencySamples();
-    DBG("Total Latency: " << totalLatency);
-    // setLatencySamples((int)std::ceil(totalLatency));
-
     juce::dsp::ProcessSpec oversampledSpec;
     oversampledSpec.sampleRate = sampleRate * pow(2, oversamplingStack.getOversamplingFactor());
     oversampledSpec.maximumBlockSize = samplesPerBlock;
@@ -230,6 +226,10 @@ void AudioPluginAudioProcessor::prepareToPlay(double sampleRate, int samplesPerB
     noiseDistortionSelection.prepare(spec);
 
     dynamics.prepare(spec);
+
+    float totalLatency = oversamplingStack.getLatencySamples() + oversamplingStackPost.getLatencySamples();
+    DBG("Total Latency: " << totalLatency);
+    // setLatencySamples((int)std::ceil(totalLatency));
 
     dryWetMixer.reset();
     dryWetMixer.prepare(spec);
