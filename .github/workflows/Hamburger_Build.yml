@@ -97,19 +97,19 @@ jobs:
       if: ${{ !startsWith(matrix.os, 'windows') }}
       id: configure
       run: |
-        cmake -B "${{matrix.folder}}" -G "${{matrix.compiler}}" -DCMAKE_BUILD_TYPE:STRING=Release -j
+        cmake -B "${{matrix.folder}}" -G "${{matrix.compiler}}" -DCMAKE_BUILD_TYPE:STRING=Release
 
     - name: build
       id: build
       run: |
-        cmake --build "${{matrix.folder}}" --config Release --target ${{env.NOSPACE}}_VST3
-        cmake --build "${{matrix.folder}}" --config Release --target ${{env.NOSPACE}}_CLAP
+        cmake --build "${{matrix.folder}}" --config Release --target ${{env.NOSPACE}}_VST3 -j
+        cmake --build "${{matrix.folder}}" --config Release --target ${{env.NOSPACE}}_CLAP -j
 
     - name: (mac) build
       if: startsWith(matrix.os, 'macos')
       id: build_mac
       run: |
-        cmake --build "${{matrix.folder}}" --config Release --target ${{env.NOSPACE}}_AU
+        cmake --build "${{matrix.folder}}" --config Release --target ${{env.NOSPACE}}_AU -j
 
     - name: (windows) package
       if: startsWith(matrix.os, 'windows')
