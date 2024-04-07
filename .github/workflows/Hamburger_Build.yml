@@ -97,7 +97,7 @@ jobs:
       if: ${{ !startsWith(matrix.os, 'windows') }}
       id: configure
       run: |
-        cmake -B "${{matrix.folder}}" -G "${{matrix.compiler}}"
+        cmake -B "${{matrix.folder}}" -G "${{matrix.compiler}}" -DCMAKE_BUILD_TYPE:STRING=Release -j
 
     - name: build
       id: build
