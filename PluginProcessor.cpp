@@ -120,6 +120,7 @@ AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::createP
     params.add(std::make_unique<AudioParameterFloat>("fold", "Fold", 0.0f, 100.0f, 0.0f));
     
     params.add(std::make_unique<AudioParameterFloat>("gateAmt", "Gate Amt", 0.0f, 1.0f, 0.f));
+    params.add(std::make_unique<AudioParameterFloat>("gateMix", "Gate Mix", 0.0f, 1.0f, 1.f));
     
     params.add(std::make_unique<AudioParameterFloat>("bias", "Bias", 0.0f, 1.0f, 0.0f));
 

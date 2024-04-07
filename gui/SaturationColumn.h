@@ -10,7 +10,7 @@
 #include "Modules/Panels/ErosionPanel.h"
 #include "Modules/Panels/SizzlePanel.h"
 #include "Modules/Panels/ReductionPanel.h"
-#include "Modules/Panels/JeffPanel.h"
+#include "Modules/Panels/GatePanel.h"
 
 #include "LookAndFeel/Palette.h"
 
@@ -60,7 +60,7 @@ public:
         noisePanels.push_back(std::make_unique<SizzlePanel>(p));
         noisePanels.push_back(std::make_unique<ErosionPanel>(p));
         noisePanels.push_back(std::make_unique<ReductionPanel>(p));
-        noisePanels.push_back(std::make_unique<JeffPanel>(p));
+        noisePanels.push_back(std::make_unique<GatePanel>(p));
         noisePanels.push_back(std::make_unique<SizzleOGPanel>(p));
 
         noise = std::make_unique<Module>(p, "NOISE", "noiseDistortionEnabled", "noiseDistortionType", std::move(noisePanels));

@@ -9,10 +9,11 @@
 class HarshGate
 {
 public:
-    HarshGate(juce::AudioProcessorValueTreeState& treeState): amount(treeState, "gateAmt") {};
+    HarshGate(juce::AudioProcessorValueTreeState& treeState): amount(treeState, "gateAmt"), mix(treeState, "gateMix") {};
 
     void processBlock(dsp::AudioBlock<float>& block) {
         amount.update();
+        mix.update();
 
         auto rightDryData = block.getChannelPointer(1);
         auto leftDryData = block.getChannelPointer(0);
@@ -25,21 +26,24 @@ public:
 
             auto lr = l + r;
             
-            // basic piecewise
+            
+            float blend = mix.getNextValue();
 
             if (abs(lr) < amt) {
-                block.setSample(0, sample, 0.0f);
-                block.setSample(1, sample, 0.0f);
+                block.setSample(0, sample, (0.0f) * blend + l * (1 - blend));
+                block.setSample(1, sample, (0.0f) * blend + r * (1 - blend));
                 continue;
             }
 
             if (lr > -amt) {
-                block.setSample(0, sample, l + amt);
-                block.setSample(1, sample, r + amt);
+                block.setSample(0, sample, (l + amt) * blend + l * (1 - blend));
+                block.setSample(1, sample, (r + amt) * blend + r * (1 - blend));
             } else if (lr < amt) {
-                block.setSample(0, sample, l - amt);
-                block.setSample(1, sample, r - amt);
+                block.setSample(0, sample, (l - amt) * blend + l * (1 - blend));
+                block.setSample(1, sample, (r - amt) * blend + r * (1 - blend));
             }
+
+
         }
     }
     
@@ -48,6 +52,7 @@ public:
     }
 private:
     SmoothParam amount;
+    SmoothParam mix;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(HarshGate);
 };
