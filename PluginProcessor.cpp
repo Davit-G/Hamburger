@@ -142,7 +142,7 @@ AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::createP
     // noise distortions
     params.add(std::make_unique<AudioParameterFloat>("noiseAmount", "Noise Amt", 0.0f, 100.0f, 0.f));
     params.add(std::make_unique<AudioParameterFloat>("noiseFrequency", "Noise Freq", juce::NormalisableRange<float>(20.0f, 20000.0f, 0.f, 0.25f), 4000.0f));
-    params.add(std::make_unique<AudioParameterFloat>("noiseQ", "Noise Q", 0.1f, 1.5f, 0.2f));
+    params.add(std::make_unique<AudioParameterFloat>("noiseQ", "Noise Q", 0.1f, 1.5f, 1.f));
 
     params.add(std::make_unique<AudioParameterFloat>("downsampleFreq", "Dwnsmpl Freq", juce::NormalisableRange<float>(200.0f, 40000.0f, 0.f, 0.25f), 40000.0f));
     params.add(std::make_unique<AudioParameterFloat>("downsampleMix", "Dwnsmpl Mix", 0.0f, 1.0f, 1.f));

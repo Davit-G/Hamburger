@@ -41,7 +41,7 @@ void PhaseDist::processBlock(juce::dsp::AudioBlock<float>& block) {
 
 	// apply the distortion
 	for (int i = 0; i < block.getNumSamples(); i++) {
-		auto amt = powf(amount.get() * 0.01f, 2) * 100.0f * 20.0f;
+		auto amt = powf(amount.get() * 0.01f, 3) * 60.0f * 20.0f;
 
 		float left = block.getSample(0, i);
 		float right = block.getSample(1, i);
