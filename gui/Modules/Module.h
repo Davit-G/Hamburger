@@ -57,7 +57,6 @@ public:
 
     void paint(juce::Graphics &g) override
     {
-        // g.fillAll(juce::Colour::fromRGB(0, 0, 0));
         Path p;
         p.addRoundedRectangle(getLocalBounds().reduced(4).toFloat(), 15.0f);
         g.setColour(juce::Colour::fromRGB(0, 0, 0));
@@ -66,7 +65,7 @@ public:
 
     void resized() override
     {
-        auto bounds = getLocalBounds().reduced(8);
+        auto bounds = getLocalBounds().reduced(12);
 
         if (noHeader)
         {
@@ -135,10 +134,9 @@ private:
         titleLabel.setText(moduleName, juce::dontSendNotification);
         titleLabel.setFont(comboBoxLook.getComboBoxFont());
         titleLabel.setColour(juce::Label::textColourId, juce::Colours::white);
-        // if (modulePanels.size() == 1)
-        // {
-            addAndMakeVisible(titleLabel);
-        // }
+        
+        addAndMakeVisible(titleLabel);
+        
     }
 
     void setCategoryText(juce::String moduleName)

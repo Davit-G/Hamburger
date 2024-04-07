@@ -11,10 +11,12 @@ public:
         erosionFreq(p, "FREQ", "noiseFrequency", ParamUnits::hz),
         erosionQ(p, "Q", "noiseQ")
     {
-
+        
         addAndMakeVisible(erosionAmt);
         addAndMakeVisible(erosionFreq);
         addAndMakeVisible(erosionQ);
+
+        
     }
 
     void resized() {

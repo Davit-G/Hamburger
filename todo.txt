@@ -24,7 +24,6 @@ make a credits panel that shows up on the entire screen
 
 feedback:
 
-Emphasis eq panel isnt intuitive, separate eq bits with a divider, and add a label on the top for band 1 band 2 or smth
 Mix knob on bit noise and gate noise
 breaks on multiple channels
 
