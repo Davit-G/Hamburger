@@ -11,22 +11,22 @@ public:
     ReductionPanel(AudioPluginAudioProcessor &p) : Panel(p, "BIT"),
                                                    downSample(p, "RATE", "downsampleFreq", ParamUnits::hz),
                                                    bitReduction(p, "BITS", "bitReduction"),
-                                                   jitter(p, "GRIT", "downsampleJitter")
+                                                   downsampleMix(p, "MIX", "downsampleMix")
     {
         addAndMakeVisible(downSample);
         addAndMakeVisible(bitReduction);
-        addAndMakeVisible(jitter);
+        addAndMakeVisible(downsampleMix);
     }
 
     void resized() override {
         auto bounds = getLocalBounds();
         auto width = bounds.getWidth() / 3;
         downSample.setBounds(bounds.removeFromLeft(width));
-        jitter.setBounds(bounds.removeFromLeft(width));
-        bitReduction.setBounds(bounds);
+        bitReduction.setBounds(bounds.removeFromLeft(width));
+        downsampleMix.setBounds(bounds);
     }
 
     ParamKnob downSample;
-    ParamKnob jitter;
+    ParamKnob downsampleMix;
     ParamKnob bitReduction;
 };

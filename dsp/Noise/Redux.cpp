@@ -4,7 +4,7 @@
 
 //==============================================================================
 Redux::Redux(juce::AudioProcessorValueTreeState &treeState) : downsample(treeState, "downsampleFreq"),
-															  jitter(treeState, "downsampleJitter"),
+															  downsampleMix(treeState, "downsampleMix"),
 															  bitReduction(treeState, "bitReduction")
 {
 }
@@ -16,7 +16,7 @@ Redux::~Redux()
 void Redux::prepare(juce::dsp::ProcessSpec &spec)
 {
 	downsample.prepare(spec);
-	jitter.prepare(spec);
+	downsampleMix.prepare(spec);
 	bitReduction.prepare(spec);
 	this->sampleRate = spec.sampleRate;
 
@@ -54,35 +54,43 @@ void Redux::processBlock(juce::dsp::AudioBlock<float> &block)
 
 	downsample.update();
 	bitReduction.update();
-	jitter.update();
+	downsampleMix.update();
 
 	for (int sample = 0; sample < block.getNumSamples(); sample++)
 	{
 		float dsmplFreq = downsample.get();
 		float downsamplingValue = sampleRate * 0.5f / dsmplFreq;
 
-		float bitReductionValue = bitReduction.get();
-		float jitterAmount = jitter.get();
+		float bitReductionValue = bitReduction.getNextValue();
+		float mixAmount = downsampleMix.getNextValue();
 
 		// sample and hold process L channel
-		if (floor(fmodf(sample, downsamplingValue + jitterOffsetL)) == 0)
+		if (floor(fmodf(sample, downsamplingValue)) == 0)
 		{
 			auto xL = leftDryData[sample];
 			auto xR = rightDryData[sample];
-			float posValues = powf(2, bitReductionValue);
+
+			// float posValues = powf(2, bitReductionValue);
+
+			// faster version?
+			float amt = bitReductionValue;
+    
+			long long int result = 2;
+			result <<= (int)amt;
+			
+			float remainder = powf(2, (float)(amt - (int)amt));
+			float posValues = remainder * result;
+
 			xL = fmodf(xL, 1 / posValues); // bit reduction process
 			xR = fmodf(xR, 1 / posValues); // bit reduction process
 			xL = leftDryData[sample] - xL;
 			xR = rightDryData[sample] - xR;
 
 			heldSampleL = xL;
-			jitterOffsetL = jitterAmount * (rand() / (float)RAND_MAX) * 0.3f; // different rand value for both channels results in stereo :D
-
 			heldSampleR = xR;
-			jitterOffsetR = jitterAmount * (rand() / (float)RAND_MAX) * 0.3f;
 		}
 
-		leftDryData[sample] = heldSampleL;
-		rightDryData[sample] = heldSampleR;
+		leftDryData[sample] = heldSampleL * mixAmount + leftDryData[sample] * (1 - mixAmount);
+		rightDryData[sample] = heldSampleR * mixAmount + rightDryData[sample] * (1 - mixAmount);
 	}
 }

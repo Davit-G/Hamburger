@@ -20,13 +20,10 @@ public:
 
 private:
     SmoothParam downsample;
-    SmoothParam jitter;
+    SmoothParam downsampleMix;
     SmoothParam bitReduction;
 
     juce::dsp::ProcessorDuplicator<juce::dsp::IIR::Filter<float>, juce::dsp::IIR::Coefficients<float>> antialiasingFilter[4];
-
-    float jitterOffsetL = 0.0f;
-    float jitterOffsetR = 0.0f;
 
     float heldSampleL = 0.0f;
     float heldSampleR = 0.0f;
