@@ -6,7 +6,6 @@ JUCE is licensed under the GNU General Public License v3 for this project. See [
 
 # Fonts 
 Questrial-Regular.ttf: Copyright 2011 The Questrial Project Authors (https://github.com/googlefonts/questrial)
-Quicksand[wght].ttf: Copyright 2019 The Quicksand Project Authors (https://github.com/andrew-paglinawan/QuicksandFamily.git), with Reserved Font Name "Quicksand"
 
 # xsimd
 

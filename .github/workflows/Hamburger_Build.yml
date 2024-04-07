@@ -18,6 +18,7 @@ jobs:
   build:
     name: build
     strategy:
+      fail-fast: false
       matrix:
         include:
         - {
