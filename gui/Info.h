@@ -84,7 +84,7 @@ public:
         versionLabel.setFont(*questrialFont);
 
         descriptionLabel.setJustificationType(Justification::topLeft);
-        descriptionLabel.setText("Hamburger is a free but powerful distortion effect plugin with dynamics controls and equalisation designed for more control. Hamburger takes inspiration from other distortion and analog emulation plugins, and provides a tight set of controls that allow for fast pleasing results. \n \nHuge thanks to Sam (womp), Bean, DEPARTURE, Sheaf, HurleybirdJr, Ewan Bristow, Alyssa, Patrhetoric, the dubstep den chaps, and anyone else I've left out, for all the help with testing, debugging and contributions.\n\nClick anywhere on the screen to return to the plugin", NotificationType::dontSendNotification);
+        descriptionLabel.setText("Hamburger is a free but powerful distortion effect plugin with dynamics controls and equalisation designed for more control. Hamburger takes inspiration from other distortion and analog emulation plugins, and provides a tight set of controls that allow for fast pleasing results. \n \nHuge thanks to Sam (womp), Danburger (Antfactory), Bean, DEPARTURE, Sheaf, HurleybirdJr, Ewan Bristow, Alyssa, Patrhetoric, the dubstep den chaps, and anyone else I've left out, for all the help with testing, debugging and contributions.\n\nIf you want to know more about Aviary, click the logo on the top right. \n\nClick anywhere on the screen to return to the plugin", NotificationType::dontSendNotification);
         descriptionLabel.setFont(*questrialFont);
 
         drawableLogoString->setInterceptsMouseClicks(false, false);
