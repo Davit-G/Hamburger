@@ -18,7 +18,7 @@ public:
         auto leftDryData = block.getChannelPointer(0);
 
         for (int sample = 0; sample < block.getNumSamples(); sample++) {
-            float amt = powf(amount.getNextValue() * 0.4, 3.0f);
+            float amt = powf(amount.getNextValue() * 0.8f, 3.0f) * 3.0f;
 
             float l = leftDryData[sample];
             float r = rightDryData[sample];
@@ -33,12 +33,12 @@ public:
                 continue;
             }
 
-            if (lr > amt) {
-                block.setSample(0, sample, l - amt);
-                block.setSample(1, sample, r - amt);
-            } else if (lr < -amt) {
+            if (lr > -amt) {
                 block.setSample(0, sample, l + amt);
                 block.setSample(1, sample, r + amt);
+            } else if (lr < amt) {
+                block.setSample(0, sample, l - amt);
+                block.setSample(1, sample, r - amt);
             }
         }
     }
