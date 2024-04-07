@@ -19,7 +19,8 @@ public:
         setColour(juce::PopupMenu::ColourIds::highlightedTextColourId, juce::Colours::white);
         setColour(juce::ComboBox::arrowColourId, juce::Colours::white);
 
-        questrialFont->setSizeAndStyle(18, questrialFont->getAvailableStyles()[0], 1, 0);
+        questrialFont->setHeight(18);
+
     }
 
     Font getComboBoxFont()

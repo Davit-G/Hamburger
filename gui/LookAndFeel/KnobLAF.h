@@ -10,9 +10,10 @@ public:
         setColour(Slider::thumbColourId, juce::Colours::whitesmoke);
         setColour(Slider::rotarySliderFillColourId, color);
 
-        questrialFont12->setSizeAndStyle(14, questrialFont12->getAvailableStyles()[0], 1, 0);
-        questrialFont14->setSizeAndStyle(16, questrialFont14->getAvailableStyles()[0], 1, 0);
-        questrialFont16->setSizeAndStyle(18, questrialFont16->getAvailableStyles()[0], 1, 0);
+        // dont use setsizeandstyle, it will remove the typeface info for windows specifically (weird bug)
+        questrialFont12->setHeight(13.0f);
+        questrialFont14->setHeight(16.0f);
+        questrialFont16->setHeight(17.0f);
     }
 
     ~KnobLAF()
