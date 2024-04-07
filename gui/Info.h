@@ -121,9 +121,7 @@ public:
         logoArea.removeFromLeft(10);
         g.drawImage(gplLogo, logoArea.removeFromLeft(110).toFloat(), Justification::centred);
         logoArea.removeFromLeft(10);
-        g.setOpacity(0.5f);
-        g.drawImage(womp, logoArea.removeFromLeft(130).toFloat(), Justification::centred, true);
-        g.setOpacity(1.f);
+        g.drawImage(womp, logoArea.removeFromLeft(130).toFloat(), Justification::centred);
 
         const juce::Image features[4] = {feature1, feature2, feature3, feature4};
 
