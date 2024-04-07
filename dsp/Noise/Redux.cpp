@@ -80,9 +80,15 @@ void Redux::processBlock(juce::dsp::AudioBlock<float> &block)
 			
 			float remainder = powf(2, (float)(amt - (int)amt));
 			float posValues = remainder * result;
+			float invertPosValues = 1 / posValues;
 
-			xL = fmodf(xL, 1 / posValues); // bit reduction process
-			xR = fmodf(xR, 1 / posValues); // bit reduction process
+			// xL = fmodf(xL, 1 / posValues); // bit reduction process
+			// xR = fmodf(xR, 1 / posValues); // bit reduction process
+
+			// faster version?
+			xL = xL - (long long int)(xL * posValues) * invertPosValues;
+			xR = xR - (long long int)(xR * posValues) * invertPosValues;
+
 			xL = leftDryData[sample] - xL;
 			xR = rightDryData[sample] - xR;
 
