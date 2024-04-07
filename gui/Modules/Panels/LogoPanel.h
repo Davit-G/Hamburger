@@ -31,6 +31,11 @@ public:
         addAndMakeVisible(*drawableLogoString);
     }
 
+    void mouseUp(const MouseEvent &event) override
+    {
+        getParentComponent()->getParentComponent()->getParentComponent()->postCommandMessage(0);
+    }
+
     void resized() override
     {
         drawableLogoString->setBoundsToFit(getLocalBounds(), Justification::centred, true);

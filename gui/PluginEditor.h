@@ -8,6 +8,7 @@
 
 #include "BinaryData.h"
 
+#include "Info.h"
 #include "LeftColumn.h"
 #include "SaturationColumn.h"
 #include "UtilColumn.h"
@@ -21,16 +22,19 @@ public:
     EditorV2(AudioPluginAudioProcessor &p) : AudioProcessorEditor(&p),
                                              leftColumn(p),
                                              saturationColumn(p),
-                                             utilColumn(p)
+                                             utilColumn(p),
+                                             infoPanel(p)
     {
         setSize(800, 500);
 
         addAndMakeVisible(leftColumn);
         addAndMakeVisible(saturationColumn);
         addAndMakeVisible(utilColumn);
+        addAndMakeVisible(infoPanel);
 
         setOpaque(true);
-        // setResizable(true, true);
+
+        infoPanel.setVisible(false);
 
         setPaintingIsUnclipped(true);
     }
@@ -47,6 +51,8 @@ public:
         auto bounds = getLocalBounds();
         auto totalWidth = bounds.getWidth() / 4;
 
+        infoPanel.setBounds(bounds);
+
         auto left = bounds.removeFromLeft(totalWidth);
         auto right = bounds.removeFromRight(totalWidth);
 
@@ -55,10 +61,29 @@ public:
         utilColumn.setBounds(right);
     }
 
+    void handleCommandMessage(int command) override
+    {
+        if (command== 0)
+        {
+            infoPanel.setVisible(true);
+            leftColumn.setVisible(false);
+            saturationColumn.setVisible(false);
+            utilColumn.setVisible(false);
+        } else if (command == 1)
+        {
+            infoPanel.setVisible(false);
+            leftColumn.setVisible(true);
+            saturationColumn.setVisible(true);
+            utilColumn.setVisible(true);
+        }
+    }
+
 private:
     LeftColumn leftColumn;
     SaturationColumn saturationColumn;
     UtilColumn utilColumn;
+
+    Info infoPanel;
 
     juce::Image image = juce::ImageCache::getFromMemory(BinaryData::bg4_jpg, BinaryData::bg4_jpgSize);
 

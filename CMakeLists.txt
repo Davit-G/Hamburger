@@ -136,6 +136,14 @@ juce_add_binary_data("${BaseTargetName}BinaryData" HEADER_NAME BinaryData.h NAME
     Assets/poweroff.png
     Assets/HamburgerLogo.png
     Assets/Questrial-Regular.ttf
+    Assets/clap-icon.png
+    Assets/vst-icon.png
+    Assets/wompwuzhere.png
+    Assets/feature1.jpg
+    Assets/feature2.jpg
+    Assets/feature3.jpg
+    Assets/feature4.jpg
+    Assets/gplv3-icon.png
     Assets/tick.png
     Assets/bg4.jpg
 )

@@ -95,11 +95,6 @@ public:
             tubeAmp->processBlock(block);
             break;
         }
-        // case 2:
-        // { // waveshaper style
-        //     TRACE_EVENT("dsp", "waveshaper");
-        //     break;
-        // }
         case 2:
         { // phase distortion
             TRACE_EVENT("dsp", "phase");
