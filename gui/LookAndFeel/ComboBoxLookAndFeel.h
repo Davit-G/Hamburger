@@ -19,7 +19,7 @@ public:
         setColour(juce::PopupMenu::ColourIds::highlightedTextColourId, juce::Colours::white);
         setColour(juce::ComboBox::arrowColourId, juce::Colours::white);
 
-        questrialFont->setHeight(18);
+        questrialFont->setHeight(14);
 
     }
 

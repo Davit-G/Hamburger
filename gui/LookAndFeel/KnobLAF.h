@@ -11,9 +11,9 @@ public:
         setColour(Slider::rotarySliderFillColourId, color);
 
         // dont use setsizeandstyle, it will remove the typeface info for windows specifically (weird bug)
-        questrialFont12->setHeight(13.0f);
-        questrialFont14->setHeight(16.0f);
-        questrialFont16->setHeight(17.0f);
+        questrialFont12->setHeight(12.0f);
+        questrialFont14->setHeight(14.0f);
+        questrialFont16->setHeight(16.0f);
     }
 
     ~KnobLAF()

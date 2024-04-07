@@ -1,5 +1,6 @@
 Must
 
+support mono / stereo only, dont have it break on mono
 performance optimisations
 pluginval
 
@@ -11,7 +12,6 @@ give tube more character
 Would be nice
 
 add more waveshaper stuff to grill
-support more channels?
 post filtering (filtered tone sounds better than regular one? idk)
 replicate / improve bias dc behaviour better
 
