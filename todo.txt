@@ -7,7 +7,6 @@ Should
 
 visual volume indicator? (vu meter and/or bars for peak / lufs)
 give tube more character
-antialiasing on logo
 
 Would be nice
 
@@ -25,7 +24,6 @@ make a credits panel that shows up on the entire screen
 
 feedback:
 
-Antialiasing on hamburger logo is ham
 Emphasis eq panel isnt intuitive, separate eq bits with a divider, and add a label on the top for band 1 band 2 or smth
 Mix knob on bit noise and gate noise
 breaks on multiple channels

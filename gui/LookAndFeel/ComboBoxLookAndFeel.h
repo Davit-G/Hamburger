@@ -18,42 +18,27 @@ public:
         setColour(juce::PopupMenu::ColourIds::highlightedBackgroundColourId, juce::Colour::fromHSV(0.0f, 0.0f, 0.2f, 1.0f));
         setColour(juce::PopupMenu::ColourIds::highlightedTextColourId, juce::Colours::white);
         setColour(juce::ComboBox::arrowColourId, juce::Colours::white);
+
+        questrialFont = std::make_unique<Font>(Font(Typeface::createSystemTypefaceFor(BinaryData::QuestrialRegular_ttf, BinaryData::QuestrialRegular_ttfSize)));
+        questrialFont->setSizeAndStyle(14, questrialFont->getAvailableStyles()[0], 1, 0);
     }
 
     Font getComboBoxFont()
     {
-        auto font = Font(Typeface::createSystemTypefaceFor(BinaryData::QuestrialRegular_ttf, BinaryData::QuestrialRegular_ttfSize));
-        font.setSizeAndStyle(14, font.getAvailableStyles()[0], 1, 0);
-
-        auto styles = font.getAvailableStyles();
-        // DBG(styles[1]);
-        return font;
+        
+        return *questrialFont;
     }
 
     Font getPopupMenuFont()
     {
-        auto font = Font(Typeface::createSystemTypefaceFor(BinaryData::QuestrialRegular_ttf, BinaryData::QuestrialRegular_ttfSize));
-        font.setSizeAndStyle(14, font.getAvailableStyles()[0], 1, 0);
-        return font;
+        
+        return *questrialFont;
     }
 
     Font getLabelFont(Label &label) override
     {
-        return getComboBoxFont();
+        return *questrialFont;
     }
-
-    // Path getTickShape(float height)
-    // {
-    //     static const unsigned char data[] =
-    //         {
-    //             109, 0, 224, 168, 68, 0, 0, 119, 67, 108, 0, 224, 172, 68, 0, 128, 146, 67, 113, 0, 192, 148, 68, 0, 0, 219, 67, 0, 96, 110, 68, 0, 224, 56, 68, 113, 0, 64, 51, 68, 0, 32, 130, 68, 0, 64, 20, 68, 0, 224,
-    //             162, 68, 108, 0, 128, 3, 68, 0, 128, 168, 68, 113, 0, 128, 221, 67, 0, 192, 175, 68, 0, 0, 207, 67, 0, 32, 179, 68, 113, 0, 0, 201, 67, 0, 224, 173, 68, 0, 0, 181, 67, 0, 224, 161, 68, 108, 0, 128, 168, 67,
-    //             0, 128, 154, 68, 113, 0, 128, 141, 67, 0, 192, 138, 68, 0, 128, 108, 67, 0, 64, 131, 68, 113, 0, 0, 62, 67, 0, 128, 119, 68, 0, 0, 5, 67, 0, 128, 114, 68, 113, 0, 0, 102, 67, 0, 192, 88, 68, 0, 128, 155,
-    //             67, 0, 192, 88, 68, 113, 0, 0, 190, 67, 0, 192, 88, 68, 0, 128, 232, 67, 0, 224, 131, 68, 108, 0, 128, 246, 67, 0, 192, 139, 68, 113, 0, 64, 33, 68, 0, 128, 87, 68, 0, 0, 93, 68, 0, 224, 26, 68, 113, 0,
-    //             96, 140, 68, 0, 128, 188, 67, 0, 224, 168, 68, 0, 0, 119, 67, 99, 101};
-
-    //     return createPathFromData(height, data, sizeof(data));
-    // }
 
     void drawComboBox(Graphics &g, int width, int height, bool,
                       int, int, int, int, ComboBox &box)
@@ -178,4 +163,6 @@ public:
     }
 
 private:
+
+    std::unique_ptr<Font> questrialFont = nullptr;
 };
