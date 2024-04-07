@@ -68,7 +68,7 @@ void Amp::calculateCoefficients()
     // trioesL[3].millerHF_Hz = 6400.0;
     triode4.millerHF_Hz = 20000.0f;
     triode4.dcBlockingLF_Hz = (8.0f);
-    triode4.outputGain = pow(10.0f, (-drive.getRaw() * 0.01f * 24.f - 5.5f) / 20.0f);
+    triode4.outputGain = pow(10.0f, (-drive.getRaw() * 0.01f * 12.f - 5.5f) / 20.0f);
     triode4.dcShiftCoefficient = (0.52f);
 
     for (int i = 0; i < 4; i++)
@@ -133,7 +133,7 @@ void Amp::calculateCoefficients2()
 
     // trioesL[3].millerHF_Hz = 6400.0;
     triode4.millerHF_Hz = 21000.0f;
-    triode4.outputGain = pow(10.0f, (-drive.getRaw() * 0.01f * 18.f) / 20.0f);
+    triode4.outputGain = pow(10.0f, (-drive.getRaw() * 0.01f * 6.f) / 20.0f);
     triode4.dcShiftCoefficient = 1.2f;
 
     for (int i = 0; i < 4; i++)
@@ -160,7 +160,7 @@ void Amp::processBlock(juce::dsp::AudioBlock<float> &block)
 
     // left channel
     TRACE_EVENT_BEGIN("dsp", "tubes");
-    // block.add(bias.getRaw() * 3.0f);
+    block.add(bias.getRaw() * 3.0f);
 
     triodes[0].processBlock(block); // step 3: triode 1
     block.multiplyBy(driveGain);    // step 4: drive the signal

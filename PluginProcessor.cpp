@@ -95,7 +95,7 @@ AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::createP
     params.add(std::make_unique<AudioParameterBool>("compressionOn", "Compressor On", false));
     params.add(std::make_unique<AudioParameterBool>("emphasisOn", "Emphasis EQ On", true));
 
-    params.add(std::make_unique<AudioParameterBool>("preDistortionEnabled", "Pre-Dist Enabled", true));
+    params.add(std::make_unique<AudioParameterBool>("preDistortionEnabled", "Pre-Dist Enabled", false));
     params.add(std::make_unique<AudioParameterBool>("primaryDistortionEnabled", "Dist Enabled", true));
     params.add(std::make_unique<AudioParameterBool>("noiseDistortionEnabled", "Noise Enabled", false));
     params.add(std::make_unique<AudioParameterBool>("postClipEnabled", "SoftClip Enabled", true));
@@ -106,7 +106,7 @@ AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::createP
     params.add(std::make_unique<AudioParameterFloat>("compSpeed", "Comp Speed", juce::NormalisableRange<float>(0.0f, 400.0f, 0.f, 0.25f), 100.f));
     params.add(std::make_unique<AudioParameterFloat>("compBandTilt", "Comp Band Tilt", -20.0f, 20.0f, 0.f));
     params.add(std::make_unique<AudioParameterFloat>("compStereoLink", "Stereo Link", 0.0f, 100.0f, 100.f));
-    params.add(std::make_unique<AudioParameterFloat>("compThreshold", "Comp Threshold", -48.0f, 0.0f, -35.f));
+    params.add(std::make_unique<AudioParameterFloat>("compThreshold", "Comp Threshold", -48.0f, 0.0f, -24.f));
     params.add(std::make_unique<AudioParameterFloat>("compRatio", "Comp Ratio", 1.0f, 10.0f, 3.5f));
     params.add(std::make_unique<AudioParameterFloat>("compOut", "Comp Makeup", -24.0f, 24.0f, 0.f));
 
@@ -149,9 +149,9 @@ AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::createP
 
     params.add(std::make_unique<AudioParameterFloat>("tubeTone", "Tube Tone", 0.0f, 1.0f, 1.0f));
 
-    params.add(std::make_unique<AudioParameterFloat>("allPassFreq", "AllPass Frequency", juce::NormalisableRange<float>(20.0f, 20000.0f, 0.f, 0.25f), 400.0f));
-    params.add(std::make_unique<AudioParameterFloat>("allPassQ", "AllPass Q", 0.01f, 1.41f, 0.1f));
-    params.add(std::make_unique<AudioParameterFloat>("allPassAmount", "AllPass Number", 0.0f, 50.0f, 0.0f));
+    params.add(std::make_unique<AudioParameterFloat>("allPassFreq", "AllPass Frequency", juce::NormalisableRange<float>(20.0f, 20000.0f, 0.f, 0.25f), 85.0f));
+    params.add(std::make_unique<AudioParameterFloat>("allPassQ", "AllPass Q", 0.01f, 1.41f, 0.4f));
+    params.add(std::make_unique<AudioParameterFloat>("allPassAmount", "AllPass Number", 10.0f, 50.0f, 0.0f));
 
     return params;
 }
@@ -207,7 +207,6 @@ void AudioPluginAudioProcessor::prepareToPlay(double sampleRate, int samplesPerB
     oversamplingStack.prepare(spec);
     oversamplingStackPost.setOversamplingFactor(hq->get());
     oversamplingStackPost.prepare(spec);
-    // simdGain.prepare(spec);
 
     juce::dsp::ProcessSpec oversampledSpec;
     oversampledSpec.sampleRate = sampleRate * pow(2, oversamplingStack.getOversamplingFactor());
@@ -223,8 +222,8 @@ void AudioPluginAudioProcessor::prepareToPlay(double sampleRate, int samplesPerB
     dynamics.prepare(spec);
 
     float totalLatency = oversamplingStack.getLatencySamples() + oversamplingStackPost.getLatencySamples();
-    DBG("Total Latency: " << totalLatency);
-    // setLatencySamples((int)std::ceil(totalLatency));
+    DBG("Total Latency: " << totalLatency );
+    setLatencySamples((int)std::ceil(totalLatency));
 
     dryWetMixer.reset();
     dryWetMixer.prepare(spec);
@@ -373,12 +372,12 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
         emphasisCompensationGain.setGainDecibels(-eqCompensation);
         emphasisCompensationGain.process(context);
 
+        dsp::AudioBlock<float> oversampledBlock2 = oversamplingStackPost.processSamplesUp(block);
         if (clipEnabled->get())
         {
-            dsp::AudioBlock<float> oversampledBlock2 = oversamplingStackPost.processSamplesUp(block);
             postClip.processBlock(oversampledBlock2);
-            oversamplingStackPost.processSamplesDown(block);
         }
+        oversamplingStackPost.processSamplesDown(block);
 
 
         // before output gain

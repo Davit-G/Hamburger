@@ -11,9 +11,8 @@ give tube more character
 
 Would be nice
 
-add more waveshaper stuff to grill
-post filtering (filtered tone sounds better than regular one? idk)
-replicate / improve bias dc behaviour better
+add more dist types
+replicate / improve bias dc behaviour better on tube
 
 
 ONCE DSP and layout HAS BEEN FINALISED:
@@ -25,7 +24,3 @@ make a credits panel that shows up on the entire screen
 feedback:
 
 Mix knob on bit noise and gate noise
-breaks on multiple channels
-
-
-
