@@ -100,14 +100,9 @@ AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::createP
     params.add(std::make_unique<AudioParameterBool>("noiseDistortionEnabled", "Noise Enabled", false));
     params.add(std::make_unique<AudioParameterBool>("postClipEnabled", "SoftClip Enabled", true));
 
-    // params.add(std::make_unique<AudioParameterBool>("hqEnabled", "High Quality", true));
-
     params.add(std::make_unique<AudioParameterBool>("hamburgerEnabled", "Enabled", true));
-    params.add(std::make_unique<AudioParameterBool>("autoGain", "Auto Gain", false));
 
     params.add(std::make_unique<AudioParameterInt>("oversamplingFactor", "Oversampling Factor", 0, 2, 0));
-    // params.add(std::make_unique<AudioParameterChoice>("qualityFactor", "Quality", params::quality.categories, 0));
-
     params.add(std::make_unique<AudioParameterFloat>("compSpeed", "Comp Speed", juce::NormalisableRange<float>(0.0f, 400.0f, 0.f, 0.25f), 100.f));
     params.add(std::make_unique<AudioParameterFloat>("compBandTilt", "Comp Band Tilt", -20.0f, 20.0f, 0.f));
     params.add(std::make_unique<AudioParameterFloat>("compStereoLink", "Stereo Link", 0.0f, 100.0f, 100.f));

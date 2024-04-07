@@ -18,8 +18,12 @@ public:
         setColour(juce::PopupMenu::ColourIds::highlightedBackgroundColourId, juce::Colour::fromHSV(0.0f, 0.0f, 0.2f, 1.0f));
         setColour(juce::PopupMenu::ColourIds::highlightedTextColourId, juce::Colours::white);
         setColour(juce::ComboBox::arrowColourId, juce::Colours::white);
-
-        questrialFont->setHeight(14);
+    
+        #if JUCE_WINDOWS
+            questrialFont->setHeight(20);
+        #else
+            questrialFont->setHeight(14);
+        #endif
 
     }
 

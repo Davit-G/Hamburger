@@ -25,9 +25,6 @@ public:
         band1.setJustificationType(Justification::centred);
         band2.setJustificationType(Justification::centred);
 
-        // band1.setColour(juce::Label::ColourIds::textColourId, Palette::colours[1]);
-        // band2.setColour(juce::Label::ColourIds::textColourId, Palette::colours[1]);
-
         addAndMakeVisible(band1);
         addAndMakeVisible(band2);
     }
