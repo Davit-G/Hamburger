@@ -151,7 +151,7 @@ AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::createP
 
     params.add(std::make_unique<AudioParameterFloat>("allPassFreq", "AllPass Frequency", juce::NormalisableRange<float>(20.0f, 20000.0f, 0.f, 0.25f), 85.0f));
     params.add(std::make_unique<AudioParameterFloat>("allPassQ", "AllPass Q", 0.01f, 1.41f, 0.4f));
-    params.add(std::make_unique<AudioParameterFloat>("allPassAmount", "AllPass Number", 10.0f, 50.0f, 0.0f));
+    params.add(std::make_unique<AudioParameterFloat>("allPassAmount", "AllPass Number", 0.0f, 50.0f, 10.0f));
 
     return params;
 }
