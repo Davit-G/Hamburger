@@ -17,7 +17,7 @@ TRACE_EVENT("dsp", "Erosion::processBlock");
 
     float erosionFreqVal = erosionFrequency.getRaw();
     // get the current value of the saturation knob to figure out how much to multiply a random value by
-    float saturationAmount = erosionAmount.getRaw() * 0.001f * (oldSampleRate / erosionFreqVal);
+    float saturationAmount = powf(erosionAmount.getRaw() * 0.01f, 2) * 100.0f;
 
     float q = erosionQ.getRaw();
 
@@ -26,11 +26,13 @@ TRACE_EVENT("dsp", "Erosion::processBlock");
 
     // now with the filtered values, multiply them by the saturation amount
 
+    float ampVal = 1.0f + powf(erosionFreqVal * 0.0000454545454545f, 2) + (q * 6);
+
     for (int i = 0; i < block.getNumSamples(); i++) {
 
         float randomValue = random.nextFloat() * 2.0f - 1.0f;
 
-        float filtered = iirFilter.processSample(randomValue) * (1.f + q * 5);
+        float filtered = iirFilter.processSample(randomValue) * ampVal;
 
         float leftEroded = delayLine.popSample(0, (filtered + 1.f) * saturationAmount);
         float rightEroded = delayLine.popSample(1, (filtered + 1.f) * saturationAmount);

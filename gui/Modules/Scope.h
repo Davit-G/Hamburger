@@ -6,7 +6,7 @@ class AudioBufferQueue
 {
 public:
     //==============================================================================
-    static constexpr size_t order = 9;
+    static constexpr size_t order = 10;
     static constexpr size_t bufferSize = 1U << order;
     static constexpr size_t numBuffers = 5;
 

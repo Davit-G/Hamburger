@@ -36,21 +36,21 @@ void PhaseDist::processBlock(juce::dsp::AudioBlock<float>& block) {
 	}
 
 	// filter the phase buffer
-	*filter.state = juce::dsp::IIR::ArrayCoefficients<float>::makeLowPass(sampleRate, tone.getRaw(), 0.707f);
+	*filter.state = juce::dsp::IIR::ArrayCoefficients<float>::makeLowPass(sampleRate, tone.getRaw(), 1.1f);
 	filter.process(juce::dsp::ProcessContextReplacing<float>(block));
 
 	// apply the distortion
 	for (int i = 0; i < block.getNumSamples(); i++) {
-		auto amt = (amount.get()) / 100.0f;
+		auto amt = powf(amount.get() * 0.01f, 2) * 100.0f * 20.0f;
 
 		float left = block.getSample(0, i);
 		float right = block.getSample(1, i);
 
 		float mono = (fmin(left, right) + fmax(left, right)) / 2.0f;
 
-		float normalised = tanhWaveShaper(mono, normalise.getNextValue() * 10.0f + 0.00001f);
+		float normalised = tanhWaveShaper(mono, 4.0f + 0.00001f);
 
-		auto phaseShiftL = (normalised + 2.0f) * amt * 50 * (sampleRate / 44100.0f);
+		auto phaseShiftL = (normalised + 2.0f) * amt * (sampleRate / 44100.0f);
 		
 		auto leftProcessed = delayLine.popSample(0, phaseShiftL);
 		auto rightProcessed = delayLine.popSample(1, phaseShiftL);
