@@ -6,7 +6,6 @@ pluginval
 
 # Should
 
-visual volume indicator? (vu meter and/or bars for peak / lufs)
 give tube more character
 
 # Would be nice
