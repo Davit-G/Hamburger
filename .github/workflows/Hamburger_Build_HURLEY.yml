@@ -18,52 +18,41 @@ jobs:
   build:
     name: build
     runs-on: self-hosted
-    concurrency: build_${{ matrix.os }}
 
     steps:
     - uses: actions/checkout@v3
 
     - name: (linux) install juce dependencies
-      if: startsWith(matrix.os, 'ubuntu')
       id: juce_dependencies
       run: | 
         sudo apt-get update
         sudo apt-get install g++ libasound2-dev libjack-jackd2-dev ladspa-sdk libcurl4-openssl-dev libfreetype6-dev libx11-dev libxcomposite-dev libxcursor-dev libxcursor-dev libxext-dev libxinerama-dev libxrandr-dev libxrender-dev libwebkit2gtk-4.0-dev libglu1-mesa-dev mesa-common-dev
 
-    - name: cache stuff
-      id: cache_stuff
-      uses: actions/cache@v3
-      with:
-        path: "${{matrix.folder}}"
-        key: "${{matrix.folder}}"
-    
     - name: create directories
       id: create_dirs
       run: |
         mkdir "./gh_artifacts/"
         mkdir "./gh_artifacts/Manual Install"
 
-    - name: (unix  mac / linux) configure
-      if: ${{ !startsWith(matrix.os, 'windows') }}
+    - name: (unix linux) configure
       id: configure
       run: |
-        cmake -B "${{matrix.folder}}" -G "${{matrix.compiler}}" -DCMAKE_BUILD_TYPE:STRING=Release
+        cmake -B "build_linux" -G "Unix Makefiles" -DCMAKE_BUILD_TYPE:STRING=Release
 
     - name: build
       id: build
       run: |
-        cmake --build "${{matrix.folder}}" --config Release --target ${{env.NOSPACE}}_VST3 -j
-        cmake --build "${{matrix.folder}}" --config Release --target ${{env.NOSPACE}}_CLAP -j
+        cmake --build "build_linux" --config Release --target ${{env.NOSPACE}}_VST3 -j
+        cmake --build "build_linux" --config Release --target ${{env.NOSPACE}}_CLAP -j
 
     - name: (linux) package
-      if: startsWith(matrix.os, 'ubuntu')
       id: package_linux
       run: |
         pwd
-        mv "./${{matrix.folder}}/${{env.PLUG}}.vst3" "./gh_artifacts/Manual Install/${{env.PLUG}}.vst3"
-        mv "./${{matrix.folder}}/${{env.PLUG}}.clap" "./gh_artifacts/Manual Install/${{env.PLUG}}.clap"
+        mv "./build_linux/${{env.PLUG}}.vst3" "./gh_artifacts/Manual Install/${{env.PLUG}}.vst3"
+        mv "./build_linux/${{env.PLUG}}.clap" "./gh_artifacts/Manual Install/${{env.PLUG}}.clap"
 
     - uses: actions/upload-artifact@v3
       with:
-        name: "${{env.PLUG}} ${{ matrix.name }}"
+        name: "${{env.PLUG}} Linux (x86_64)"
         path: "./gh_artifacts"
