@@ -39,12 +39,12 @@ jobs:
         #     compiler: "Xcode",
         #     folder: "build_mac"
         #   }
-        - {
-            name: "MacOS (Universal)",
-            os: macos-14,
-            compiler: "Xcode",
-            folder: "build_mac",
-          }
+        #- {
+        #    name: "MacOS (Universal)",
+        #    os: macos-14,
+        #    compiler: "Xcode",
+        #    folder: "build_mac",
+        #  }
     runs-on: ${{ matrix.os }}
     concurrency: build_${{ matrix.os }}
 
