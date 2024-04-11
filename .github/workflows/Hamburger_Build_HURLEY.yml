@@ -49,8 +49,8 @@ jobs:
       id: package_linux
       run: |
         pwd
-        mv "./build_linux/${{env.PLUG}}.vst3" "./gh_artifacts/Manual Install/${{env.PLUG}}.vst3"
-        mv "./build_linux/${{env.PLUG}}.clap" "./gh_artifacts/Manual Install/${{env.PLUG}}.clap"
+        mv "./build_linux/Hamburger_artefacts/Release/VST3/${{env.PLUG}}.vst3" "./gh_artifacts/Manual Install/${{env.PLUG}}.vst3"
+        mv "./build_linux/Hamburger_artefacts/Release/CLAP/${{env.PLUG}}.clap" "./gh_artifacts/Manual Install/${{env.PLUG}}.clap"
 
     - uses: actions/upload-artifact@v3
       with:
