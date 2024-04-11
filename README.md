@@ -20,7 +20,7 @@ Main page
 
 ## Audio demos
 
-Coming soon, stay tuned!
+[Check out audio demos here](https://soundcloud.com/davz-razorblades/hamburger-guitar-demo-dry-wet). More audio demos coming soon
 
 # Overview
 
