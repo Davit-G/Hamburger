@@ -28,6 +28,8 @@ public:
         drawableLogoString = Drawable::createFromSVG (*parsedLogoString);
         jassert(drawableLogoString != nullptr);
 
+        setMouseCursor(MouseCursor::PointingHandCursor);
+
         addAndMakeVisible(*drawableLogoString);
     }
 
