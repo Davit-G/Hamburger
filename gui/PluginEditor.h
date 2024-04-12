@@ -17,7 +17,7 @@
 
 // #include "melatonin_inspector/melatonin_inspector.h"
 
-#define PRESETS_MANAGER_VISIBLE 0
+#define PRESETS_MANAGER_VISIBLE 1
 
 class EditorV2 : public juce::AudioProcessorEditor
 {
@@ -57,6 +57,8 @@ public:
 
         // // enable the inspector
         // inspector.toggle(true);
+
+        
     }
 
     ~EditorV2() override {}
@@ -74,7 +76,8 @@ public:
         infoPanel.setBounds(bounds);
 
 #if PRESETS_MANAGER_VISIBLE
-        presetPanel.setBounds(bounds.removeFromTop(45));
+        presetPanel.setBounds(bounds);
+        bounds.removeFromTop(45);
 #endif
 
         auto left = bounds.removeFromLeft(totalWidth);

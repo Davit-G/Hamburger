@@ -31,17 +31,17 @@ else()
 endif()
 
 
-if (MSVC)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /fp:fast")
-elseif (CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ffast-math")
-endif()
+# if (MSVC)
+# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /fp:fast")
+# elseif (CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ffast-math")
+# endif()
 
-if (MSVC)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Ox")
-elseif (CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Ofast")
-endif()
+# if (MSVC)
+# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Ox")
+# elseif (CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Ofast")
+# endif()
 
 FetchContent_Declare(
 	JUCE
@@ -137,6 +137,7 @@ juce_add_binary_data("${BaseTargetName}BinaryData" HEADER_NAME BinaryData.h NAME
     Assets/poweroff.png
     Assets/HamburgerLogo.png
     Assets/Questrial-Regular.ttf
+    Assets/Quicksand-Bold.ttf
     Assets/clap-icon.png
     Assets/vst-icon.png
     Assets/wompwuzhere.png

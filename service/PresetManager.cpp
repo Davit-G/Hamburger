@@ -114,6 +114,23 @@ juce::StringArray PresetManager::getAllPresets() const
 	return presets;
 }
 
+juce::Array<juce::File> PresetManager::getPresetFileHierarchy() const
+{
+	// get files and folders
+	auto dirsFiles = defaultDirectory.findChildFiles(juce::File::TypesOfFileToFind::findFilesAndDirectories, true);
+
+	auto wildcard = juce::WildcardFileFilter("*." + extension, "*", "*");
+	
+	for (int i = dirsFiles.size(); --i >= 0;)
+	{
+		if (!wildcard.isFileSuitable(dirsFiles[i]) && !dirsFiles[i].isDirectory())
+		{
+			dirsFiles.remove(i);
+		}
+	}
+	return dirsFiles;
+}
+
 juce::String PresetManager::getCurrentPreset() const
 {
 	return currentPreset.toString();

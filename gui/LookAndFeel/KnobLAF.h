@@ -47,6 +47,8 @@ public:
         return *questrialFont16;
     }
 
+    
+
     void drawRotarySlider(juce::Graphics &g, int x, int y, int width, int height, float sliderPos,
                           const float rotaryStartAngle, const float rotaryEndAngle, juce::Slider &slider) override
     {
