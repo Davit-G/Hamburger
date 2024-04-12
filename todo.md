@@ -10,4 +10,17 @@ give tube more character
 
 # Would be nice
 
-add more dist types
+add more dist types (transformer? foil??)
+linear phase mode for emphasis eq
+
+
+# feedback 
+
+double precision on EQs 
+allpass is mixing dry signal
+correct oversampling delay compensation
+complete manual page, reupload with new info for plugin
+specify order of effect operations in manual or visually
+
+# other
+gain compensation on grunge?
