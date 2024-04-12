@@ -15,6 +15,7 @@
 #include "gui/Modules/Scope.h"
 
 #include "dsp/Fifo.h"
+#include "service/PresetManager.h"
 
 // #include "xsimd/xsimd.hpp"
 // #include "dsp/SIMDGain.h"
@@ -71,6 +72,8 @@ public:
     AudioBufferQueue<float>& getAudioBufferQueueL() noexcept        { return audioBufferQueueL; }
     AudioBufferQueue<float>& getAudioBufferQueueR() noexcept        { return audioBufferQueueR; }
 
+    PresetManager& getPresetManager() { return *presetManager; }
+
 private:
     // juce::AudioParameterFloat *knobValue = nullptr;
     juce::AudioParameterFloat *inputGainKnob = nullptr;
@@ -123,6 +126,8 @@ private:
     AudioBufferQueue<float> audioBufferQueueL;
     AudioBufferQueue<float> audioBufferQueueR;
     ScopeDataCollector<float> scopeDataCollector { audioBufferQueueL, audioBufferQueueR };
+
+    std::unique_ptr<PresetManager> presetManager;
 
     #if PERFETTO // if we have the profiling
         std::unique_ptr<perfetto::TracingSession> tracingSession;
