@@ -1,5 +1,5 @@
 #include "PluginProcessor.h"
-#include "./gui/PluginEditor.h"
+#include "gui/PluginEditor.h"
 
 
 #include "gui/Modules/Panels/PanelNames.h"
