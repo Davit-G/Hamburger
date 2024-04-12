@@ -1,4 +1,4 @@
-# Hamburger Plugin CMakeLists.txt
+# Hamburger Plugin CMakeLists.txt 
 
 include (FetchContent)
 Set(FETCHCONTENT_QUIET FALSE)
@@ -104,6 +104,7 @@ target_sources("${BaseTargetName}"
         )
 
 add_subdirectory(dsp)
+add_subdirectory(service)
 
 target_compile_features("${BaseTargetName}" PUBLIC cxx_std_17)
 
@@ -158,11 +159,11 @@ FetchContent_Declare (melatonin_perfetto
 FetchContent_Declare (xsimd 
     GIT_REPOSITORY https://github.com/xtensor-stack/xsimd.git
     GIT_TAG origin/master)
-
+    
 FetchContent_Declare (melatonin_inspector
-  GIT_REPOSITORY https://github.com/sudara/melatonin_inspector.git
-  GIT_TAG origin/main
-  SOURCE_DIR ${CMAKE_CURRENT_BINARY_DIR}/melatonin_inspector)
+    GIT_REPOSITORY https://github.com/sudara/melatonin_inspector.git
+    GIT_TAG origin/main
+    SOURCE_DIR ${CMAKE_CURRENT_BINARY_DIR}/melatonin_inspector)
 
 FetchContent_Declare (clap-juce-extensions
   GIT_REPOSITORY https://github.com/free-audio/clap-juce-extensions.git
@@ -183,7 +184,7 @@ target_link_libraries("${BaseTargetName}"
         "${BaseTargetName}BinaryData"
         Melatonin::Perfetto
         xsimd
-        # melatonin_inspector
+        melatonin_inspector
     PUBLIC
         juce::juce_recommended_config_flags
         juce::juce_recommended_lto_flags

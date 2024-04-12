@@ -18,7 +18,6 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor() : AudioProcessor(BusesPro
       distortionTypeSelection(treeState),
       noiseDistortionSelection(treeState),
       preDistortionSelection(treeState)
-    //   simdGain(treeState)
 {
     treeState.state = ValueTree("savedParams");
 
@@ -58,11 +57,10 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor() : AudioProcessor(BusesPro
     clipEnabled = dynamic_cast<juce::AudioParameterBool *>(treeState.getParameter("postClipEnabled"));
     jassert(clipEnabled);
 
-    // oversamplingFactor = dynamic_cast<juce::AudioParameterChoice *>(treeState.getParameter("oversamplingFactor"));
-    // jassert(oversamplingFactor);
-
     enableEmphasis = dynamic_cast<juce::AudioParameterBool *>(treeState.getParameter("emphasisOn"));
     jassert(enableEmphasis);
+
+    presetManager = std::make_unique<PresetManager>(treeState);
 
 #if PERFETTO
     // MelatoninPerfetto::get().beginSession(300000);
@@ -420,10 +418,11 @@ void AudioPluginAudioProcessor::setStateInformation(const void *data, int sizeIn
     // You should use this method to restore your parameters from this memory block,
     // whose contents will have been created by the getStateInformation() call.
     std::unique_ptr<juce::XmlElement> xmlState(getXmlFromBinary(data, sizeInBytes));
-    if (xmlState.get() != nullptr)
-        if (xmlState->hasTagName(treeState.state.getType()))
-            // treeState.replaceState(juce::ValueTree::fromXml(*xmlState));
-            treeState.state = ValueTree::fromXml(*xmlState);
+    if (xmlState.get() == nullptr) return;
+
+    if (xmlState->hasTagName(treeState.state.getType()))
+        // treeState.replaceState(juce::ValueTree::fromXml(*xmlState));
+        treeState.state = ValueTree::fromXml(*xmlState);
 }
 
 //==============================================================================
