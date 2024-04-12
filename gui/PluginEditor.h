@@ -13,7 +13,7 @@
 #include "SaturationColumn.h"
 #include "UtilColumn.h"
 
-#include "gui/PresetPanel.h"
+#include "PresetPanel.h"
 
 // #include "melatonin_inspector/melatonin_inspector.h"
 
