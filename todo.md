@@ -10,7 +10,7 @@ give tube more character
 
 # Would be nice
 
-add more dist types (transformer? foil??)
+add more dist types (foil??)
 linear phase mode for emphasis eq
 
 
@@ -20,7 +20,7 @@ double precision on EQs
 allpass is mixing dry signal
 correct oversampling delay compensation
 complete manual page, reupload with new info for plugin
-specify order of effect operations in manual or 
+specify order of effect operations in manual or in plugin
 remove melatonin inspector and perfetto completely from git fetches on release builds
 
 # other

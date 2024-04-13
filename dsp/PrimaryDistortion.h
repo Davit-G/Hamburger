@@ -101,11 +101,13 @@ public:
         { // phase distortion
             TRACE_EVENT("dsp", "phase");
             phaseDist->processBlock(block);
+            break;
         }
         case 3:
         {// rubidium distortion
             TRACE_EVENT("dsp", "rubidium");
             rubidium->processBlock(block);
+            break;
         }
         }
     }
