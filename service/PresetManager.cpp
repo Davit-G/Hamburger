@@ -91,6 +91,8 @@ void PresetManager::loadPreset(const juce::File &presetFile)
 	juce::XmlDocument xmlDocument{presetFile};
 	const auto valueTreeToLoad = juce::ValueTree::fromXml(*xmlDocument.getDocumentElement());
 
+	
+
 	valueTreeState.replaceState(valueTreeToLoad);
 	currentPreset.setValue(presetFile.getRelativePathFrom(defaultDirectory));
 }
@@ -101,7 +103,19 @@ juce::File PresetManager::loadNextPreset()
 	if (allPresets.isEmpty())
 		return juce::File();
 
-	const auto currentIndex = allPresets.indexOf(currentPreset.toString());
+	auto currentIndex = 0;
+
+	for (int i = 0; i < allPresets.size(); i++)
+	{
+		if (allPresets[i].getRelativePathFrom(defaultDirectory) == currentPreset.toString())
+		{
+			DBG("Current preset: " + currentPreset.toString());
+			DBG("Index: " + juce::String(i));
+			currentIndex = i;
+			break;
+		}
+	}
+
 	const auto nextIndex = currentIndex + 1 > (allPresets.size() - 1) ? 0 : currentIndex + 1;
 	const auto preset = allPresets.getReference(nextIndex);
 	loadPreset(preset);
@@ -114,7 +128,19 @@ juce::File PresetManager::loadPreviousPreset()
 	if (allPresets.isEmpty())
 		return juce::File();
 
-	const auto currentIndex = allPresets.indexOf(currentPreset.toString());
+	auto currentIndex = 0;
+
+	for (int i = 0; i < allPresets.size(); i++)
+	{
+		if (allPresets[i].getRelativePathFrom(defaultDirectory) == currentPreset.toString())
+		{
+			DBG("Current preset: " + currentPreset.toString());
+			DBG("Index: " + juce::String(i));
+			currentIndex = i;
+			break;
+		}
+	}
+
 	const auto previousIndex = currentIndex - 1 < 0 ? allPresets.size() - 1 : currentIndex - 1;
 	const auto preset = allPresets.getReference(previousIndex);
 	loadPreset(preset);
