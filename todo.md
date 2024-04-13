@@ -20,7 +20,8 @@ double precision on EQs
 allpass is mixing dry signal
 correct oversampling delay compensation
 complete manual page, reupload with new info for plugin
-specify order of effect operations in manual or visually
+specify order of effect operations in manual or 
+remove melatonin inspector and perfetto completely from git fetches on release builds
 
 # other
 gain compensation on grunge?

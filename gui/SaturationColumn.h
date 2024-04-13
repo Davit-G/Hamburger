@@ -4,6 +4,7 @@
 
 #include "Modules/Panels/ClassicSatPanel.h"
 #include "Modules/Panels/TubeSatPanel.h"
+#include "Modules/Panels/RubidiumSatPanel.h" 
 #include "Modules/Panels/PhaseDistPanel.h"
 #include "Modules/Panels/WaveshaperPanel.h"
 #include "Modules/Panels/PostClipPanel.h"
@@ -40,8 +41,12 @@ public:
         // panels.push_back(std::move(waveshape));
 
         phase = std::make_unique<PhaseDistPanel>(p);
-        phase->setLookAndFeel(&tubeSatLAF);
+        phase->setLookAndFeel(&tubeSatLAF); // todo: customise
         panels.push_back(std::move(phase));
+
+        rubidium = std::make_unique<RubidiumSatPanel>(p);
+        rubidium->setLookAndFeel(&tubeSatLAF); // todo: customise
+        panels.push_back(std::move(rubidium));
 
         saturation = std::make_unique<Module>(p, "SATURATION", "primaryDistortionEnabled", "primaryDistortionType", std::move(panels));
         addAndMakeVisible(saturation.get());
@@ -85,6 +90,7 @@ private:
     std::unique_ptr<Panel> classic = nullptr;
     std::unique_ptr<Panel> tube = nullptr;
     std::unique_ptr<Panel> phase = nullptr;
+    std::unique_ptr<Panel> rubidium = nullptr;
     std::unique_ptr<Panel> postClipPanel = nullptr;
 
     std::unique_ptr<Module> noise = nullptr;

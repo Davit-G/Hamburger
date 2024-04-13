@@ -6,6 +6,7 @@
 #include "Distortions/Cooked.h"
 #include "Distortions/DiodeWaveshape.h"
 #include "Distortions/PhaseDist.h"
+#include "Distortions/Rubidium.h"
 #include "./Noise/Jeff.h"
 #include "Distortions/tube/Amp.h"
 
@@ -34,6 +35,7 @@ public:
         tubeAmp = std::make_unique<Amp>(state);
         phaseDist = std::make_unique<PhaseDist>(state);
         diodeWaveshape = std::make_unique<DiodeWaveshape>(state);
+        rubidium = std::make_unique<RubidiumDistortion>(state);
     }
 
     ~PrimaryDistortion() {}
@@ -100,6 +102,11 @@ public:
             TRACE_EVENT("dsp", "phase");
             phaseDist->processBlock(block);
         }
+        case 3:
+        {// rubidium distortion
+            TRACE_EVENT("dsp", "rubidium");
+            rubidium->processBlock(block);
+        }
         }
     }
 
@@ -113,6 +120,7 @@ public:
         phaseDist->prepare(spec);
         jeff->prepare(spec);
         diodeWaveshape->prepare(spec);
+        rubidium->prepare(spec);
 
 
         // init iir filter
@@ -142,6 +150,7 @@ private:
     std::unique_ptr<DiodeWaveshape> diodeWaveshape = nullptr;
     std::unique_ptr<Amp> tubeAmp = nullptr;
     std::unique_ptr<PhaseDist> phaseDist = nullptr;
+    std::unique_ptr<RubidiumDistortion> rubidium = nullptr;
 
     dsp::ProcessorDuplicator<dsp::IIR::Filter<double>, dsp::IIR::Coefficients<double>> iirFilter;
 
