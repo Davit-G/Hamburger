@@ -5,6 +5,16 @@
 #include "LookAndFeel/ComboBoxLookAndFeel.h"
 #include "BurgerAlertWindow.h"
 
+std::unique_ptr<juce::Drawable> makeIcon(const char *iconString)
+{
+	auto parsedIconString{XmlDocument::parse(String(iconString))};
+	jassert(parsedIconString != nullptr);
+	auto drawableLogoString = Drawable::createFromSVG(*parsedIconString);
+	jassert(drawableLogoString != nullptr);
+
+	return drawableLogoString;
+}
+
 class CustomListBoxModel : public ListBoxModel
 {
 public:
@@ -18,6 +28,21 @@ public:
 		}
 
 		refreshFilesToRender();
+
+		auto folderClosedIconString = R"svgDELIM(
+			<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-folder-closed"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/><path d="M2 10h20"/></svg>
+		)svgDELIM";
+
+		auto folderOpenIconString = R"svgDELIM(
+			<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-folder-open"><path d="m6 14 1.5-2.9A2 2 0 0 1 9.24 10H20a2 2 0 0 1 1.94 2.5l-1.54 6a2 2 0 0 1-1.95 1.5H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3.9a2 2 0 0 1 1.69.9l.81 1.2a2 2 0 0 0 1.67.9H18a2 2 0 0 1 2 2v2"/></svg>
+		)svgDELIM";
+
+		folderClosedIcon = makeIcon(folderClosedIconString);
+		folderOpenIcon = makeIcon(folderOpenIconString);
+
+		listBox.setRowHeight(36);
+		folderClosedIcon->setVisible(true);
+		folderOpenIcon->setVisible(true);
 	}
 
 	void refreshFilesToRender()
@@ -67,22 +92,41 @@ public:
 		auto row = filesToRender[rowNumber];
 
 		auto isDir = row.isDirectory();
+		
 
-		if (rowIsSelected)
-			g.fillAll(Colours::lightblue);
+		if (rowIsSelected && !isDir)
+			g.fillAll(Colour::fromRGB(33, 33, 33));
 
 		auto depth = row.getRelativePathFrom(presetManager.defaultDirectory).retainCharacters("/\\").length();
 
 		if (isDir)
 		{
-			g.fillAll(Colours::grey);
+			bool collapsed = isCollapsed[row.getRelativePathFrom(presetManager.defaultDirectory)];
+			g.fillAll(Colour::fromRGB(22, 22, 22));
+
+			g.setColour(Colours::white);
+
+			auto drawArea = Rectangle<float>(5 + depth * 30, 0, height, height).reduced(12).toFloat();
+
+			if (collapsed) {
+				folderClosedIcon->drawWithin(g, drawArea, RectanglePlacement::centred, 1.0f);
+			} else {
+				folderOpenIcon->drawWithin(g, drawArea, RectanglePlacement::centred, 1.0f);
+			}
+			
+
 		}
 
+		auto extraRoom = 0;
+
+		if (isDir)
+			extraRoom = 35;
+
 		g.setColour(LookAndFeel::getDefaultLookAndFeel().findColour(Label::textColourId));
-		g.setFont((float)height * 0.7f);
+		g.setFont((float)height * 0.4f); // TODO: add font to this
 
 		g.drawText(row.getFileNameWithoutExtension(),
-				   5 + depth * 30, 0, width, height,
+				   15 + depth * 30 + extraRoom, 0, width, height,
 				   Justification::centredLeft, true);
 	}
 
@@ -153,6 +197,9 @@ private:
 
 	std::map<String, bool> isCollapsed;
 
+	std::unique_ptr<juce::Drawable> folderClosedIcon;
+	std::unique_ptr<juce::Drawable> folderOpenIcon;
+
 	JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(CustomListBoxModel)
 };
 
@@ -195,7 +242,7 @@ public:
 		// pass clicks through
 		setInterceptsMouseClicks(false, true);
 
-		listBox.setColour(ListBox::ColourIds::backgroundColourId, Colour::fromRGB(22, 22, 22));
+		listBox.setColour(ListBox::ColourIds::backgroundColourId, Colours::black);
 		listBox.setColour(ListBox::ColourIds::textColourId, Colours::white);
 		listBox.setColour(ListBox::ColourIds::outlineColourId, Colours::black);
 		listBox.setModel(&listBoxModel);
@@ -266,16 +313,15 @@ private:
 		p.addRoundedRectangle(getLocalBounds().removeFromTop(45).reduced(4).toFloat(), 15.0f);
 		g.setColour(juce::Colour::fromRGB(0, 0, 0));
 		g.fillPath(p);
-	}
 
-	std::unique_ptr<juce::Drawable> makeIcon(const char *iconString)
-	{
-		auto parsedIconString{XmlDocument::parse(String(iconString))};
-		jassert(parsedIconString != nullptr);
-		auto drawableLogoString = Drawable::createFromSVG(*parsedIconString);
-		jassert(drawableLogoString != nullptr);
+		// Rectangle<int> arrowZone(5 + 45 * 2, 0, 20, 45);
+        // Path path;
+        // path.startNewSubPath((float)arrowZone.getX() + 4.0f, (float)arrowZone.getCentreY() - 2.0f);
+        // path.lineTo((float)arrowZone.getCentreX(), (float)arrowZone.getCentreY() + 3.0f);
+        // path.lineTo((float)arrowZone.getRight() - 4.0f, (float)arrowZone.getCentreY() - 2.0f);
 
-		return drawableLogoString;
+        // g.setColour(juce::Colours::white);
+        // g.strokePath(path, PathStrokeType(2.0f, juce::PathStrokeType::JointStyle::curved, juce::PathStrokeType::EndCapStyle::rounded));
 	}
 
 	void buttonClicked(Button *button) override
