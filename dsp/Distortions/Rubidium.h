@@ -298,8 +298,8 @@ public:
             spl1 -= h1;
 
             // saturation
-            spl0 = atan(spl0 * delta0) / (spl0 == 0 ? 1 : delta0);
-            spl1 = atan(spl1 * delta1) / (spl1 == 0 ? 1 : delta1);
+            spl0 = atan(spl0 * delta0) / (spl0 == 0 ? 1 : (delta0 == 0 ? 0.00000001f : delta0));
+            spl1 = atan(spl1 * delta1) / (spl1 == 0 ? 1 : (delta1 == 0 ? 0.00000001f : delta1));
             //spl0 = sin(spl0 * delta0) / (spl0 === 0 ? 1 : delta0);
             //spl1 = sin(spl1 * delta1) / (spl1 === 0 ? 1 : delta1);
 
@@ -352,8 +352,8 @@ public:
             delta1 += l3;
 
             // saturation
-            spl0 = atan(spl0 * delta0) / (spl0 == 0 ? 1 : delta0);
-            spl1 = atan(spl1 * delta1) / (spl1 == 0 ? 1 : delta1);
+            spl0 = atan(spl0 * delta0) / (spl0 == 0 ? 1 : (delta0 == 0 ? 0.00000001f : delta0));
+            spl1 = atan(spl1 * delta1) / (spl1 == 0 ? 1 : (delta1 == 0 ? 0.00000001f : delta1));
 
             // gain compensation
             spl0 /= adj3;
