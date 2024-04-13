@@ -173,9 +173,10 @@ spl1 *= vol;
 class RubidiumDistortion
 {
 public:
-    RubidiumDistortion(juce::AudioProcessorValueTreeState &treeState) : saturation(treeState, "rubidiumAmount"),
+    RubidiumDistortion(juce::AudioProcessorValueTreeState &treeState) : drive(treeState, "rubidiumAmount"),
                                                                         hysteresis(treeState, "rubidiumHysteresis"),
-                                                                        tone(treeState, "rubidiumTone")
+                                                                        tone(treeState, "rubidiumTone"),
+                                                                        mojo(treeState, "rubidiumMojo")
     {
     }
 
@@ -197,7 +198,7 @@ public:
     }
 
     void updateCoefficients() {
-        float satAmt = saturation.getRaw() * 0.9f + 10.f;
+        float satAmt = mojo.getRaw() * 0.9f + 10.f;
         float hystAmt = hysteresis.getRaw();
         float toneAmt = tone.getRaw();
 
@@ -235,13 +236,17 @@ public:
     {
         updateCoefficients();
 
+        drive.update();
+
         for (int sample = 0; sample < block.getNumSamples(); sample++)
         {
             double spl0 = (double)block.getSample(0, sample);
             double spl1 = (double)block.getSample(1, sample);
 
-            spl0 = atan(spl0 * 1.6);
-            spl1 = atan(spl1 * 1.6);
+            float driveVal = juce::Decibels::decibelsToGain(drive.getNextValue() * 0.01f * 24.0f); 
+
+            spl0 = atan(spl0 * 1.3 * driveVal);
+            spl1 = atan(spl1 * 1.3 * driveVal);
 
             spl0 *= adj3;
             spl1 *= adj4;
@@ -364,7 +369,8 @@ public:
     }
 
 private:
-    SmoothParam saturation;
+    SmoothParam drive;
+    SmoothParam mojo;
     SmoothParam hysteresis;
     SmoothParam tone;
 
