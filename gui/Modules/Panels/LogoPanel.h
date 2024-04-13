@@ -36,7 +36,7 @@ public:
 
     void mouseUp(const MouseEvent &event) override
     {
-        // getParentComponent()->getParentComponent()->getParentComponent()->postCommandMessage(0);
+        getParentComponent()->getParentComponent()->getParentComponent()->postCommandMessage(0);
 
         auto alertWindow = new BurgerAlertWindow("Save Preset", "Enter a name for your new preset: ", MessageBoxIconType::NoIcon);
         

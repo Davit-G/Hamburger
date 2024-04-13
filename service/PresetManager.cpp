@@ -114,20 +114,46 @@ juce::StringArray PresetManager::getAllPresets() const
 	return presets;
 }
 
+/**
+ * @brief Recursively traverse a directory and return a sorted list of files.
+ * Makes sure that folders are traversed before files.
+ * Also filters by extension.
+*/
+juce::Array<juce::File> PresetManager::recursiveSortedTraverse(const juce::File& directory) const {
+	juce::Array<juce::File> files;
+
+	auto wildcard = juce::WildcardFileFilter("*." + extension, "*", "*");
+	auto dirsFiles = directory.findChildFiles(juce::File::TypesOfFileToFind::findFilesAndDirectories, false);
+	
+	// sort folders before directories
+	std::sort(dirsFiles.begin(), dirsFiles.end(), [](const juce::File& a, const juce::File& b) {
+		return a.isDirectory() && !b.isDirectory();
+	});
+
+	// for every folder, recursively traverse and insert
+	for (int i = 0; i < dirsFiles.size(); i++)
+	{
+		if (dirsFiles[i].isDirectory())
+		{
+			auto subFiles = recursiveSortedTraverse(dirsFiles[i]);
+			files.add(dirsFiles[i]); // add the directory as well as the children to the 2d arr
+			files.addArray(subFiles);
+		}
+		else {
+			if (wildcard.isFileSuitable(dirsFiles[i])) {
+				files.add(dirsFiles[i]);
+			}
+		}
+	}
+
+	return files;
+}
+
 juce::Array<juce::File> PresetManager::getPresetFileHierarchy() const
 {
 	// get files and folders
-	auto dirsFiles = defaultDirectory.findChildFiles(juce::File::TypesOfFileToFind::findFilesAndDirectories, true);
+	auto dirsFiles = recursiveSortedTraverse(defaultDirectory);
 
-	auto wildcard = juce::WildcardFileFilter("*." + extension, "*", "*");
-	
-	for (int i = dirsFiles.size(); --i >= 0;)
-	{
-		if (!wildcard.isFileSuitable(dirsFiles[i]) && !dirsFiles[i].isDirectory())
-		{
-			dirsFiles.remove(i);
-		}
-	}
 	return dirsFiles;
 }
 

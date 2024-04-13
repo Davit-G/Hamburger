@@ -5,45 +5,90 @@
 #include "LookAndFeel/ComboBoxLookAndFeel.h"
 #include "BurgerAlertWindow.h"
 
+struct FileComparator
+{
+	FileComparator(PresetManager &pm) : presetManager(pm) {}
+	
+	int compareElements (const File& a, const File& b) const
+    {
+        if (a.isDirectory() && !b.isDirectory()) return -1;
+        if (!a.isDirectory() && b.isDirectory()) return 1;
+        return 0;
+
+		// we need directories on the same level to be sorted alphabetically while keeping directories at the top.
+		// auto aDepth = a.getRelativePathFrom(presetManager.defaultDirectory).retainCharacters("/\\").length();
+		// auto bDepth = b.getRelativePathFrom(presetManager.defaultDirectory).retainCharacters("/\\").length();
+
+		
+
+		
+    }
+
+	PresetManager &presetManager;
+};
+
 class CustomListBoxModel : public ListBoxModel
 {
 public:
-	CustomListBoxModel(PresetManager &pm) : presetManager(pm)
+	CustomListBoxModel(PresetManager &pm, ListBox &lb) : presetManager(pm), listBox(lb), comparator(pm)
 	{
 		filesFolders = presetManager.getPresetFileHierarchy();
+
+		for (auto &file : filesFolders)
+		{
+			isCollapsed[file.getRelativePathFrom(pm.defaultDirectory)] = true;
+		}
+
+		refreshFilesToRender();
+	}
+
+	void refreshFilesToRender()
+	{
+		filesToRender.clear();
+		for (auto &file : filesFolders)
+		{
+			auto relativePath = file.getRelativePathFrom(presetManager.defaultDirectory);
+			auto depth = relativePath.retainCharacters("/\\").length();
+			if (depth == 0)
+			{
+				filesToRender.add(file);
+			}
+			else
+			{
+				auto parent = file.getParentDirectory();
+				File current = parent;
+
+				int tries = 0;
+
+				while (current != presetManager.defaultDirectory)
+				{
+					auto currentFile = current.getRelativePathFrom(presetManager.defaultDirectory);
+					if (isCollapsed[currentFile] || tries++ > 40) break;
+
+					current = current.getParentDirectory();
+				}
+
+				if (!isCollapsed[current.getRelativePathFrom(presetManager.defaultDirectory)])
+				{
+					filesToRender.add(file);
+				}
+			}
+		}
+
+		// push all directories to the top
+		// filesToRender.sort(comparator, false);
 	}
 
 	int getNumRows() override
 	{
-		return filesFolders.size();
+		return filesToRender.size();
 	}
-
-	// Component* refreshComponentForRow(int rowNumber, bool isRowSelected, Component *existingComponentToUpdate) override {
-	// 	// if (existingComponentToUpdate == nullptr)
-	// 	// {
-	// 	// 	auto *label = new Label();
-	// 	// 	label->setColour(Label::ColourIds::textColourId, Colours::white);
-	// 	// 	label->setColour(Label::ColourIds::backgroundColourId, Colours::black);
-	// 	// 	label->setColour(Label::ColourIds::outlineColourId, Colours::black);
-	// 	// 	label->setJustificationType(Justification::centred);
-	// 	// 	label->setFont(Font(15.0f));
-	// 	// 	label->setText("Preset " + String(rowNumber), dontSendNotification);
-	// 	// 	return label;
-	// 	// }
-	// 	// else
-	// 	// {
-	// 	// 	auto *label = dynamic_cast<Label*>(existingComponentToUpdate);
-	// 	// 	label->setText("Preset " + String(rowNumber), dontSendNotification);
-	// 	// 	return label;
-	// 	// }
-
-	// }
 
 	void paintListBoxItem(int rowNumber, Graphics &g,
 						  int width, int height, bool rowIsSelected) override
 	{
 
-		auto row = filesFolders[rowNumber];
+		auto row = filesToRender[rowNumber];
 
 		auto isDir = row.isDirectory();
 
@@ -67,15 +112,18 @@ public:
 	}
 
 	void listBoxItemClicked(int row, const MouseEvent &mouseEvent) override {
-		auto fileFolder = filesFolders[row];
+		auto item = filesToRender[row];
 
-		auto isDir = fileFolder.isDirectory();
+		auto isDir = item.isDirectory();
 
 		if (isDir)
 		{
-			// filesFolders = fileFolder.findChildFiles(File::findFilesAndDirectories, false, "*");
-			// listBox.updateContent();
-			DBG("clicked on dir", fileFolder.getFullPathName());
+			
+			DBG("clicked on dir", item.getFullPathName());
+			auto relativePath = item.getRelativePathFrom(presetManager.defaultDirectory);
+			isCollapsed[relativePath] = !isCollapsed[relativePath];
+			refreshFilesToRender();
+			listBox.updateContent();
 		}
 		else
 		{
@@ -90,8 +138,14 @@ public:
 
 private:
 	PresetManager &presetManager;
+	ListBox &listBox;
+
+	FileComparator comparator;
 
 	juce::Array<File> filesFolders;
+	juce::Array<File> filesToRender;
+
+	std::map<String, bool> isCollapsed;
 
 	JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(CustomListBoxModel)
 };
@@ -100,7 +154,7 @@ class PresetPanel : public Component, Button::Listener, ComboBox::Listener
 {
 public:
 	PresetPanel(PresetManager &pm) : presetManager(pm),
-									 listBoxModel(pm),
+									 listBoxModel(pm, listBox),
 									 saveButton("Save", DrawableButton::ImageOnButtonBackground),
 									 deleteButton("Delete", DrawableButton::ImageOnButtonBackground),
 									 previousPresetButton("Previous", DrawableButton::ImageOnButtonBackground),

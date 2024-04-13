@@ -21,6 +21,8 @@ public:
 	juce::StringArray getAllPresets() const;
 	juce::String getCurrentPreset() const;
 
+	juce::Array<juce::File> recursiveSortedTraverse(const juce::File& directory) const;
+
 	juce::Array<juce::File> getPresetFileHierarchy() const;
 private:
 	void valueTreeRedirected(juce::ValueTree& treeWhichHasBeenChanged) override;
