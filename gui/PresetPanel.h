@@ -40,10 +40,8 @@ public:
 
 		folderClosedIcon = makeIcon(folderClosedIconString);
 		folderOpenIcon = makeIcon(folderOpenIconString);
-
+		
 		listBox.setRowHeight(36);
-		folderClosedIcon->setVisible(true);
-		folderOpenIcon->setVisible(true);
 
 		itemFont.setHeight(20.0f);
 	}
@@ -255,6 +253,11 @@ public:
 		listBox.setColour(ListBox::ColourIds::backgroundColourId, Colours::black);
 		listBox.setColour(ListBox::ColourIds::textColourId, Colours::white);
 		listBox.setColour(ListBox::ColourIds::outlineColourId, Colours::black);
+
+		listBox.setColour(ScrollBar::ColourIds::thumbColourId, Palette::colours[2]);
+		listBox.setColour(ScrollBar::ColourIds::trackColourId, Palette::colours[0]);
+		listBox.setColour(ScrollBar::ColourIds::backgroundColourId, Palette::colours[1]);
+
 		listBox.setModel(&listBoxModel);
 		addAndMakeVisible(listBox);
 
@@ -272,7 +275,6 @@ public:
 		currentPresetLabel.setLookAndFeel(&comboBoxLAF);
 		currentPresetLabel.setColour(ComboBox::backgroundColourId, Colours::black);
 		currentPresetLabel.setColour(TextButton::ColourIds::buttonColourId, Colours::black);
-		// todo: draw chevron on the left to indicate clickability
 
 		currentPresetLabel.setMouseCursor(MouseCursor::PointingHandCursor);
 		addAndMakeVisible(currentPresetLabel);
@@ -305,7 +307,7 @@ public:
 		deleteButton.setBounds(bounds.removeFromLeft(height).reduced(4));
 		nextPresetButton.setBounds(bounds.removeFromRight(height).reduced(4));
 		previousPresetButton.setBounds(bounds.removeFromRight(height).reduced(4));
-		currentPresetLabel.setBounds(bounds);
+		currentPresetLabel.setBounds(bounds.reduced(4));
 
 		if (showPresetsList)
 			listBox.setBounds(getLocalBounds().withTrimmedTop(height).reduced(4));
@@ -374,7 +376,6 @@ private:
 
 	void setupButton(Button &button, const String &buttonText)
 	{
-		// button.setButtonText(buttonText);
 		button.setMouseCursor(MouseCursor::PointingHandCursor);
 
 		button.setColour(TextButton::ColourIds::buttonOnColourId, Colour::fromRGB(0, 0, 0));
@@ -398,7 +399,7 @@ private:
 			presets.add(file.getFileNameWithoutExtension());
 		}
 
-		currentPresetLabel.setButtonText("Presets");
+		currentPresetLabel.setButtonText("Hamburger");
 	}
 
 	ListBox listBox;
