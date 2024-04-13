@@ -105,11 +105,10 @@ public:
 		{
 			DBG(item.getFullPathName());
 			presetManager.loadPreset(item);
-			// presetPanel.updatePresetLabel();
 
 			for (auto listener : singleClickListener)
 			{
-				listener.operator()(item.getFileNameWithoutExtension());
+				listener.operator()(item.getParentDirectory().getFileNameWithoutExtension() + " - " + item.getFileNameWithoutExtension());
 			}
 		}
 	}
@@ -122,7 +121,7 @@ public:
 
 		for (auto listener : doubleClickListener)
 		{
-			listener.operator()(item.getFileNameWithoutExtension());
+			listener.operator()(item.getParentDirectory().getFileNameWithoutExtension() + " - " + item.getFileNameWithoutExtension());
 		}
 	}
 
@@ -298,12 +297,12 @@ private:
 		if (button == &previousPresetButton)
 		{
 			const auto newPreset = presetManager.loadPreviousPreset();
-			currentPresetLabel.setButtonText(newPreset.getFileNameWithoutExtension());
+			currentPresetLabel.setButtonText(newPreset.getParentDirectory().getFileNameWithoutExtension() + " - " + newPreset.getFileNameWithoutExtension());
 		}
 		if (button == &nextPresetButton)
 		{
 			const auto newPreset = presetManager.loadNextPreset();
-			currentPresetLabel.setButtonText(newPreset.getFileNameWithoutExtension());
+			currentPresetLabel.setButtonText(newPreset.getParentDirectory().getFileNameWithoutExtension() + " - " + newPreset.getFileNameWithoutExtension());
 		}
 		if (button == &deleteButton)
 		{
