@@ -210,7 +210,7 @@ public:
         hys1 = hystAmt / 100;
         cut0 = 2 * juce::MathConstants<float>::pi * (highpassFreq + rand0) / srate;
         cut1 = 2 * juce::MathConstants<float>::pi * (highpassFreq + rand1) / srate;
-        cut2 = 2 * juce::MathConstants<float>::pi * (0.01f) / srate;
+        cut2 = 2 * juce::MathConstants<float>::pi * (0.f) / srate;
         cut2 = 0;
         buf_length1 = fmax((stepRatio * 2) - 1, 0);
 
@@ -243,13 +243,6 @@ public:
             spl0 = atan(spl0 * 1.6);
             spl1 = atan(spl1 * 1.6);
 
-            // smooth fader gain
-            // adj_s3 += a * (adj3 - adj_s3);
-            // if (!adj3 && !adj_s3)
-            //     adj_s3 = adj3;
-            // adj_s4 += a * (adj4 - adj_s4);
-            // if (!adj4 && !adj_s4)
-            //     adj_s4 = adj4;
             spl0 *= adj3;
             spl1 *= adj4;
 
@@ -280,8 +273,12 @@ public:
             pos1 += 1;
             if (pos1 > buf_length0)
                 pos1 = 0;
-            delta0 += hys1 * fmax(hys0 - sqrt(out0), 0);
-            delta1 += hys1 * fmax(hys0 - sqrt(out1), 0);
+
+            float out0sign = out0 < 0 ? -1 : 1;
+            float out1sign = out1 < 0 ? -1 : 1;
+
+            delta0 += hys1 * fmax(hys0 - sqrt(out0 * out0sign) * out0sign, 0);
+            delta1 += hys1 * fmax(hys0 - sqrt(out1 * out1sign) * out1sign, 0);
 
             // delta lowpass + rectified
             l0 += ((delta0 - l0) * cut0);
