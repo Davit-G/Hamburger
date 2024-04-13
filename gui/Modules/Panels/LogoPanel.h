@@ -3,7 +3,6 @@
 #include "../Panel.h"
 #include "PanelNames.h"
 #include "juce_gui_basics/juce_gui_basics.h"
-#include "../../BurgerAlertWindow.h"
 
 #include "../Scope.h"
 
@@ -37,15 +36,6 @@ public:
     void mouseUp(const MouseEvent &event) override
     {
         getParentComponent()->getParentComponent()->getParentComponent()->postCommandMessage(0);
-
-        auto alertWindow = new BurgerAlertWindow("Save Preset", "Enter a name for your new preset: ", MessageBoxIconType::NoIcon);
-        
-		alertWindow->enterModalState(true, nullptr, true);
-
-        // auto alertWindow2 = new BurgerAlertWindow("Delete Preset", "Are you sure you want to delete this preset? ", MessageBoxIconType::NoIcon);
-		// alertWindow2->addButton("Delete", 1, KeyPress(KeyPress::returnKey, 0, 0));
-		// alertWindow2->addButton("Cancel", 0, KeyPress(KeyPress::escapeKey, 0, 0));
-		// alertWindow2->enterModalState(true, nullptr, true);
     }
 
     void resized() override

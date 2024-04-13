@@ -5,32 +5,10 @@
 #include "LookAndFeel/ComboBoxLookAndFeel.h"
 #include "BurgerAlertWindow.h"
 
-struct FileComparator
-{
-	FileComparator(PresetManager &pm) : presetManager(pm) {}
-	
-	int compareElements (const File& a, const File& b) const
-    {
-        if (a.isDirectory() && !b.isDirectory()) return -1;
-        if (!a.isDirectory() && b.isDirectory()) return 1;
-        return 0;
-
-		// we need directories on the same level to be sorted alphabetically while keeping directories at the top.
-		// auto aDepth = a.getRelativePathFrom(presetManager.defaultDirectory).retainCharacters("/\\").length();
-		// auto bDepth = b.getRelativePathFrom(presetManager.defaultDirectory).retainCharacters("/\\").length();
-
-		
-
-		
-    }
-
-	PresetManager &presetManager;
-};
-
 class CustomListBoxModel : public ListBoxModel
 {
 public:
-	CustomListBoxModel(PresetManager &pm, ListBox &lb) : presetManager(pm), listBox(lb), comparator(pm)
+	CustomListBoxModel(PresetManager &pm, ListBox &lb) : presetManager(pm), listBox(lb)
 	{
 		filesFolders = presetManager.getPresetFileHierarchy();
 
@@ -63,7 +41,8 @@ public:
 				while (current != presetManager.defaultDirectory)
 				{
 					auto currentFile = current.getRelativePathFrom(presetManager.defaultDirectory);
-					if (isCollapsed[currentFile] || tries++ > 40) break;
+					if (isCollapsed[currentFile] || tries++ > 40)
+						break;
 
 					current = current.getParentDirectory();
 				}
@@ -74,9 +53,6 @@ public:
 				}
 			}
 		}
-
-		// push all directories to the top
-		// filesToRender.sort(comparator, false);
 	}
 
 	int getNumRows() override
@@ -95,7 +71,6 @@ public:
 		if (rowIsSelected)
 			g.fillAll(Colours::lightblue);
 
-		
 		auto depth = row.getRelativePathFrom(presetManager.defaultDirectory).retainCharacters("/\\").length();
 
 		if (isDir)
@@ -111,14 +86,15 @@ public:
 				   Justification::centredLeft, true);
 	}
 
-	void listBoxItemClicked(int row, const MouseEvent &mouseEvent) override {
+	void listBoxItemClicked(int row, const MouseEvent &mouseEvent) override
+	{
 		auto item = filesToRender[row];
 
 		auto isDir = item.isDirectory();
 
 		if (isDir)
 		{
-			
+
 			DBG("clicked on dir", item.getFullPathName());
 			auto relativePath = item.getRelativePathFrom(presetManager.defaultDirectory);
 			isCollapsed[relativePath] = !isCollapsed[relativePath];
@@ -127,8 +103,38 @@ public:
 		}
 		else
 		{
-			// presetManager.loadPreset(fileFolder.getFileNameWithoutExtension());
+			DBG(item.getFullPathName());
+			presetManager.loadPreset(item);
+			// presetPanel.updatePresetLabel();
+
+			for (auto listener : singleClickListener)
+			{
+				listener.operator()(item.getFileNameWithoutExtension());
+			}
 		}
+	}
+
+	void listBoxItemDoubleClicked(int row, const MouseEvent &mouseEvent) override
+	{
+		auto item = filesToRender[row];
+		if (item.isDirectory())
+			return;
+
+		for (auto listener : doubleClickListener)
+		{
+			listener.operator()(item.getFileNameWithoutExtension());
+		}
+	}
+
+	// function to add lambdas that take a string argument
+	void addSingleClickListener(std::function<void(String)> listener)
+	{
+		singleClickListener.push_back(listener);
+	}
+
+	void addDoubleClickListener(std::function<void(String)> listener)
+	{
+		doubleClickListener.push_back(listener);
 	}
 
 	void updateContent()
@@ -140,7 +146,8 @@ private:
 	PresetManager &presetManager;
 	ListBox &listBox;
 
-	FileComparator comparator;
+	std::vector<std::function<void(String)>> singleClickListener;
+	std::vector<std::function<void(String)>> doubleClickListener;
 
 	juce::Array<File> filesFolders;
 	juce::Array<File> filesToRender;
@@ -150,7 +157,7 @@ private:
 	JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(CustomListBoxModel)
 };
 
-class PresetPanel : public Component, Button::Listener, ComboBox::Listener
+class PresetPanel : public Component, Button::Listener
 {
 public:
 	PresetPanel(PresetManager &pm) : presetManager(pm),
@@ -195,14 +202,32 @@ public:
 		listBox.setModel(&listBoxModel);
 		addAndMakeVisible(listBox);
 
-		presetList.setLookAndFeel(&comboBoxLAF);
-		presetList.setJustificationType(Justification::centred);
-		presetList.setColour(ComboBox::backgroundColourId, Colours::black);
+		listBoxModel.addSingleClickListener(std::function<void(String)>([&](String presetName)
+																		{ currentPresetLabel.setButtonText(presetName); }));
 
-		presetList.setTextWhenNothingSelected("--- Presets ---");
-		presetList.setMouseCursor(MouseCursor::PointingHandCursor);
-		addAndMakeVisible(presetList);
-		presetList.addListener(this);
+		listBoxModel.addDoubleClickListener(std::function<void(String)>([&](String presetName)
+																		{
+			showPresetsList = false;
+			listBox.setVisible(showPresetsList);
+			resized(); }));
+
+		listBox.setVisible(showPresetsList);
+
+		currentPresetLabel.setLookAndFeel(&comboBoxLAF);
+		currentPresetLabel.setColour(ComboBox::backgroundColourId, Colours::black);
+		currentPresetLabel.setColour(TextButton::ColourIds::buttonColourId, Colours::black);
+		// todo: draw chevron on the left to indicate clickability
+
+		currentPresetLabel.setMouseCursor(MouseCursor::PointingHandCursor);
+		addAndMakeVisible(currentPresetLabel);
+		currentPresetLabel.addListener(this);
+
+		currentPresetLabel.onClick = [this]
+		{
+			showPresetsList = !showPresetsList;
+			listBox.setVisible(showPresetsList);
+			resized();
+		};
 
 		loadPresetList();
 	}
@@ -213,7 +238,6 @@ public:
 		deleteButton.removeListener(this);
 		previousPresetButton.removeListener(this);
 		nextPresetButton.removeListener(this);
-		presetList.removeListener(this);
 	}
 
 	void resized() override
@@ -225,9 +249,15 @@ public:
 		deleteButton.setBounds(bounds.removeFromLeft(height).reduced(4));
 		nextPresetButton.setBounds(bounds.removeFromRight(height).reduced(4));
 		previousPresetButton.setBounds(bounds.removeFromRight(height).reduced(4));
-		presetList.setBounds(bounds);
+		currentPresetLabel.setBounds(bounds);
 
-		listBox.setBounds(getLocalBounds().withTrimmedTop(height).reduced(4));
+		if (showPresetsList)
+			listBox.setBounds(getLocalBounds().withTrimmedTop(height).reduced(4));
+	}
+
+	void updatePresetLabel(juce::String &text)
+	{
+		currentPresetLabel.setButtonText(text);
 	}
 
 private:
@@ -253,37 +283,37 @@ private:
 	{
 		if (button == &saveButton)
 		{
-			fileChooser = std::make_unique<FileChooser>(
-				"Save Preset",
-				PresetManager::defaultDirectory,
-				"*." + PresetManager::extension);
-			fileChooser->launchAsync(FileBrowserComponent::saveMode, [&](const FileChooser &chooser)
-									 {
-					const auto resultFile = chooser.getResult();
-					presetManager.savePreset(resultFile.getFileNameWithoutExtension());
-					loadPresetList(); });
+			auto alertWindow = new BurgerAlertWindow("Save Preset", "Enter a name for your new preset: ", MessageBoxIconType::NoIcon);
+
+			alertWindow->enterModalState(true, juce::ModalCallbackFunction::create([this, alertWindow](int result)
+																				   {
+				if (result == 1) {
+					auto name = alertWindow->getTextEditor("presetName")->getText();
+					presetManager.savePreset(name);
+					loadPresetList();
+				}
+
+				delete alertWindow; }));
 		}
 		if (button == &previousPresetButton)
 		{
-			const auto index = presetManager.loadPreviousPreset();
-			presetList.setSelectedItemIndex(index, dontSendNotification);
+			const auto newPreset = presetManager.loadPreviousPreset();
+			currentPresetLabel.setButtonText(newPreset.getFileNameWithoutExtension());
 		}
 		if (button == &nextPresetButton)
 		{
-			const auto index = presetManager.loadNextPreset();
-			presetList.setSelectedItemIndex(index, dontSendNotification);
+			const auto newPreset = presetManager.loadNextPreset();
+			currentPresetLabel.setButtonText(newPreset.getFileNameWithoutExtension());
 		}
 		if (button == &deleteButton)
 		{
 			presetManager.deletePreset(presetManager.getCurrentPreset());
 			loadPresetList();
-		}
-	}
-	void comboBoxChanged(ComboBox *comboBoxThatHasChanged) override
-	{
-		if (comboBoxThatHasChanged == &presetList)
-		{
-			presetManager.loadPreset(presetList.getItemText(presetList.getSelectedItemIndex()));
+
+			// auto alertWindow2 = new BurgerAlertWindow("Delete Preset", "Are you sure you want to delete this preset? ", MessageBoxIconType::NoIcon);
+			// alertWindow2->addButton("Delete", 1, KeyPress(KeyPress::returnKey, 0, 0));
+			// alertWindow2->addButton("Cancel", 0, KeyPress(KeyPress::escapeKey, 0, 0));
+			// alertWindow2->enterModalState(true, nullptr, true);
 		}
 	}
 
@@ -303,18 +333,28 @@ private:
 
 	void loadPresetList()
 	{
-		presetList.clear(dontSendNotification);
+
 		const auto allPresets = presetManager.getAllPresets();
 		const auto currentPreset = presetManager.getCurrentPreset();
-		presetList.addItemList(allPresets, 1);
-		presetList.setSelectedItemIndex(allPresets.indexOf(currentPreset), dontSendNotification);
+
+		juce::StringArray presets;
+		for (auto &file : allPresets)
+		{
+			presets.add(file.getFileNameWithoutExtension());
+		}
+
+		currentPresetLabel.setButtonText("Presets");
 	}
 
 	ListBox listBox;
 
 	PresetManager &presetManager;
 	DrawableButton saveButton, deleteButton, previousPresetButton, nextPresetButton;
-	ComboBox presetList;
+
+	bool showPresetsList = false;
+
+	TextButton currentPresetLabel;
+
 	std::unique_ptr<FileChooser> fileChooser;
 
 	ComboBoxLookAndFeel comboBoxLAF;

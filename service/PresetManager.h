@@ -9,17 +9,17 @@ class PresetManager : juce::ValueTree::Listener
 public:
 	static const juce::File defaultDirectory;
 	static const juce::String extension;
-	static const juce::String presetNameProperty;
+	static const juce::String presetPathProperty;
 
 	PresetManager(juce::AudioProcessorValueTreeState&);
 
-	void savePreset(const juce::String& presetName);
-	void deletePreset(const juce::String& presetName);
-	void loadPreset(const juce::String& presetName);
-	int loadNextPreset();
-	int loadPreviousPreset();
-	juce::StringArray getAllPresets() const;
-	juce::String getCurrentPreset() const;
+	void savePreset(const juce::String& preset);
+	void deletePreset(const juce::File& preset);
+	void loadPreset(const juce::File& preset);
+	juce::File loadNextPreset();
+	juce::File loadPreviousPreset();
+	juce::Array<juce::File> getAllPresets() const;
+	juce::File getCurrentPreset() const;
 
 	juce::Array<juce::File> recursiveSortedTraverse(const juce::File& directory) const;
 
