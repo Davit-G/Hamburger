@@ -19,7 +19,8 @@ public:
         auto leftDryData = block.getChannelPointer(0);
 
         for (int sample = 0; sample < block.getNumSamples(); sample++) {
-            float amt = powf(amount.getNextValue() * 0.8f, 3.0f) * 3.0f;
+            float amt = amount.getNextValue() * 0.8f;
+            amt = amt * amt * amt * 3.0f;
 
             float l = leftDryData[sample];
             float r = rightDryData[sample];

@@ -18,7 +18,8 @@ void DiodeWaveshape::processBlock(juce::dsp::AudioBlock<float> &block)
 		auto dryData = block.getChannelPointer(channel);
 		for (int sample = 0; sample < block.getNumSamples(); sample++)
 		{
-			float amt = powf(amount.getNextValue() * 0.01f * 3.0f + 0.000001f, 3);
+            const auto amountNext = amount.getNextValue() * 0.01f * 3.0f + 0.000001f;
+			float amt = amountNext * amountNext * amountNext;
 
             float blend = fmin(amt * 0.8f, 1.0f);
             auto x = dryData[sample];

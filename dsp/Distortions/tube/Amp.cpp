@@ -29,7 +29,8 @@ void Amp::calculateCoefficients()
     auto &triode3 = triodes[2];
     auto &triode4 = triodes[3];
 
-    auto skewedTone = powf(tubeTone.getRaw(), 3.0f);
+    auto tubeToneValue = tubeTone.getRaw();
+    auto skewedTone = tubeToneValue*tubeToneValue*tubeToneValue;
 
     for (int i = 0; i < 4; i++)
     {

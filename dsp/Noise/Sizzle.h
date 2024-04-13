@@ -39,7 +39,7 @@ public:
 	float newSizzleFunction(float inputSample, float nextSizzle, float envelope, float nextRand)
 	{
 		float audioClipped = std::fmin(1.f, std::fmax(0.f, inputSample));
-		float amt = powf(audioClipped, 2.0f) - 2.0f * audioClipped + 1.0f;
+		float amt = audioClipped * audioClipped - 2.0f * audioClipped + 1.0f;
 
 		return inputSample + (nextRand * ((nextSizzle * envelope * amt) * 0.5f)); // nextSizzle * (nextSizzle / 2)
 	}
