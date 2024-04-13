@@ -4,6 +4,7 @@
 
 #include "LookAndFeel/ComboBoxLookAndFeel.h"
 #include "BurgerAlertWindow.h"
+#include "Utils/HamburgerFonts.h"
 
 std::unique_ptr<juce::Drawable> makeIcon(const char *iconString)
 {
@@ -18,7 +19,7 @@ std::unique_ptr<juce::Drawable> makeIcon(const char *iconString)
 class CustomListBoxModel : public ListBoxModel
 {
 public:
-	CustomListBoxModel(PresetManager &pm, ListBox &lb) : presetManager(pm), listBox(lb)
+	CustomListBoxModel(PresetManager &pm, ListBox &lb) : presetManager(pm), listBox(lb), itemFont(*HamburgerFonts::quicksandFont)
 	{
 		filesFolders = presetManager.getPresetFileHierarchy();
 
@@ -43,6 +44,8 @@ public:
 		listBox.setRowHeight(36);
 		folderClosedIcon->setVisible(true);
 		folderOpenIcon->setVisible(true);
+
+		itemFont.setHeight(20.0f);
 	}
 
 	void refreshFilesToRender()
@@ -85,6 +88,11 @@ public:
 		return filesToRender.size();
 	}
 
+	MouseCursor getMouseCursorForRow(int row) override
+	{
+		return MouseCursor::PointingHandCursor;
+	}
+
 	void paintListBoxItem(int rowNumber, Graphics &g,
 						  int width, int height, bool rowIsSelected) override
 	{
@@ -123,7 +131,7 @@ public:
 			extraRoom = 35;
 
 		g.setColour(LookAndFeel::getDefaultLookAndFeel().findColour(Label::textColourId));
-		g.setFont((float)height * 0.4f); // TODO: add font to this
+		g.setFont(itemFont);
 
 		g.drawText(row.getFileNameWithoutExtension(),
 				   15 + depth * 30 + extraRoom, 0, width, height,
@@ -199,6 +207,8 @@ private:
 
 	std::unique_ptr<juce::Drawable> folderClosedIcon;
 	std::unique_ptr<juce::Drawable> folderOpenIcon;
+
+	Font itemFont;
 
 	JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(CustomListBoxModel)
 };

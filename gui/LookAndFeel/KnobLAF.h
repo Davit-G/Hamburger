@@ -1,4 +1,6 @@
 #pragma once
+#include "../Utils/HamburgerFonts.h"
+
 
 class KnobLAF : public juce::LookAndFeel_V4
 {
@@ -102,6 +104,6 @@ private:
     static const std::unique_ptr<Font> questrialFont16;
 };
 
-const std::unique_ptr<juce::Font, std::default_delete<juce::Font>> KnobLAF::questrialFont12 = std::make_unique<juce::Font>(juce::Typeface::createSystemTypefaceFor(BinaryData::QuestrialRegular_ttf, BinaryData::QuestrialRegular_ttfSize));
-const std::unique_ptr<juce::Font, std::default_delete<juce::Font>> KnobLAF::questrialFont14 = std::make_unique<juce::Font>(juce::Typeface::createSystemTypefaceFor(BinaryData::QuestrialRegular_ttf, BinaryData::QuestrialRegular_ttfSize));
-const std::unique_ptr<juce::Font, std::default_delete<juce::Font>> KnobLAF::questrialFont16 = std::make_unique<juce::Font>(juce::Typeface::createSystemTypefaceFor(BinaryData::QuestrialRegular_ttf, BinaryData::QuestrialRegular_ttfSize));
+const std::unique_ptr<juce::Font, std::default_delete<juce::Font>> KnobLAF::questrialFont12 = std::make_unique<juce::Font>(HamburgerFonts::questrialTypeface);
+const std::unique_ptr<juce::Font, std::default_delete<juce::Font>> KnobLAF::questrialFont14 = std::make_unique<juce::Font>(HamburgerFonts::questrialTypeface);
+const std::unique_ptr<juce::Font, std::default_delete<juce::Font>> KnobLAF::questrialFont16 = std::make_unique<juce::Font>(HamburgerFonts::questrialTypeface);
