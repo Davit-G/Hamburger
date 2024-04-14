@@ -27,12 +27,17 @@ public:
             dataBuffer.setSample(0, i, 0);
         }
 
+        mojo.prepare(spec);
+        hysteresis.prepare(spec);
+        drive.prepare(spec);
+        tone.prepare(spec);
+
         updateCoefficients();
     }
 
     void updateCoefficients() {
         float satAmt = powf(mojo.getRaw() * 0.01f, 1.5f) * 100.0f + 5.0f;
-        float hystAmt = powf(hysteresis.getRaw() * 0.1f, 2.0f) * 12.f;
+        float hystAmt = powf(hysteresis.getRaw() * 0.1f, 2.0f) * 16.f;
         float toneAmt = tone.getRaw();
 
         highpassFreq = toneAmt;

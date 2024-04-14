@@ -14,7 +14,7 @@ enum class ParamUnits {
     x
 };
 
-juce::String createParamString(float value, ParamUnits unit) {
+inline juce::String createParamString(float value, ParamUnits unit) noexcept {
     switch (unit) {
         case ParamUnits::hz:
             return juce::String(value, 1, false) + " Hz";

@@ -4,7 +4,7 @@ include (FetchContent)
 Set(FETCHCONTENT_QUIET FALSE)
 
 cmake_minimum_required(VERSION 3.15)
-set(ProjectVersion 0.3)
+set(ProjectVersion 0.4)
 set(PluginName "Hamburger")
 
 set(BaseTargetName Hamburger)

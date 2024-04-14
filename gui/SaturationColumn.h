@@ -53,7 +53,7 @@ public:
         matrixSat->setLookAndFeel(&matrixLAF);
         panels.push_back(std::move(matrixSat));
 
-        saturation = std::make_unique<Module>(p, "SATURATION", "primaryDistortionEnabled", "primaryDistortionType", std::move(panels));
+        saturation = std::make_unique<Module>(p, "DISTORTION", "primaryDistortionEnabled", "primaryDistortionType", std::move(panels));
         addAndMakeVisible(saturation.get());
 
         std::vector<std::unique_ptr<Panel>> clipPanel;
@@ -92,7 +92,7 @@ private:
     KnobLAF tubeSatLAF = KnobLAF(Palette::colours[4]);
     KnobLAF phaseLAF = KnobLAF(Palette::colours[3]);
     KnobLAF rubidiumLAF = KnobLAF(Palette::colours[2]);
-    KnobLAF matrixLAF = KnobLAF(Palette::colours[5]);
+    KnobLAF matrixLAF = KnobLAF(Palette::colours[6]);
     KnobLAF knobLAF1 = KnobLAF(Palette::colours[1]);
 
     std::unique_ptr<Panel> classic = nullptr;

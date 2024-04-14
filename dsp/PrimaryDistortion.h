@@ -7,6 +7,7 @@
 #include "Distortions/DiodeWaveshape.h"
 #include "Distortions/PhaseDist.h"
 #include "Distortions/Rubidium.h"
+#include "Distortions/MatrixWaveshaper.h"
 #include "./Noise/Jeff.h"
 #include "Distortions/tube/Amp.h"
 
@@ -36,6 +37,7 @@ public:
         phaseDist = std::make_unique<PhaseDist>(state);
         diodeWaveshape = std::make_unique<DiodeWaveshape>(state);
         rubidium = std::make_unique<RubidiumDistortion>(state);
+        matrix = std::make_unique<MatrixWaveshaper>(state);
     }
 
     ~PrimaryDistortion() {}
@@ -111,7 +113,9 @@ public:
         }
         case 4:
         {// waveshaping matrix distortion
-            
+            TRACE_EVENT("dsp", "matrix");
+            matrix->processBlock(block);
+            break;
         }
         }
     }
@@ -127,6 +131,7 @@ public:
         jeff->prepare(spec);
         diodeWaveshape->prepare(spec);
         rubidium->prepare(spec);
+        matrix->prepare(spec);
 
 
         // init iir filter
@@ -157,6 +162,7 @@ private:
     std::unique_ptr<Amp> tubeAmp = nullptr;
     std::unique_ptr<PhaseDist> phaseDist = nullptr;
     std::unique_ptr<RubidiumDistortion> rubidium = nullptr;
+    std::unique_ptr<MatrixWaveshaper> matrix = nullptr;
 
     dsp::ProcessorDuplicator<dsp::IIR::Filter<double>, dsp::IIR::Coefficients<double>> iirFilter;
 

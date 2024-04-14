@@ -13,12 +13,12 @@ inline float calcWSGain(float xn, float saturation, float asymmetry)
 	return g;
 }
 
-inline float atanWaveShaper(float xn, float saturation)
+inline float atanWaveShaper(float xn, float saturation) noexcept
 {
 	return atan(saturation * xn) / atan(saturation);
 }
 
-inline float tanhWaveShaper(float xn, float saturation)
+inline float tanhWaveShaper(float xn, float saturation) noexcept
 {
 	return tanh(saturation * xn) / tanh(saturation);
 }
