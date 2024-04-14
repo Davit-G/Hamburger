@@ -12,12 +12,12 @@ SoftClip::~SoftClip()
 {
 }
 
-void SoftClip::prepare(juce::dsp::ProcessSpec& spec)
+void SoftClip::prepare(juce::dsp::ProcessSpec& spec) noexcept
 {
     saturationKnob.prepare(spec);
 }
 
-void SoftClip::processBlock(juce::dsp::AudioBlock<float>& block) {
+void SoftClip::processBlock(juce::dsp::AudioBlock<float>& block) noexcept {
     TRACE_EVENT("dsp", "SoftClip::processBlock");
     saturationKnob.update();
 

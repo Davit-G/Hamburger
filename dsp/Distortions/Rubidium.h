@@ -174,7 +174,7 @@ class RubidiumDistortion
 {
 public:
     RubidiumDistortion(juce::AudioProcessorValueTreeState &treeState) : drive(treeState, "rubidiumAmount"),
-                                                                        hysteresis(treeState, "rubidiumHysteresis"),
+                                                                        hysteresis(treeState, "rubidiumAsym"),
                                                                         tone(treeState, "rubidiumTone"),
                                                                         mojo(treeState, "rubidiumMojo")
     {

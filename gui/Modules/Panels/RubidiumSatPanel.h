@@ -11,7 +11,7 @@ public:
     RubidiumSatPanel(AudioPluginAudioProcessor &p) : Panel(p, "RUBIDIUM"), 
         tubeTone(p, "TONE", "rubidiumTone"),
         mojo(p, "MOJO", "rubidiumMojo"),
-        hysteresis(p, "HYSTERESIS", "rubidiumHysteresis"),
+        hysteresis(p, "ASYM", "rubidiumAsym"),
         drive(p, "DRIVE", "rubidiumAmount", ParamUnits::percent)
     {
         addAndMakeVisible(tubeTone);

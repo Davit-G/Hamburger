@@ -7,11 +7,11 @@ Cooked::Cooked(juce::AudioProcessorValueTreeState& treeState) : amount(treeState
 
 Cooked::~Cooked() {}
 
-void Cooked::prepare(juce::dsp::ProcessSpec& spec) {
+void Cooked::prepare(juce::dsp::ProcessSpec& spec) noexcept {
 	amount.prepare(spec);
 }
 
-void Cooked::processBlock(juce::dsp::AudioBlock<float>& block) {
+void Cooked::processBlock(juce::dsp::AudioBlock<float>& block) noexcept {
 	TRACE_EVENT("dsp", "Cooked::processBlock");
 	amount.update();
 

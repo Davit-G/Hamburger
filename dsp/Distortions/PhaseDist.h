@@ -14,8 +14,8 @@ public:
     PhaseDist(juce::AudioProcessorValueTreeState& treeState);
     ~PhaseDist() {}
 
-    void processBlock(juce::dsp::AudioBlock<float> &block);
-    void prepare(juce::dsp::ProcessSpec& spec);
+    void processBlock(juce::dsp::AudioBlock<float> &block) noexcept;
+    void prepare(juce::dsp::ProcessSpec& spec) noexcept;
 
 private:
     SmoothParam amount;

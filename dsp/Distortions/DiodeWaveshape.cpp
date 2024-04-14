@@ -3,12 +3,12 @@
 //==============================================================================
 DiodeWaveshape::DiodeWaveshape(juce::AudioProcessorValueTreeState &treeState) : amount(treeState, "diode") {}
 
-void DiodeWaveshape::prepare(juce::dsp::ProcessSpec &spec)
+void DiodeWaveshape::prepare(juce::dsp::ProcessSpec &spec) noexcept
 {
 	amount.prepare(spec);
 }
 
-void DiodeWaveshape::processBlock(juce::dsp::AudioBlock<float> &block)
+void DiodeWaveshape::processBlock(juce::dsp::AudioBlock<float> &block) noexcept
 {
 	TRACE_EVENT("dsp", "DiodeWaveshape::processBlock");
 	amount.update();
