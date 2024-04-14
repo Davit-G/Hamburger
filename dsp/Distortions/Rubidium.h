@@ -353,8 +353,8 @@ public:
             spl0 = atan(spl0 * delta0) / (spl0 == 0 ? 1 : (delta0 == 0 ? 0.00000001f : delta0));
             spl1 = atan(spl1 * delta1) / (spl1 == 0 ? 1 : (delta1 == 0 ? 0.00000001f : delta1));
             
-            spl0 /= adj3 * (driveVal * 0.3f + 1.0f);
-            spl1 /= adj4 * (driveVal * 0.3f + 1.0f);
+            spl0 /= adj3 * (driveVal * 0.4f + 1.0f);
+            spl1 /= adj4 * (driveVal * 0.4f + 1.0f);
             
             spl0 *= vol;
             spl1 *= vol;
