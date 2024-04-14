@@ -41,11 +41,11 @@ public:
         // panels.push_back(std::move(waveshape));
 
         phase = std::make_unique<PhaseDistPanel>(p);
-        phase->setLookAndFeel(&tubeSatLAF); // todo: customise
+        phase->setLookAndFeel(&phaseLAF); // todo: customise
         panels.push_back(std::move(phase));
 
         rubidium = std::make_unique<RubidiumSatPanel>(p);
-        rubidium->setLookAndFeel(&tubeSatLAF); // todo: customise
+        rubidium->setLookAndFeel(&rubidiumLAF); // todo: customise
         panels.push_back(std::move(rubidium));
 
         saturation = std::make_unique<Module>(p, "SATURATION", "primaryDistortionEnabled", "primaryDistortionType", std::move(panels));
@@ -85,6 +85,8 @@ public:
 private:
     KnobLAF saturationLAF = KnobLAF(Palette::colours[0]);
     KnobLAF tubeSatLAF = KnobLAF(Palette::colours[4]);
+    KnobLAF phaseLAF = KnobLAF(Palette::colours[3]);
+    KnobLAF rubidiumLAF = KnobLAF(Palette::colours[2]);
     KnobLAF knobLAF1 = KnobLAF(Palette::colours[1]);
 
     std::unique_ptr<Panel> classic = nullptr;
