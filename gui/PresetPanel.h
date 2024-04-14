@@ -119,8 +119,6 @@ public:
 			} else {
 				folderOpenIcon->drawWithin(g, drawArea, RectanglePlacement::centred, 1.0f);
 			}
-			
-
 		}
 
 		auto extraRoom = 0;
@@ -144,8 +142,6 @@ public:
 
 		if (isDir)
 		{
-
-			DBG("clicked on dir", item.getFullPathName());
 			auto relativePath = item.getRelativePathFrom(presetManager.defaultDirectory);
 			isCollapsed[relativePath] = !isCollapsed[relativePath];
 			refreshFilesToRender();
