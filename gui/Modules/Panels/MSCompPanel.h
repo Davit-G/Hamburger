@@ -29,7 +29,7 @@ public:
         using fr = Grid::Fr;
         using Track = Grid::TrackInfo;
 
-        grid.templateRows = {Track(fr(1)), Track(fr(1))};
+        grid.templateRows = {Track(fr(1)), Track(fr(1))}; // todo: optimise this
         grid.templateColumns = {Track(fr(1)), Track(fr(1)), Track(fr(1))};
 
         grid.items = {

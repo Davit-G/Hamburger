@@ -109,6 +109,10 @@ public:
             rubidium->processBlock(block);
             break;
         }
+        case 4:
+        {// waveshaping matrix distortion
+            
+        }
         }
     }
 

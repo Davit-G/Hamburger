@@ -134,7 +134,17 @@ AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::createP
     params.add(std::make_unique<AudioParameterFloat>("phaseAmount", "Phase Saturation", 0.0f, 100.0f, 0.f));
     params.add(std::make_unique<AudioParameterFloat>("rubidiumAmount", "Rubidium Saturation", 0.0f, 100.0f, 5.f));
 
-    params.add(std::make_unique<AudioParameterFloat>("rubidiumMojo", "Rubidium Mojo", 0.0f, 100.0f, 25.f));
+    params.add(std::make_unique<AudioParameterFloat>("matrix1", "Matrix #1", 0.0f, 1.0f, 0.f));
+    params.add(std::make_unique<AudioParameterFloat>("matrix2", "Matrix #2", 0.0f, 1.0f, 0.f));
+    params.add(std::make_unique<AudioParameterFloat>("matrix3", "Matrix #3", 0.0f, 1.0f, 0.f));
+    params.add(std::make_unique<AudioParameterFloat>("matrix4", "Matrix #4", 0.0f, 1.0f, 0.f));
+    params.add(std::make_unique<AudioParameterFloat>("matrix5", "Matrix #5", 0.0f, 1.0f, 0.f));
+    params.add(std::make_unique<AudioParameterFloat>("matrix6", "Matrix #6", 0.0f, 1.0f, 0.f));
+    params.add(std::make_unique<AudioParameterFloat>("matrix7", "Matrix #7", 0.0f, 1.0f, 0.f));
+    params.add(std::make_unique<AudioParameterFloat>("matrix8", "Matrix #8", 0.0f, 1.0f, 0.f));
+    params.add(std::make_unique<AudioParameterFloat>("matrix9", "Matrix #9", 0.0f, 1.0f, 0.f));
+
+    params.add(std::make_unique<AudioParameterFloat>("rubidiumMojo", "Rubidium Mojo", 0.0f, 100.0f, 40.f));
     params.add(std::make_unique<AudioParameterFloat>("rubidiumAsym", "Rubidium Asymmetry", 0.0f, 10.0f, 0.f));
     params.add(std::make_unique<AudioParameterFloat>("rubidiumTone", "Rubidium Tone", juce::NormalisableRange<float>(4.0f, 100.0f, 0.f, 0.5f), 5.0f));
 
