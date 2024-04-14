@@ -9,7 +9,7 @@ class RubidiumSatPanel : public Panel
 {
 public:
     RubidiumSatPanel(AudioPluginAudioProcessor &p) : Panel(p, "RUBIDIUM"), 
-        tubeTone(p, "TONE", "rubidiumTone"),
+        tubeTone(p, "TONE", "rubidiumTone", ParamUnits::hz),
         mojo(p, "MOJO", "rubidiumMojo"),
         hysteresis(p, "ASYM", "rubidiumAsym"),
         drive(p, "DRIVE", "rubidiumAmount", ParamUnits::percent)

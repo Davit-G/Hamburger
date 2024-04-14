@@ -198,8 +198,8 @@ public:
     }
 
     void updateCoefficients() {
-        float satAmt = mojo.getRaw() * 0.9f + 10.f;
-        float hystAmt = hysteresis.getRaw();
+        float satAmt = powf(mojo.getRaw() * 0.01f, 1.5f) * 100.0f + 5.0f;
+        float hystAmt = powf(hysteresis.getRaw() * 0.1f, 2.0f) * 12.f;
         float toneAmt = tone.getRaw();
 
         highpassFreq = toneAmt;
@@ -212,7 +212,6 @@ public:
         cut0 = 2 * juce::MathConstants<float>::pi * (highpassFreq + rand0) / srate;
         cut1 = 2 * juce::MathConstants<float>::pi * (highpassFreq + rand1) / srate;
         cut2 = 0.f; //2 * juce::MathConstants<float>::pi * (0.f) / srate;  // maybe dont mess with this
-        cut2 = 0;
         buf_length1 = fmax((stepRatio * 2) - 1, 0);
 
         if (stepRatio == 6) buf_length1 = 21;
@@ -237,6 +236,8 @@ public:
         updateCoefficients();
 
         drive.update();
+        mojo.update();
+        hysteresis.update();
 
         for (int sample = 0; sample < block.getNumSamples(); sample++)
         {
@@ -353,8 +354,8 @@ public:
             spl0 = atan(spl0 * delta0) / (spl0 == 0 ? 1 : (delta0 == 0 ? 0.00000001f : delta0));
             spl1 = atan(spl1 * delta1) / (spl1 == 0 ? 1 : (delta1 == 0 ? 0.00000001f : delta1));
             
-            spl0 /= adj3 * (driveVal * 0.4f + 1.0f);
-            spl1 /= adj4 * (driveVal * 0.4f + 1.0f);
+            spl0 /= adj3 * (driveVal * 0.1f + 1.0f);
+            spl1 /= adj4 * (driveVal * 0.1f + 1.0f);
             
             spl0 *= vol;
             spl1 *= vol;

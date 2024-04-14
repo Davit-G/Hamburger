@@ -35,7 +35,10 @@ void Amp::calculateCoefficients()
     for (int i = 0; i < 4; i++)
     {
         // triodes[i].blend = blend * 4;
-        triodes[i].waveshaperSaturation = 0.01f + drive.getRaw() * 0.016;
+        triodes[i].waveshaperSaturation = 0.01f + powf(drive.getRaw() * 0.02f, 0.8f) * 1.6f;
+        triodes[i].clipPointPositive = 4.0f;
+        triodes[i].clipPointNegative = (-1.5f);
+        triodes[i].gridConductionThreshold = (1.9f);
     }
 
     triode1.lowFrequencyShelf_Hz = (10.0f);
@@ -43,7 +46,7 @@ void Amp::calculateCoefficients()
     // triode1.millerHF_Hz = (20000.0f);
     triode1.millerHF_Hz = fmin(6000.0f + 7900.0f * skewedTone, 21000.0f);
     triode1.dcBlockingLF_Hz = (12.0f);
-    triode1.outputGain = pow(10.0f, (-1.0f) / 20.0f);
+    triode1.outputGain = pow(10.0f, (+5.0f) / 20.0f);
     triode1.dcShiftCoefficient = (1.0f);
     triode1.inputGain = driv + 0.3f;
 
@@ -69,7 +72,7 @@ void Amp::calculateCoefficients()
     // trioesL[3].millerHF_Hz = 6400.0;
     triode4.millerHF_Hz = 20000.0f;
     triode4.dcBlockingLF_Hz = (8.0f);
-    triode4.outputGain = pow(10.0f, (-drive.getRaw() * 0.01f * 12.f - 5.5f) / 20.0f);
+    triode4.outputGain = pow(10.0f, (-drive.getRaw() * 0.01f * 14.f - 5.5f) / 20.0f);
     triode4.dcShiftCoefficient = (0.52f);
 
     for (int i = 0; i < 4; i++)
@@ -161,13 +164,14 @@ void Amp::processBlock(juce::dsp::AudioBlock<float> &block)
 
     // left channel
     TRACE_EVENT_BEGIN("dsp", "tubes");
-    block.add(bias.getRaw() * 3.0f);
+    float biasAmt = bias.getRaw();
+    block.add(biasAmt * biasAmt * -1.6f);
 
     triodes[0].processBlock(block); // step 3: triode 1
     block.multiplyBy(driveGain);    // step 4: drive the signal
 
     // step 5: triode 2 and 3 and etc, go nuts
-    triodes[1].processBlock(block);
+    // triodes[1].processBlock(block);
     triodes[2].processBlock(block);
     triodes[3].processBlock(block);
 

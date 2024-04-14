@@ -56,7 +56,7 @@ void Grunge::processBlock(juce::dsp::AudioBlock<float> &block)
         delayLine.pushSample(0, dcBlockerLRes);
         delayLine.pushSample(1, dcBlockerRRes);
 
-        block.setSample(0, i, juce::dsp::FastMathApproximations::tanh((sampleL + delaySampleL)* 0.1f * (1 - fbKnobAmt * 0.5f)) * 10.0f);
-        block.setSample(1, i, juce::dsp::FastMathApproximations::tanh((sampleR + delaySampleR)* 0.1f * (1 - fbKnobAmt * 0.5f)) * 10.0f);
+        block.setSample(0, i, juce::dsp::FastMathApproximations::tanh((sampleL + delaySampleL)* 0.1f * (1 - fbKnobAmt * 0.7f)) * 10.0f);
+        block.setSample(1, i, juce::dsp::FastMathApproximations::tanh((sampleR + delaySampleR)* 0.1f * (1 - fbKnobAmt * 0.7f)) * 10.0f);
     }
 }

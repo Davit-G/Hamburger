@@ -126,7 +126,7 @@ AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::createP
     params.add(std::make_unique<AudioParameterFloat>("grungeTone", "Grunge Tone", 0.0f, 1.0f, 0.5f));
 
     params.add(std::make_unique<AudioParameterFloat>("postClipGain", "SoftClip Gain", -18.0f, 18.0f, 0.f));
-    params.add(std::make_unique<AudioParameterFloat>("postClipKnee", "SoftClip Knee", 0.0f, 4.0f, 1.f));
+    params.add(std::make_unique<AudioParameterFloat>("postClipKnee", "SoftClip Knee", 0.0f, 4.0f, 0.5f));
 
     // primary distortions
     params.add(std::make_unique<AudioParameterFloat>("saturationAmount", "Grill Saturation", 0.0f, 100.0f, 0.f));
