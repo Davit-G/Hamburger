@@ -211,7 +211,7 @@ public:
         hys1 = hystAmt / 100;
         cut0 = 2 * juce::MathConstants<float>::pi * (highpassFreq + rand0) / srate;
         cut1 = 2 * juce::MathConstants<float>::pi * (highpassFreq + rand1) / srate;
-        cut2 = 2 * juce::MathConstants<float>::pi * (0.f) / srate;
+        cut2 = 0.f; //2 * juce::MathConstants<float>::pi * (0.f) / srate;  // maybe dont mess with this
         cut2 = 0;
         buf_length1 = fmax((stepRatio * 2) - 1, 0);
 
@@ -226,8 +226,8 @@ public:
         vol = 0.9f;
 
         // smooth fader
-        adj3 = gain <= 0 ? 0 : exp(shape * log10(gain));
-        adj4 = gain <= 0 ? 0 : exp(shape * log10(gain));
+        adj3 = gain <= 0 ? 0.0000001f : exp(shape * log10(gain)) + 0.00000001f;
+        adj4 = gain <= 0 ? 0.0000001f : exp(shape * log10(gain)) + 0.00000001f;
         rc = 0.2 * fmax(128 * 0.001, maxBlockSize / srate);
         a = dt / (rc + dt);
     }
@@ -243,7 +243,8 @@ public:
             double spl0 = (double)block.getSample(0, sample);
             double spl1 = (double)block.getSample(1, sample);
 
-            float driveVal = juce::Decibels::decibelsToGain(drive.getNextValue() * 0.01f * 24.0f); 
+            float driveKnob = drive.getNextValue() * 0.01f; // normalised between 0 - 1
+            float driveVal = juce::Decibels::decibelsToGain(driveKnob * 24.0f); 
 
             spl0 = atan(spl0 * 1.3 * driveVal);
             spl1 = atan(spl1 * 1.3 * driveVal);
@@ -251,8 +252,7 @@ public:
             spl0 *= adj3;
             spl1 *= adj4;
 
-
-            // delta signal hysteresis - single pole allpass
+            // delta signal hysteresis
             ap1_x0 = spl0;
             ap1_y = ap1_y0 + ap1_k0 * ap1_x0;
             ap1_y0 = ap1_x0 - ap1_k0 * ap1_y;
@@ -262,8 +262,7 @@ public:
             ap1_y1 = ap1_x1 - ap1_k1 * ap1_z;
             delta1 = ap1_z;
 
-
-            // low level hysteresis - nested allpass
+            // low level hysteresis
             double in0 = ap1_y + cDenorm;
             double v_n0 = in0 + dataBuffer.getSample(0, v_n_buf0 + pos0) * -g;
             double out0 = v_n0 * g + dataBuffer.getSample(0, v_n_buf0 + pos0);
@@ -350,16 +349,13 @@ public:
             delta0 += l2;
             l3 += ((delta1 - l3) * cut2);
             delta1 += l3;
-
-            // saturation
+            
             spl0 = atan(spl0 * delta0) / (spl0 == 0 ? 1 : (delta0 == 0 ? 0.00000001f : delta0));
             spl1 = atan(spl1 * delta1) / (spl1 == 0 ? 1 : (delta1 == 0 ? 0.00000001f : delta1));
-
-            // gain compensation
-            spl0 /= adj3;
-            spl1 /= adj4;
-
-            // output level
+            
+            spl0 /= adj3 * (driveVal * 0.3f + 1.0f);
+            spl1 /= adj4 * (driveVal * 0.3f + 1.0f);
+            
             spl0 *= vol;
             spl1 *= vol;
 

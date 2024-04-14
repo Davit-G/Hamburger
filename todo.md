@@ -12,6 +12,7 @@ give tube more character
 
 add more dist types (foil??)
 linear phase mode for emphasis eq
+icons in middle of saturation knobs with different cool things like tube, rubidium etc
 
 
 # feedback 
