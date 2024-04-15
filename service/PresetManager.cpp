@@ -51,7 +51,9 @@ void PresetManager::savePreset(const juce::String &presetName)
 	{
 		DBG("Preset file " + presetFile.getFullPathName() + " already exists");
 		return;
-	} else {
+	}
+	else
+	{
 		presetFile.create();
 	}
 
@@ -87,11 +89,9 @@ void PresetManager::loadPreset(const juce::File &presetFile)
 		jassertfalse;
 		return;
 	}
-	// presetFile (XML) -> (ValueTree)
+	
 	juce::XmlDocument xmlDocument{presetFile};
 	const auto valueTreeToLoad = juce::ValueTree::fromXml(*xmlDocument.getDocumentElement());
-
-	
 
 	valueTreeState.replaceState(valueTreeToLoad);
 	currentPreset.setValue(presetFile.getRelativePathFrom(defaultDirectory));
@@ -167,26 +167,21 @@ juce::Array<juce::File> PresetManager::recursiveSortedTraverse(const juce::File 
 
 	auto wildcard = juce::WildcardFileFilter("*." + extension, "*", "*");
 	auto dirsFiles = directory.findChildFiles(juce::File::TypesOfFileToFind::findFilesAndDirectories, false);
-
-	// sort folders before directories
+	
 	std::sort(dirsFiles.begin(), dirsFiles.end(), [](const juce::File &a, const juce::File &b)
 			  { return a.isDirectory() && !b.isDirectory(); });
 
-	// for every folder, recursively traverse and insert
 	for (int i = 0; i < dirsFiles.size(); i++)
 	{
 		if (dirsFiles[i].isDirectory())
 		{
 			auto subFiles = recursiveSortedTraverse(dirsFiles[i]);
-			files.add(dirsFiles[i]); // add the directory as well as the children to the 2d arr
+			files.add(dirsFiles[i]); // add the directory as well as the children to the 2d array
 			files.addArray(subFiles);
 		}
-		else
+		else if (wildcard.isFileSuitable(dirsFiles[i]))
 		{
-			if (wildcard.isFileSuitable(dirsFiles[i]))
-			{
-				files.add(dirsFiles[i]);
-			}
+			files.add(dirsFiles[i]);
 		}
 	}
 
@@ -195,10 +190,7 @@ juce::Array<juce::File> PresetManager::recursiveSortedTraverse(const juce::File 
 
 juce::Array<juce::File> PresetManager::getPresetFileHierarchy() const
 {
-	// get files and folders
-	auto dirsFiles = recursiveSortedTraverse(defaultDirectory);
-
-	return dirsFiles;
+	return recursiveSortedTraverse(defaultDirectory);
 }
 
 juce::File PresetManager::getCurrentPreset() const
