@@ -7,7 +7,7 @@ pluginval
 # Should
 
 give tube more character
-sentry.io plugin crash reporting
+self hosted sentry.io plugin crash reporting
 
 # Would be nice
 
