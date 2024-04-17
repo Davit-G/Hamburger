@@ -40,7 +40,7 @@ public:
 
 		folderClosedIcon = makeIcon(folderClosedIconString);
 		folderOpenIcon = makeIcon(folderOpenIconString);
-		
+
 		listBox.setRowHeight(36);
 
 		itemFont.setHeight(20.0f);
@@ -53,30 +53,30 @@ public:
 		{
 			auto relativePath = file.getRelativePathFrom(presetManager.defaultDirectory);
 			auto depth = relativePath.retainCharacters("/\\").length();
+
 			if (depth == 0)
 			{
 				filesToRender.add(file);
+				continue;
 			}
-			else
+
+			auto parent = file.getParentDirectory();
+			File current = parent;
+
+			int tries = 0;
+
+			while (current != presetManager.defaultDirectory)
 			{
-				auto parent = file.getParentDirectory();
-				File current = parent;
+				auto currentFile = current.getRelativePathFrom(presetManager.defaultDirectory);
+				if (isCollapsed[currentFile] || tries++ > 40)
+					break;
 
-				int tries = 0;
+				current = current.getParentDirectory();
+			}
 
-				while (current != presetManager.defaultDirectory)
-				{
-					auto currentFile = current.getRelativePathFrom(presetManager.defaultDirectory);
-					if (isCollapsed[currentFile] || tries++ > 40)
-						break;
-
-					current = current.getParentDirectory();
-				}
-
-				if (!isCollapsed[current.getRelativePathFrom(presetManager.defaultDirectory)])
-				{
-					filesToRender.add(file);
-				}
+			if (!isCollapsed[current.getRelativePathFrom(presetManager.defaultDirectory)])
+			{
+				filesToRender.add(file);
 			}
 		}
 	}
@@ -94,29 +94,37 @@ public:
 	void paintListBoxItem(int rowNumber, Graphics &g,
 						  int width, int height, bool rowIsSelected) override
 	{
-
 		auto row = filesToRender[rowNumber];
 
 		auto isDir = row.isDirectory();
-		
 
 		if (rowIsSelected && !isDir)
+		{
 			g.fillAll(Colour::fromRGB(33, 33, 33));
+		}
 
 		auto depth = row.getRelativePathFrom(presetManager.defaultDirectory).retainCharacters("/\\").length();
 
 		if (isDir)
 		{
 			bool collapsed = isCollapsed[row.getRelativePathFrom(presetManager.defaultDirectory)];
-			g.fillAll(Colour::fromRGB(22, 22, 22));
+			int delta = 2;
+
+			Path p;
+			p.addRoundedRectangle(5 + depth * 30, 0, width - (depth * 30 + delta * 4), height - 2 * delta, 15.0f);
+			g.setColour(juce::Colour::fromRGB(22, 22, 22));
+			g.fillPath(p);
 
 			g.setColour(Colours::white);
 
 			auto drawArea = Rectangle<float>(5 + depth * 30, 0, height, height).reduced(12).toFloat();
 
-			if (collapsed) {
+			if (collapsed)
+			{
 				folderClosedIcon->drawWithin(g, drawArea, RectanglePlacement::centred, 1.0f);
-			} else {
+			}
+			else
+			{
 				folderOpenIcon->drawWithin(g, drawArea, RectanglePlacement::centred, 1.0f);
 			}
 		}
@@ -207,6 +215,39 @@ private:
 	JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(CustomListBoxModel)
 };
 
+class CustomPresetListBox : public ListBox
+{
+public:
+	CustomPresetListBox()
+	{
+
+		setColour(ListBox::ColourIds::backgroundColourId, Colours::transparentBlack);
+		setColour(ListBox::ColourIds::textColourId, Colours::white);
+		setColour(ListBox::ColourIds::outlineColourId, Colours::black);
+
+		setColour(ScrollBar::ColourIds::thumbColourId, Palette::colours[2]);
+		setColour(ScrollBar::ColourIds::trackColourId, Palette::colours[0]);
+		setColour(ScrollBar::ColourIds::backgroundColourId, Palette::colours[1]);
+
+		setOpaque(false);
+	}
+
+	void paint(juce::Graphics &g) override
+	{
+		// if (this->hasDoneInitialUpdate) {
+		// 	updateContent()
+		// }
+
+		Path p;
+		p.addRoundedRectangle(getLocalBounds().reduced(4).withTrimmedTop(-4).toFloat(), 15.0f);
+		g.setColour(juce::Colour::fromRGB(0, 0, 0));
+		g.fillPath(p);
+	}
+
+private:
+	JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(CustomPresetListBox)
+};
+
 class PresetPanel : public Component, Button::Listener
 {
 public:
@@ -215,7 +256,8 @@ public:
 									 saveButton("Save", DrawableButton::ImageOnButtonBackground),
 									 deleteButton("Delete", DrawableButton::ImageOnButtonBackground),
 									 previousPresetButton("Previous", DrawableButton::ImageOnButtonBackground),
-									 nextPresetButton("Next", DrawableButton::ImageOnButtonBackground)
+									 nextPresetButton("Next", DrawableButton::ImageOnButtonBackground),
+									 closeButton("Close", DrawableButton::ImageOnButtonBackground)
 	{
 
 		auto saveIcon = makeIcon(R"svgDELIM(
@@ -238,21 +280,28 @@ public:
 		)svgDELIM");
 		nextPresetButton.setImages(rightChevronIcon.get());
 
+		auto closeIcon = makeIcon(R"svgDelim(
+			<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 30 30" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+		)svgDelim");
+		closeButton.setImages(closeIcon.get());
+
 		setupButton(saveButton, "Save");
 		setupButton(deleteButton, "Delete");
 		setupButton(previousPresetButton, "<");
 		setupButton(nextPresetButton, ">");
+		setupButton(closeButton, "X");
+
+		closeButton.setVisible(false);
+		closeButton.onClick = [this]
+		{
+			showPresetsList = false;
+			listBox.setVisible(showPresetsList);
+			closeButton.setVisible(false);
+			resized();
+		};
 
 		// pass clicks through
 		setInterceptsMouseClicks(false, true);
-
-		listBox.setColour(ListBox::ColourIds::backgroundColourId, Colours::black);
-		listBox.setColour(ListBox::ColourIds::textColourId, Colours::white);
-		listBox.setColour(ListBox::ColourIds::outlineColourId, Colours::black);
-
-		listBox.setColour(ScrollBar::ColourIds::thumbColourId, Palette::colours[2]);
-		listBox.setColour(ScrollBar::ColourIds::trackColourId, Palette::colours[0]);
-		listBox.setColour(ScrollBar::ColourIds::backgroundColourId, Palette::colours[1]);
 
 		listBox.setModel(&listBoxModel);
 		addAndMakeVisible(listBox);
@@ -264,6 +313,7 @@ public:
 																		{
 			showPresetsList = false;
 			listBox.setVisible(showPresetsList);
+			closeButton.setVisible(false);
 			resized(); }));
 
 		listBox.setVisible(showPresetsList);
@@ -280,6 +330,7 @@ public:
 		{
 			showPresetsList = !showPresetsList;
 			listBox.setVisible(showPresetsList);
+			closeButton.setVisible(showPresetsList);
 			resized();
 		};
 
@@ -292,6 +343,7 @@ public:
 		deleteButton.removeListener(this);
 		previousPresetButton.removeListener(this);
 		nextPresetButton.removeListener(this);
+		currentPresetLabel.removeListener(this);
 	}
 
 	void resized() override
@@ -303,10 +355,18 @@ public:
 		deleteButton.setBounds(bounds.removeFromLeft(height).reduced(4));
 		nextPresetButton.setBounds(bounds.removeFromRight(height).reduced(4));
 		previousPresetButton.setBounds(bounds.removeFromRight(height).reduced(4));
+		closeButton.setBounds(bounds.removeFromRight(height).reduced(8));
 		currentPresetLabel.setBounds(bounds.reduced(4));
 
+		auto presetListBounds = getLocalBounds().withTrimmedTop(height);
+
+		presetListBounds.removeFromLeft(getWidth() / 4);
+		presetListBounds.removeFromRight(getWidth() / 4);
+		presetListBounds.removeFromBottom(presetListBounds.getHeight() / 4);
+		presetListBounds.reduce(4, 4);
+
 		if (showPresetsList)
-			listBox.setBounds(getLocalBounds().withTrimmedTop(height).reduced(4));
+			listBox.setBounds(presetListBounds);
 	}
 
 	void updatePresetLabel(juce::String &text)
@@ -323,13 +383,13 @@ private:
 		g.fillPath(p);
 
 		// Rectangle<int> arrowZone(5 + 45 * 2, 0, 20, 45);
-        // Path path;
-        // path.startNewSubPath((float)arrowZone.getX() + 4.0f, (float)arrowZone.getCentreY() - 2.0f);
-        // path.lineTo((float)arrowZone.getCentreX(), (float)arrowZone.getCentreY() + 3.0f);
-        // path.lineTo((float)arrowZone.getRight() - 4.0f, (float)arrowZone.getCentreY() - 2.0f);
+		// Path path;
+		// path.startNewSubPath((float)arrowZone.getX() + 4.0f, (float)arrowZone.getCentreY() - 2.0f);
+		// path.lineTo((float)arrowZone.getCentreX(), (float)arrowZone.getCentreY() + 3.0f);
+		// path.lineTo((float)arrowZone.getRight() - 4.0f, (float)arrowZone.getCentreY() - 2.0f);
 
-        // g.setColour(juce::Colours::white);
-        // g.strokePath(path, PathStrokeType(2.0f, juce::PathStrokeType::JointStyle::curved, juce::PathStrokeType::EndCapStyle::rounded));
+		// g.setColour(juce::Colours::white);
+		// g.strokePath(path, PathStrokeType(2.0f, juce::PathStrokeType::JointStyle::curved, juce::PathStrokeType::EndCapStyle::rounded));
 	}
 
 	void buttonClicked(Button *button) override
@@ -398,10 +458,8 @@ private:
 		currentPresetLabel.setButtonText("Hamburger");
 	}
 
-	ListBox listBox;
-
 	PresetManager &presetManager;
-	DrawableButton saveButton, deleteButton, previousPresetButton, nextPresetButton;
+	DrawableButton saveButton, deleteButton, previousPresetButton, nextPresetButton, closeButton;
 
 	bool showPresetsList = false;
 
@@ -411,6 +469,7 @@ private:
 
 	ComboBoxLookAndFeel comboBoxLAF;
 
+	CustomPresetListBox listBox;
 	CustomListBoxModel listBoxModel;
 
 	JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PresetPanel)

@@ -75,7 +75,6 @@ public:
     PresetManager& getPresetManager() { return *presetManager; }
 
 private:
-    // juce::AudioParameterFloat *knobValue = nullptr;
     juce::AudioParameterFloat *inputGainKnob = nullptr;
     juce::AudioParameterFloat *mixKnob = nullptr;
     juce::AudioParameterFloat *outputGainKnob = nullptr;
@@ -83,7 +82,7 @@ private:
     juce::AudioParameterBool *clipEnabled = nullptr;
     juce::AudioParameterBool *enableEmphasis = nullptr;
     juce::AudioParameterInt *hq = nullptr;
-    juce::AudioParameterBool *hamburgerEnabledButton = nullptr; // acts as bypass
+    juce::AudioParameterBool *hamburgerEnabledButton = nullptr;
 
     juce::AudioParameterFloat *emphasisLow = nullptr;
     juce::AudioParameterFloat *emphasisMid = nullptr;
