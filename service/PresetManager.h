@@ -13,7 +13,7 @@ public:
 
 	PresetManager(juce::AudioProcessorValueTreeState&);
 
-	void savePreset(const juce::String& preset);
+	void savePreset(const juce::String& preset, const juce::String &author);
 	void deletePreset(const juce::File& preset);
 	void loadPreset(const juce::File& preset);
 	juce::File loadNextPreset();
@@ -29,4 +29,5 @@ private:
 
 	juce::AudioProcessorValueTreeState& valueTreeState;
 	juce::Value currentPreset;
+	juce::Value currentAuthor;
 };

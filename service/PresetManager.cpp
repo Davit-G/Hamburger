@@ -39,12 +39,13 @@ PresetManager::PresetManager(juce::AudioProcessorValueTreeState &apvts) : valueT
 	currentPreset.referTo(valueTreeState.state.getPropertyAsValue(presetPathProperty, nullptr));
 }
 
-void PresetManager::savePreset(const juce::String &presetName)
+void PresetManager::savePreset(const juce::String &presetName, const juce::String &author)
 {
 	if (presetName.isEmpty())
 		return;
 
 	currentPreset.setValue(presetName);
+	currentAuthor.setValue(author);
 	const auto xml = valueTreeState.copyState().createXml();
 	const auto presetFile = juce::File(defaultDirectory.getFullPathName() + "/User/" + presetName + "." + extension);
 	if (presetFile.existsAsFile())
@@ -79,6 +80,7 @@ void PresetManager::deletePreset(const juce::File &presetFile)
 		return;
 	}
 	currentPreset.setValue("");
+	currentAuthor.setValue("");
 }
 
 void PresetManager::loadPreset(const juce::File &presetFile)
@@ -89,12 +91,13 @@ void PresetManager::loadPreset(const juce::File &presetFile)
 		jassertfalse;
 		return;
 	}
-	
+
 	juce::XmlDocument xmlDocument{presetFile};
 	const auto valueTreeToLoad = juce::ValueTree::fromXml(*xmlDocument.getDocumentElement());
 
 	valueTreeState.replaceState(valueTreeToLoad);
 	currentPreset.setValue(presetFile.getRelativePathFrom(defaultDirectory));
+	// currentAuthor.setValue(valueTreeToLoad.getChildWithName("author").getProperty("author", ""));
 }
 
 juce::File PresetManager::loadNextPreset()
@@ -167,7 +170,7 @@ juce::Array<juce::File> PresetManager::recursiveSortedTraverse(const juce::File 
 
 	auto wildcard = juce::WildcardFileFilter("*." + extension, "*", "*");
 	auto dirsFiles = directory.findChildFiles(juce::File::TypesOfFileToFind::findFilesAndDirectories, false);
-	
+
 	std::sort(dirsFiles.begin(), dirsFiles.end(), [](const juce::File &a, const juce::File &b)
 			  { return a.isDirectory() && !b.isDirectory(); });
 
@@ -201,4 +204,5 @@ juce::File PresetManager::getCurrentPreset() const
 void PresetManager::valueTreeRedirected(juce::ValueTree &treeWhichHasBeenChanged)
 {
 	currentPreset.referTo(treeWhichHasBeenChanged.getPropertyAsValue(presetPathProperty, nullptr));
+	currentAuthor.referTo(treeWhichHasBeenChanged.getPropertyAsValue("author", nullptr));
 }

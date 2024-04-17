@@ -407,7 +407,8 @@ private:
 																				   {
 				if (result == 1) {
 					auto name = alertWindow->getTextEditor("presetName")->getText();
-					presetManager.savePreset(name);
+					auto author = alertWindow->getTextEditor("author")->getText();
+					presetManager.savePreset(name, author);
 					loadPresetList();
 				}
 

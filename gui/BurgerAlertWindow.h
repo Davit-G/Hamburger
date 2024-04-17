@@ -21,14 +21,19 @@ public:
         setColour(juce::Label::ColourIds::outlineColourId, juce::Colours::white);
 
         addTextEditor("presetName", "MyBurger", "Preset Name");
+        addTextEditor("author", "me", "Preset Author");
 		addButton("Save", 1, KeyPress(KeyPress::returnKey, 0, 0));
 		addButton("Cancel", 0, KeyPress(KeyPress::escapeKey, 0, 0));
 
-        auto textEditor = getTextEditor("presetName");
+        auto presetTextEditor = getTextEditor("presetName");
+        auto authorTextEditor = getTextEditor("author");
 
-        textEditor->setColour(juce::TextEditor::backgroundColourId, juce::Colour::fromRGB(22, 22, 22));
-        textEditor->setColour(juce::TextEditor::ColourIds::outlineColourId, juce::Colours::transparentBlack);
-        textEditor->setFont(comboBoxLook.getComboBoxFont());
+        presetTextEditor->setColour(juce::TextEditor::backgroundColourId, juce::Colour::fromRGB(22, 22, 22));
+        presetTextEditor->setColour(juce::TextEditor::ColourIds::outlineColourId, juce::Colours::transparentBlack);
+        presetTextEditor->setFont(comboBoxLook.getComboBoxFont());
+        authorTextEditor->setColour(juce::TextEditor::backgroundColourId, juce::Colour::fromRGB(22, 22, 22));
+        authorTextEditor->setColour(juce::TextEditor::ColourIds::outlineColourId, juce::Colours::transparentBlack);
+        authorTextEditor->setFont(comboBoxLook.getComboBoxFont());
 
         auto okButton = getButton(0);
         auto cancelButton = getButton(1);
