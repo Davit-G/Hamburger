@@ -171,6 +171,8 @@ juce::Array<juce::File> PresetManager::recursiveSortedTraverse(const juce::File 
 	auto wildcard = juce::WildcardFileFilter("*." + extension, "*", "*");
 	auto dirsFiles = directory.findChildFiles(juce::File::TypesOfFileToFind::findFilesAndDirectories, false);
 
+	// todo: return instances of custom class with author data?
+
 	std::sort(dirsFiles.begin(), dirsFiles.end(), [](const juce::File &a, const juce::File &b)
 			  { return a.isDirectory() && !b.isDirectory(); });
 
