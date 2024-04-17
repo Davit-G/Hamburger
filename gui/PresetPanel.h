@@ -108,12 +108,15 @@ public:
 		if (isDir)
 		{
 			bool collapsed = isCollapsed[row.getRelativePathFrom(presetManager.defaultDirectory)];
-			int delta = 2;
+			int delta = 0;
 
-			Path p;
-			p.addRoundedRectangle(5 + depth * 30, 0, width - (depth * 30 + delta * 4), height - 2 * delta, 15.0f);
-			g.setColour(juce::Colour::fromRGB(22, 22, 22));
-			g.fillPath(p);
+			// Path p;
+			// p.addRoundedRectangle(5 + depth * 30, 0, width - (depth * 30 + delta * 4), height - 2 * delta, 15.0f);
+			g.setColour(juce::Colour::fromRGB(44, 44, 44));
+			// g.fillPath(p);
+			g.drawLine(5 + depth * 30, height, width, height, 2);
+
+			// g.fillAll(juce::Colour::fromRGB(22, 22, 22));
 
 			g.setColour(Colours::white);
 
@@ -225,11 +228,13 @@ public:
 		setColour(ListBox::ColourIds::textColourId, Colours::white);
 		setColour(ListBox::ColourIds::outlineColourId, Colours::black);
 
-		setColour(ScrollBar::ColourIds::thumbColourId, Palette::colours[2]);
-		setColour(ScrollBar::ColourIds::trackColourId, Palette::colours[0]);
-		setColour(ScrollBar::ColourIds::backgroundColourId, Palette::colours[1]);
-
 		setOpaque(false);
+
+		auto &vertScroll = this->getVerticalScrollBar();
+
+		vertScroll.setColour(ScrollBar::ColourIds::thumbColourId, Palette::colours[3]);
+		vertScroll.setColour(ScrollBar::ColourIds::trackColourId, Palette::colours[3]);
+		vertScroll.setColour(ScrollBar::ColourIds::backgroundColourId, Colours::black);
 	}
 
 	void paint(juce::Graphics &g) override
