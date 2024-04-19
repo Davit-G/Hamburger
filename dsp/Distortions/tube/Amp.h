@@ -15,7 +15,7 @@ public:
     Amp(juce::AudioProcessorValueTreeState &treeState) : 
         tubeTone(treeState, ParamIDs::tubeTone),
         drive(treeState, ParamIDs::tubeAmount),
-        bias(treeState, ParamIDs::bias)
+        bias(treeState, ParamIDs::tubeBias)
         {}
 
     ~Amp() {}

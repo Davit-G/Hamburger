@@ -12,7 +12,7 @@ class TubeSatPanel : public Panel
 public:
     TubeSatPanel(AudioPluginAudioProcessor &p) : Panel(p, "TUBE"), 
         tubeTone(p, "TUBE TONE", ParamIDs::tubeTone),
-        bias(p, "BIAS", ParamIDs::bias),
+        bias(p, "BIAS", ParamIDs::tubeBias),
         jeff(p, "JEFF", ParamIDs::jeffAmount),
         drive(p, "DRIVE", ParamIDs::tubeAmount, ParamUnits::percent)
     {
