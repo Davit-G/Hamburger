@@ -4,7 +4,6 @@
 #include "./Noise/Sizzle.h"
 #include "./Noise/Erosion.h"
 #include "./Noise/Redux.h"
-
 #include "./Distortions/HarshGate.h"
 
 #include "SmoothParam.h"

@@ -3,7 +3,7 @@
 #include "juce_gui_basics/juce_gui_basics.h"
 #include "../Panel.h"
 #include "../../Knob.h"
-#include "../../Params.h"
+
 
 
 class MatrixSatPanel : public Panel

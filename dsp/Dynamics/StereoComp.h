@@ -11,11 +11,11 @@ public:
     // compressorL(CompressionType::COMPRESSOR),
     //                                                     compressorR(CompressionType::COMPRESSOR),
                                                         compressorBoth(CompressionType::COMPRESSOR),
-                                                        threshold(state, "compThreshold"),
-                                                        ratio(state, "compRatio"),
-                                                        sLink(state, "compStereoLink"), // should be stereo link
-                                                        speed(state, "compSpeed"),
-                                                        makeup(state, "compOut") {}
+                                                        threshold(state, ParamIDs::compThreshold),
+                                                        ratio(state, ParamIDs::compRatio),
+                                                        sLink(state, ParamIDs::compStereoLink), // should be stereo link
+                                                        speed(state, ParamIDs::compSpeed),
+                                                        makeup(state, ParamIDs::compOut) {}
     ~StereoComp() {}
 
     void processBlock(dsp::AudioBlock<float> &block)

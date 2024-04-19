@@ -2,6 +2,7 @@
 
  
 #include "../SmoothParam.h"
+#include "../../utils/Params.h"
 
 #include "../EnvelopeFollower.h"
 

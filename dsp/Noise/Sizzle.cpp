@@ -13,9 +13,9 @@
 //==============================================================================
 Sizzle::Sizzle(juce::AudioProcessorValueTreeState &treeState)
 	: envelopeDetector(true),
-	  noiseAmount(treeState, "noiseAmount"),
-	  filterTone(treeState, "noiseFrequency"),
-	  filterQ(treeState, "noiseQ") {}
+	  noiseAmount(treeState, ParamIDs::sizzleAmount),
+	  filterTone(treeState, ParamIDs::noiseFrequency),
+	  filterQ(treeState, ParamIDs::noiseQ) {}
 
 Sizzle::~Sizzle()
 {

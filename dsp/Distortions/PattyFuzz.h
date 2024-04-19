@@ -2,6 +2,7 @@
 
  
 #include "../SmoothParam.h"
+#include "../../utils/Params.h"
 
 #include "juce_dsp/juce_dsp.h"
 

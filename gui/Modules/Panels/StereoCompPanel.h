@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../Panel.h"
-#include "../../Params.h"
+
 
 class StereoCompPanel : public Panel
 {
