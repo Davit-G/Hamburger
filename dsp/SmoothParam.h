@@ -25,6 +25,11 @@ public:
         smoothedParam.setTargetValue(newRawVal);
     }
 
+    void setTo(float value) {
+        smoothedParam.setValue(value);
+        oldRawVal = newRawVal = value;
+    }
+
     void updateFloored() {
         oldRawVal = newRawVal;
         newRawVal = param->get();
