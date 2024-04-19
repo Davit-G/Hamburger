@@ -161,10 +161,8 @@ public:
 		g.setColour(Colour::fromRGB(100, 100, 100));
 		g.setFont(itemFont);
 
-		DBG(row.getAuthor());
-
 		g.drawText(row.getAuthor(),
-				   40 + depth * 30 + extraRoom, 0, width - 40 - depth * 30 - 30 - extraRoom, height,
+				   0, 0, width - 20, height,
 				   Justification::centredRight, true);
 	}
 

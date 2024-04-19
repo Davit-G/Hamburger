@@ -22,7 +22,7 @@ public:
 
         addTextEditor("presetName", "MyBurger", "Preset Name");
         addTextEditor("author", "me", "Author");
-        addTextEditor("description", "", "Description");
+        // addTextEditor("description", "", "Description");
 		addButton("Save", 1, KeyPress(KeyPress::returnKey, 0, 0));
 		addButton("Cancel", 0, KeyPress(KeyPress::escapeKey, 0, 0));
 

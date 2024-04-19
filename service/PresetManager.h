@@ -47,16 +47,11 @@ namespace Preset
 			// copy file to avoid locking it
 			auto thing = this->file;
 
-
 			juce::XmlDocument xmlDocument{thing};
-
 
 			const auto valueTreeToLoad = juce::ValueTree::fromXml(*xmlDocument.getDocumentElement());
 			author = valueTreeToLoad.getProperty("author");
-			description = valueTreeToLoad.getProperty("description");
-
-			// DBG("Author: " + author);
-			// DBG("Description: " + description);
+			// description = valueTreeToLoad.getProperty("description");
 		}
 
 		juce::String getAuthor() const
