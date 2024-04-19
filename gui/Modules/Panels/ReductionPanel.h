@@ -3,7 +3,7 @@
  
 
 #include "../Panel.h"
-#include "../../Params.h"
+
 
 
 class ReductionPanel : public Panel

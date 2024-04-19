@@ -4,9 +4,9 @@
 
 //==============================================================================
 PhaseDist::PhaseDist(juce::AudioProcessorValueTreeState& treeState) : 
-	amount(treeState, "phaseAmount"),
-	tone(treeState, "phaseDistTone"),
-	normalise(treeState, "phaseDistNormalise")
+	amount(treeState, ParamIDs::phaseAmount),
+	tone(treeState, ParamIDs::phaseDistTone),
+	normalise(treeState, ParamIDs::phaseDistNormalise)
 	{};
 
 void PhaseDist::prepare(juce::dsp::ProcessSpec& spec) noexcept {

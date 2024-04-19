@@ -1,11 +1,12 @@
 #pragma once
 
+#include "../../utils/Params.h"
+
 #include "juce_core/juce_core.h"
 #include "juce_dsp/juce_dsp.h"
 #include "juce_audio_processors/juce_audio_processors.h"
 
 #include <melatonin_perfetto/melatonin_perfetto.h>
-
 #include "../SmoothParam.h"
 //==============================================================================
 /*
@@ -14,9 +15,9 @@ class Erosion
 {
 public:
     Erosion(juce::AudioProcessorValueTreeState& treeState) : delayLine(200),
-        erosionAmount(treeState, "noiseAmount"),
-        erosionFrequency(treeState, "noiseFrequency"),
-        erosionQ(treeState, "noiseQ") {}
+        erosionAmount(treeState, ParamIDs::erosionAmount),
+        erosionFrequency(treeState, ParamIDs::noiseFrequency),
+        erosionQ(treeState, ParamIDs::noiseQ) {}
     
     ~Erosion() {}
 

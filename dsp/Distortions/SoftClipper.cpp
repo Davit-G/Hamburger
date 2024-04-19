@@ -6,7 +6,7 @@ int sgn(T val)
     return (T(0) < val) - (val < T(0));
 }
 
-SoftClip::SoftClip(juce::AudioProcessorValueTreeState& treeState) : saturationKnob(treeState, "saturationAmount") {}
+SoftClip::SoftClip(juce::AudioProcessorValueTreeState& treeState) : saturationKnob(treeState, ParamIDs::saturationAmount) {}
 
 SoftClip::~SoftClip()
 {

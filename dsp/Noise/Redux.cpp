@@ -3,9 +3,9 @@
  
 
 //==============================================================================
-Redux::Redux(juce::AudioProcessorValueTreeState &treeState) : downsample(treeState, "downsampleFreq"),
-															  downsampleMix(treeState, "downsampleMix"),
-															  bitReduction(treeState, "bitReduction")
+Redux::Redux(juce::AudioProcessorValueTreeState &treeState) : downsample(treeState, ParamIDs::downsampleFreq),
+															  downsampleMix(treeState, ParamIDs::downsampleMix),
+															  bitReduction(treeState, ParamIDs::bitReduction)
 {
 }
 

@@ -10,11 +10,11 @@ public:
     MBComp(juce::AudioProcessorValueTreeState &state) : compressor1(CompressionType::COMPRESSOR),
                                                         compressor2(CompressionType::COMPRESSOR),
                                                         compressor3(CompressionType::COMPRESSOR),
-                                                        threshold(state, "compThreshold"),
-                                                        ratio(state, "compRatio"),
-                                                        tilt(state, "compBandTilt"),
-                                                        speed(state, "compSpeed"),
-                                                        makeup(state, "compOut") {}
+                                                        threshold(state, ParamIDs::compThreshold),
+                                                        ratio(state, ParamIDs::compRatio),
+                                                        tilt(state, ParamIDs::compBandTilt),
+                                                        speed(state, ParamIDs::compSpeed),
+                                                        makeup(state, ParamIDs::compOut) {}
     ~MBComp() {}
 
     void processBlock(dsp::AudioBlock<float> &block)

@@ -4,7 +4,7 @@
 #include "../Panel.h"
 #include "../../Knob.h"
 
-#include "../../Params.h"
+
 
 
 class TubeSatPanel : public Panel

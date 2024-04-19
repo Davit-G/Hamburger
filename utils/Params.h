@@ -1,5 +1,8 @@
 #pragma once
 
+#include "juce_core/juce_core.h"
+#include "juce_audio_processors/juce_audio_processors.h"
+
 namespace ParamIDs {
     struct PanelInfo {
         juce::String name;
@@ -7,35 +10,35 @@ namespace ParamIDs {
         juce::StringArray categories;
 
         PanelInfo() : name("default"), attachmentID("default"), categories({ "default" }) {}
-        PanelInfo(juce::String n, juce::String aID, StringArray categories) : name(n), attachmentID(aID), categories({ categories }) {}
+        PanelInfo(juce::String n, juce::String aID, juce::StringArray categories) : name(n), attachmentID(aID), categories({ categories }) {}
     };
 
     static const PanelInfo utilityInfo = {
-        "UTILITY", "", StringArray({"default"})
+        "UTILITY", "", juce::StringArray({"default"})
     };
 
     static const PanelInfo emphasisInfo = {
-        "EMPHASIS", "", StringArray({"default"})
+        "EMPHASIS", "", juce::StringArray({"default"})
     };
 
     static const PanelInfo distortion = {
-        "DISTORTION", "", StringArray({"GRILL", "TUBE", "PHASE", "RUBIDIUM", "MATRIX"})
+        "DISTORTION", "", juce::StringArray({"GRILL", "TUBE", "PHASE", "RUBIDIUM", "MATRIX"})
     };
 
     static const PanelInfo preDistortionTypes = {
-        "PRE-DISTORTION", "", StringArray({"DISPERSER"})
+        "PRE-DISTORTION", "", juce::StringArray({"DISPERSER"})
     };
 
     static const PanelInfo noiseTypes = {
-        "NOISE", "", StringArray({"SIZZLE", "EROSION", "BIT", "JEFF", "SIZZLE_OG"})
+        "NOISE", "", juce::StringArray({"SIZZLE", "EROSION", "BIT", "JEFF", "SIZZLE_OG"})
     };
 
     static const PanelInfo dynamics = {
-        "DYNAMICS", "", StringArray({"STEREO", "OTT", "MID-SIDE"})
+        "DYNAMICS", "", juce::StringArray({"STEREO", "OTT", "MID-SIDE"})
     };
 
     static const PanelInfo quality = {
-        "QUALITY", "", StringArray({"FAST", "STANDARD", "HIGH"})
+        "QUALITY", "", juce::StringArray({"FAST", "STANDARD", "HIGH"})
     };
 
 
@@ -52,12 +55,11 @@ namespace ParamIDs {
     static const juce::ParameterID emphasisHighFreq { "emphasisHighFreq", 1 };
 
 
+    static const juce::ParameterID primaryDistortionType { "primaryDistortionType", 1 };
+    static const juce::ParameterID noiseDistortionType { "noiseDistortionType", 1 };
+    static const juce::ParameterID compressionType { "compressionType", 1 };
     static const juce::ParameterID compressionOn { "compressionOn", 1 };
-
-
     static const juce::ParameterID emphasisOn { "emphasisOn", 1 };
-
-
     static const juce::ParameterID preDistortionEnabled { "preDistortionEnabled", 1 };
     static const juce::ParameterID primaryDistortionEnabled { "primaryDistortionEnabled", 1 };
     static const juce::ParameterID noiseDistortionEnabled { "noiseDistortionEnabled", 1 };
@@ -74,16 +76,6 @@ namespace ParamIDs {
     static const juce::ParameterID compRatio { "compRatio", 1 };
     static const juce::ParameterID compOut { "compOut", 1 };
 
-
-    static const juce::ParameterID primaryDistortionType { "primaryDistortionType", 1 };
-    static const juce::ParameterID noiseDistortionType { "noiseDistortionType", 1 };
-    static const juce::ParameterID compressionType { "compressionType", 1 };
-
-
-    static const juce::ParameterID diode { "diode", 1 };
-    static const juce::ParameterID sizzle { "sizzle", 1 };
-    static const juce::ParameterID fold { "fold", 1 };
-
      // gate (noise distortion)
     static const juce::ParameterID gateAmt { "gateAmt", 1 };
     static const juce::ParameterID gateMix { "gateMix", 1 };
@@ -98,6 +90,8 @@ namespace ParamIDs {
 
      // grill saturation
     static const juce::ParameterID saturationAmount { "saturationAmount", 1 };
+    static const juce::ParameterID diode { "diode", 1 };
+    static const juce::ParameterID fold { "fold", 1 };
     static const juce::ParameterID bias { "bias", 1 };
 
     // matrix distortion
@@ -127,10 +121,14 @@ namespace ParamIDs {
     static const juce::ParameterID tubeTone { "tubeTone", 1 };
     static const juce::ParameterID jeffAmount { "jeffAmount", 1 };
 
-
-    static const juce::ParameterID noiseAmount { "noiseAmount", 1 };
+    // sizzle
+    static const juce::ParameterID sizzleAmount { "sizzleAmount", 1 };
     static const juce::ParameterID noiseFrequency { "noiseFrequency", 1 };
     static const juce::ParameterID noiseQ { "noiseQ", 1 };
+
+
+    // erosion
+    static const juce::ParameterID erosionAmount { "erosionAmount", 1 };
 
 
     static const juce::ParameterID downsampleFreq { "downsampleFreq", 1 };

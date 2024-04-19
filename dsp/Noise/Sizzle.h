@@ -1,5 +1,7 @@
 #pragma once
 
+#include "../../utils/Params.h"
+
 #include "../SmoothParam.h"
 #include "../EnvelopeFollower.h"
 

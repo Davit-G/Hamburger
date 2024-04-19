@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../Panel.h"
-#include "../../Params.h"
+
 
 class MSCompPanel : public Panel
 {

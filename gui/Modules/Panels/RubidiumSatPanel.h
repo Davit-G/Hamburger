@@ -3,7 +3,7 @@
  
 #include "../Panel.h"
 #include "../../Knob.h"
-#include "../../Params.h"
+
 
 
 class RubidiumSatPanel : public Panel

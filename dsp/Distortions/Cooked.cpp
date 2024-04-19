@@ -3,7 +3,7 @@
 #include "Cooked.h"
 
 //==============================================================================
-Cooked::Cooked(juce::AudioProcessorValueTreeState& treeState) : amount(treeState, "fold") {}
+Cooked::Cooked(juce::AudioProcessorValueTreeState& treeState) : amount(treeState, ParamIDs::fold) {}
 
 Cooked::~Cooked() {}
 

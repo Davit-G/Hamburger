@@ -1,7 +1,7 @@
 #include "PattyFuzz.h"
 
 //==============================================================================
-PattyFuzz::PattyFuzz(juce::AudioProcessorValueTreeState &treeState) : amount(treeState, "diode") {}
+PattyFuzz::PattyFuzz(juce::AudioProcessorValueTreeState &treeState) : amount(treeState, ParamIDs::diode) {}
 
 void PattyFuzz::prepare(juce::dsp::ProcessSpec &spec)
 {

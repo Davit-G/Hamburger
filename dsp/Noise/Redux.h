@@ -1,5 +1,7 @@
 #pragma once
 
+#include "../../utils/Params.h"
+
 #include "juce_core/juce_core.h"
 #include "juce_dsp/juce_dsp.h"
 #include "juce_audio_processors/juce_audio_processors.h"

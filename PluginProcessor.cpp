@@ -3,7 +3,6 @@
 
 #include <chrono>
 #include <ctime>
-#include "gui/Params.h"
 
 //==============================================================================
 AudioPluginAudioProcessor::AudioPluginAudioProcessor() : AudioProcessor(BusesProperties()
@@ -111,8 +110,6 @@ AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::createP
     params.add(std::make_unique<AudioParameterChoice>(ParamIDs::compressionType, "Comp Type", ParamIDs::dynamics.categories, 0));
 
     params.add(std::make_unique<AudioParameterFloat>(ParamIDs::diode, "Diode", 0.0f, 100.0f, 0.0f));
-    // params.add(std::make_unique<AudioParameterFloat>(ParamIDs::fuzz, "Fuzz", 0.0f, 100.0f, 0.0f));
-    params.add(std::make_unique<AudioParameterFloat>(ParamIDs::sizzle, "Sizzle", 0.0f, 100.0f, 0.0f));
     params.add(std::make_unique<AudioParameterFloat>(ParamIDs::fold, "Fold", 0.0f, 100.0f, 0.0f));
     
     params.add(std::make_unique<AudioParameterFloat>(ParamIDs::gateAmt, "Gate Amt", 0.0f, 1.0f, 0.f));
@@ -152,7 +149,7 @@ AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::createP
     params.add(std::make_unique<AudioParameterFloat>(ParamIDs::jeffAmount, "Tube Jeff Amt", 0.0f, 100.0f, 0.f));
 
     // noise distortions
-    params.add(std::make_unique<AudioParameterFloat>(ParamIDs::noiseAmount, "Noise Amt", 0.0f, 100.0f, 0.f));
+    params.add(std::make_unique<AudioParameterFloat>(ParamIDs::sizzleAmount, "Noise Amt", 0.0f, 100.0f, 0.f));
     params.add(std::make_unique<AudioParameterFloat>(ParamIDs::noiseFrequency, "Noise Freq", juce::NormalisableRange<float>(20.0f, 20000.0f, 0.f, 0.25f), 4000.0f));
     params.add(std::make_unique<AudioParameterFloat>(ParamIDs::noiseQ, "Noise Q", 0.1f, 1.5f, 1.f));
 

@@ -1,7 +1,7 @@
 #include "DiodeWaveshape.h"
 
 //==============================================================================
-DiodeWaveshape::DiodeWaveshape(juce::AudioProcessorValueTreeState &treeState) : amount(treeState, "diode") {}
+DiodeWaveshape::DiodeWaveshape(juce::AudioProcessorValueTreeState &treeState) : amount(treeState, ParamIDs::diode) {}
 
 void DiodeWaveshape::prepare(juce::dsp::ProcessSpec &spec) noexcept
 {

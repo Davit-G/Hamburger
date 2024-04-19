@@ -17,9 +17,6 @@
 #include "dsp/Fifo.h"
 #include "service/PresetManager.h"
 
-// #include "xsimd/xsimd.hpp"
-// #include "dsp/SIMDGain.h"
-
 // profiling
 #include <melatonin_perfetto/melatonin_perfetto.h>
 

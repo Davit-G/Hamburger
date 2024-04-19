@@ -1,14 +1,14 @@
 #pragma once
 
 #include "../Panel.h"
-#include "../../Params.h"
+
 
 
 class ErosionPanel : public Panel
 {
 public:
     ErosionPanel(AudioPluginAudioProcessor &p) : Panel(p, "EROSION"),
-        erosionAmt(p, "AMOUNT", ParamIDs::noiseAmount),
+        erosionAmt(p, "AMOUNT", ParamIDs::erosionAmount),
         erosionFreq(p, "FREQ", ParamIDs::noiseFrequency, ParamUnits::hz),
         erosionQ(p, "Q", ParamIDs::noiseQ)
     {

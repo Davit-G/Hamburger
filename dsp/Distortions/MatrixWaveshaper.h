@@ -31,15 +31,15 @@ inline double shredShape(double x, double c) noexcept
 class MatrixWaveshaper
 {
 public:
-    MatrixWaveshaper(juce::AudioProcessorValueTreeState &treeState) : mat1Param(treeState, "matrix1"),
-                                                                      mat2Param(treeState, "matrix2"),
-                                                                      mat3Param(treeState, "matrix3"),
-                                                                      mat4Param(treeState, "matrix4"),
-                                                                      mat5Param(treeState, "matrix5"),
-                                                                      mat6Param(treeState, "matrix6"),
-                                                                      mat7Param(treeState, "matrix7"),
-                                                                      mat8Param(treeState, "matrix8"),
-                                                                      mat9Param(treeState, "matrix9")
+    MatrixWaveshaper(juce::AudioProcessorValueTreeState &treeState) : mat1Param(treeState, ParamIDs::matrix1),
+                                                                      mat2Param(treeState, ParamIDs::matrix2),
+                                                                      mat3Param(treeState, ParamIDs::matrix3),
+                                                                      mat4Param(treeState, ParamIDs::matrix4),
+                                                                      mat5Param(treeState, ParamIDs::matrix5),
+                                                                      mat6Param(treeState, ParamIDs::matrix6),
+                                                                      mat7Param(treeState, ParamIDs::matrix7),
+                                                                      mat8Param(treeState, ParamIDs::matrix8),
+                                                                      mat9Param(treeState, ParamIDs::matrix9)
     {
     }
 
