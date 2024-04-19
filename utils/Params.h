@@ -92,7 +92,7 @@ namespace ParamIDs {
     static const juce::ParameterID saturationAmount { "saturationAmount", 1 };
     static const juce::ParameterID diode { "diode", 1 };
     static const juce::ParameterID fold { "fold", 1 };
-    static const juce::ParameterID bias { "bias", 1 };
+    static const juce::ParameterID grillBias { "grillBias", 1 };
 
     // matrix distortion
     static const juce::ParameterID matrix1 { "matrix1", 1 };
@@ -119,6 +119,7 @@ namespace ParamIDs {
     // tube distortion
     static const juce::ParameterID tubeAmount { "tubeAmount", 1 };
     static const juce::ParameterID tubeTone { "tubeTone", 1 };
+    static const juce::ParameterID tubeBias { "tubeBias", 1 };
     static const juce::ParameterID jeffAmount { "jeffAmount", 1 };
 
     // sizzle
