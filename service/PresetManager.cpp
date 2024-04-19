@@ -165,14 +165,11 @@ juce::Array<juce::File> Preset::PresetManager::getAllPresets() const
  * Makes sure that folders are traversed before files.
  * Also filters by extension.
  */
-juce::Array<juce::File> Preset::PresetManager::recursiveSortedTraverse(const juce::File &directory) const
+void Preset::PresetManager::recursiveSortedTraverse(const juce::File &directory, std::shared_ptr<juce::OwnedArray<Preset::PresetFile>> files)
 {
-	juce::Array<juce::File> files;
-
+	
 	auto wildcard = juce::WildcardFileFilter("*." + extension, "*", "*");
 	auto dirsFiles = directory.findChildFiles(juce::File::TypesOfFileToFind::findFilesAndDirectories, false);
-
-	// todo: return instances of custom class with author data?
 
 	std::sort(dirsFiles.begin(), dirsFiles.end(), [](const juce::File &a, const juce::File &b)
 			  { return a.isDirectory() && !b.isDirectory(); });
@@ -181,22 +178,31 @@ juce::Array<juce::File> Preset::PresetManager::recursiveSortedTraverse(const juc
 	{
 		if (dirsFiles[i].isDirectory())
 		{
-			auto subFiles = recursiveSortedTraverse(dirsFiles[i]);
-			files.add(dirsFiles[i]); // add the directory as well as the children to the 2d array
-			files.addArray(subFiles);
+			auto preset = std::make_unique<PresetFile>(dirsFiles[i]);
+
+			files->add(std::move(preset)); // add the directory as well as the children to the 2d array
+
+			recursiveSortedTraverse(dirsFiles[i], files);
 		}
 		else if (wildcard.isFileSuitable(dirsFiles[i]))
 		{
-			files.add(dirsFiles[i]);
+			auto preset = std::make_unique<PresetFile>(dirsFiles[i]);
+			files->add(std::move(preset));
 		}
 	}
 
-	return files;
+	return;
 }
 
-juce::Array<juce::File> Preset::PresetManager::getPresetFileHierarchy() const
+std::shared_ptr<juce::OwnedArray<Preset::PresetFile>> Preset::PresetManager::getPresetFileHierarchy()
 {
-	return recursiveSortedTraverse(defaultDirectory);
+	auto files = std::make_shared<juce::OwnedArray<Preset::PresetFile>>();
+
+	recursiveSortedTraverse(defaultDirectory, files);
+
+	this->presetsCache = files;
+	
+	return files;
 }
 
 juce::File Preset::PresetManager::getCurrentPreset() const

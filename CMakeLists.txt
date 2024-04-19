@@ -156,19 +156,23 @@ set_target_properties("${BaseTargetName}BinaryData" PROPERTIES POSITION_INDEPEND
 
 FetchContent_Declare (melatonin_perfetto
   GIT_REPOSITORY https://github.com/sudara/melatonin_perfetto.git
+  GIT_SHALLOW 1
   GIT_TAG origin/main)
 
 FetchContent_Declare (xsimd 
     GIT_REPOSITORY https://github.com/xtensor-stack/xsimd.git
+    GIT_SHALLOW 1
     GIT_TAG origin/master)
     
 FetchContent_Declare (melatonin_inspector
     GIT_REPOSITORY https://github.com/sudara/melatonin_inspector.git
+    GIT_SHALLOW 1
     GIT_TAG origin/main
     SOURCE_DIR ${CMAKE_CURRENT_BINARY_DIR}/melatonin_inspector)
 
 FetchContent_Declare (clap-juce-extensions
   GIT_REPOSITORY https://github.com/free-audio/clap-juce-extensions.git
+  GIT_SHALLOW 1
   GIT_TAG origin/main)
 
 FetchContent_MakeAvailable (melatonin_perfetto xsimd melatonin_inspector clap-juce-extensions)

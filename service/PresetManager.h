@@ -17,7 +17,7 @@ namespace Preset
 	class PresetFile
 	{
 	public:
-		PresetFile(juce::File &file) : file(file)
+		PresetFile(juce::File file = juce::File()) : file(file)
 		{
 			id = file.getRelativePathFrom(defaultDirectory);
 
@@ -27,9 +27,15 @@ namespace Preset
 				return;
 			}
 
-			if (file.getFileExtension() != extension)
+			if (file.getFileExtension() != "." + extension)
 			{
 				DBG("Preset file " + file.getFullPathName() + " does not have the correct extension");
+				return;
+			}
+			
+			if (file.isDirectory())
+			{
+				DBG("Preset file " + file.getFullPathName() + " is a directory");
 				return;
 			}
 
@@ -38,9 +44,19 @@ namespace Preset
 
 		void loadMetadata()
 		{
-			juce::XmlDocument xmlDocument{file};
+			// copy file to avoid locking it
+			auto thing = this->file;
+
+
+			juce::XmlDocument xmlDocument{thing};
+
+
 			const auto valueTreeToLoad = juce::ValueTree::fromXml(*xmlDocument.getDocumentElement());
 			author = valueTreeToLoad.getProperty("author");
+			description = valueTreeToLoad.getProperty("description");
+
+			// DBG("Author: " + author);
+			// DBG("Description: " + description);
 		}
 
 		juce::String getAuthor() const
@@ -53,15 +69,16 @@ namespace Preset
 			return id;
 		}
 
-		juce::File getFile() const
+		juce::File getFile()
 		{
 			return file;
 		}
 
 	private:
-		juce::File &file;
+		juce::File file;
 
 		juce::String author;
+		juce::String description;
 		juce::String id;
 	};
 
@@ -78,12 +95,14 @@ namespace Preset
 		juce::Array<juce::File> getAllPresets() const;
 		juce::File getCurrentPreset() const;
 
-		juce::Array<juce::File> recursiveSortedTraverse(const juce::File &directory) const;
+		void recursiveSortedTraverse(const juce::File &directory, std::shared_ptr<juce::OwnedArray<Preset::PresetFile>> presets);
 
-		juce::Array<juce::File> getPresetFileHierarchy() const;
+		std::shared_ptr<juce::OwnedArray<Preset::PresetFile>> getPresetFileHierarchy();
 
 	private:
 		void valueTreeRedirected(juce::ValueTree &treeWhichHasBeenChanged) override;
+
+		std::shared_ptr<juce::OwnedArray<Preset::PresetFile>> presetsCache = nullptr;
 
 		juce::AudioProcessorValueTreeState &valueTreeState;
 		juce::Value currentPreset;

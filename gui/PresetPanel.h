@@ -40,9 +40,9 @@ public:
 	void initFiles() {
 		updateContent();
 
-		for (auto &file : filesFolders)
+		for (auto &file : *filesFolders)
 		{
-			isCollapsed[file.getRelativePathFrom(Preset::defaultDirectory)] = true;
+			isCollapsed[file->getFile().getRelativePathFrom(Preset::defaultDirectory)] = true;
 		}
 
 		refreshFilesToRender();
@@ -51,18 +51,21 @@ public:
 	void refreshFilesToRender()
 	{
 		filesToRender.clear();
-		for (auto &file : filesFolders)
+
+		auto& collection = *filesFolders;
+
+		for (auto &file : collection)
 		{
-			auto relativePath = file.getRelativePathFrom(Preset::defaultDirectory);
+			auto relativePath = file->getFile().getRelativePathFrom(Preset::defaultDirectory);
 			auto depth = relativePath.retainCharacters("/\\").length();
 
 			if (depth == 0)
 			{
-				filesToRender.add(file);
+				filesToRender.add(file->getFile());
 				continue;
 			}
 
-			auto parent = file.getParentDirectory();
+			auto parent = file->getFile().getParentDirectory();
 			File current = parent;
 
 			int tries = 0;
@@ -78,7 +81,7 @@ public:
 
 			if (!isCollapsed[current.getRelativePathFrom(Preset::defaultDirectory)])
 			{
-				filesToRender.add(file);
+				filesToRender.add(file->getFile());
 			}
 		}
 	}
@@ -101,18 +104,18 @@ public:
 		
 		auto row = filesToRender[rowNumber];
 
-		auto isDir = row.isDirectory();
+		auto isDir = row.getFile().isDirectory();
 
 		if (rowIsSelected && !isDir)
 		{
 			g.fillAll(Colour::fromRGB(33, 33, 33));
 		}
 
-		auto depth = row.getRelativePathFrom(Preset::defaultDirectory).retainCharacters("/\\").length();
+		auto depth = row.getFile().getRelativePathFrom(Preset::defaultDirectory).retainCharacters("/\\").length();
 
 		if (isDir)
 		{
-			bool collapsed = isCollapsed[row.getRelativePathFrom(Preset::defaultDirectory)];
+			bool collapsed = isCollapsed[row.getFile().getRelativePathFrom(Preset::defaultDirectory)];
 			int delta = 0;
 
 			// Path p;
@@ -145,32 +148,47 @@ public:
 		g.setColour(LookAndFeel::getDefaultLookAndFeel().findColour(Label::textColourId));
 		g.setFont(itemFont);
 
-		g.drawText(row.getFileNameWithoutExtension(),
+		auto presetName = row.getFile().getFileNameWithoutExtension();
+
+		if (presetName.length() > 30) {
+			presetName = presetName.substring(0, 30) + "...";
+		}
+
+		g.drawText(presetName,
 				   15 + depth * 30 + extraRoom, 0, width, height,
 				   Justification::centredLeft, true);
+		
+		g.setColour(Colour::fromRGB(100, 100, 100));
+		g.setFont(itemFont);
+
+		DBG(row.getAuthor());
+
+		g.drawText(row.getAuthor(),
+				   40 + depth * 30 + extraRoom, 0, width - 40 - depth * 30 - 30 - extraRoom, height,
+				   Justification::centredRight, true);
 	}
 
 	void listBoxItemClicked(int row, const MouseEvent &mouseEvent) override
 	{
 		auto item = filesToRender[row];
 
-		auto isDir = item.isDirectory();
+		auto isDir = item.getFile().isDirectory();
 
 		if (isDir)
 		{
-			auto relativePath = item.getRelativePathFrom(Preset::defaultDirectory);
+			auto relativePath = item.getFile().getRelativePathFrom(Preset::defaultDirectory);
 			isCollapsed[relativePath] = !isCollapsed[relativePath];
 			refreshFilesToRender();
 			listBox.updateContent();
 		}
 		else
 		{
-			DBG(item.getFullPathName());
-			presetManager.loadPreset(item);
+			DBG(item.getFile().getFullPathName());
+			presetManager.loadPreset(item.getFile());
 
 			for (auto listener : singleClickListener)
 			{
-				listener.operator()(item.getParentDirectory().getFileNameWithoutExtension() + " - " + item.getFileNameWithoutExtension());
+				listener.operator()(item.getFile().getParentDirectory().getFileNameWithoutExtension() + " - " + item.getFile().getFileNameWithoutExtension());
 			}
 		}
 	}
@@ -178,12 +196,12 @@ public:
 	void listBoxItemDoubleClicked(int row, const MouseEvent &mouseEvent) override
 	{
 		auto item = filesToRender[row];
-		if (item.isDirectory())
+		if (item.getFile().isDirectory())
 			return;
 
 		for (auto listener : doubleClickListener)
 		{
-			listener.operator()(item.getParentDirectory().getFileNameWithoutExtension() + " - " + item.getFileNameWithoutExtension());
+			listener.operator()(item.getFile().getParentDirectory().getFileNameWithoutExtension() + " - " + item.getFile().getFileNameWithoutExtension());
 		}
 	}
 
@@ -210,8 +228,8 @@ private:
 	std::vector<std::function<void(String)>> singleClickListener;
 	std::vector<std::function<void(String)>> doubleClickListener;
 
-	juce::Array<File> filesFolders;
-	juce::Array<File> filesToRender;
+	std::shared_ptr<juce::OwnedArray<Preset::PresetFile>> filesFolders = nullptr;
+	juce::Array<Preset::PresetFile> filesToRender;
 
 	std::map<String, bool> isCollapsed;
 
@@ -351,16 +369,11 @@ public:
 			this->listBox.updateContent();
 			this->listBox.repaint();
 		});
+
+		currentPresetLabel.setButtonText("Hamburger");
 	}
 
-	~PresetPanel()
-	{
-		saveButton.removeListener(this);
-		deleteButton.removeListener(this);
-		previousPresetButton.removeListener(this);
-		nextPresetButton.removeListener(this);
-		currentPresetLabel.removeListener(this);
-	}
+	~PresetPanel() override = default;
 
 	void resized() override
 	{
@@ -491,8 +504,6 @@ private:
 	bool showPresetsList = false;
 
 	TextButton currentPresetLabel;
-
-	std::unique_ptr<FileChooser> fileChooser;
 
 	ComboBoxLookAndFeel comboBoxLAF;
 
