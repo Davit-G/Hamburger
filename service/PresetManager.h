@@ -4,30 +4,78 @@
 #include "juce_core/juce_core.h"
 #include "juce_audio_processors/juce_audio_processors.h"
 
-class PresetManager : juce::ValueTree::Listener
+namespace Preset
 {
-public:
-	static const juce::File defaultDirectory;
-	static const juce::String extension;
-	static const juce::String presetPathProperty;
 
-	PresetManager(juce::AudioProcessorValueTreeState&);
+	static const juce::File defaultDirectory{juce::File::getSpecialLocation(
+												 juce::File::SpecialLocationType::commonDocumentsDirectory)
+												 .getChildFile(JucePlugin_Manufacturer)
+												 .getChildFile(JucePlugin_Name)};
+	static const juce::String extension{"borgir"};
+	static const juce::String presetPathProperty{"presetPath"};
 
-	void savePreset(const juce::String& preset, const juce::String &author);
-	void deletePreset(const juce::File& preset);
-	void loadPreset(const juce::File& preset);
-	juce::File loadNextPreset();
-	juce::File loadPreviousPreset();
-	juce::Array<juce::File> getAllPresets() const;
-	juce::File getCurrentPreset() const;
+	class PresetFile
+	{
+	public:
+		PresetFile(juce::File &file) : file(file)
+		{
+			id = file.getRelativePathFrom(defaultDirectory);
 
-	juce::Array<juce::File> recursiveSortedTraverse(const juce::File& directory) const;
+			loadMetadata();
+		}
 
-	juce::Array<juce::File> getPresetFileHierarchy() const;
-private:
-	void valueTreeRedirected(juce::ValueTree& treeWhichHasBeenChanged) override;
+		void loadMetadata()
+		{
+			juce::XmlDocument xmlDocument{file};
+			const auto valueTreeToLoad = juce::ValueTree::fromXml(*xmlDocument.getDocumentElement());
+			author = valueTreeToLoad.getProperty("author");
+		}
 
-	juce::AudioProcessorValueTreeState& valueTreeState;
-	juce::Value currentPreset;
-	juce::Value currentAuthor;
-};
+		juce::String getAuthor() const
+		{
+			return author;
+		}
+
+		juce::String getId() const
+		{
+			return id;
+		}
+
+		juce::File getFile() const
+		{
+			return file;
+		}
+
+	private:
+		juce::File &file;
+
+		juce::String author;
+		juce::String id;
+	};
+
+	class PresetManager : juce::ValueTree::Listener
+	{
+	public:
+		PresetManager(juce::AudioProcessorValueTreeState &);
+
+		void savePreset(const juce::String &preset, const juce::String &author);
+		void deletePreset(const juce::File &preset);
+		void loadPreset(const juce::File &preset);
+		juce::File loadNextPreset();
+		juce::File loadPreviousPreset();
+		juce::Array<juce::File> getAllPresets() const;
+		juce::File getCurrentPreset() const;
+
+		juce::Array<juce::File> recursiveSortedTraverse(const juce::File &directory) const;
+
+		juce::Array<juce::File> getPresetFileHierarchy() const;
+
+	private:
+		void valueTreeRedirected(juce::ValueTree &treeWhichHasBeenChanged) override;
+
+		juce::AudioProcessorValueTreeState &valueTreeState;
+		juce::Value currentPreset;
+		juce::Value currentAuthor;
+	};
+
+}

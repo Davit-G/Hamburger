@@ -111,6 +111,7 @@ target_compile_features("${BaseTargetName}" PUBLIC cxx_std_17)
 
 target_compile_definitions("${BaseTargetName}" PUBLIC
     PERFETTO=0
+    #DONT_SET_USING_JUCE_NAMESPACE=1 # if i ever want to remove juce as being included in the namespace by default
 	JUCE_DISPLAY_SPLASH_SCREEN=0
     JUCE_REPORT_APP_USAGE=0
 	JUCE_USE_FLAC=0

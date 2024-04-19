@@ -19,13 +19,13 @@ std::unique_ptr<juce::Drawable> makeIcon(const char *iconString)
 class CustomListBoxModel : public ListBoxModel
 {
 public:
-	CustomListBoxModel(PresetManager &pm, ListBox &lb) : presetManager(pm), listBox(lb), itemFont(*HamburgerFonts::quicksandFont)
+	CustomListBoxModel(Preset::PresetManager &pm, ListBox &lb) : presetManager(pm), listBox(lb), itemFont(*HamburgerFonts::quicksandFont)
 	{
 		filesFolders = presetManager.getPresetFileHierarchy();
 
 		for (auto &file : filesFolders)
 		{
-			isCollapsed[file.getRelativePathFrom(pm.defaultDirectory)] = true;
+			isCollapsed[file.getRelativePathFrom(Preset::defaultDirectory)] = true;
 		}
 
 		refreshFilesToRender();
@@ -51,7 +51,7 @@ public:
 		filesToRender.clear();
 		for (auto &file : filesFolders)
 		{
-			auto relativePath = file.getRelativePathFrom(presetManager.defaultDirectory);
+			auto relativePath = file.getRelativePathFrom(Preset::defaultDirectory);
 			auto depth = relativePath.retainCharacters("/\\").length();
 
 			if (depth == 0)
@@ -65,16 +65,16 @@ public:
 
 			int tries = 0;
 
-			while (current != presetManager.defaultDirectory)
+			while (current != Preset::defaultDirectory)
 			{
-				auto currentFile = current.getRelativePathFrom(presetManager.defaultDirectory);
+				auto currentFile = current.getRelativePathFrom(Preset::defaultDirectory);
 				if (isCollapsed[currentFile] || tries++ > 40)
 					break;
 
 				current = current.getParentDirectory();
 			}
 
-			if (!isCollapsed[current.getRelativePathFrom(presetManager.defaultDirectory)])
+			if (!isCollapsed[current.getRelativePathFrom(Preset::defaultDirectory)])
 			{
 				filesToRender.add(file);
 			}
@@ -103,11 +103,11 @@ public:
 			g.fillAll(Colour::fromRGB(33, 33, 33));
 		}
 
-		auto depth = row.getRelativePathFrom(presetManager.defaultDirectory).retainCharacters("/\\").length();
+		auto depth = row.getRelativePathFrom(Preset::defaultDirectory).retainCharacters("/\\").length();
 
 		if (isDir)
 		{
-			bool collapsed = isCollapsed[row.getRelativePathFrom(presetManager.defaultDirectory)];
+			bool collapsed = isCollapsed[row.getRelativePathFrom(Preset::defaultDirectory)];
 			int delta = 0;
 
 			// Path p;
@@ -153,7 +153,7 @@ public:
 
 		if (isDir)
 		{
-			auto relativePath = item.getRelativePathFrom(presetManager.defaultDirectory);
+			auto relativePath = item.getRelativePathFrom(Preset::defaultDirectory);
 			isCollapsed[relativePath] = !isCollapsed[relativePath];
 			refreshFilesToRender();
 			listBox.updateContent();
@@ -199,7 +199,7 @@ public:
 	}
 
 private:
-	PresetManager &presetManager;
+	Preset::PresetManager &presetManager;
 	ListBox &listBox;
 
 	std::vector<std::function<void(String)>> singleClickListener;
@@ -256,7 +256,7 @@ private:
 class PresetPanel : public Component, Button::Listener
 {
 public:
-	PresetPanel(PresetManager &pm) : presetManager(pm),
+	PresetPanel(Preset::PresetManager &pm) : presetManager(pm),
 									 listBoxModel(pm, listBox),
 									 saveButton("Save", DrawableButton::ImageOnButtonBackground),
 									 deleteButton("Delete", DrawableButton::ImageOnButtonBackground),
@@ -464,7 +464,7 @@ private:
 		currentPresetLabel.setButtonText("Hamburger");
 	}
 
-	PresetManager &presetManager;
+	Preset::PresetManager &presetManager;
 	DrawableButton saveButton, deleteButton, previousPresetButton, nextPresetButton, closeButton;
 
 	bool showPresetsList = false;

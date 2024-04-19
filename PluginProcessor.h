@@ -72,7 +72,7 @@ public:
     AudioBufferQueue<float>& getAudioBufferQueueL() noexcept        { return audioBufferQueueL; }
     AudioBufferQueue<float>& getAudioBufferQueueR() noexcept        { return audioBufferQueueR; }
 
-    PresetManager& getPresetManager() { return *presetManager; }
+    Preset::PresetManager& getPresetManager() { return *presetManager; }
 
 private:
     juce::AudioParameterFloat *inputGainKnob = nullptr;
@@ -126,7 +126,7 @@ private:
     AudioBufferQueue<float> audioBufferQueueR;
     ScopeDataCollector<float> scopeDataCollector { audioBufferQueueL, audioBufferQueueR };
 
-    std::unique_ptr<PresetManager> presetManager;
+    std::unique_ptr<Preset::PresetManager> presetManager;
 
     #if PERFETTO // if we have the profiling
         std::unique_ptr<perfetto::TracingSession> tracingSession;

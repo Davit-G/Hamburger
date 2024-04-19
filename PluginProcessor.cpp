@@ -60,7 +60,7 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor() : AudioProcessor(BusesPro
     enableEmphasis = dynamic_cast<juce::AudioParameterBool *>(treeState.getParameter("emphasisOn"));
     jassert(enableEmphasis);
 
-    presetManager = std::make_unique<PresetManager>(treeState);
+    presetManager = std::make_unique<Preset::PresetManager>(treeState);
 
 #if PERFETTO
     // MelatoninPerfetto::get().beginSession(300000);

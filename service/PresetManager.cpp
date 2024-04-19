@@ -1,13 +1,6 @@
 #include "PresetManager.h"
 
-const juce::File PresetManager::defaultDirectory{juce::File::getSpecialLocation(
-													 juce::File::SpecialLocationType::commonDocumentsDirectory)
-													 .getChildFile(JucePlugin_Manufacturer)
-													 .getChildFile(JucePlugin_Name)};
-const juce::String PresetManager::extension{"borgir"};
-const juce::String PresetManager::presetPathProperty{"presetPath"};
-
-PresetManager::PresetManager(juce::AudioProcessorValueTreeState &apvts) : valueTreeState(apvts)
+Preset::PresetManager::PresetManager(juce::AudioProcessorValueTreeState &apvts) : valueTreeState(apvts)
 {
 	// Create a default Preset Directory, if it doesn't exist
 	if (!defaultDirectory.exists())
@@ -39,7 +32,7 @@ PresetManager::PresetManager(juce::AudioProcessorValueTreeState &apvts) : valueT
 	currentPreset.referTo(valueTreeState.state.getPropertyAsValue(presetPathProperty, nullptr));
 }
 
-void PresetManager::savePreset(const juce::String &presetName, const juce::String &author)
+void Preset::PresetManager::savePreset(const juce::String &presetName, const juce::String &author)
 {
 	if (presetName.isEmpty())
 		return;
@@ -65,7 +58,7 @@ void PresetManager::savePreset(const juce::String &presetName, const juce::Strin
 	}
 }
 
-void PresetManager::deletePreset(const juce::File &presetFile)
+void Preset::PresetManager::deletePreset(const juce::File &presetFile)
 {
 	if (!presetFile.existsAsFile())
 	{
@@ -83,7 +76,7 @@ void PresetManager::deletePreset(const juce::File &presetFile)
 	currentAuthor.setValue("");
 }
 
-void PresetManager::loadPreset(const juce::File &presetFile)
+void Preset::PresetManager::loadPreset(const juce::File &presetFile)
 {
 	if (!presetFile.existsAsFile())
 	{
@@ -100,7 +93,7 @@ void PresetManager::loadPreset(const juce::File &presetFile)
 	// currentAuthor.setValue(valueTreeToLoad.getChildWithName("author").getProperty("author", ""));
 }
 
-juce::File PresetManager::loadNextPreset()
+juce::File Preset::PresetManager::loadNextPreset()
 {
 	const auto allPresets = getAllPresets();
 	if (allPresets.isEmpty())
@@ -125,7 +118,7 @@ juce::File PresetManager::loadNextPreset()
 	return preset;
 }
 
-juce::File PresetManager::loadPreviousPreset()
+juce::File Preset::PresetManager::loadPreviousPreset()
 {
 	const auto allPresets = getAllPresets();
 	if (allPresets.isEmpty())
@@ -150,7 +143,7 @@ juce::File PresetManager::loadPreviousPreset()
 	return preset;
 }
 
-juce::Array<juce::File> PresetManager::getAllPresets() const
+juce::Array<juce::File> Preset::PresetManager::getAllPresets() const
 {
 	juce::StringArray presets;
 	const auto fileArray = defaultDirectory.findChildFiles(
@@ -164,7 +157,7 @@ juce::Array<juce::File> PresetManager::getAllPresets() const
  * Makes sure that folders are traversed before files.
  * Also filters by extension.
  */
-juce::Array<juce::File> PresetManager::recursiveSortedTraverse(const juce::File &directory) const
+juce::Array<juce::File> Preset::PresetManager::recursiveSortedTraverse(const juce::File &directory) const
 {
 	juce::Array<juce::File> files;
 
@@ -193,17 +186,17 @@ juce::Array<juce::File> PresetManager::recursiveSortedTraverse(const juce::File 
 	return files;
 }
 
-juce::Array<juce::File> PresetManager::getPresetFileHierarchy() const
+juce::Array<juce::File> Preset::PresetManager::getPresetFileHierarchy() const
 {
 	return recursiveSortedTraverse(defaultDirectory);
 }
 
-juce::File PresetManager::getCurrentPreset() const
+juce::File Preset::PresetManager::getCurrentPreset() const
 {
 	return defaultDirectory.getChildFile(currentPreset.toString());
 }
 
-void PresetManager::valueTreeRedirected(juce::ValueTree &treeWhichHasBeenChanged)
+void Preset::PresetManager::valueTreeRedirected(juce::ValueTree &treeWhichHasBeenChanged)
 {
 	currentPreset.referTo(treeWhichHasBeenChanged.getPropertyAsValue(presetPathProperty, nullptr));
 	currentAuthor.referTo(treeWhichHasBeenChanged.getPropertyAsValue("author", nullptr));
