@@ -27,8 +27,11 @@ public:
                                              leftColumn(p),
                                              saturationColumn(p),
                                              utilColumn(p),
-                                             infoPanel(p),
-                                             presetPanel(p.getPresetManager())
+                                             infoPanel(p)
+                                             
+#if PRESETS_MANAGER_VISIBLE 
+                                             ,presetPanel(p.getPresetManager())
+#endif
     {
         int additionalHeight = 0;
 
@@ -75,7 +78,8 @@ public:
         infoPanel.setBounds(bounds);
 
 #if PRESETS_MANAGER_VISIBLE
-        presetPanel.setBounds(bounds.removeFromTop(45));
+        presetPanel.setBounds(bounds);
+        bounds.removeFromTop(45);
 #endif
 
         auto left = bounds.removeFromLeft(totalWidth);
@@ -95,8 +99,6 @@ public:
             leftColumn.setVisible(false);
             saturationColumn.setVisible(false);
             utilColumn.setVisible(false);
-
-            presetPanel.setVisible(false);
         }
         else if (command == 1)
         {
@@ -105,9 +107,18 @@ public:
             leftColumn.setVisible(true);
             saturationColumn.setVisible(true);
             utilColumn.setVisible(true);
+        }
 
+#if PRESETS_MANAGER_VISIBLE
+        if (command == 0)
+        {
+            presetPanel.setVisible(false);
+        }
+        else if (command == 1)
+        {
             presetPanel.setVisible(true);
         }
+#endif
     }
 
 private:
@@ -115,7 +126,9 @@ private:
     SaturationColumn saturationColumn;
     UtilColumn utilColumn;
 
+#if PRESETS_MANAGER_VISIBLE
     PresetPanel presetPanel;
+#endif
 
     Info infoPanel;
 

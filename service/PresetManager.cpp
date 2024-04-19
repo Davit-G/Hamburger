@@ -1,17 +1,12 @@
 #include "PresetManager.h"
 
-const juce::File PresetManager::defaultDirectory{juce::File::getSpecialLocation(
-													 juce::File::SpecialLocationType::commonDocumentsDirectory)
-													 .getChildFile(JucePlugin_Manufacturer)
-													 .getChildFile(JucePlugin_Name)};
-const juce::String PresetManager::extension{"borgir"};
-const juce::String PresetManager::presetNameProperty{"presetName"};
-
-PresetManager::PresetManager(juce::AudioProcessorValueTreeState &apvts) : valueTreeState(apvts)
+Preset::PresetManager::PresetManager(juce::AudioProcessorValueTreeState &apvts) : valueTreeState(apvts)
 {
 	// Create a default Preset Directory, if it doesn't exist
 	if (!defaultDirectory.exists())
 	{
+		// todo: load defaults here?
+
 		const auto result = defaultDirectory.createDirectory();
 		if (result.failed())
 		{
@@ -20,31 +15,61 @@ PresetManager::PresetManager(juce::AudioProcessorValueTreeState &apvts) : valueT
 		}
 	}
 
+	// does a child path called /user exist?
+	auto child = juce::File(defaultDirectory.getFullPathName() + "/User");
+
+	if (!child.exists())
+	{
+		const auto result = child.createDirectory();
+		if (result.failed())
+		{
+			DBG("Could not create preset directory: " + result.getErrorMessage());
+			jassertfalse;
+		}
+	}
+
 	valueTreeState.state.addListener(this);
-	currentPreset.referTo(valueTreeState.state.getPropertyAsValue(presetNameProperty, nullptr));
+	currentPreset.referTo(valueTreeState.state.getPropertyAsValue(presetPathProperty, nullptr));
 }
 
-void PresetManager::savePreset(const juce::String &presetName)
+/**
+ * @brief Save a preset to the default directory.
+ * Returns true if the preset was saved successfully, false otherwise.
+*/
+bool Preset::PresetManager::savePreset(const juce::String &presetName, const juce::String &author, const juce::String &description)
 {
 	if (presetName.isEmpty())
-		return;
+		return false;
 
 	currentPreset.setValue(presetName);
+	currentAuthor.setValue(author);
 	const auto xml = valueTreeState.copyState().createXml();
-	const auto presetFile = defaultDirectory.getChildFile(presetName + "." + extension);
+	const auto presetFile = juce::File(defaultDirectory.getFullPathName() + "/User/" + presetName + "." + extension);
+	if (presetFile.existsAsFile())
+	{
+		DBG("Preset file " + presetFile.getFullPathName() + " already exists");
+
+		return false;
+	}
+	else
+	{
+		presetFile.create();
+	}
+
 	if (!xml->writeTo(presetFile))
 	{
 		DBG("Could not create preset file: " + presetFile.getFullPathName());
 		jassertfalse;
+		return false;
 	}
+	
+	currentPreset.setValue(presetFile.getRelativePathFrom(defaultDirectory));
+
+	return true;
 }
 
-void PresetManager::deletePreset(const juce::String &presetName)
+void Preset::PresetManager::deletePreset(const juce::File &presetFile)
 {
-	if (presetName.isEmpty())
-		return;
-
-	const auto presetFile = defaultDirectory.getChildFile(presetName + "." + extension);
 	if (!presetFile.existsAsFile())
 	{
 		DBG("Preset file " + presetFile.getFullPathName() + " does not exist");
@@ -58,68 +83,137 @@ void PresetManager::deletePreset(const juce::String &presetName)
 		return;
 	}
 	currentPreset.setValue("");
+	currentAuthor.setValue("");
 }
 
-void PresetManager::loadPreset(const juce::String &presetName)
+void Preset::PresetManager::loadPreset(const juce::File &presetFile)
 {
-	if (presetName.isEmpty())
-		return;
-
-	const auto presetFile = defaultDirectory.getChildFile(presetName + "." + extension);
 	if (!presetFile.existsAsFile())
 	{
 		DBG("Preset file " + presetFile.getFullPathName() + " does not exist");
 		jassertfalse;
 		return;
 	}
-	// presetFile (XML) -> (ValueTree)
+
 	juce::XmlDocument xmlDocument{presetFile};
 	const auto valueTreeToLoad = juce::ValueTree::fromXml(*xmlDocument.getDocumentElement());
 
 	valueTreeState.replaceState(valueTreeToLoad);
-	currentPreset.setValue(presetName);
+	currentPreset.setValue(presetFile.getRelativePathFrom(defaultDirectory));
+	// currentAuthor.setValue(valueTreeToLoad.getChildWithName("author").getProperty("author", ""));
 }
 
-int PresetManager::loadNextPreset()
+juce::File Preset::PresetManager::loadNextPreset()
 {
 	const auto allPresets = getAllPresets();
 	if (allPresets.isEmpty())
-		return -1;
-	const auto currentIndex = allPresets.indexOf(currentPreset.toString());
+		return juce::File();
+
+	auto currentIndex = 0;
+
+	for (int i = 0; i < allPresets.size(); i++)
+	{
+		if (allPresets[i].getRelativePathFrom(defaultDirectory) == currentPreset.toString())
+		{
+			DBG("Current preset: " + currentPreset.toString());
+			DBG("Index: " + juce::String(i));
+			currentIndex = i;
+			break;
+		}
+	}
+
 	const auto nextIndex = currentIndex + 1 > (allPresets.size() - 1) ? 0 : currentIndex + 1;
-	loadPreset(allPresets.getReference(nextIndex));
-	return nextIndex;
+	const auto preset = allPresets.getReference(nextIndex);
+	loadPreset(preset);
+	return preset;
 }
 
-int PresetManager::loadPreviousPreset()
+juce::File Preset::PresetManager::loadPreviousPreset()
 {
 	const auto allPresets = getAllPresets();
 	if (allPresets.isEmpty())
-		return -1;
-	const auto currentIndex = allPresets.indexOf(currentPreset.toString());
+		return juce::File();
+
+	auto currentIndex = 0;
+
+	for (int i = 0; i < allPresets.size(); i++)
+	{
+		if (allPresets[i].getRelativePathFrom(defaultDirectory) == currentPreset.toString())
+		{
+			DBG("Current preset: " + currentPreset.toString());
+			DBG("Index: " + juce::String(i));
+			currentIndex = i;
+			break;
+		}
+	}
+
 	const auto previousIndex = currentIndex - 1 < 0 ? allPresets.size() - 1 : currentIndex - 1;
-	loadPreset(allPresets.getReference(previousIndex));
-	return previousIndex;
+	const auto preset = allPresets.getReference(previousIndex);
+	loadPreset(preset);
+	return preset;
 }
 
-juce::StringArray PresetManager::getAllPresets() const
+juce::Array<juce::File> Preset::PresetManager::getAllPresets() const
 {
 	juce::StringArray presets;
 	const auto fileArray = defaultDirectory.findChildFiles(
-		juce::File::TypesOfFileToFind::findFiles, false, "*." + extension);
-	for (const auto &file : fileArray)
+		juce::File::TypesOfFileToFind::findFiles, true, "*." + extension);
+
+	return fileArray;
+}
+
+/**
+ * @brief Recursively traverse a directory and return a sorted list of files.
+ * Makes sure that folders are traversed before files.
+ * Also filters by extension.
+ */
+void Preset::PresetManager::recursiveSortedTraverse(const juce::File &directory, std::shared_ptr<juce::OwnedArray<Preset::PresetFile>> files)
+{
+	
+	auto wildcard = juce::WildcardFileFilter("*." + extension, "*", "*");
+	auto dirsFiles = directory.findChildFiles(juce::File::TypesOfFileToFind::findFilesAndDirectories, false);
+
+	std::sort(dirsFiles.begin(), dirsFiles.end(), [](const juce::File &a, const juce::File &b)
+			  { return a.isDirectory() && !b.isDirectory(); });
+
+	for (int i = 0; i < dirsFiles.size(); i++)
 	{
-		presets.add(file.getFileNameWithoutExtension());
+		if (dirsFiles[i].isDirectory())
+		{
+			auto preset = std::make_unique<PresetFile>(dirsFiles[i]);
+
+			files->add(std::move(preset)); // add the directory as well as the children to the 2d array
+
+			recursiveSortedTraverse(dirsFiles[i], files);
+		}
+		else if (wildcard.isFileSuitable(dirsFiles[i]))
+		{
+			auto preset = std::make_unique<PresetFile>(dirsFiles[i]);
+			files->add(std::move(preset));
+		}
 	}
-	return presets;
+
+	return;
 }
 
-juce::String PresetManager::getCurrentPreset() const
+std::shared_ptr<juce::OwnedArray<Preset::PresetFile>> Preset::PresetManager::getPresetFileHierarchy()
 {
-	return currentPreset.toString();
+	auto files = std::make_shared<juce::OwnedArray<Preset::PresetFile>>();
+
+	recursiveSortedTraverse(defaultDirectory, files);
+
+	this->presetsCache = files;
+	
+	return files;
 }
 
-void PresetManager::valueTreeRedirected(juce::ValueTree &treeWhichHasBeenChanged)
+juce::File Preset::PresetManager::getCurrentPreset() const
 {
-	currentPreset.referTo(treeWhichHasBeenChanged.getPropertyAsValue(presetNameProperty, nullptr));
+	return defaultDirectory.getChildFile(currentPreset.toString());
+}
+
+void Preset::PresetManager::valueTreeRedirected(juce::ValueTree &treeWhichHasBeenChanged)
+{
+	currentPreset.referTo(treeWhichHasBeenChanged.getPropertyAsValue(presetPathProperty, nullptr));
+	currentAuthor.referTo(treeWhichHasBeenChanged.getPropertyAsValue("author", nullptr));
 }

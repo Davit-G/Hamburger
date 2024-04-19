@@ -1,6 +1,6 @@
 #pragma once
+#include "../Utils/HamburgerFonts.h"
 
- 
 
 class ComboBoxLookAndFeel : public juce::LookAndFeel_V4
 {
@@ -21,8 +21,10 @@ public:
     
         #if JUCE_WINDOWS
             questrialFont->setHeight(20);
+            quicksandFont->setHeight(24);
         #else
             questrialFont->setHeight(14);
+            quicksandFont->setHeight(18);
         #endif
 
     }
@@ -43,6 +45,22 @@ public:
     {
         return *questrialFont;
     }
+
+    Font getAlertWindowFont() override
+    {
+        return *questrialFont;
+    }
+
+    Font getAlertWindowMessageFont() override
+    {
+        return *questrialFont;
+    }
+
+    Font getAlertWindowTitleFont() override
+    {
+        return *quicksandFont;
+    }
+
 
     void drawComboBox(Graphics &g, int width, int height, bool,
                       int, int, int, int, ComboBox &box)
@@ -169,6 +187,8 @@ public:
 private:
 
     static const std::unique_ptr<Font> questrialFont;
+    static const std::unique_ptr<Font> quicksandFont;
 };
 
-const std::unique_ptr<juce::Font, std::default_delete<juce::Font>> ComboBoxLookAndFeel::questrialFont = std::make_unique<juce::Font>(juce::Typeface::createSystemTypefaceFor(BinaryData::QuestrialRegular_ttf, BinaryData::QuestrialRegular_ttfSize));
+const std::unique_ptr<juce::Font, std::default_delete<juce::Font>> ComboBoxLookAndFeel::questrialFont = std::make_unique<juce::Font>(HamburgerFonts::questrialTypeface);
+const std::unique_ptr<juce::Font, std::default_delete<juce::Font>> ComboBoxLookAndFeel::quicksandFont = std::make_unique<juce::Font>(HamburgerFonts::quicksandTypeface);
