@@ -37,7 +37,7 @@ public:
 
     void updateCoefficients() {
         float satAmt = powf(mojo.getRaw() * 0.01f, 1.5f) * 100.0f + 5.0f;
-        float hystAmt = powf(hysteresis.getRaw() * 0.1f, 2.0f) * 16.f;
+        float hystAmt = powf(hysteresis.getRaw() * 0.1f, 2.0f) * 300.f;
         float toneAmt = tone.getRaw();
 
         highpassFreq = toneAmt;
@@ -138,8 +138,6 @@ public:
             // saturation
             spl0 = atan(spl0 * delta0) / (spl0 == 0 ? 1 : (delta0 == 0 ? 0.00000000000001 : delta0));
             spl1 = atan(spl1 * delta1) / (spl1 == 0 ? 1 : (delta1 == 0 ? 0.00000000000001 : delta1));
-            //spl0 = sin(spl0 * delta0) / (spl0 === 0 ? 1 : delta0);
-            //spl1 = sin(spl1 * delta1) / (spl1 === 0 ? 1 : delta1);
 
             // nested allpass
             if (buf_length1 == 0) {
@@ -243,12 +241,14 @@ private:
     double adj_s4 = 1;
     // nested allpass
     double cDenorm = 10 ^ -30;
-    double v_n_buf0 = 1000;
-    double v_n_buf1 = 2000;
-    double v_n_buf2 = 3000;
-    double v_n_buf3 = 4000;
-    double v_n_buf4 = 5000;
-    double v_n_buf5 = 6000;
+
+    int v_n_buf0 = 1000;
+    int v_n_buf1 = 2000;
+    int v_n_buf2 = 3000;
+    int v_n_buf3 = 4000;
+    int v_n_buf4 = 5000;
+    int v_n_buf5 = 6000;
+
     double g = 0;
     // highpass
     double h0 = 0;

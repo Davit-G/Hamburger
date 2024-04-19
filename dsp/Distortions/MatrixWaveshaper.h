@@ -31,15 +31,15 @@ inline double shredShape(double x, double c) noexcept
 class MatrixWaveshaper
 {
 public:
-    MatrixWaveshaper(juce::AudioProcessorValueTreeState &treeState) : mat1Param(treeState, "matrix1"),
-                                                                      mat2Param(treeState, "matrix2"),
-                                                                      mat3Param(treeState, "matrix3"),
-                                                                      mat4Param(treeState, "matrix4"),
-                                                                      mat5Param(treeState, "matrix5"),
-                                                                      mat6Param(treeState, "matrix6"),
-                                                                      mat7Param(treeState, "matrix7"),
-                                                                      mat8Param(treeState, "matrix8"),
-                                                                      mat9Param(treeState, "matrix9")
+    MatrixWaveshaper(juce::AudioProcessorValueTreeState &treeState) : mat1Param(treeState, ParamIDs::matrix1),
+                                                                      mat2Param(treeState, ParamIDs::matrix2),
+                                                                      mat3Param(treeState, ParamIDs::matrix3),
+                                                                      mat4Param(treeState, ParamIDs::matrix4),
+                                                                      mat5Param(treeState, ParamIDs::matrix5),
+                                                                      mat6Param(treeState, ParamIDs::matrix6),
+                                                                      mat7Param(treeState, ParamIDs::matrix7),
+                                                                      mat8Param(treeState, ParamIDs::matrix8),
+                                                                      mat9Param(treeState, ParamIDs::matrix9)
     {
     }
 
@@ -74,15 +74,15 @@ public:
             float matrix2 = mat2Param.getNextValue();
             float matrix3 = mat3Param.getNextValue();
             float matrix4 = mat4Param.getNextValue();
-            float matrix5 = mat5Param.getNextValue();
-            float matrix6 = mat6Param.getNextValue();
-            float matrix7 = mat7Param.getNextValue();
-            float matrix8 = mat8Param.getNextValue();
-            float matrix9 = mat9Param.getNextValue();
+            // float matrix5 = mat5Param.getNextValue();
+            // float matrix6 = mat6Param.getNextValue();
+            // float matrix7 = mat7Param.getNextValue();
+            // float matrix8 = mat8Param.getNextValue();
+            // float matrix9 = mat9Param.getNextValue();
 
             double p1 = matrix1 * 10.0 + tiny;
             double p2 = matrix2 * 20.0 + tiny;
-            double p3 = matrix3;
+            // double p3 = matrix3;
             double p4 = matrix4 + tiny;
 
             for (int channel = 0; channel < block.getNumChannels(); channel++)
@@ -95,7 +95,7 @@ public:
 
                 double res = tanhWaveShaper(x - sinWS + shredded, p1);
 
-                block.setSample(channel, i, res);
+                block.setSample(channel, i, (float)res);
             }
         }
     }

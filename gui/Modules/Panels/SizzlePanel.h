@@ -1,17 +1,15 @@
 #pragma once
 
- 
-
 #include "../Panel.h"
-#include "PanelNames.h"
+
 
 class SizzlePanel : public Panel
 {
 public:
     SizzlePanel(AudioPluginAudioProcessor &p) : Panel(p, "SIZZLE"),
-    sizzleKnob(p, "SIZZLE", "noiseAmount"),
-    sizzleFreq(p, "FREQ", "noiseFrequency"),
-    sizzleQ(p, "Q", "noiseQ") {
+    sizzleKnob(p, "SIZZLE", ParamIDs::sizzleAmount),
+    sizzleFreq(p, "FREQ", ParamIDs::sizzleFrequency),
+    sizzleQ(p, "Q", ParamIDs::sizzleQ) {
         addAndMakeVisible(sizzleKnob);
         addAndMakeVisible(sizzleFreq);
         addAndMakeVisible(sizzleQ);

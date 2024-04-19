@@ -4,7 +4,7 @@
 
 #include "Modules/Panels/EQPanel.h"
 #include "Modules/Panels/UtilityPanel.h"
-#include "Modules/Panels/SettingsPanel.h"
+#include "Modules/Panels/ScopePanel.h"
 #include "Modules/Panels/OtherUtils.h"
 #include "LookAndFeel/Palette.h"
 
@@ -30,7 +30,7 @@ public:
         addAndMakeVisible(utility.get());
 
         std::vector<std::unique_ptr<Panel>> settingsPanels;
-        settingsPanels.push_back(std::make_unique<SettingsPanel>(p));
+        settingsPanels.push_back(std::make_unique<ScopePanel>(p));
         settings = std::make_unique<Module>(p, "SETTINGS", "", "", std::move(settingsPanels), true);
         addAndMakeVisible(settings.get());
     }

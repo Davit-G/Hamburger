@@ -3,15 +3,16 @@
  
 
 #include "../Panel.h"
-#include "PanelNames.h"
+
+
 
 class ReductionPanel : public Panel
 {
 public:
     ReductionPanel(AudioPluginAudioProcessor &p) : Panel(p, "BIT"),
-                                                   downSample(p, "RATE", "downsampleFreq", ParamUnits::hz),
-                                                   bitReduction(p, "BITS", "bitReduction"),
-                                                   downsampleMix(p, "MIX", "downsampleMix")
+                                                   downSample(p, "RATE", ParamIDs::downsampleFreq, ParamUnits::hz),
+                                                   bitReduction(p, "BITS", ParamIDs::bitReduction),
+                                                   downsampleMix(p, "MIX", ParamIDs::downsampleMix)
     {
         addAndMakeVisible(downSample);
         addAndMakeVisible(bitReduction);

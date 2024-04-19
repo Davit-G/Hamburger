@@ -1,7 +1,7 @@
 #include "Fuzz.h"
 
 //==============================================================================
-Fuzz::Fuzz(juce::AudioProcessorValueTreeState& treeState) : bias(treeState, "bias"), follower(false) {}
+Fuzz::Fuzz(juce::AudioProcessorValueTreeState& treeState) : bias(treeState, ParamIDs::grillBias), follower(false) {}
 
 Fuzz::~Fuzz() {}
 

@@ -3,16 +3,18 @@
  
 #include "../Panel.h"
 #include "../../Knob.h"
-#include "PanelNames.h"
+
+
+
 
 class TubeSatPanel : public Panel
 {
 public:
     TubeSatPanel(AudioPluginAudioProcessor &p) : Panel(p, "TUBE"), 
-        tubeTone(p, "TUBE TONE", "tubeTone"),
-        bias(p, "BIAS", "bias"),
-        jeff(p, "JEFF", "jeffAmount"),
-        drive(p, "DRIVE", "tubeAmount", ParamUnits::percent)
+        tubeTone(p, "TUBE TONE", ParamIDs::tubeTone),
+        bias(p, "BIAS", ParamIDs::tubeBias),
+        jeff(p, "JEFF", ParamIDs::jeffAmount),
+        drive(p, "DRIVE", ParamIDs::tubeAmount, ParamUnits::percent)
     {
         addAndMakeVisible(tubeTone);
         addAndMakeVisible(drive);
@@ -23,7 +25,7 @@ public:
     void resized() override
     {
         auto bounds = getLocalBounds();
-        drive.setBounds(bounds.removeFromTop(bounds.getHeight() / 1.5f).reduced(10));
+        drive.setBounds(bounds.removeFromTop(static_cast<int>(bounds.getHeight() * 0.6666f)).reduced(10));
 
         auto width = bounds.getWidth() / 3;
         tubeTone.setBounds(bounds.removeFromLeft(width));

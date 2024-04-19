@@ -1,15 +1,16 @@
 #pragma once
 
 #include "../Panel.h"
-#include "PanelNames.h"
+
+
 #include "../../Knob.h"
 
 class GrungePanel : public Panel
 {
 public:
     GrungePanel(AudioPluginAudioProcessor &p) : Panel(p, "GRUNGE"),
-    amount(p, "AMT", "grungeAmt"),
-    tone(p, "TONE", "grungeTone") {
+    amount(p, "AMT", ParamIDs::grungeAmt),
+    tone(p, "TONE", ParamIDs::grungeTone) {
 
         addAndMakeVisible(amount);
         addAndMakeVisible(tone);

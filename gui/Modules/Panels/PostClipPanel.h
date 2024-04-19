@@ -1,14 +1,15 @@
 #pragma once
 
 #include "../Panel.h"
-#include "PanelNames.h"
+
+
 
 class PostClipPanel : public Panel
 {
 public:
     PostClipPanel(AudioPluginAudioProcessor &p) : Panel(p, "CLIPPER"),
-    gain(p, "GAIN", "postClipGain"),
-    knee(p, "KNEE", "postClipKnee") {
+    gain(p, "GAIN", ParamIDs::postClipGain),
+    knee(p, "KNEE", ParamIDs::postClipKnee) {
         addAndMakeVisible(gain);
         addAndMakeVisible(knee);
     }

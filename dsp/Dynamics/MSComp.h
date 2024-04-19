@@ -10,11 +10,11 @@ class MSComp
 public:
     MSComp(juce::AudioProcessorValueTreeState &state) : compressorMid(CompressionType::COMPRESSOR),
                                                         compressorSide(CompressionType::COMPRESSOR),
-                                                        threshold(state, "compThreshold"),
-                                                        ratio(state, "compRatio"),
-                                                        tilt(state, "compBandTilt"),
-                                                        speed(state, "compSpeed"),
-                                                        makeup(state, "compOut") {}
+                                                        threshold(state, ParamIDs::compThreshold),
+                                                        ratio(state, ParamIDs::compRatio),
+                                                        tilt(state, ParamIDs::compBandTilt),
+                                                        speed(state, ParamIDs::compSpeed),
+                                                        makeup(state, ParamIDs::compOut) {}
     ~MSComp() {}
 
     void processBlock(dsp::AudioBlock<float> &block)

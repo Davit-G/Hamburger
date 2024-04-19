@@ -2,15 +2,16 @@
  
 #include "../Panel.h"
 #include "../../Knob.h"
-#include "PanelNames.h"
+
+
 
 class PhaseDistPanel : public Panel
 {
 public:
     PhaseDistPanel(AudioPluginAudioProcessor &p) : Panel(p, "PHASE"), 
-        satKnob(p, "SATURATION", "phaseAmount", ParamUnits::percent),
-        toneKnob(p, "TONE", "phaseDistTone", ParamUnits::hz),
-        normKnob(p, "NORMALIZE", "phaseDistNormalise")
+        satKnob(p, "SATURATION", ParamIDs::phaseAmount, ParamUnits::percent),
+        toneKnob(p, "TONE", ParamIDs::phaseDistTone, ParamUnits::hz),
+        normKnob(p, "NORMALIZE", ParamIDs::phaseDistNormalise)
     {
         addAndMakeVisible(satKnob);
         addAndMakeVisible(toneKnob);

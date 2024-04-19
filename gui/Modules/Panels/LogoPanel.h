@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../Panel.h"
-#include "PanelNames.h"
+
 #include "juce_gui_basics/juce_gui_basics.h"
 
 #include "../Scope.h"

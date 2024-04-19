@@ -3,16 +3,17 @@
  
 #include "../Panel.h"
 #include "../../Knob.h"
-#include "PanelNames.h"
+
+
 
 class RubidiumSatPanel : public Panel
 {
 public:
     RubidiumSatPanel(AudioPluginAudioProcessor &p) : Panel(p, "RUBIDIUM"), 
-        tubeTone(p, "TONE", "rubidiumTone", ParamUnits::hz),
-        mojo(p, "MOJO", "rubidiumMojo"),
-        hysteresis(p, "ASYM", "rubidiumAsym"),
-        drive(p, "DRIVE", "rubidiumAmount", ParamUnits::percent)
+        tubeTone(p, "TONE", ParamIDs::rubidiumTone, ParamUnits::hz),
+        mojo(p, "MOJO", ParamIDs::rubidiumMojo),
+        hysteresis(p, "ASYM", ParamIDs::rubidiumAsym),
+        drive(p, "DRIVE", ParamIDs::rubidiumAmount, ParamUnits::percent)
     {
         addAndMakeVisible(tubeTone);
         addAndMakeVisible(drive);

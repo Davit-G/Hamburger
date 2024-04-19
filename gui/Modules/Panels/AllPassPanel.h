@@ -1,15 +1,16 @@
 #pragma once
 
 #include "../Panel.h"
-#include "PanelNames.h"
+
+
 
 class AllPassPanel : public Panel
 {
 public:
     AllPassPanel(AudioPluginAudioProcessor &p) : Panel(p, "ALLPASS"),
-        amount(p, "AMOUNT", "allPassAmount"),
-        freq(p, "FREQ", "allPassFreq", ParamUnits::hz),
-        q(p, "Q", "allPassQ")
+        amount(p, "AMOUNT", ParamIDs::allPassAmount),
+        freq(p, "FREQ", ParamIDs::allPassFreq, ParamUnits::hz),
+        q(p, "Q", ParamIDs::allPassQ)
     {
         addAndMakeVisible(amount);
         addAndMakeVisible(freq);

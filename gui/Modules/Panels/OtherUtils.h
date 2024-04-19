@@ -1,13 +1,13 @@
 #pragma once
 
 #include "../Panel.h"
-#include "PanelNames.h"
+
 
 class OtherUtils : public Panel
 {
 public:
     OtherUtils(AudioPluginAudioProcessor &p) : Panel(p, "OTHER?"),
-    quality(p, "QUALITY FACTOR", "oversamplingFactor", ParamUnits::x)
+    quality(p, "QUALITY FACTOR", ParamIDs::oversamplingFactor, ParamUnits::x)
     {
         addAndMakeVisible(quality);
     }

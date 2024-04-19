@@ -1,14 +1,14 @@
 #pragma once
 
 #include "../Panel.h"
-#include "PanelNames.h"
+
 
 class GatePanel : public Panel
 {
 public:
     GatePanel(AudioPluginAudioProcessor &p) : Panel(p, "GATE"),
-    gate(p, "GATE", "gateAmt"),
-    gateMix(p, "MIX", "gateMix")
+    gate(p, "GATE", ParamIDs::gateAmt),
+    gateMix(p, "MIX", ParamIDs::gateMix)
     {
         addAndMakeVisible(gate);
         addAndMakeVisible(gateMix);

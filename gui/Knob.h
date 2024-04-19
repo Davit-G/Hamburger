@@ -34,11 +34,11 @@ inline juce::String createParamString(float value, ParamUnits unit) noexcept {
 class ParamKnob : public juce::Component
 {
 public:
-    ParamKnob(AudioPluginAudioProcessor &p, juce::String knobName, juce::String attachmentID, ParamUnits knobUnit = ParamUnits::none): processorRef(p), kName(knobName), unit(knobUnit) {
-        knobAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(processorRef.treeState, attachmentID, knob);
+    ParamKnob(AudioPluginAudioProcessor &p, juce::String knobName, juce::ParameterID attachmentID, ParamUnits knobUnit = ParamUnits::none): processorRef(p), kName(knobName), unit(knobUnit) {
+        knobAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(processorRef.treeState, attachmentID.getParamID(), knob);
         jassert(knobAttachment);
 
-        auto knobParamRange = p.treeState.getParameterRange(attachmentID);
+        auto knobParamRange = p.treeState.getParameterRange(attachmentID.getParamID());
 
         knob.setSliderStyle(juce::Slider::RotaryVerticalDrag);
         knob.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
@@ -143,7 +143,7 @@ public:
 
         g.setColour(outline);
         
-        auto size = std::min(knobBounds.getWidth(), knobBounds.getHeight());
+        float size = std::min(knobBounds.getWidth(), knobBounds.getHeight());
 
         // the knob background
         g.fillEllipse(Rectangle<float>(size, size).reduced(5.0f).withCentre(bounds.getCentre()));

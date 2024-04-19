@@ -1,19 +1,17 @@
 #pragma once
 
- 
-
 #include "../Panel.h"
-#include "PanelNames.h"
+
 
 class StereoCompPanel : public Panel
 {
 public:
     StereoCompPanel(AudioPluginAudioProcessor &p) : Panel(p, "LR"),
-                                                   threshold(p, "THRES", "compThreshold", ParamUnits::db),
-                                                   ratio(p, "RATIO", "compRatio"),
+                                                   threshold(p, "THRES", ParamIDs::compThreshold, ParamUnits::db),
+                                                   ratio(p, "RATIO", ParamIDs::compRatio),
                                                 //    tilt(p, "S-LNK", "compStereoLink", ParamUnits::percent),
-                                                   attack(p, "SPEED", "compSpeed", ParamUnits::ms),
-                                                   makeup(p, "GAIN", "compOut", ParamUnits::db)
+                                                   attack(p, "SPEED", ParamIDs::compSpeed, ParamUnits::ms),
+                                                   makeup(p, "GAIN", ParamIDs::compOut, ParamUnits::db)
     {
         addAndMakeVisible(threshold);
         addAndMakeVisible(ratio);

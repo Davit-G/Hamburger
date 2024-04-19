@@ -3,21 +3,22 @@
 #include "juce_gui_basics/juce_gui_basics.h"
 #include "../Panel.h"
 #include "../../Knob.h"
-#include "PanelNames.h"
+
+
 
 class MatrixSatPanel : public Panel
 {
 public:
     MatrixSatPanel(AudioPluginAudioProcessor &p) : Panel(p, "MATRIX"), 
-        mat1(p, "MAT1", "matrix1"),
-        mat2(p, "MAT2", "matrix2"),
-        mat3(p, "MAT3", "matrix3"),
-        mat4(p, "MAT4", "matrix4"),
-        mat5(p, "MAT5", "matrix5"),
-        mat6(p, "MAT6", "matrix6"),
-        mat7(p, "MAT7", "matrix7"),
-        mat8(p, "MAT8", "matrix8"),
-        mat9(p, "MAT9", "matrix9")
+        mat1(p, "MAT1", ParamIDs::matrix1),
+        mat2(p, "MAT2", ParamIDs::matrix2),
+        mat3(p, "MAT3", ParamIDs::matrix3),
+        mat4(p, "MAT4", ParamIDs::matrix4),
+        mat5(p, "MAT5", ParamIDs::matrix5),
+        mat6(p, "MAT6", ParamIDs::matrix6),
+        mat7(p, "MAT7", ParamIDs::matrix7),
+        mat8(p, "MAT8", ParamIDs::matrix8),
+        mat9(p, "MAT9", ParamIDs::matrix9)
     {
         addAndMakeVisible(mat1);
         addAndMakeVisible(mat2);

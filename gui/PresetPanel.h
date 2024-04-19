@@ -488,6 +488,8 @@ private:
 
 	void setupButton(Button &button, const String &buttonText)
 	{
+		juce::ignoreUnused(buttonText);
+		// button.setButtonText(buttonText);
 		button.setMouseCursor(MouseCursor::PointingHandCursor);
 
 		button.setColour(TextButton::ColourIds::buttonOnColourId, Colour::fromRGB(0, 0, 0));

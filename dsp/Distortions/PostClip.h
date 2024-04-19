@@ -2,6 +2,7 @@
 #include "../SmoothParam.h"
 
 #include <melatonin_perfetto/melatonin_perfetto.h>
+#include "../../utils/Params.h"
 
 class PostClip
 {

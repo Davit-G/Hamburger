@@ -13,9 +13,9 @@
 //==============================================================================
 Sizzle::Sizzle(juce::AudioProcessorValueTreeState &treeState)
 	: envelopeDetector(true),
-	  noiseAmount(treeState, "noiseAmount"),
-	  filterTone(treeState, "noiseFrequency"),
-	  filterQ(treeState, "noiseQ") {}
+	  noiseAmount(treeState, ParamIDs::sizzleAmount),
+	  filterTone(treeState, ParamIDs::sizzleFrequency),
+	  filterQ(treeState, ParamIDs::sizzleQ) {}
 
 Sizzle::~Sizzle()
 {
@@ -24,7 +24,6 @@ Sizzle::~Sizzle()
 void Sizzle::prepare(dsp::ProcessSpec &spec)
 {
 	this->sampleRate = spec.sampleRate;
-
 
 	noiseAmount.prepare(spec);
 	filterTone.prepare(spec);

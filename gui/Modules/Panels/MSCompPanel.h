@@ -1,19 +1,17 @@
 #pragma once
 
- 
-
 #include "../Panel.h"
-#include "PanelNames.h"
+
 
 class MSCompPanel : public Panel
 {
 public:
     MSCompPanel(AudioPluginAudioProcessor &p) : Panel(p, "MIDSIDE"),
-                                                   threshold(p, "THRES", "compThreshold", ParamUnits::db),
-                                                   ratio(p, "RATIO", "compRatio"),
-                                                   tilt(p, "TILT", "compBandTilt", ParamUnits::db),
-                                                   attack(p, "SPEED", "compSpeed", ParamUnits::ms),
-                                                   makeup(p, "GAIN", "compOut", ParamUnits::db)
+                                                   threshold(p, "THRES", ParamIDs::compThreshold, ParamUnits::db),
+                                                   ratio(p, "RATIO", ParamIDs::compRatio),
+                                                   tilt(p, "TILT", ParamIDs::compBandTilt, ParamUnits::db),
+                                                   attack(p, "SPEED", ParamIDs::compSpeed, ParamUnits::ms),
+                                                   makeup(p, "GAIN", ParamIDs::compOut, ParamUnits::db)
     {
         addAndMakeVisible(threshold);
         addAndMakeVisible(ratio);

@@ -7,10 +7,10 @@ int sgn(T val)
     return (T(0) < val) - (val < T(0));
 }
 
-PostClip::PostClip(juce::AudioProcessorValueTreeState &treeState) : gainKnob(treeState, "postClipGain"),
-                                                                    kneeKnob(treeState, "postClipKnee")
+PostClip::PostClip(juce::AudioProcessorValueTreeState &treeState) : gainKnob(treeState, ParamIDs::postClipGain),
+                                                                    kneeKnob(treeState, ParamIDs::postClipKnee)
 {
-    clipEnabled = dynamic_cast<juce::AudioParameterBool *>(treeState.getParameter("postClipEnabled"));
+    clipEnabled = dynamic_cast<juce::AudioParameterBool *>(treeState.getParameter(ParamIDs::postClipEnabled.getParamID()));
     jassert(clipEnabled);
 }
 
