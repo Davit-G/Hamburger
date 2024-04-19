@@ -8,8 +8,8 @@ class SizzlePanel : public Panel
 public:
     SizzlePanel(AudioPluginAudioProcessor &p) : Panel(p, "SIZZLE"),
     sizzleKnob(p, "SIZZLE", ParamIDs::sizzleAmount),
-    sizzleFreq(p, "FREQ", ParamIDs::noiseFrequency),
-    sizzleQ(p, "Q", ParamIDs::noiseQ) {
+    sizzleFreq(p, "FREQ", ParamIDs::sizzleFrequency),
+    sizzleQ(p, "Q", ParamIDs::sizzleQ) {
         addAndMakeVisible(sizzleKnob);
         addAndMakeVisible(sizzleFreq);
         addAndMakeVisible(sizzleQ);

@@ -37,7 +37,7 @@ void Redux::antiAliasingStep(juce::dsp::AudioBlock<float> &block)
 	{
 		for (int i = 0; i < 4; i++)
 		{
-			*antialiasingFilter[i].state = *juce::dsp::IIR::Coefficients<float>::makeLowPass(this->sampleRate, fmin(downsample.getRaw() * 2.f - 40.0f, 20000.0), 0.7f);
+			*antialiasingFilter[i].state = juce::dsp::IIR::ArrayCoefficients<float>::makeLowPass(this->sampleRate, fmin(downsample.getRaw() * 2.f - 40.0f, 20000.0), 0.7f);
 		}
 	}
 	for (int i = 0; i < 4; i++)

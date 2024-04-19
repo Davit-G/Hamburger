@@ -50,7 +50,7 @@ public:
 	{
 		float sign = inputSample < 0 ? -1.0f : 1.0f;
 		float rectifiedSample = fabs(inputSample);
-		float sizzleLevel = nextSizzle * 4.0f * pow(fmax(envelope - rectifiedSample, 0.0f), 0.8f + 1.0f / filterQ.getRaw());
+		float sizzleLevel = nextSizzle * 4.0f * pow(fmax(envelope - rectifiedSample, 0.0f), 0.8f + 0.5f / filterQ.getRaw());
 
 		return inputSample + (sizzleLevel * nextRand - (sizzleLevel * 0.5f)) * sign;
 	}

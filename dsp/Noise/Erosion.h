@@ -16,8 +16,8 @@ class Erosion
 public:
     Erosion(juce::AudioProcessorValueTreeState& treeState) : delayLine(200),
         erosionAmount(treeState, ParamIDs::erosionAmount),
-        erosionFrequency(treeState, ParamIDs::noiseFrequency),
-        erosionQ(treeState, ParamIDs::noiseQ) {}
+        erosionFrequency(treeState, ParamIDs::erosionFrequency),
+        erosionQ(treeState, ParamIDs::erosionQ) {}
     
     ~Erosion() {}
 

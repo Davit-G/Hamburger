@@ -2,25 +2,22 @@
 
 #include "../Panel.h"
 
-
-
 class ErosionPanel : public Panel
 {
 public:
     ErosionPanel(AudioPluginAudioProcessor &p) : Panel(p, "EROSION"),
-        erosionAmt(p, "AMOUNT", ParamIDs::erosionAmount),
-        erosionFreq(p, "FREQ", ParamIDs::noiseFrequency, ParamUnits::hz),
-        erosionQ(p, "Q", ParamIDs::noiseQ)
+                                                 erosionAmt(p, "AMOUNT", ParamIDs::erosionAmount),
+                                                 erosionFreq(p, "FREQ", ParamIDs::erosionFrequency, ParamUnits::hz),
+                                                 erosionQ(p, "Q", ParamIDs::erosionQ)
     {
-        
+
         addAndMakeVisible(erosionAmt);
         addAndMakeVisible(erosionFreq);
         addAndMakeVisible(erosionQ);
-
-        
     }
 
-    void resized() {
+    void resized()
+    {
         // three, in a row
         auto bounds = getLocalBounds();
         erosionAmt.setBounds(bounds.removeFromLeft(bounds.getWidth() / 3));
