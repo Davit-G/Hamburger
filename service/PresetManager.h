@@ -44,7 +44,6 @@ namespace Preset
 
 		void loadMetadata()
 		{
-			// copy file to avoid locking it
 			auto thing = this->file;
 
 			juce::XmlDocument xmlDocument{thing};
