@@ -133,6 +133,7 @@ private:
 
 	void setupButton(Button& button, const String& buttonText) 
 	{
+		juce::ignoreUnused(buttonText);
 		// button.setButtonText(buttonText);
 		button.setMouseCursor(MouseCursor::PointingHandCursor);
 

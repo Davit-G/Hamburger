@@ -142,6 +142,7 @@ public:
 
     void mouseDown(const juce::MouseEvent &event) override
     {
+        juce::ignoreUnused(event);
         this->viewSpectrum = !this->viewSpectrum;
     }
 

@@ -327,7 +327,7 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
             float eqGainValue = emphasis[i]->get();
             float eqFreqValue = emphasisFreq[i]->get();
             
-            float grabbedSampleRate = getSampleRate();
+            float grabbedSampleRate = static_cast<float>(getSampleRate());
             if (eqGainValue != prevEmphasis[i] || eqFreqValue != prevEmphasisFreq[i])
             {
                 *peakFilterBefore[i].state = dsp::IIR::ArrayCoefficients<float>::makePeakFilter(grabbedSampleRate, eqFreqValue, 0.5f, Decibels::decibelsToGain(-eqGainValue));

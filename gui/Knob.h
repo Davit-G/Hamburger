@@ -143,7 +143,7 @@ public:
 
         g.setColour(outline);
         
-        auto size = std::min(knobBounds.getWidth(), knobBounds.getHeight());
+        float size = std::min(knobBounds.getWidth(), knobBounds.getHeight());
 
         // the knob background
         g.fillEllipse(Rectangle<float>(size, size).reduced(5.0f).withCentre(bounds.getCentre()));

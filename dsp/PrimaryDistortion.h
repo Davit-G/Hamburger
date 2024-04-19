@@ -65,10 +65,10 @@ public:
             diodeWaveshape->processBlock(block);
             softClipper->processBlock(block);
 
-            juce::AudioBuffer<double> bufferDouble(block.getNumChannels(), block.getNumSamples());
+            juce::AudioBuffer<double> bufferDouble(static_cast<int>(block.getNumChannels()), static_cast<int>(block.getNumSamples()));
             juce::dsp::AudioBlock<double> blockDouble(bufferDouble);
-            
-            
+
+
             for (int channel = 0; channel < block.getNumChannels(); channel++)
             {
                 for (int sample = 0; sample < block.getNumSamples(); sample++)
@@ -85,7 +85,7 @@ public:
             {
                 for (int sample = 0; sample < block.getNumSamples(); sample++)
                 {
-                    block.setSample(channel, sample, blockDouble.getSample(channel, sample));
+                    block.setSample(channel, sample, static_cast<float>(bufferDouble.getSample(channel, sample)));
                 }
             }
             

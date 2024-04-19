@@ -74,15 +74,15 @@ public:
             float matrix2 = mat2Param.getNextValue();
             float matrix3 = mat3Param.getNextValue();
             float matrix4 = mat4Param.getNextValue();
-            float matrix5 = mat5Param.getNextValue();
-            float matrix6 = mat6Param.getNextValue();
-            float matrix7 = mat7Param.getNextValue();
-            float matrix8 = mat8Param.getNextValue();
-            float matrix9 = mat9Param.getNextValue();
+            // float matrix5 = mat5Param.getNextValue();
+            // float matrix6 = mat6Param.getNextValue();
+            // float matrix7 = mat7Param.getNextValue();
+            // float matrix8 = mat8Param.getNextValue();
+            // float matrix9 = mat9Param.getNextValue();
 
             double p1 = matrix1 * 10.0 + tiny;
             double p2 = matrix2 * 20.0 + tiny;
-            double p3 = matrix3;
+            // double p3 = matrix3;
             double p4 = matrix4 + tiny;
 
             for (int channel = 0; channel < block.getNumChannels(); channel++)
@@ -95,7 +95,7 @@ public:
 
                 double res = tanhWaveShaper(x - sinWS + shredded, p1);
 
-                block.setSample(channel, i, res);
+                block.setSample(channel, i, (float)res);
             }
         }
     }

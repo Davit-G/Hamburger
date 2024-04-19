@@ -243,12 +243,14 @@ private:
     double adj_s4 = 1;
     // nested allpass
     double cDenorm = 10 ^ -30;
-    double v_n_buf0 = 1000;
-    double v_n_buf1 = 2000;
-    double v_n_buf2 = 3000;
-    double v_n_buf3 = 4000;
-    double v_n_buf4 = 5000;
-    double v_n_buf5 = 6000;
+
+    int v_n_buf0 = 1000;
+    int v_n_buf1 = 2000;
+    int v_n_buf2 = 3000;
+    int v_n_buf3 = 4000;
+    int v_n_buf4 = 5000;
+    int v_n_buf5 = 6000;
+    
     double g = 0;
     // highpass
     double h0 = 0;

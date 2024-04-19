@@ -4,13 +4,12 @@
 
 inline float sgn(float xn)
 {
-	return (xn > 0) - (xn < 0);
+	return (xn > 0.f) - (xn < 0.f);
 }
 
 inline float calcWSGain(float xn, float saturation, float asymmetry)
 {
-	double g = ((xn >= 0.0f && asymmetry > 0.0f) || (xn < 0.0f && asymmetry < 0.0f)) ? saturation * (1.0f + 4.0f * fabs(asymmetry)) : saturation;
-	return g;
+	return ((xn >= 0.0f && asymmetry > 0.0f) || (xn < 0.0f && asymmetry < 0.0f)) ? saturation * (1.0f + 4.0f * fabs(asymmetry)) : saturation;
 }
 
 inline float atanWaveShaper(float xn, float saturation) noexcept
