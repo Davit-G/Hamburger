@@ -32,10 +32,14 @@ Preset::PresetManager::PresetManager(juce::AudioProcessorValueTreeState &apvts) 
 	currentPreset.referTo(valueTreeState.state.getPropertyAsValue(presetPathProperty, nullptr));
 }
 
-void Preset::PresetManager::savePreset(const juce::String &presetName, const juce::String &author)
+/**
+ * @brief Save a preset to the default directory.
+ * Returns true if the preset was saved successfully, false otherwise.
+*/
+bool Preset::PresetManager::savePreset(const juce::String &presetName, const juce::String &author, const juce::String &description)
 {
 	if (presetName.isEmpty())
-		return;
+		return false;
 
 	currentPreset.setValue(presetName);
 	currentAuthor.setValue(author);
@@ -44,7 +48,8 @@ void Preset::PresetManager::savePreset(const juce::String &presetName, const juc
 	if (presetFile.existsAsFile())
 	{
 		DBG("Preset file " + presetFile.getFullPathName() + " already exists");
-		return;
+
+		return false;
 	}
 	else
 	{
@@ -55,7 +60,10 @@ void Preset::PresetManager::savePreset(const juce::String &presetName, const juc
 	{
 		DBG("Could not create preset file: " + presetFile.getFullPathName());
 		jassertfalse;
+		return false;
 	}
+
+	return true;
 }
 
 void Preset::PresetManager::deletePreset(const juce::File &presetFile)

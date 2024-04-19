@@ -3,7 +3,7 @@
 #include "juce_gui_basics/juce_gui_basics.h"
 
 #include "LookAndFeel/ComboBoxLookAndFeel.h"
-#include "BurgerAlertWindow.h"
+#include "BurgerSaveAlert.h"
 #include "Utils/HamburgerFonts.h"
 
 std::unique_ptr<juce::Drawable> makeIcon(const char *iconString)
@@ -21,15 +21,6 @@ class CustomListBoxModel : public ListBoxModel
 public:
 	CustomListBoxModel(Preset::PresetManager &pm, ListBox &lb) : presetManager(pm), listBox(lb), itemFont(*HamburgerFonts::quicksandFont)
 	{
-		filesFolders = presetManager.getPresetFileHierarchy();
-
-		for (auto &file : filesFolders)
-		{
-			isCollapsed[file.getRelativePathFrom(Preset::defaultDirectory)] = true;
-		}
-
-		refreshFilesToRender();
-
 		auto folderClosedIconString = R"svgDELIM(
 			<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-folder-closed"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/><path d="M2 10h20"/></svg>
 		)svgDELIM";
@@ -44,6 +35,17 @@ public:
 		listBox.setRowHeight(36);
 
 		itemFont.setHeight(20.0f);
+	}
+
+	void initFiles() {
+		updateContent();
+
+		for (auto &file : filesFolders)
+		{
+			isCollapsed[file.getRelativePathFrom(Preset::defaultDirectory)] = true;
+		}
+
+		refreshFilesToRender();
 	}
 
 	void refreshFilesToRender()
@@ -94,6 +96,9 @@ public:
 	void paintListBoxItem(int rowNumber, Graphics &g,
 						  int width, int height, bool rowIsSelected) override
 	{
+		if (filesToRender.size() == 0)
+			return;
+		
 		auto row = filesToRender[rowNumber];
 
 		auto isDir = row.isDirectory();
@@ -339,7 +344,13 @@ public:
 			resized();
 		};
 
-		loadPresetList();
+		MessageManager::callAsync([this]
+		{
+			loadPresetList();
+			this->listBoxModel.initFiles();
+			this->listBox.updateContent();
+			this->listBox.repaint();
+		});
 	}
 
 	~PresetPanel()
@@ -401,14 +412,24 @@ private:
 	{
 		if (button == &saveButton)
 		{
-			auto alertWindow = new BurgerAlertWindow("Save Preset", "Enter a name for your new preset: ", MessageBoxIconType::NoIcon);
+			auto alertWindow = new BurgerSaveAlert("Save Preset", "Enter a name for your new preset: ", MessageBoxIconType::NoIcon);
 
 			alertWindow->enterModalState(true, juce::ModalCallbackFunction::create([this, alertWindow](int result)
 																				   {
 				if (result == 1) {
 					auto name = alertWindow->getTextEditor("presetName")->getText();
 					auto author = alertWindow->getTextEditor("author")->getText();
-					presetManager.savePreset(name, author);
+					auto description = alertWindow->getTextEditor("description")->getText();
+
+					auto saveSuccess = presetManager.savePreset(name, author, description);
+
+					if (!saveSuccess) {
+						auto errorAlert = new juce::AlertWindow("Error", "Preset was unable to be saved (it already exists?)", juce::AlertWindow::AlertIconType::WarningIcon);
+
+						errorAlert->addButton("Ok", 1, juce::KeyPress(juce::KeyPress::returnKey, 0, 0));
+						errorAlert->enterModalState(true, nullptr, true);
+					}
+
 					loadPresetList();
 				}
 

@@ -21,6 +21,18 @@ namespace Preset
 		{
 			id = file.getRelativePathFrom(defaultDirectory);
 
+			if (!file.existsAsFile())
+			{
+				DBG("Preset file " + file.getFullPathName() + " does not exist");
+				return;
+			}
+
+			if (file.getFileExtension() != extension)
+			{
+				DBG("Preset file " + file.getFullPathName() + " does not have the correct extension");
+				return;
+			}
+
 			loadMetadata();
 		}
 
@@ -58,7 +70,7 @@ namespace Preset
 	public:
 		PresetManager(juce::AudioProcessorValueTreeState &);
 
-		void savePreset(const juce::String &preset, const juce::String &author);
+		bool savePreset(const juce::String &preset, const juce::String &author, const juce::String &description);
 		void deletePreset(const juce::File &preset);
 		void loadPreset(const juce::File &preset);
 		juce::File loadNextPreset();

@@ -4,10 +4,10 @@
 
 #include "LookAndFeel/ComboBoxLookAndFeel.h"
 
-class BurgerAlertWindow : public juce::AlertWindow
+class BurgerSaveAlert : public juce::AlertWindow
 {
 public:
-    BurgerAlertWindow(const juce::String &title, const juce::String &message, juce::AlertWindow::AlertIconType iconType)
+    BurgerSaveAlert(const juce::String &title, const juce::String &message, juce::AlertWindow::AlertIconType iconType)
         : juce::AlertWindow(title, message, iconType)
     {
         setLookAndFeel(&comboBoxLook);
@@ -21,12 +21,14 @@ public:
         setColour(juce::Label::ColourIds::outlineColourId, juce::Colours::white);
 
         addTextEditor("presetName", "MyBurger", "Preset Name");
-        addTextEditor("author", "me", "Preset Author");
+        addTextEditor("author", "me", "Author");
+        addTextEditor("description", "", "Description");
 		addButton("Save", 1, KeyPress(KeyPress::returnKey, 0, 0));
 		addButton("Cancel", 0, KeyPress(KeyPress::escapeKey, 0, 0));
 
         auto presetTextEditor = getTextEditor("presetName");
         auto authorTextEditor = getTextEditor("author");
+        auto descriptionTextEditor = getTextEditor("description");
 
         presetTextEditor->setColour(juce::TextEditor::backgroundColourId, juce::Colour::fromRGB(22, 22, 22));
         presetTextEditor->setColour(juce::TextEditor::ColourIds::outlineColourId, juce::Colours::transparentBlack);
@@ -34,6 +36,9 @@ public:
         authorTextEditor->setColour(juce::TextEditor::backgroundColourId, juce::Colour::fromRGB(22, 22, 22));
         authorTextEditor->setColour(juce::TextEditor::ColourIds::outlineColourId, juce::Colours::transparentBlack);
         authorTextEditor->setFont(comboBoxLook.getComboBoxFont());
+        descriptionTextEditor->setColour(juce::TextEditor::backgroundColourId, juce::Colour::fromRGB(22, 22, 22));
+        descriptionTextEditor->setColour(juce::TextEditor::ColourIds::outlineColourId, juce::Colours::transparentBlack);
+        descriptionTextEditor->setFont(comboBoxLook.getComboBoxFont());
 
         auto okButton = getButton(0);
         auto cancelButton = getButton(1);
