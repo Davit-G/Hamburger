@@ -3,6 +3,9 @@
 support mono / stereo only, dont have it break on mono
 performance optimisations
 pluginval
+remove dc clicking from bias params
+make noise parameters independent
+preset panel needs to show author and description potentially
 
 # Should
 
