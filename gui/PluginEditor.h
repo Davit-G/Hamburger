@@ -17,7 +17,7 @@
 
 // #include "melatonin_inspector/melatonin_inspector.h"
 
-#define PRESETS_MANAGER_VISIBLE 1
+#define PRESETS_MANAGER_VISIBLE 0
 
 class EditorV2 : public juce::AudioProcessorEditor
 {
@@ -26,8 +26,11 @@ public:
                                              leftColumn(p),
                                              saturationColumn(p),
                                              utilColumn(p),
-                                             infoPanel(p),
-                                             presetPanel(p.getPresetManager())
+                                             infoPanel(p)
+                                             
+#if PRESETS_MANAGER_VISIBLE 
+                                             ,presetPanel(p.getPresetManager())
+#endif
     {
         int additionalHeight = 0;
 
