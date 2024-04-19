@@ -57,8 +57,6 @@ public:
 
         // // enable the inspector
         // inspector.toggle(true);
-
-        
     }
 
     ~EditorV2() override {}
@@ -97,8 +95,6 @@ public:
             leftColumn.setVisible(false);
             saturationColumn.setVisible(false);
             utilColumn.setVisible(false);
-
-            presetPanel.setVisible(false);
         }
         else if (command == 1)
         {
@@ -107,9 +103,18 @@ public:
             leftColumn.setVisible(true);
             saturationColumn.setVisible(true);
             utilColumn.setVisible(true);
+        }
 
+#if PRESETS_MANAGER_VISIBLE
+        if (command == 0)
+        {
+            presetPanel.setVisible(false);
+        }
+        else if (command == 1)
+        {
             presetPanel.setVisible(true);
         }
+#endif
     }
 
 private:
@@ -117,7 +122,9 @@ private:
     SaturationColumn saturationColumn;
     UtilColumn utilColumn;
 
+#if PRESETS_MANAGER_VISIBLE
     PresetPanel presetPanel;
+#endif
 
     Info infoPanel;
 

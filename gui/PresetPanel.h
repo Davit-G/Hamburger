@@ -3,7 +3,7 @@
 #include "juce_gui_basics/juce_gui_basics.h"
 
 #include "LookAndFeel/ComboBoxLookAndFeel.h"
-#include "BurgerSaveAlert.h"
+#include "BurgerAlert.h"
 #include "Utils/HamburgerFonts.h"
 
 std::unique_ptr<juce::Drawable> makeIcon(const char *iconString)
@@ -37,12 +37,14 @@ public:
 		itemFont.setHeight(20.0f);
 	}
 
-	void initFiles() {
+	void initFiles(bool ignoreCollapsedStates = false) {
 		updateContent();
 
-		for (auto &file : *filesFolders)
-		{
-			isCollapsed[file->getFile().getRelativePathFrom(Preset::defaultDirectory)] = true;
+		if (!ignoreCollapsedStates) {
+			for (auto &file : *filesFolders)
+			{
+				isCollapsed[file->getFile().getRelativePathFrom(Preset::defaultDirectory)] = true;
+			}
 		}
 
 		refreshFilesToRender();
@@ -423,25 +425,31 @@ private:
 	{
 		if (button == &saveButton)
 		{
-			auto alertWindow = new BurgerSaveAlert("Save Preset", "Enter a name for your new preset: ", MessageBoxIconType::NoIcon);
+			auto alertWindow = new BurgerAlert("Save Preset", "Enter a name for your new preset: ", MessageBoxIconType::NoIcon);
+
+			alertWindow->createPresetSaveAlert();
 
 			alertWindow->enterModalState(true, juce::ModalCallbackFunction::create([this, alertWindow](int result)
 																				   {
 				if (result == 1) {
 					auto name = alertWindow->getTextEditor("presetName")->getText();
 					auto author = alertWindow->getTextEditor("author")->getText();
-					auto description = alertWindow->getTextEditor("description")->getText();
+					// auto description = alertWindow->getTextEditor("description")->getText();
 
-					auto saveSuccess = presetManager.savePreset(name, author, description);
+					auto saveSuccess = presetManager.savePreset(name, author, "");
 
 					if (!saveSuccess) {
-						auto errorAlert = new juce::AlertWindow("Error", "Preset was unable to be saved (it already exists?)", juce::AlertWindow::AlertIconType::WarningIcon);
+						auto errorAlert = new BurgerAlert("Error", "Preset was unable to be saved (it already exists?)", juce::AlertWindow::AlertIconType::WarningIcon);
 
-						errorAlert->addButton("Ok", 1, juce::KeyPress(juce::KeyPress::returnKey, 0, 0));
+						errorAlert->createPresetWarning();
 						errorAlert->enterModalState(true, nullptr, true);
-					}
+					} else {
+						loadPresetList();
+						this->listBoxModel.initFiles();
+						this->listBox.repaint();
 
-					loadPresetList();
+						this->currentPresetLabel.setButtonText(name);
+					}
 				}
 
 				delete alertWindow; }));
@@ -461,10 +469,20 @@ private:
 			presetManager.deletePreset(presetManager.getCurrentPreset());
 			loadPresetList();
 
-			// auto alertWindow2 = new BurgerAlertWindow("Delete Preset", "Are you sure you want to delete this preset? ", MessageBoxIconType::NoIcon);
-			// alertWindow2->addButton("Delete", 1, KeyPress(KeyPress::returnKey, 0, 0));
-			// alertWindow2->addButton("Cancel", 0, KeyPress(KeyPress::escapeKey, 0, 0));
-			// alertWindow2->enterModalState(true, nullptr, true);
+			auto alertWindow2 = new BurgerAlert("Delete Preset", "Are you sure you want to delete this preset? ", MessageBoxIconType::NoIcon);
+			alertWindow2->createPresetDeleteAlert();
+			alertWindow2->enterModalState(true, juce::ModalCallbackFunction::create([this, alertWindow2](int result)
+																					{
+				if (result == 1)
+				{
+					presetManager.deletePreset(presetManager.getCurrentPreset());
+					loadPresetList();
+					this->listBoxModel.initFiles(true);
+					this->listBox.repaint();
+				}
+
+				delete alertWindow2;
+			}));
 		}
 	}
 

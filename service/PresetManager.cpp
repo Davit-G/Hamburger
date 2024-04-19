@@ -62,6 +62,8 @@ bool Preset::PresetManager::savePreset(const juce::String &presetName, const juc
 		jassertfalse;
 		return false;
 	}
+	
+	currentPreset.setValue(presetFile.getRelativePathFrom(defaultDirectory));
 
 	return true;
 }
