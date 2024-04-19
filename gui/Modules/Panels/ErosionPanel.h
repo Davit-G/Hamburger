@@ -1,15 +1,16 @@
 #pragma once
 
 #include "../Panel.h"
-#include "PanelNames.h"
+#include "../../Params.h"
+
 
 class ErosionPanel : public Panel
 {
 public:
     ErosionPanel(AudioPluginAudioProcessor &p) : Panel(p, "EROSION"),
-        erosionAmt(p, "AMOUNT", "noiseAmount"),
-        erosionFreq(p, "FREQ", "noiseFrequency", ParamUnits::hz),
-        erosionQ(p, "Q", "noiseQ")
+        erosionAmt(p, "AMOUNT", ParamIDs::noiseAmount),
+        erosionFreq(p, "FREQ", ParamIDs::noiseFrequency, ParamUnits::hz),
+        erosionQ(p, "Q", ParamIDs::noiseQ)
     {
         
         addAndMakeVisible(erosionAmt);

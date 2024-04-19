@@ -3,16 +3,16 @@
  
 #include "../Panel.h"
 #include "../../Knob.h"
-#include "PanelNames.h"
+#include "../../Params.h"
 
 class ClassicSatPanel : public Panel
 {
 public:
     ClassicSatPanel(AudioPluginAudioProcessor &p) : Panel(p, "GRILL"), 
         satKnob(p, "SATURATION", "saturationAmount", ParamUnits::percent),
-        biasKnob(p, "BIAS", "bias"),
-        fuzzKnob(p, "DIODE", "diode"),
-        cookedKnob(p, "FOLD", "fold")
+        biasKnob(p, "BIAS", ParamIDs::bias),
+        fuzzKnob(p, "DIODE", ParamIDs::diode),
+        cookedKnob(p, "FOLD", ParamIDs::fold)
     {
         addAndMakeVisible(satKnob);
         addAndMakeVisible(biasKnob);

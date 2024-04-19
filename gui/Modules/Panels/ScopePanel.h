@@ -1,14 +1,14 @@
 #pragma once
 
 #include "../Panel.h"
-#include "PanelNames.h"
+
 
 #include "../Scope.h"
 
-class SettingsPanel : public Panel
+class ScopePanel : public Panel
 {
 public:
-    SettingsPanel(AudioPluginAudioProcessor &p) : Panel(p, "SETTINGS"),
+    ScopePanel(AudioPluginAudioProcessor &p) : Panel(p, "SETTINGS"),
                                                   // qualityOption("QUALITY")
                                                   scope(p.getAudioBufferQueueL(), p.getAudioBufferQueueR())
     {

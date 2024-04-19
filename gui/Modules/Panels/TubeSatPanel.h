@@ -3,16 +3,18 @@
  
 #include "../Panel.h"
 #include "../../Knob.h"
-#include "PanelNames.h"
+
+#include "../../Params.h"
+
 
 class TubeSatPanel : public Panel
 {
 public:
     TubeSatPanel(AudioPluginAudioProcessor &p) : Panel(p, "TUBE"), 
-        tubeTone(p, "TUBE TONE", "tubeTone"),
-        bias(p, "BIAS", "bias"),
-        jeff(p, "JEFF", "jeffAmount"),
-        drive(p, "DRIVE", "tubeAmount", ParamUnits::percent)
+        tubeTone(p, "TUBE TONE", ParamIDs::tubeTone),
+        bias(p, "BIAS", ParamIDs::bias),
+        jeff(p, "JEFF", ParamIDs::jeffAmount),
+        drive(p, "DRIVE", ParamIDs::tubeAmount, ParamUnits::percent)
     {
         addAndMakeVisible(tubeTone);
         addAndMakeVisible(drive);

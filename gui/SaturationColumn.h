@@ -7,7 +7,6 @@
 #include "Modules/Panels/TubeSatPanel.h"
 #include "Modules/Panels/RubidiumSatPanel.h" 
 #include "Modules/Panels/PhaseDistPanel.h"
-#include "Modules/Panels/WaveshaperPanel.h"
 #include "Modules/Panels/PostClipPanel.h"
 #include "Modules/Panels/ErosionPanel.h"
 #include "Modules/Panels/SizzlePanel.h"
