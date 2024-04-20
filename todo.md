@@ -20,6 +20,7 @@ speed up DSP by replacing some direct form filters with svf ones (in the case of
 
 add more dist types (foil??)
 icons in middle of saturation knobs with different cool things like tube, rubidium etc
+other filters before / after distortion, such as combs / phasers / filters etc
 
 # feedback 
 
