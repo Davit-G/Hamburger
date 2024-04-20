@@ -33,23 +33,10 @@ public:
         tone.prepare(spec);
 
         updateCoefficients();
-    }
-
-    void updateCoefficients() {
-        float satAmt = powf(mojo.getRaw() * 0.01f, 1.5f) * 100.0f + 5.0f;
-        float hystAmt = powf(hysteresis.getRaw() * 0.1f, 2.0f) * 300.f;
-        float toneAmt = tone.getRaw();
-
-        highpassFreq = toneAmt;
 
         float stepRatio = 2.0f;
+        vol = 0.9f;
 
-        gain = 0.125 + (satAmt / 15);
-        hys0 = 0.015625 + 0.015625 * (hystAmt / 12.5);
-        hys1 = hystAmt / 100;
-        cut0 = 2 * juce::MathConstants<float>::pi * (highpassFreq + rand0) / srate;
-        cut1 = 2 * juce::MathConstants<float>::pi * (highpassFreq + rand1) / srate;
-        cut2 = 0.f; //2 * juce::MathConstants<float>::pi * (0.f) / srate;  // maybe dont mess with this
         buf_length1 = fmax((stepRatio * 2) - 1, 0);
 
         if (stepRatio == 6) buf_length1 = 21;
@@ -59,31 +46,46 @@ public:
 
         if (buf_length1 == 2)
             buf_length0 = 6;
-
-        vol = 0.9f;
-
-        // smooth fader
-        adj3 = gain <= 0 ? 0.0000001f : exp(shape * log10(gain)) + 0.00000001f;
-        adj4 = gain <= 0 ? 0.0000001f : exp(shape * log10(gain)) + 0.00000001f;
+        
         rc = 0.2 * fmax(128 * 0.001, maxBlockSize / srate);
         a = dt / (rc + dt);
     }
 
+    void updateCoefficients() {
+        float satAmt = powf((mojo.getNextValue() * 0.8f + 20.0f) * 0.01f, 1.2f) * 100.0f + 5.0f;
+        float hystAmt = powf(hysteresis.getNextValue() * 0.1f, 2.0f) * 300.f;
+        float toneAmt = tone.getNextValue();
+
+        highpassFreq = toneAmt;
+
+        gain = 0.125 + (satAmt / 15);
+        hys0 = 0.015625 + 0.015625 * (hystAmt / 12.5);
+        hys1 = hystAmt / 100;
+        cut0 = 2 * juce::MathConstants<float>::pi * (highpassFreq + rand0) * dt;
+        cut1 = 2 * juce::MathConstants<float>::pi * (highpassFreq + rand1) * dt;
+        cut2 = 0.f;
+
+        // smooth fader
+        adj3 = gain <= 0 ? 0.0000001f : exp(shape * log10(gain)) + 0.00000001f;
+        adj4 = gain <= 0 ? 0.0000001f : exp(shape * log10(gain)) + 0.00000001f;
+    }
+
     void processBlock(juce::dsp::AudioBlock<float> &block)
     {
-        updateCoefficients();
-
+        
         drive.update();
         mojo.update();
         hysteresis.update();
 
         for (int sample = 0; sample < block.getNumSamples(); sample++)
         {
+            updateCoefficients();
+
             double spl0 = (double)block.getSample(0, sample);
             double spl1 = (double)block.getSample(1, sample);
 
             float driveKnob = drive.getNextValue() * 0.01f; // normalised between 0 - 1
-            float driveVal = juce::Decibels::decibelsToGain(driveKnob * 24.0f); 
+            float driveVal = juce::Decibels::decibelsToGain(driveKnob * 30.0f); 
 
             spl0 = atan(spl0 * 1.3 * driveVal);
             spl1 = atan(spl1 * 1.3 * driveVal);
