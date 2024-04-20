@@ -1,3 +1,10 @@
+# For v0.4
+
+double check all knob ranges are reasonable
+make all parameters smooth to remove clicking
+self hosted sentry.io plugin crash reporting
+
+
 # Must
 
 support mono / stereo only, dont have it break on mono
@@ -7,7 +14,6 @@ make all parameters smooth to remove clicking
 
 # Should
 
-give tube more character
 self hosted sentry.io plugin crash reporting
 speed up DSP by replacing some direct form filters with svf ones (in the case of per-sample coefficient modulation)
 
