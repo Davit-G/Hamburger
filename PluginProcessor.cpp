@@ -35,20 +35,6 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor() : AudioProcessor(BusesPro
     hq = dynamic_cast<juce::AudioParameterInt *>(treeState.getParameter(ParamIDs::oversamplingFactor.getParamID()));
     jassert(hq);
 
-    emphasisLow = dynamic_cast<juce::AudioParameterFloat *>(treeState.getParameter(ParamIDs::emphasisLowGain.getParamID()));
-    emphasis[0] = emphasisLow;
-    jassert(emphasisLow);
-    emphasisHigh = dynamic_cast<juce::AudioParameterFloat *>(treeState.getParameter(ParamIDs::emphasisHighGain.getParamID()));
-    emphasis[1] = emphasisHigh;
-    jassert(emphasisHigh);
-
-    emphasisLowFreq = dynamic_cast<juce::AudioParameterFloat *>(treeState.getParameter(ParamIDs::emphasisLowFreq.getParamID()));
-    emphasisFreq[0] = emphasisLowFreq;
-    jassert(emphasisLowFreq);
-    emphasisHighFreq = dynamic_cast<juce::AudioParameterFloat *>(treeState.getParameter(ParamIDs::emphasisHighFreq.getParamID()));
-    emphasisFreq[1] = emphasisHighFreq;
-    jassert(emphasisHighFreq);
-
     clipEnabled = dynamic_cast<juce::AudioParameterBool *>(treeState.getParameter(ParamIDs::postClipEnabled.getParamID()));
     jassert(clipEnabled);
 
@@ -209,8 +195,8 @@ void AudioPluginAudioProcessor::prepareToPlay(double sampleRate, int samplesPerB
     for (int channel = 0; channel < 2; channel++) {
         for (int i = 0; i < 2; i++)
         {
-            *peakFilterBefore[i][channel].coefficients = juce::dsp::IIR::ArrayCoefficients<float>::makePeakFilter(spec.sampleRate, filterFrequencies[i], 0.5f, 1.0f);
-            *peakFilterAfter[i][channel].coefficients = juce::dsp::IIR::ArrayCoefficients<float>::makePeakFilter(spec.sampleRate, filterFrequencies[i], 0.5f, 1.0f);
+            *peakFilterBefore[i][channel].coefficients = juce::dsp::IIR::ArrayCoefficients<double>::makePeakFilter(spec.sampleRate, filterFrequencies[i], 0.5f, 1.0f);
+            *peakFilterAfter[i][channel].coefficients = juce::dsp::IIR::ArrayCoefficients<double>::makePeakFilter(spec.sampleRate, filterFrequencies[i], 0.5f, 1.0f);
             
             peakFilterBefore[i][channel].prepare(spec);
             peakFilterAfter[i][channel].prepare(spec);
@@ -382,8 +368,8 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
                 
                 switch (channel) {
                     case 0: {
-                        auto highCoeffs = juce::dsp::IIR::ArrayCoefficients<float>::makePeakFilter(sRate, nextEmphasisHighFreq, 0.5f, Decibels::decibelsToGain(-nextEmphasisHigh));
-                        auto lowCoeffs = juce::dsp::IIR::ArrayCoefficients<float>::makePeakFilter(sRate, nextEmphasisLowFreq, 0.5f, Decibels::decibelsToGain(-nextEmphasisLow));
+                        auto highCoeffs = juce::dsp::IIR::ArrayCoefficients<double>::makePeakFilter(sRate, nextEmphasisHighFreq, 0.5f, Decibels::decibelsToGain(-nextEmphasisHigh));
+                        auto lowCoeffs = juce::dsp::IIR::ArrayCoefficients<double>::makePeakFilter(sRate, nextEmphasisLowFreq, 0.5f, Decibels::decibelsToGain(-nextEmphasisLow));
 
                         *peakFilterBefore[1][channel].coefficients = highCoeffs;
                         *peakFilterBefore[0][channel].coefficients = lowCoeffs;
@@ -453,8 +439,8 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
 
                 switch (channel) {
                     case 0: {
-                        auto highCoeffs = juce::dsp::IIR::ArrayCoefficients<float>::makePeakFilter(sRate, nextEmphasisHighFreq, 0.5f, Decibels::decibelsToGain(nextEmphasisHigh));
-                        auto lowCoeffs = juce::dsp::IIR::ArrayCoefficients<float>::makePeakFilter(sRate, nextEmphasisLowFreq, 0.5f, Decibels::decibelsToGain(nextEmphasisLow));
+                        auto highCoeffs = juce::dsp::IIR::ArrayCoefficients<double>::makePeakFilter(sRate, nextEmphasisHighFreq, 0.5f, Decibels::decibelsToGain(nextEmphasisHigh));
+                        auto lowCoeffs = juce::dsp::IIR::ArrayCoefficients<double>::makePeakFilter(sRate, nextEmphasisLowFreq, 0.5f, Decibels::decibelsToGain(nextEmphasisLow));
 
                         *peakFilterAfter[1][channel].coefficients = highCoeffs;
                         *peakFilterAfter[0][channel].coefficients = lowCoeffs;
@@ -478,7 +464,7 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
     {
         TRACE_EVENT("dsp", "other");
         // emphasis compensated gain
-        float eqCompensation = (emphasisLowSmooth.getRaw() + emphasisHighSmooth.getRaw()) * 0.333f;
+        float eqCompensation = (emphasisLowSmooth.getRaw() + emphasisHighSmooth.getRaw()) * 0.133f;
         emphasisCompensationGain.setGainDecibels(-eqCompensation);
         emphasisCompensationGain.process(context);
 

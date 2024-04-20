@@ -21,7 +21,6 @@ remove random mid emphasis parameter if it's not used
 
 # feedback 
 
-double precision on EQs 
 allpass is mixing dry signal (?)
 correct oversampling delay compensation
 complete manual page, reupload with new info for plugin
