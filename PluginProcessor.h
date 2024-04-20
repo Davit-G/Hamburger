@@ -17,7 +17,7 @@
 #include "dsp/Fifo.h"
 #include "service/PresetManager.h"
 
-// #include "dsp/ProcessDuplicator.h"
+#include "dsp/SVTPTFilter.h"
 
 // profiling
 #include <melatonin_perfetto/melatonin_perfetto.h>
@@ -113,8 +113,9 @@ private:
     std::vector<float> emphasisLowFreqBuffer;
     std::vector<float> emphasisHighFreqBuffer;
 
-    dsp::IIR::Filter<float> peakFilterBefore[2][2];
-    dsp::IIR::Filter<float> peakFilterAfter[2][2];
+    // todo: change to double
+    SVTPTFilter<float> peakFilterBefore[2];
+    SVTPTFilter<float> peakFilterAfter[2];
 
     float filterFrequencies[2] = {62.0f, 9000.0f};
 
