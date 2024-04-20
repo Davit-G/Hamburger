@@ -3,19 +3,18 @@
 support mono / stereo only, dont have it break on mono
 performance optimisations
 pluginval
-make all parameters smoothed to remove clicking
+make all parameters smooth to remove clicking
 
 # Should
 
 give tube more character
 self hosted sentry.io plugin crash reporting
-speed up DSP by replacing some direct form filters with svf ones
+speed up DSP by replacing some direct form filters with svf ones (in the case of per-sample coefficient modulation)
 
 # Would be nice
 
 add more dist types (foil??)
 icons in middle of saturation knobs with different cool things like tube, rubidium etc
-remove random mid emphasis parameter if it's not used
 
 # feedback 
 

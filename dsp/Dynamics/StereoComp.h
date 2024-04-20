@@ -11,7 +11,7 @@ public:
     // compressorL(CompressionType::COMPRESSOR),
     //                                                     compressorR(CompressionType::COMPRESSOR),
                                                         compressorBoth(CompressionType::COMPRESSOR),
-                                                        threshold(state, ParamIDs::compThreshold),
+                                                        threshold(state, ParamIDs::stereoCompThreshold),
                                                         ratio(state, ParamIDs::compRatio),
                                                         sLink(state, ParamIDs::compStereoLink), // should be stereo link
                                                         speed(state, ParamIDs::compSpeed),

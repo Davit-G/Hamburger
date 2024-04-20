@@ -72,9 +72,12 @@ namespace ParamIDs {
     static const juce::ParameterID compSpeed { "compSpeed", 1 };
     static const juce::ParameterID compBandTilt { "compBandTilt", 1 };
     static const juce::ParameterID compStereoLink { "compStereoLink", 1 };
-    static const juce::ParameterID compThreshold { "compThreshold", 1 };
     static const juce::ParameterID compRatio { "compRatio", 1 };
     static const juce::ParameterID compOut { "compOut", 1 };
+
+    static const juce::ParameterID stereoCompThreshold { "stereoCompThreshold", 1 };
+    static const juce::ParameterID MBCompThreshold { "MBCompThreshold", 1 };
+    static const juce::ParameterID MSCompThreshold { "MSCompThreshold", 1 };
 
      // gate (noise distortion)
     static const juce::ParameterID gateAmt { "gateAmt", 1 };

@@ -10,7 +10,7 @@ class MSComp
 public:
     MSComp(juce::AudioProcessorValueTreeState &state) : compressorMid(CompressionType::COMPRESSOR),
                                                         compressorSide(CompressionType::COMPRESSOR),
-                                                        threshold(state, ParamIDs::compThreshold),
+                                                        threshold(state, ParamIDs::MSCompThreshold),
                                                         ratio(state, ParamIDs::compRatio),
                                                         tilt(state, ParamIDs::compBandTilt),
                                                         speed(state, ParamIDs::compSpeed),

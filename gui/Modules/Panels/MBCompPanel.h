@@ -6,8 +6,8 @@
 class MBCompPanel : public Panel
 {
 public:
-    MBCompPanel(AudioPluginAudioProcessor &p) : Panel(p, "M-BAND"),
-                                                   threshold(p, "THRES", ParamIDs::compThreshold, ParamUnits::db),
+    MBCompPanel(AudioPluginAudioProcessor &p) : Panel(p, "MB"),
+                                                   threshold(p, "THRES", ParamIDs::MBCompThreshold, ParamUnits::db),
                                                    ratio(p, "RATIO", ParamIDs::compRatio),
                                                    tilt(p, "TILT", ParamIDs::compBandTilt, ParamUnits::db),
                                                    attack(p, "SPEED", ParamIDs::compSpeed, ParamUnits::ms),

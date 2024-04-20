@@ -10,7 +10,7 @@ public:
     MBComp(juce::AudioProcessorValueTreeState &state) : compressor1(CompressionType::COMPRESSOR),
                                                         compressor2(CompressionType::COMPRESSOR),
                                                         compressor3(CompressionType::COMPRESSOR),
-                                                        threshold(state, ParamIDs::compThreshold),
+                                                        threshold(state, ParamIDs::MBCompThreshold),
                                                         ratio(state, ParamIDs::compRatio),
                                                         tilt(state, ParamIDs::compBandTilt),
                                                         speed(state, ParamIDs::compSpeed),
