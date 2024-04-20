@@ -82,7 +82,7 @@ AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::createP
 
     // rubidium
     params.add(std::make_unique<AudioParameterFloat>(ParamIDs::rubidiumAmount, "Rubidium Saturation", 0.0f, 100.0f, 5.f));
-    params.add(std::make_unique<AudioParameterFloat>(ParamIDs::rubidiumMojo, "Rubidium Mojo", 0.0f, 100.0f, 40.f));
+    params.add(std::make_unique<AudioParameterFloat>(ParamIDs::rubidiumMojo, "Rubidium Mojo", 0.0f, 100.0f, 20.f));
     params.add(std::make_unique<AudioParameterFloat>(ParamIDs::rubidiumAsym, "Rubidium Asymmetry", 0.0f, 10.0f, 0.f));
     params.add(std::make_unique<AudioParameterFloat>(ParamIDs::rubidiumTone, "Rubidium Tone", juce::NormalisableRange<float>(4.0f, 100.0f, 0.f, 0.5f), 5.0f));
     
