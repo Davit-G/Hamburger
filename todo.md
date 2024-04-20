@@ -1,9 +1,8 @@
 # For v0.4
 
 double check all knob ranges are reasonable
-make all parameters smooth to remove clicking
 self hosted sentry.io plugin crash reporting
-
+fill in matrix distortion section with more distortions
 
 # Must
 
