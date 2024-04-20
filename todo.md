@@ -9,7 +9,7 @@ make all parameters smoothed to remove clicking
 
 give tube more character
 self hosted sentry.io plugin crash reporting
-
+speed up DSP by replacing some direct form filters with svf ones
 
 # Would be nice
 

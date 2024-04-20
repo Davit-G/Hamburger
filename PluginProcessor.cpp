@@ -442,8 +442,8 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
                         auto highCoeffs = juce::dsp::IIR::ArrayCoefficients<double>::makePeakFilter(sRate, nextEmphasisHighFreq, 0.5f, Decibels::decibelsToGain(nextEmphasisHigh));
                         auto lowCoeffs = juce::dsp::IIR::ArrayCoefficients<double>::makePeakFilter(sRate, nextEmphasisLowFreq, 0.5f, Decibels::decibelsToGain(nextEmphasisLow));
 
-                        *peakFilterAfter[1][channel].coefficients = highCoeffs;
-                        *peakFilterAfter[0][channel].coefficients = lowCoeffs;
+                        *peakFilterAfter[1][0].coefficients = highCoeffs;
+                        *peakFilterAfter[0][0].coefficients = lowCoeffs;
 
                         break;
                     }

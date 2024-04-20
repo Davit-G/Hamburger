@@ -46,7 +46,7 @@ void Amp::calcCoefficientsPerSample() {
     triode2.millerHF_Hz = 7000.0f + 6000.0f * skewedTone;
     triode3.millerHF_Hz = 9000.0f + 6000.0f * skewedTone;
 
-    triode4.outputGain = pow(10.0f, (-nextDrive * 0.01f * 17.f - 1.5f) / 20.0f);
+    triode4.outputGain = juce::Decibels::decibelsToGain(-nextDrive * 0.01f * 17.f - 1.5f);
 }
 
 void Amp::calcCoefficients()
