@@ -3,7 +3,6 @@
 support mono / stereo only, dont have it break on mono
 performance optimisations
 pluginval
-remove dc clicking from bias params
 make all parameters smoothed to remove clicking
 
 # Should
@@ -15,7 +14,6 @@ self hosted sentry.io plugin crash reporting
 # Would be nice
 
 add more dist types (foil??)
-linear phase mode for emphasis eq
 icons in middle of saturation knobs with different cool things like tube, rubidium etc
 remove random mid emphasis parameter if it's not used
 
