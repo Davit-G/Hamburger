@@ -20,8 +20,9 @@ public:
 
     ~Amp() {}
 
-    void calculateCoefficients();
-    void calculateCoefficients2();
+    void calcCoefficients();
+    void calcCoefficientsPerSample();
+    void calcCoefficients2();
 
     void prepare(juce::dsp::ProcessSpec& spec);
     void processBlock(juce::dsp::AudioBlock<float> &block);

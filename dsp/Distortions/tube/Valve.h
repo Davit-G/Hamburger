@@ -24,24 +24,33 @@ public:
 
 		calculateCoefficients();
 
-		lowShelvingFilter.prepare(spec);
-		dcBlockingFilter.prepare(spec);
-		upperBandwidthFilter1stOrder.prepare(spec);
-		upperBandwidthFilter2ndOrder.prepare(spec);
+		lowShelvingFilter[0].prepare(spec);
+		dcBlockingFilter[0].prepare(spec);
+		upperBandwidthFilter1stOrder[0].prepare(spec);
+		upperBandwidthFilter2ndOrder[0].prepare(spec);
+
+		lowShelvingFilter[1].prepare(spec);
+		dcBlockingFilter[1].prepare(spec);
+		upperBandwidthFilter1stOrder[1].prepare(spec);
+		upperBandwidthFilter2ndOrder[1].prepare(spec);
 	}
 
 	void calculateCoefficients()
 	{
 		// --- low shelf
-		*lowShelvingFilter.state = juce::dsp::IIR::ArrayCoefficients<float>::makeLowShelf(sampleRate, lowFrequencyShelf_Hz, 0.707f, juce::Decibels::decibelsToGain(lowFrequencyShelfGain_dB));
+		*lowShelvingFilter[0].coefficients = juce::dsp::IIR::ArrayCoefficients<float>::makeLowShelf(sampleRate, lowFrequencyShelf_Hz, 0.707f, juce::Decibels::decibelsToGain(lowFrequencyShelfGain_dB));
+		lowShelvingFilter[1].coefficients = lowShelvingFilter[0].coefficients;
 
 		// --- output HPF
-		*dcBlockingFilter.state = juce::dsp::IIR::ArrayCoefficients<float>::makeFirstOrderHighPass(sampleRate, dcBlockingLF_Hz);
+		*dcBlockingFilter[0].coefficients = juce::dsp::IIR::ArrayCoefficients<float>::makeFirstOrderHighPass(sampleRate, dcBlockingLF_Hz);
+		dcBlockingFilter[1].coefficients = dcBlockingFilter[0].coefficients;
 
 		// --- LPF (upper edge), technically supposed to be second order
 		auto upperBandwidthFilterCoeffs = juce::dsp::IIR::ArrayCoefficients<float>::makeLowPass(sampleRate, millerHF_Hz, 0.89f);
-		*upperBandwidthFilter1stOrder.state = upperBandwidthFilterCoeffs;
-		*upperBandwidthFilter2ndOrder.state = upperBandwidthFilterCoeffs;
+		*upperBandwidthFilter1stOrder[0].coefficients = upperBandwidthFilterCoeffs;
+		*upperBandwidthFilter2ndOrder[0].coefficients = upperBandwidthFilterCoeffs;
+		upperBandwidthFilter1stOrder[1].coefficients = upperBandwidthFilter1stOrder[0].coefficients;
+		upperBandwidthFilter2ndOrder[1].coefficients = upperBandwidthFilter2ndOrder[0].coefficients;
 	}
 
 	void processBlock(const juce::dsp::ProcessContextReplacing<SampleType> &context)
@@ -57,7 +66,7 @@ public:
 
 			for (int i = 0; i < inputBlock.getNumSamples(); ++i)
 			{
-				output[i] = processAudioSampleOld(input[i], ch);
+				output[i] = processAudioSample(input[i], ch);
 			}
 		}
 
@@ -66,6 +75,18 @@ public:
 		upperBandwidthFilter1stOrder.process(context); // --- HF Edge
 		// upperBandwidthFilter2ndOrder.process(context);
 		outputBlock.multiplyBy(-outputGain); // --- (5) final output scaling and inversion
+	}
+
+	/**
+	 * Process only the stuff that happens at the end of the processing chain
+	*/
+	void processEnd(juce::dsp::ProcessContextReplacing<SampleType> &context)
+	{
+		dcBlockingFilter.process(context);			  // --- remove DC
+		lowShelvingFilter.process(context);			  // --- LF Shelf
+		upperBandwidthFilter1stOrder.process(context); // --- HF Edge
+		// upperBandwidthFilter2ndOrder.process(context);
+		context.getOutputBlock().multiplyBy(-outputGain); // --- (5) final output scaling and inversion
 	}
 
 	float lowFrequencyShelf_Hz = 10.0f; // using defaults from will pirkle
@@ -89,14 +110,14 @@ public:
 	float dcOffsetDetected = 0.0f;
 
 	// --- do the valve emulation
-	SampleType processAudioSampleOld(SampleType xn, int channel)
+	SampleType processAudioSample(SampleType xn, int channel)
 	{
 
 		auto og = xn;
 		xn *= inputGain;
 
 		// xn = (abs(dcShiftAdditional) + 1)*(dcShiftAdditional * - (xn * xn) + xn);
-		xn = doValveGridConductionOld(xn); // grid conduction check, must be done prior to waveshaping
+		xn = doValveGridConduction(xn); // grid conduction check, must be done prior to waveshaping
 
 		// float dcOffset = (lossyIntegrator).processAudioSample(dsp::SIMDRegister<float>(xn)).get(0); // detect the DC offset that the clipping may have caused
 		float dcOffset = lossyIntegrator[channel].processAudioSample(xn); // detect the DC offset that the clipping may have caused
@@ -107,16 +128,24 @@ public:
 		//     *negative* values so meters should be aware
 		// dcOffsetDetected = fabs(dcOffset * dcShiftCoefficient);
 
-		auto yn = doValveEmulationOld(xn, dcOffset * dcShiftCoefficient * 0.0f);
+		auto yn = doValveEmulation(xn, dcOffset * dcShiftCoefficient * 0.0f);
 
 		// float clippedBlend = fmin(0.5, blend) * 2.0f;
 
 		// yn = yn * clippedBlend + (og * (1.0f - clippedBlend));
 
+		yn = dcBlockingFilter[channel].processSample(yn);			  // --- remove DC
+		yn = lowShelvingFilter[channel].processSample(yn);			  // --- LF Shelf
+		yn = upperBandwidthFilter1stOrder[channel].processSample(yn); // --- HF Edge
+
+		// upperBandwidthFilter2ndOrder.process(context);
+
+		yn *= -outputGain; // --- (5) final output scaling and inversion
+
 		return yn;
 	}
 
-	SampleType doValveGridConductionOld(SampleType xn)
+	SampleType doValveGridConduction(SampleType xn)
 	{
 		if (xn > 0.0f)
 		{
@@ -130,7 +159,7 @@ public:
 	}
 
 	// --- main triode emulation - plenty of room here for experimentation
-	SampleType doValveEmulationOld(SampleType xn, SampleType variableDCOffset)
+	SampleType doValveEmulation(SampleType xn, SampleType variableDCOffset)
 	{
 		xn += variableDCOffset; // --- add the offset detected
 		float yn = 0.0f;
@@ -183,8 +212,8 @@ private:
 
 	LossyIntegrator lossyIntegrator[2];
 
-	juce::dsp::ProcessorDuplicator<juce::dsp::IIR::Filter<SampleType>, juce::dsp::IIR::Coefficients<float>> lowShelvingFilter;
-	juce::dsp::ProcessorDuplicator<juce::dsp::IIR::Filter<SampleType>, juce::dsp::IIR::Coefficients<float>> dcBlockingFilter;
-	juce::dsp::ProcessorDuplicator<juce::dsp::IIR::Filter<SampleType>, juce::dsp::IIR::Coefficients<float>> upperBandwidthFilter1stOrder;
-	juce::dsp::ProcessorDuplicator<juce::dsp::IIR::Filter<SampleType>, juce::dsp::IIR::Coefficients<float>> upperBandwidthFilter2ndOrder;
+	juce::dsp::IIR::Filter<SampleType> lowShelvingFilter[2];
+	juce::dsp::IIR::Filter<SampleType> dcBlockingFilter[2];
+	juce::dsp::IIR::Filter<SampleType> upperBandwidthFilter1stOrder[2];
+	juce::dsp::IIR::Filter<SampleType> upperBandwidthFilter2ndOrder[2];
 };
