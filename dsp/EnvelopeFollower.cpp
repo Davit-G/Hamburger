@@ -14,6 +14,7 @@ float EnvelopeFollower::processSample(float xn)
     // pick between rising or falling value
     float currEnvelope = 0.0f;
     float diff = lastEnvelope - input;
+    
     if (input > lastEnvelope) {
         currEnvelope = attackTime * diff + input;
     } else {

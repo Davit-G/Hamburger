@@ -15,6 +15,10 @@ void Cooked::processBlock(juce::dsp::AudioBlock<float>& block) noexcept {
 	TRACE_EVENT("dsp", "Cooked::processBlock");
 	amount.update();
 
+	if (amount.getRaw() == 0.f) {
+		return;
+	}
+
 	for (int sample = 0; sample < block.getNumSamples(); sample++) {
 		float nextCooked = amount.getNextValue() * 0.01f;
 
@@ -22,8 +26,8 @@ void Cooked::processBlock(juce::dsp::AudioBlock<float>& block) noexcept {
 			auto dryData = block.getChannelPointer(channel);
 
 			if (nextCooked != 0.f) {
-				auto x = dryData[sample] * (nextCooked * 20 + 1);
-				dryData[sample] = (4 * (abs(0.25*x + 0.25 - round(0.25*x + 0.25)) - 0.25));
+				auto x = dryData[sample] * (nextCooked * 20.0f + 1.0f);
+				dryData[sample] = (4.0f * (abs(0.25*x + 0.25 - round(0.25*x + 0.25)) - 0.25));
 			}
 		}
 	}

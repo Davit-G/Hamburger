@@ -15,7 +15,8 @@ void DiodeWaveshape::processBlock(juce::dsp::AudioBlock<float> &block) noexcept
 
     for (int sample = 0; sample < block.getNumSamples(); sample++)
     {
-        float amt = powf(amount.getNextValue() * 0.01f * 3.0f + 0.000001f, 3);
+        float a = amount.getNextValue() * 0.01f * 3.0f + 0.000001f;
+        float amt = a*a*a;
 
         for (int channel = 0; channel < block.getNumChannels(); channel++)
         {
