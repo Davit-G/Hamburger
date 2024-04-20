@@ -24,14 +24,17 @@ Main page
 
 # Overview
 
-## Features
-
 - Several distortion modules:
-    - Saturation (with adjustable bias for asymmetric saturation)
-    - Tube Emulation
-    - Grunge (resonant filtering)
-    - Cooked (wavefolding)
+    - Grill Saturation (with wavefolding, diode clipping and adjustable bias for asymmetric saturation)
+    - Tube Emulation (my take on Class A tube emulation, with extra parameters such as Jeff (?) and controllable bias)
+    - Phase Distortion (for watery slick tones, adds interesting harmonics in a controllable way)
+    - Rubidium Distortion (dynamic and delicious module that extends the laws of physics of a transformer saturation model)
+    - Matrix Distortion (an entirely random assortment of waveshaping functions for your pleasure)
     - Clipper at the end of the chain to help with controlling unnecessary peaks, and for your own safety :D
+
+- Pre-filtering effects
+    - Smooth and responsive allpass chain to add phase shifting to signal
+    - Grunge (resonant filtering). Good on guitars, makes the distortion more grimey.
 
 - Adjust dynamics before distorting:
     - Stereo Compressor (with adjustable stereo link to create a dual mono compressor)
@@ -43,10 +46,9 @@ Main page
     - Digital Erosion
     - Downsampling and Bit Reduction
     - Gated Noise
-    - Jeff (?)
+    - Fizz (?)
 
 - 3 Band Emphasis EQ to tone and shape the signal before and after distortion
-- Smooth and responsive allpass chain to add phase shifting to signal
 
 ## Building
 Instructions for compiling Hamburger yourself will be provided shortly
