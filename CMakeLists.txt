@@ -122,13 +122,11 @@ juce_add_plugin("${BaseTargetName}"
     VST3_CATEGORIES Fx Distortion Fx Dynamics 
 )
 
-
 # add_custom_command(
 #         TARGET ${BaseTargetName} POST_BUILD
 #         COMMAND ${CMAKE_COMMAND} -E copy
 #                 ${CMAKE_SOURCE_DIR}/${build_path}/${BaseTargetName}_artefacts/Release/CLAP/${PluginName}.clap
 #                 ${CMAKE_SOURCE_DIR}/${build_path}/${PluginName}.clap)
-
 
 target_sources("${BaseTargetName}"
     PRIVATE
@@ -139,7 +137,6 @@ add_subdirectory(dsp)
 add_subdirectory(service)
 
 target_compile_features("${BaseTargetName}" PUBLIC cxx_std_17)
-
 
 target_compile_definitions("${BaseTargetName}" PUBLIC
     PERFETTO=0
@@ -168,7 +165,6 @@ target_compile_definitions("${BaseTargetName}" PUBLIC
     SENTRY=${SENTRY}
 )
 
-
 juce_add_binary_data("${BaseTargetName}BinaryData" HEADER_NAME BinaryData.h NAMESPACE BinaryData SOURCES
     Assets/poweron.png
     Assets/poweroff.png
@@ -187,8 +183,6 @@ juce_add_binary_data("${BaseTargetName}BinaryData" HEADER_NAME BinaryData.h NAME
     Assets/bg4.jpg
 )
 set_target_properties("${BaseTargetName}BinaryData" PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
-
-
 
 FetchContent_Declare (melatonin_perfetto
   GIT_REPOSITORY https://github.com/sudara/melatonin_perfetto.git
@@ -216,7 +210,6 @@ FetchContent_MakeAvailable (melatonin_perfetto melatonin_inspector clap-juce-ext
 clap_juce_extensions_plugin(TARGET "${BaseTargetName}"
 CLAP_ID "com.AviaryAudio.${PluginName}"
 CLAP_FEATURES effect "distortion analog compressor" audio-effect)
-
 
 target_link_libraries("${BaseTargetName}"
     PRIVATE
