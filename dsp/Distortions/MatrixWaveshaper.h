@@ -105,14 +105,14 @@ public:
             // float matrix9 = mat9Param.getNextValue();
 
             double p1 = matrix1 * 10.0 + tiny;
-            double p2 = matrix2 * 20.0 + tiny;
+            double p2 = matrix2 * 40.0 + tiny;
             double p3 = matrix3 * 10.0 + tiny;
             double p4 = matrix4 + tiny;
             double p5 = matrix5;
             double p6 = matrix6;
 
             filter.setCutoffFrequency(powf(p6, 3.0f) * 20000.0f + 50.0f);
-            filter2.setCutoffFrequency(powf(1.0f - p6, 2.6f) * 20000.0f + 50.0f);
+            filter2.setCutoffFrequency(powf(sin(p6 * 3.14f * 2.6f) * 0.5f + 0.5f, 2.0f) * 20000.0f + 50.0f);
 
             filter.setResonance(sin(p5 * 12.14f) * 0.8f + 0.81f);
             filter2.setResonance(sin(p5 * 7.14f) * 0.8f + 0.81f);
@@ -136,11 +136,11 @@ public:
                 double dcRemoval = hpFilter.processSample(channel, x + bounced - sinWS + shredded);
 
                 auto filtOut = filter.processSample(channel, dcRemoval);
-                auto lp = filtOut[0];
+                auto lp = filtOut[0] * lpMix;
                 auto hp = filtOut[1] * hpMix;
                 auto bp = filtOut[2] * bpMix;
 
-                auto filt2Out = filter2.processSample(channel, dcRemoval + bp);
+                auto filt2Out = filter2.processSample(channel, dcRemoval);
                 auto lp2 = filt2Out[0] * lp2Mix;
                 auto hp2 = -filt2Out[1] * hp2Mix;
                 auto bp2 = filt2Out[2] * bp2Mix;
