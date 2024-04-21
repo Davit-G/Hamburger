@@ -34,3 +34,5 @@ separate parameters that have common IDs in the apvts
 
 # other
 gain compensation on grunge?
+
+Revert to Release and not RelWithDebInfo once v1.0 is out
