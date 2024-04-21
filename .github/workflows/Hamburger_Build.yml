@@ -131,7 +131,7 @@ jobs:
         mv "${{matrix.folder}}/${{env.PLUG}}.vst3/Contents/x86_64-win/${{env.PLUG}}.vst3" "${{env.PLUG}}.vst3"
         rm -r "${{matrix.folder}}/${{env.PLUG}}.vst3"
         mv "${{env.PLUG}}.vst3" "${{matrix.folder}}/${{env.PLUG}}.vst3"
-        mv -Force "${{matrix.folder}}/${{env.NOSPACE}}_artefacts/Release/CLAP/${{env.PLUG}}.clap" "${{matrix.folder}}/${{env.PLUG}}.clap"
+        mv -Force "${{matrix.folder}}/${{env.NOSPACE}}_artefacts/RelWithDebInfo/CLAP/${{env.PLUG}}.clap" "${{matrix.folder}}/${{env.PLUG}}.clap"
         cp "${{matrix.folder}}/${{env.PLUG}}.clap" "gh_artifacts/Manual Install/${{env.PLUG}}.clap"
         cp "${{matrix.folder}}/${{env.PLUG}}.vst3" "gh_artifacts/Manual Install/${{env.PLUG}}.vst3"
 
@@ -141,13 +141,13 @@ jobs:
       run: |
         pwd
         mv "./${{matrix.folder}}/${{env.PLUG}}.vst3" "./gh_artifacts/Manual Install/${{env.PLUG}}.vst3"
-        mv "./${{matrix.folder}}/${{env.NOSPACE}}_artefacts/Release/CLAP/${{env.PLUG}}.clap" "./gh_artifacts/Manual Install/${{env.PLUG}}.clap"
+        mv "./${{matrix.folder}}/${{env.NOSPACE}}_artefacts/RelWithDebInfo/CLAP/${{env.PLUG}}.clap" "./gh_artifacts/Manual Install/${{env.PLUG}}.clap"
 
     - name: (mac) package
       if: startsWith(matrix.os, 'macos')
       id: package_mac
       run: |
-        mv "${{matrix.folder}}/${{env.NOSPACE}}_artefacts/Release/CLAP/${{env.PLUG}}.clap" "${{matrix.folder}}/${{env.PLUG}}.clap"
+        mv "${{matrix.folder}}/${{env.NOSPACE}}_artefacts/RelWithDebInfo/CLAP/${{env.PLUG}}.clap" "${{matrix.folder}}/${{env.PLUG}}.clap"
 
     - name: (mac) code signing
       if: startsWith(matrix.os, 'macos')

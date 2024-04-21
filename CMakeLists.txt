@@ -77,7 +77,7 @@ endif()
 
 set(SENTRY_BACKEND "breakpad")
 
-# set commit hash for sentry
+# set commit hash for sentry 
 execute_process(
     COMMAND git log -1 --format=%h
     WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
