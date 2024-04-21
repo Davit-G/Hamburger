@@ -1,4 +1,5 @@
 # Hamburger Audio Plugin
+If you are a musician who wants to use this plugin, please download the binaries from [my store page](https://ko-fi.com/s/6e7ded34dc).
 
 Hamburger is a distortion plugin with inbuilt dynamics controls and equalisation that can deliver both subtle tangy harmonics and absolute annihilation and noise-wall-ification to any sound. 
 

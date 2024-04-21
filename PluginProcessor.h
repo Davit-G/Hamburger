@@ -22,8 +22,11 @@
 // profiling
 #include <melatonin_perfetto/melatonin_perfetto.h>
 
+#include "clap-juce-extensions/clap-juce-extensions.h"
+
 //==============================================================================
-class AudioPluginAudioProcessor : public juce::AudioProcessor
+class AudioPluginAudioProcessor : public juce::AudioProcessor, public clap_juce_extensions::clap_properties
+
 {
 public:
     //==============================================================================

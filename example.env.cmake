@@ -1,0 +1,1 @@
+set(ENV{SENTRY_URL} "") # put sentry URL here

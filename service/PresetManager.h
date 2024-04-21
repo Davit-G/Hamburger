@@ -10,7 +10,8 @@ namespace Preset
 	static const juce::File defaultDirectory{juce::File::getSpecialLocation(
 												 juce::File::SpecialLocationType::commonDocumentsDirectory)
 												 .getChildFile(JucePlugin_Manufacturer)
-												 .getChildFile(JucePlugin_Name)};
+												 .getChildFile(JucePlugin_Name)
+												 .getChildFile("./presets/")};
 	static const juce::String extension{"borgir"};
 	static const juce::String presetPathProperty{"presetPath"};
 

@@ -53,6 +53,39 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(JUCE)
 
+set(SENTRY_URL "")
+set(SENTRY 0)
+
+# load environment variable for cmake env path
+if(NOT DEFINED ENV{SENTRY_URL}) 
+    message(WARNING "SENTRY_URL not set, falling back to env.cmake")
+
+    include(env.cmake)
+    
+    if(DEFINED ENV{SENTRY_URL})
+        set(SENTRY_URL "$ENV{SENTRY_URL}")
+        set(SENTRY 1)
+        message(STATUS "Ran env.cmake successfully, environment variables should be loaded.")
+    else()
+        message(FATAL_ERROR "Unable to load environment variables.")
+    endif()
+else()
+    set(SENTRY_URL "$ENV{SENTRY_URL}")
+    message(STATUS "SENTRY_URL has been set successfully")
+    set(SENTRY 1)
+endif()
+
+set(SENTRY_BACKEND "breakpad")
+
+
+# set commit hash for sentry
+
+execute_process(
+    COMMAND git log -1 --format=%h
+    WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
+    OUTPUT_VARIABLE GIT_HASH
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+)
 
 
 if(APPLE)
@@ -130,7 +163,11 @@ target_compile_definitions("${BaseTargetName}" PUBLIC
     JUCE_BUILD_EXAMPLES=0
 	JUCE_WEB_BROWSER=0
 	JUCE_USE_WIN_WEBVIEW2=0
-	JUCE_USE_CAMERA=0)
+	JUCE_USE_CAMERA=0
+    SENTRY_URL="${SENTRY_URL}"
+    GIT_HASH="${GIT_HASH}"
+    SENTRY=${SENTRY}
+)
 
 
 juce_add_binary_data("${BaseTargetName}BinaryData" HEADER_NAME BinaryData.h NAMESPACE BinaryData SOURCES
@@ -158,11 +195,6 @@ FetchContent_Declare (melatonin_perfetto
   GIT_REPOSITORY https://github.com/sudara/melatonin_perfetto.git
   GIT_SHALLOW 1
   GIT_TAG origin/main)
-
-FetchContent_Declare (xsimd 
-    GIT_REPOSITORY https://github.com/xtensor-stack/xsimd.git
-    GIT_SHALLOW 1
-    GIT_TAG origin/master)
     
 FetchContent_Declare (melatonin_inspector
     GIT_REPOSITORY https://github.com/sudara/melatonin_inspector.git
@@ -171,11 +203,16 @@ FetchContent_Declare (melatonin_inspector
     SOURCE_DIR ${CMAKE_CURRENT_BINARY_DIR}/melatonin_inspector)
 
 FetchContent_Declare (clap-juce-extensions
-  GIT_REPOSITORY https://github.com/free-audio/clap-juce-extensions.git
-  GIT_SHALLOW 1
-  GIT_TAG origin/main)
+    GIT_REPOSITORY https://github.com/free-audio/clap-juce-extensions.git
+    GIT_SHALLOW 1
+    GIT_TAG origin/main)
 
-FetchContent_MakeAvailable (melatonin_perfetto xsimd melatonin_inspector clap-juce-extensions)
+FetchContent_Declare (sentry
+    GIT_REPOSITORY https://github.com/getsentry/sentry-native.git
+    GIT_SHALLOW 1
+    GIT_TAG origin/master)
+
+FetchContent_MakeAvailable (melatonin_perfetto melatonin_inspector clap-juce-extensions sentry)
 
 clap_juce_extensions_plugin(TARGET "${BaseTargetName}"
 CLAP_ID "com.AviaryAudio.${PluginName}"
@@ -184,13 +221,12 @@ CLAP_FEATURES effect "distortion analog compressor" audio-effect)
 
 target_link_libraries("${BaseTargetName}"
     PRIVATE
-        # AudioPluginData           # If we'd created a binary data target, we'd link to it here
         juce::juce_dsp
         juce::juce_audio_utils
         "${BaseTargetName}BinaryData"
         Melatonin::Perfetto
-        xsimd
-        melatonin_inspector
+        # melatonin_inspector
+        sentry
     PUBLIC
         juce::juce_recommended_config_flags
         juce::juce_recommended_lto_flags

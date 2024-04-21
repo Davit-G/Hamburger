@@ -91,13 +91,13 @@ jobs:
       if: startsWith(matrix.os, 'windows')
       id: configure_windows
       run: |
-        cmake -B "${{matrix.folder}}" -G "${{matrix.compiler}}" -T host=x64 -A x64
+        SENTRY_URL="${{secrets.SENTRY_URL}}" cmake -B "${{matrix.folder}}" -G "${{matrix.compiler}}" -T host=x64 -A x64
 
     - name: (unix  mac / linux) configure
       if: ${{ !startsWith(matrix.os, 'windows') }}
       id: configure
       run: |
-        cmake -B "${{matrix.folder}}" -G "${{matrix.compiler}}" -DCMAKE_BUILD_TYPE:STRING=Release
+        SENTRY_URL="${{secrets.SENTRY_URL}}" cmake -B "${{matrix.folder}}" -G "${{matrix.compiler}}" -DCMAKE_BUILD_TYPE:STRING=Release
 
     - name: build
       id: build

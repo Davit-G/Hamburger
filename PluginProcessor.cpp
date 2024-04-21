@@ -4,6 +4,22 @@
 #include <chrono>
 #include <ctime>
 
+#if SENTRY
+#include <sentry.h>
+
+void crashHandler(void* platformSpecificCrashData)
+{
+    auto report = juce::SystemStats::getStackBacktrace();
+
+    sentry_value_t event = sentry_value_new_event();
+    sentry_value_set_by_key(event, "message", sentry_value_new_string(report.toRawUTF8()));
+    sentry_capture_event(event);
+
+    sentry_shutdown ();
+}
+
+#endif
+
 //==============================================================================
 AudioPluginAudioProcessor::AudioPluginAudioProcessor() : AudioProcessor(BusesProperties()
                          .withInput("Input", juce::AudioChannelSet::stereo(), true)
@@ -20,6 +36,82 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor() : AudioProcessor(BusesPro
       emphasisHighSmooth(treeState, ParamIDs::emphasisHighGain),
       emphasisLowSmooth(treeState, ParamIDs::emphasisLowGain)
 {
+
+    // sentry.io crash reporting
+
+    auto pluginWithVersion = juce::String(JucePlugin_Name);
+
+    pluginWithVersion.append("@", 1);
+    pluginWithVersion.append(JucePlugin_VersionString, 10);
+
+    auto logsPath = juce::File::getSpecialLocation(
+												 juce::File::SpecialLocationType::commonDocumentsDirectory)
+												 .getChildFile(JucePlugin_Manufacturer)
+												 .getChildFile(JucePlugin_Name).getChildFile("./logs/");
+    
+    if (!logsPath.exists())
+	{
+		const auto result = logsPath.createDirectory();
+		if (result.failed())
+		{
+			DBG("Could not create preset directory: " + result.getErrorMessage());
+			jassertfalse;
+		}
+	}
+
+    #if SENTRY
+
+    sentry_options_t *options = sentry_options_new();
+    sentry_options_set_debug(options, JUCE_DEBUG);
+    sentry_options_set_dsn(options, juce::String(SENTRY_URL).toRawUTF8());
+    sentry_options_set_handler_path(options, logsPath.getFullPathName().toRawUTF8());
+    sentry_options_set_database_path(options, logsPath.getFullPathName().toRawUTF8());
+    sentry_options_set_release(options, pluginWithVersion.toRawUTF8());
+
+    sentry_init(options);
+
+    // basic info about our plugin
+    sentry_set_tag("plugin.version", JucePlugin_VersionString); // when we find out something is wrong, we gotta know what version it was
+    sentry_set_tag("plugin.name", JucePlugin_Name); // plugin name, duhh
+    sentry_set_tag("plugin.type", JUCE_DEBUG ? "Debug" : "Release"); // whether the plugin was debug or release build
+    sentry_set_tag("plugin.build_hash", GIT_HASH); // the specific commit that the plugin was built from
+
+    // we find out what format the plugin is
+    if (is_clap) {
+        sentry_set_tag("plugin.format", "CLAP");
+    } else {
+        sentry_set_tag("plugin.format", getWrapperTypeDescription(wrapperType));
+    }
+
+    // we find out the computer detail of the system running the plugin, in case we have errors related to OS or CPU differences
+    sentry_set_tag("system.os", juce::SystemStats::getOperatingSystemName().toUTF8());
+
+    sentry_value_t systemInfo = sentry_value_new_object();
+    sentry_value_set_by_key(systemInfo, "os", sentry_value_new_string(juce::SystemStats::getOperatingSystemName().toUTF8()));
+    sentry_value_set_by_key(systemInfo, "cpu", sentry_value_new_string(juce::SystemStats::getCpuModel().toUTF8()));
+    sentry_value_set_by_key(systemInfo, "bit_depth", sentry_value_new_bool(juce::SystemStats::isOperatingSystem64Bit()));
+    sentry_value_set_by_key(systemInfo, "vendor", sentry_value_new_string(juce::SystemStats::getCpuVendor().toUTF8()));
+    sentry_value_set_by_key(systemInfo, "model", sentry_value_new_string(juce::SystemStats::getCpuModel().toUTF8()));
+    sentry_set_context("systemInfo", systemInfo);
+
+    // keeps track of how often specific computers experience errors for the plugin.
+    // TO ANYONE READING THIS: This code does not track you. This is just a way to distinguish against other events, and only gets sent when there is an error.
+    sentry_value_t user = sentry_value_new_object();
+    sentry_value_set_by_key(user, "id", sentry_value_new_string(juce::SystemStats::getUniqueDeviceID().toUTF8()));
+    sentry_set_user(user);
+
+    // sentry_capture_event(sentry_value_new_message_event(
+    // /*   level */ SENTRY_LEVEL_INFO,
+    // /*  logger */ "custom",
+    // /* message */ "It works!"
+    // ));
+
+    juce::SystemStats::setApplicationCrashHandler(crashHandler);
+
+    #endif
+
+
+
     treeState.state = ValueTree("savedParams");
 
     inputGainKnob = dynamic_cast<juce::AudioParameterFloat *>(treeState.getParameter(ParamIDs::inputGain.getParamID()));
@@ -47,6 +139,8 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor() : AudioProcessor(BusesPro
     // MelatoninPerfetto::get().beginSession(300000);
 #endif
 }
+
+
 
 AudioPluginAudioProcessor::~AudioPluginAudioProcessor()
 {

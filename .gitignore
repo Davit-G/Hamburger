@@ -12,3 +12,6 @@ JUCE
 build_mac
 build_windows
 build_linux
+
+.env
+env.cmake
