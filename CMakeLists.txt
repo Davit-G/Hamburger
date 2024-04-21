@@ -77,7 +77,6 @@ endif()
 
 set(SENTRY_BACKEND "breakpad")
 
-
 # set commit hash for sentry
 
 execute_process(

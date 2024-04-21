@@ -7,7 +7,7 @@
 #if SENTRY
 #include <sentry.h>
 
-void crashHandler(void* platformSpecificCrashData)
+void crashHandler(void *platformSpecificCrashData)
 {
     auto report = juce::SystemStats::getStackBacktrace();
 
@@ -15,26 +15,26 @@ void crashHandler(void* platformSpecificCrashData)
     sentry_value_set_by_key(event, "message", sentry_value_new_string(report.toRawUTF8()));
     sentry_capture_event(event);
 
-    sentry_shutdown ();
+    sentry_shutdown();
 }
 
 #endif
 
 //==============================================================================
 AudioPluginAudioProcessor::AudioPluginAudioProcessor() : AudioProcessor(BusesProperties()
-                         .withInput("Input", juce::AudioChannelSet::stereo(), true)
-                         .withOutput("Output", juce::AudioChannelSet::stereo(), true)),
-      treeState(*this, nullptr, "PARAMETER", createParameterLayout()),
-      dynamics(treeState),
-      postClip(treeState),
-      dryWetMixer(30),
-      distortionTypeSelection(treeState),
-      noiseDistortionSelection(treeState),
-      preDistortionSelection(treeState),
-      emphasisHighFreqSmooth(treeState, ParamIDs::emphasisHighFreq),
-      emphasisLowFreqSmooth(treeState, ParamIDs::emphasisLowFreq),
-      emphasisHighSmooth(treeState, ParamIDs::emphasisHighGain),
-      emphasisLowSmooth(treeState, ParamIDs::emphasisLowGain)
+                                                                            .withInput("Input", juce::AudioChannelSet::stereo(), true)
+                                                                            .withOutput("Output", juce::AudioChannelSet::stereo(), true)),
+                                                         treeState(*this, nullptr, "PARAMETER", createParameterLayout()),
+                                                         dynamics(treeState),
+                                                         postClip(treeState),
+                                                         dryWetMixer(30),
+                                                         distortionTypeSelection(treeState),
+                                                         noiseDistortionSelection(treeState),
+                                                         preDistortionSelection(treeState),
+                                                         emphasisHighFreqSmooth(treeState, ParamIDs::emphasisHighFreq),
+                                                         emphasisLowFreqSmooth(treeState, ParamIDs::emphasisLowFreq),
+                                                         emphasisHighSmooth(treeState, ParamIDs::emphasisHighGain),
+                                                         emphasisLowSmooth(treeState, ParamIDs::emphasisLowGain)
 {
 
     // sentry.io crash reporting
@@ -45,24 +45,25 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor() : AudioProcessor(BusesPro
     pluginWithVersion.append(JucePlugin_VersionString, 10);
 
     auto logsPath = juce::File::getSpecialLocation(
-												 juce::File::SpecialLocationType::commonDocumentsDirectory)
-												 .getChildFile(JucePlugin_Manufacturer)
-												 .getChildFile(JucePlugin_Name).getChildFile("./logs/");
-    
-    if (!logsPath.exists())
-	{
-		const auto result = logsPath.createDirectory();
-		if (result.failed())
-		{
-			DBG("Could not create preset directory: " + result.getErrorMessage());
-			jassertfalse;
-		}
-	}
+                        juce::File::SpecialLocationType::commonDocumentsDirectory)
+                        .getChildFile(JucePlugin_Manufacturer)
+                        .getChildFile(JucePlugin_Name)
+                        .getChildFile("./logs/");
 
-    #if SENTRY
+    if (!logsPath.exists())
+    {
+        const auto result = logsPath.createDirectory();
+        if (result.failed())
+        {
+            DBG("Could not create preset directory: " + result.getErrorMessage());
+            jassertfalse;
+        }
+    }
+
+#if SENTRY
 
     sentry_options_t *options = sentry_options_new();
-    sentry_options_set_debug(options, JUCE_DEBUG);
+    sentry_options_set_debug(options, false);
     sentry_options_set_dsn(options, juce::String(SENTRY_URL).toRawUTF8());
     sentry_options_set_handler_path(options, logsPath.getFullPathName().toRawUTF8());
     sentry_options_set_database_path(options, logsPath.getFullPathName().toRawUTF8());
@@ -72,14 +73,21 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor() : AudioProcessor(BusesPro
 
     // basic info about our plugin
     sentry_set_tag("plugin.version", JucePlugin_VersionString); // when we find out something is wrong, we gotta know what version it was
-    sentry_set_tag("plugin.name", JucePlugin_Name); // plugin name, duhh
-    sentry_set_tag("plugin.type", JUCE_DEBUG ? "Debug" : "Release"); // whether the plugin was debug or release build
+    sentry_set_tag("plugin.name", JucePlugin_Name);             // plugin name, duhh
+#if JUCE_DEBUG
+    sentry_set_tag("plugin.type", "Debug"); // whether the plugin was release build
+#else
+    sentry_set_tag("plugin.type", "Release"); // whether the plugin was debug build
+#endif
     sentry_set_tag("plugin.build_hash", GIT_HASH); // the specific commit that the plugin was built from
 
     // we find out what format the plugin is
-    if (is_clap) {
+    if (is_clap)
+    {
         sentry_set_tag("plugin.format", "CLAP");
-    } else {
+    }
+    else
+    {
         sentry_set_tag("plugin.format", getWrapperTypeDescription(wrapperType));
     }
 
@@ -108,9 +116,7 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor() : AudioProcessor(BusesPro
 
     juce::SystemStats::setApplicationCrashHandler(crashHandler);
 
-    #endif
-
-
+#endif
 
     treeState.state = ValueTree("savedParams");
 
@@ -139,8 +145,6 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor() : AudioProcessor(BusesPro
     // MelatoninPerfetto::get().beginSession(300000);
 #endif
 }
-
-
 
 AudioPluginAudioProcessor::~AudioPluginAudioProcessor()
 {
@@ -184,7 +188,7 @@ AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::createP
     params.add(std::make_unique<AudioParameterFloat>(ParamIDs::rubidiumMojo, "Rubidium Mojo", makeRange(0.0f, 100.0f), 5.f));
     params.add(std::make_unique<AudioParameterFloat>(ParamIDs::rubidiumAsym, "Rubidium Asymmetry", makeRange(0.0f, 10.0f), 0.f));
     params.add(std::make_unique<AudioParameterFloat>(ParamIDs::rubidiumTone, "Rubidium Tone", juce::NormalisableRange<float>(4.0f, 100.0f, 0.f, 0.5f), 5.0f));
-    
+
     // matrix
     params.add(std::make_unique<AudioParameterFloat>(ParamIDs::matrix1, "Matrix #1", makeRange(0.0f, 1.0f), 0.f));
     params.add(std::make_unique<AudioParameterFloat>(ParamIDs::matrix2, "Matrix #2", makeRange(0.0f, 1.0f), 0.f));
@@ -296,12 +300,13 @@ void AudioPluginAudioProcessor::prepareToPlay(double sampleRate, int samplesPerB
     emphasisCompensationGain.prepare(spec);
 
     // Initialize the filter
-    for (int channel = 0; channel < 2; channel++) {
+    for (int channel = 0; channel < 2; channel++)
+    {
         for (int i = 0; i < 2; i++)
         {
             *peakFilterBefore[i][channel].coefficients = juce::dsp::IIR::ArrayCoefficients<double>::makePeakFilter(spec.sampleRate, filterFrequencies[i], 0.5f, 1.0f);
             *peakFilterAfter[i][channel].coefficients = juce::dsp::IIR::ArrayCoefficients<double>::makePeakFilter(spec.sampleRate, filterFrequencies[i], 0.5f, 1.0f);
-            
+
             peakFilterBefore[i][channel].prepare(spec);
             peakFilterAfter[i][channel].prepare(spec);
         }
@@ -344,7 +349,7 @@ void AudioPluginAudioProcessor::prepareToPlay(double sampleRate, int samplesPerB
     dynamics.prepare(spec);
 
     float totalLatency = oversamplingStack.getLatencySamples() + oversamplingStackPost.getLatencySamples();
-    DBG("Total Latency: " << totalLatency );
+    DBG("Total Latency: " << totalLatency);
     setLatencySamples((int)std::ceil(totalLatency));
 
     dryWetMixer.reset();
@@ -402,9 +407,11 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
     auto totalNumInputChannels = getTotalNumInputChannels();
     auto totalNumOutputChannels = getTotalNumOutputChannels();
 
-    if (totalNumInputChannels == 0) return;
-    if (totalNumOutputChannels == 0) return;
-    
+    if (totalNumInputChannels == 0)
+        return;
+    if (totalNumOutputChannels == 0)
+        return;
+
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear(i, 0, buffer.getNumSamples());
 
@@ -433,19 +440,18 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
     bool updateHighCoefficients = false;
 
     bool emphasisOn = enableEmphasis->get();
-    
+
     emphasisLowSmooth.update();
     emphasisHighSmooth.update();
     emphasisLowFreqSmooth.update();
     emphasisHighFreqSmooth.update();
-    
-    
+
     if (emphasisOn)
     {
         TRACE_EVENT("dsp", "emphasis EQ before");
 
-
-        for (int i = 0; i < block.getNumSamples(); i++) {
+        for (int i = 0; i < block.getNumSamples(); i++)
+        {
             emphasisLowBuffer[i] = emphasisLowSmooth.get();
             emphasisHighBuffer[i] = emphasisHighSmooth.get();
             emphasisLowFreqBuffer[i] = emphasisLowFreqSmooth.get();
@@ -469,23 +475,26 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
                 float nextEmphasisHigh = emphasisHighBuffer[sample];
                 float nextEmphasisLowFreq = emphasisLowFreqBuffer[sample];
                 float nextEmphasisHighFreq = emphasisHighFreqBuffer[sample];
-                
-                switch (channel) {
-                    case 0: {
-                        auto highCoeffs = juce::dsp::IIR::ArrayCoefficients<double>::makePeakFilter(sRate, nextEmphasisHighFreq, 0.5f, Decibels::decibelsToGain(-nextEmphasisHigh));
-                        auto lowCoeffs = juce::dsp::IIR::ArrayCoefficients<double>::makePeakFilter(sRate, nextEmphasisLowFreq, 0.5f, Decibels::decibelsToGain(-nextEmphasisLow));
 
-                        *peakFilterBefore[1][channel].coefficients = highCoeffs;
-                        *peakFilterBefore[0][channel].coefficients = lowCoeffs;
+                switch (channel)
+                {
+                case 0:
+                {
+                    auto highCoeffs = juce::dsp::IIR::ArrayCoefficients<double>::makePeakFilter(sRate, nextEmphasisHighFreq, 0.5f, Decibels::decibelsToGain(-nextEmphasisHigh));
+                    auto lowCoeffs = juce::dsp::IIR::ArrayCoefficients<double>::makePeakFilter(sRate, nextEmphasisLowFreq, 0.5f, Decibels::decibelsToGain(-nextEmphasisLow));
 
-                        break;
-                    }
-                    case 1: {
-                        peakFilterBefore[1][1].coefficients = peakFilterBefore[1][0].coefficients;
-                        peakFilterBefore[0][1].coefficients = peakFilterBefore[0][0].coefficients;
+                    *peakFilterBefore[1][channel].coefficients = highCoeffs;
+                    *peakFilterBefore[0][channel].coefficients = lowCoeffs;
 
-                        break;
-                    }
+                    break;
+                }
+                case 1:
+                {
+                    peakFilterBefore[1][1].coefficients = peakFilterBefore[1][0].coefficients;
+                    peakFilterBefore[0][1].coefficients = peakFilterBefore[0][0].coefficients;
+
+                    break;
+                }
                 }
 
                 auto interm = peakFilterBefore[0][channel].processSample(block.getSample(channel, sample));
@@ -541,22 +550,25 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
                 float nextEmphasisLowFreq = emphasisLowFreqBuffer[sample];
                 float nextEmphasisHighFreq = emphasisHighFreqBuffer[sample];
 
-                switch (channel) {
-                    case 0: {
-                        auto highCoeffs = juce::dsp::IIR::ArrayCoefficients<double>::makePeakFilter(sRate, nextEmphasisHighFreq, 0.5f, Decibels::decibelsToGain(nextEmphasisHigh));
-                        auto lowCoeffs = juce::dsp::IIR::ArrayCoefficients<double>::makePeakFilter(sRate, nextEmphasisLowFreq, 0.5f, Decibels::decibelsToGain(nextEmphasisLow));
+                switch (channel)
+                {
+                case 0:
+                {
+                    auto highCoeffs = juce::dsp::IIR::ArrayCoefficients<double>::makePeakFilter(sRate, nextEmphasisHighFreq, 0.5f, Decibels::decibelsToGain(nextEmphasisHigh));
+                    auto lowCoeffs = juce::dsp::IIR::ArrayCoefficients<double>::makePeakFilter(sRate, nextEmphasisLowFreq, 0.5f, Decibels::decibelsToGain(nextEmphasisLow));
 
-                        *peakFilterAfter[1][0].coefficients = highCoeffs;
-                        *peakFilterAfter[0][0].coefficients = lowCoeffs;
+                    *peakFilterAfter[1][0].coefficients = highCoeffs;
+                    *peakFilterAfter[0][0].coefficients = lowCoeffs;
 
-                        break;
-                    }
-                    case 1: {
-                        peakFilterAfter[1][1].coefficients = peakFilterAfter[1][0].coefficients;
-                        peakFilterAfter[0][1].coefficients = peakFilterAfter[0][0].coefficients;
+                    break;
+                }
+                case 1:
+                {
+                    peakFilterAfter[1][1].coefficients = peakFilterAfter[1][0].coefficients;
+                    peakFilterAfter[0][1].coefficients = peakFilterAfter[0][0].coefficients;
 
-                        break;
-                    }
+                    break;
+                }
                 }
 
                 auto interm = peakFilterAfter[0][channel].processSample(block.getSample(channel, sample));
@@ -579,17 +591,15 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
         }
         oversamplingStackPost.processSamplesDown(block);
 
-
         // before output gain
-        scopeDataCollector.process (buffer.getReadPointer (0), buffer.getReadPointer (1), (size_t) buffer.getNumSamples());
-        
+        scopeDataCollector.process(buffer.getReadPointer(0), buffer.getReadPointer(1), (size_t)buffer.getNumSamples());
+
         outputGain.setGainDecibels(outputGainKnob->get());
         outputGain.process(context);
 
         dryWetMixer.setWetMixProportion(mixKnob->get() * 0.01f);
 
         dryWetMixer.mixWetSamples(block);
-
     }
 }
 
@@ -619,7 +629,8 @@ void AudioPluginAudioProcessor::setStateInformation(const void *data, int sizeIn
     // You should use this method to restore your parameters from this memory block,
     // whose contents will have been created by the getStateInformation() call.
     std::unique_ptr<juce::XmlElement> xmlState(getXmlFromBinary(data, sizeInBytes));
-    if (xmlState.get() == nullptr) return;
+    if (xmlState.get() == nullptr)
+        return;
 
     if (xmlState->hasTagName(treeState.state.getType()))
         // treeState.replaceState(juce::ValueTree::fromXml(*xmlState));
