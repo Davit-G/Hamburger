@@ -113,7 +113,6 @@ AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::createP
     params.add(std::make_unique<AudioParameterFloat>(ParamIDs::MBCompThreshold, "MB Comp Threshold", -48.0f, 0.0f, -24.f));
     params.add(std::make_unique<AudioParameterFloat>(ParamIDs::MSCompThreshold, "MS Comp Threshold", -48.0f, 0.0f, -24.f));
 
-
     // noise distortions
     params.add(std::make_unique<AudioParameterFloat>(ParamIDs::sizzleAmount, "Sizzle Amt", 0.0f, 100.0f, 5.f));
     params.add(std::make_unique<AudioParameterFloat>(ParamIDs::sizzleFrequency, "Sizzle Freq", juce::NormalisableRange<float>(20.0f, 20000.0f, 0.f, 0.25f), 4000.0f));
@@ -130,6 +129,9 @@ AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::createP
     params.add(std::make_unique<AudioParameterFloat>(ParamIDs::downsampleMix, "Dwnsmpl Mix", 0.0f, 1.0f, 1.f));
     params.add(std::make_unique<AudioParameterFloat>(ParamIDs::bitReduction, "Dwnsmpl Bits", 1.0f, 32.0f, 32.f));
 
+    params.add(std::make_unique<AudioParameterFloat>(ParamIDs::fizzAmount, "Fizz Amt", 0.0f, 100.0f, 5.f));
+
+    // predist
     params.add(std::make_unique<AudioParameterFloat>(ParamIDs::allPassFreq, "AllPass Frequency", juce::NormalisableRange<float>(20.0f, 20000.0f, 0.f, 0.25f), 85.0f));
     params.add(std::make_unique<AudioParameterFloat>(ParamIDs::allPassQ, "AllPass Q", 0.01f, 1.41f, 0.4f));
     params.add(std::make_unique<AudioParameterFloat>(ParamIDs::allPassAmount, "AllPass Number", 0.0f, 50.0f, 10.0f));

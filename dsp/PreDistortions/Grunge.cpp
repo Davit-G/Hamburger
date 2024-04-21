@@ -30,7 +30,7 @@ void Grunge::processBlock(juce::dsp::AudioBlock<float> &block)
     amount.update();
     tone.update();
 
-    float toneFloat = tone.getRaw() * 55.0f + 5.0f;
+    float toneFloat = tone.getRaw() * 61.0f + 0.5f;
     auto dcCoeffs = juce::dsp::IIR::ArrayCoefficients<float>::makeHighPass(sampleRate, toneFloat);
 
     *dcBlockerL.coefficients = dcCoeffs;

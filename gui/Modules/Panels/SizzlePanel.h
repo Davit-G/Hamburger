@@ -34,7 +34,7 @@ class SizzleOGPanel : public Panel
 {
 public:
     SizzleOGPanel(AudioPluginAudioProcessor &p) : Panel(p, "FIZZ"),
-    sizzleKnob(p, "FIZZLE", "noiseAmount")
+    sizzleKnob(p, "FIZZLE", ParamIDs::fizzAmount)
     {
         addAndMakeVisible(sizzleKnob);
     }

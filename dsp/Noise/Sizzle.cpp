@@ -15,6 +15,7 @@ Sizzle::Sizzle(juce::AudioProcessorValueTreeState &treeState)
 	: envelopeDetector(true),
 	  noiseAmount(treeState, ParamIDs::sizzleAmount),
 	  filterTone(treeState, ParamIDs::sizzleFrequency),
+	  fizzAmount(treeState, ParamIDs::fizzAmount),
 	  filterQ(treeState, ParamIDs::sizzleQ) {}
 
 Sizzle::~Sizzle()
@@ -26,6 +27,7 @@ void Sizzle::prepare(dsp::ProcessSpec &spec)
 	this->sampleRate = spec.sampleRate;
 
 	noiseAmount.prepare(spec);
+	fizzAmount.prepare(spec);
 	filterTone.prepare(spec);
 	filterQ.prepare(spec);
 
@@ -68,22 +70,17 @@ void Sizzle::processBlock(dsp::AudioBlock<float> &block)
 void Sizzle::processBlockOG(dsp::AudioBlock<float> &block)
 {
 	TRACE_EVENT("dsp", "Sizzle::processBlock");
-	noiseAmount.update();
-	if (noiseAmount.getRaw() == 0)
+	fizzAmount.update();
+
+	if (fizzAmount.getRaw() == 0)
 		return;
 
 	auto rightDryData = block.getChannelPointer(1);
 	auto leftDryData = block.getChannelPointer(0);
 
-	auto sizzleFreq = filterTone.getRaw();
-
 	for (int sample = 0; sample < block.getNumSamples(); sample++)
 	{
-		float nextSizzle = noiseAmount.getNextValue() * 0.02f;
-		float filtRandFloat = random.nextFloat() * 2.0f - 1.0f;
-
-		float envelope = envelopeDetector.processSampleStereo(leftDryData[sample], rightDryData[sample]);
-		float envelopeGain = juce::Decibels::decibelsToGain(envelope);
+		float nextSizzle = fizzAmount.getNextValue() * 0.04f;
 
 		rightDryData[sample] = oldSizzleFunction(rightDryData[sample], nextSizzle);
 		leftDryData[sample] = oldSizzleFunction(leftDryData[sample], nextSizzle);

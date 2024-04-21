@@ -130,6 +130,7 @@ namespace ParamIDs {
     static const juce::ParameterID sizzleFrequency { "sizzleFrequency", 1 };
     static const juce::ParameterID sizzleQ { "sizzleQ", 1 };
 
+    static const juce::ParameterID fizzAmount { "fizzAmount", 1 };
 
     // erosion
     static const juce::ParameterID erosionAmount { "erosionAmount", 1 };

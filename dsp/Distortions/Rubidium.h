@@ -52,7 +52,7 @@ public:
     }
 
     void updateCoefficients() {
-        float satAmt = powf((mojo.getNextValue() * 0.8f + 20.0f) * 0.01f, 1.2f) * 100.0f + 5.0f;
+        float satAmt = powf((mojo.getNextValue() * 0.9f + 10.0f) * 0.01f, 1.2f) * 100.0f + 5.0f;
         float hystAmt = powf(hysteresis.getNextValue() * 0.1f, 2.0f) * 300.f;
         float toneAmt = tone.getNextValue();
 
@@ -76,6 +76,7 @@ public:
         drive.update();
         mojo.update();
         hysteresis.update();
+        tone.update();
 
         for (int sample = 0; sample < block.getNumSamples(); sample++)
         {
