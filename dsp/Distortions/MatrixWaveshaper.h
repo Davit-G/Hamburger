@@ -3,6 +3,8 @@
 #include "juce_core/juce_core.h"
 #include "juce_audio_processors/juce_audio_processors.h"
 
+#include "../SVTPTFilter.h"
+
 inline float sign(float xn)
 {
 	return (xn > 0.f) - (xn < 0.f);
@@ -66,6 +68,12 @@ public:
         mat8Param.prepare(spec);
         mat9Param.prepare(spec);
 
+        filter.prepare(spec);
+        filter.reset();
+
+        filter2.prepare(spec);
+        filter2.reset();
+
         hpFilter.prepare(spec);
         hpFilter.setCutoffFrequency(3.0f);
         hpFilter.reset();
@@ -90,8 +98,8 @@ public:
             float matrix2 = mat2Param.getNextValue();
             float matrix3 = mat3Param.getNextValue();
             float matrix4 = mat4Param.getNextValue();
-            // float matrix5 = mat5Param.getNextValue();
-            // float matrix6 = mat6Param.getNextValue();
+            float matrix5 = mat5Param.getNextValue();
+            float matrix6 = mat6Param.getNextValue();
             // float matrix7 = mat7Param.getNextValue();
             // float matrix8 = mat8Param.getNextValue();
             // float matrix9 = mat9Param.getNextValue();
@@ -100,6 +108,21 @@ public:
             double p2 = matrix2 * 20.0 + tiny;
             double p3 = matrix3 * 10.0 + tiny;
             double p4 = matrix4 + tiny;
+            double p5 = matrix5;
+            double p6 = matrix6;
+
+            filter.setCutoffFrequency(powf(p6, 3.0f) * 20000.0f + 50.0f);
+            filter2.setCutoffFrequency(powf(1.0f - p6, 2.6f) * 20000.0f + 50.0f);
+
+            filter.setResonance(sin(p5 * 12.14f) * 0.8f + 0.81f);
+            filter2.setResonance(sin(p5 * 7.14f) * 0.8f + 0.81f);
+
+            double lpMix = cos(p5 * 4.49657f);
+            double hpMix = cos(p5 * 15.925f);
+            double bpMix = cos(p5 * 10.5f);
+            double lp2Mix = cos(p5 * 6.49657f);
+            double hp2Mix = cos(p5 * 12.925f);
+            double bp2Mix = cos(p5 * 7.5f);
 
             for (int channel = 0; channel < block.getNumChannels(); channel++)
             {
@@ -112,7 +135,19 @@ public:
 
                 double dcRemoval = hpFilter.processSample(channel, x + bounced - sinWS + shredded);
 
-                double res = tanhWaveShaper(dcRemoval, p1);
+                auto filtOut = filter.processSample(channel, dcRemoval);
+                auto lp = filtOut[0];
+                auto hp = filtOut[1] * hpMix;
+                auto bp = filtOut[2] * bpMix;
+
+                auto filt2Out = filter2.processSample(channel, dcRemoval + bp);
+                auto lp2 = filt2Out[0] * lp2Mix;
+                auto hp2 = -filt2Out[1] * hp2Mix;
+                auto bp2 = filt2Out[2] * bp2Mix;
+
+                auto filtRes = lp + hp + bp + lp2 + hp2 + bp2;
+
+                double res = tanhWaveShaper(filtRes, p1);
 
                 block.setSample(channel, i, (float)res);
             }
@@ -123,6 +158,9 @@ private:
     double tiny = 0.001f;
 
     juce::dsp::StateVariableTPTFilter<double> hpFilter;
+
+    SVTPTFilter<double> filter;
+    SVTPTFilter<double> filter2;
 
     SmoothParam mat1Param;
     SmoothParam mat2Param;
