@@ -1,7 +1,6 @@
 # For v0.4
 
 double check all knob ranges are reasonable
-self hosted sentry.io plugin crash reporting
 fill in matrix distortion section with more distortions
 
 # Must
@@ -13,7 +12,6 @@ make all parameters smooth to remove clicking
 
 # Should
 
-self hosted sentry.io plugin crash reporting
 speed up DSP by replacing some direct form filters with svf ones (in the case of per-sample coefficient modulation)
 
 # Would be nice
@@ -21,6 +19,8 @@ speed up DSP by replacing some direct form filters with svf ones (in the case of
 add more dist types (foil??)
 icons in middle of saturation knobs with different cool things like tube, rubidium etc
 other filters before / after distortion, such as combs / phasers / filters etc
+self hosted sentry.io?
+sentry.io proper pdb / breakpad minidump files to make symbols readable, or memory dump. might be too much for free plugin?
 
 # feedback 
 

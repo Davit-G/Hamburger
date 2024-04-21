@@ -67,7 +67,7 @@ if(NOT DEFINED ENV{SENTRY_URL})
         set(SENTRY 1)
         message(STATUS "Ran env.cmake successfully, environment variables should be loaded.")
     else()
-        message(FATAL_ERROR "Unable to load environment variables.")
+        message(WARNING "Unable to load environment variables.")
     endif()
 else()
     set(SENTRY_URL "$ENV{SENTRY_URL}")
@@ -78,13 +78,18 @@ endif()
 set(SENTRY_BACKEND "breakpad")
 
 # set commit hash for sentry
-
 execute_process(
     COMMAND git log -1 --format=%h
     WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
     OUTPUT_VARIABLE GIT_HASH
     OUTPUT_STRIP_TRAILING_WHITESPACE
 )
+
+# generate PDB files for sentry
+# add_compile_options("$<$<NOT:$<CONFIG:Debug>>:/Zi>")
+# add_link_options("$<$<NOT:$<CONFIG:Debug>>:/DEBUG>")
+# add_link_options("$<$<NOT:$<CONFIG:Debug>>:/OPT:REF>")
+# add_link_options("$<$<NOT:$<CONFIG:Debug>>:/OPT:ICF>")
 
 
 if(APPLE)

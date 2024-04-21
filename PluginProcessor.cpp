@@ -97,13 +97,12 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor() : AudioProcessor(BusesPro
     sentry_value_t systemInfo = sentry_value_new_object();
     sentry_value_set_by_key(systemInfo, "os", sentry_value_new_string(juce::SystemStats::getOperatingSystemName().toUTF8()));
     sentry_value_set_by_key(systemInfo, "cpu", sentry_value_new_string(juce::SystemStats::getCpuModel().toUTF8()));
-    sentry_value_set_by_key(systemInfo, "bit_depth", sentry_value_new_bool(juce::SystemStats::isOperatingSystem64Bit()));
     sentry_value_set_by_key(systemInfo, "vendor", sentry_value_new_string(juce::SystemStats::getCpuVendor().toUTF8()));
     sentry_value_set_by_key(systemInfo, "model", sentry_value_new_string(juce::SystemStats::getCpuModel().toUTF8()));
     sentry_set_context("systemInfo", systemInfo);
 
     // keeps track of how often specific computers experience errors for the plugin.
-    // TO ANYONE READING THIS: This code does not track you. This is just a way to distinguish against other events, and only gets sent when there is an error.
+    // TO ANYONE READING THIS: This code does not personally identify you. This is just a way to distinguish against other machines, and only gets sent when there is an error.
     sentry_value_t user = sentry_value_new_object();
     sentry_value_set_by_key(user, "id", sentry_value_new_string(juce::SystemStats::getUniqueDeviceID().toUTF8()));
     sentry_set_user(user);
