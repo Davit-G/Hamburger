@@ -8,8 +8,8 @@ class PostClipPanel : public Panel
 {
 public:
     PostClipPanel(AudioPluginAudioProcessor &p) : Panel(p, "CLIPPER"),
-    gain(p, "GAIN", ParamIDs::postClipGain),
-    knee(p, "KNEE", ParamIDs::postClipKnee) {
+    gain(p, "GAIN", ParamIDs::postClipGain, ParamUnits::db),
+    knee(p, "KNEE", ParamIDs::postClipKnee, ParamUnits::db) {
         addAndMakeVisible(gain);
         addAndMakeVisible(knee);
     }
