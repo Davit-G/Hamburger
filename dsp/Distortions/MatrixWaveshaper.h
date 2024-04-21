@@ -3,6 +3,11 @@
 #include "juce_core/juce_core.h"
 #include "juce_audio_processors/juce_audio_processors.h"
 
+inline float sign(float xn)
+{
+	return (xn > 0.f) - (xn < 0.f);
+}
+
 inline double tanhWaveShaper(double xn, double saturation) noexcept
 {
     return tanh(saturation * xn) / tanh(saturation);
@@ -26,6 +31,12 @@ inline double shredShape(double x, double c) noexcept
         return 0;
 
     return c * (floor(c * x * 10) - (0.5 * floor(c * x * 20)) + 0.25) * 0.1;
+}
+
+inline float bounceShape(float x, float c) noexcept
+{
+    float interm = fmodf(abs(x * c - 0.5f) , 1.0f) - 0.5f;
+    return sign(x) * c * 0.1f * interm * interm - 0.02f * c;
 }
 
 class MatrixWaveshaper
@@ -54,6 +65,11 @@ public:
         mat7Param.prepare(spec);
         mat8Param.prepare(spec);
         mat9Param.prepare(spec);
+
+        hpFilter.prepare(spec);
+        hpFilter.setCutoffFrequency(3.0f);
+        hpFilter.reset();
+        hpFilter.setType(juce::dsp::StateVariableTPTFilterType::highpass);
     }
 
     void processBlock(juce::dsp::AudioBlock<float> &block)
@@ -82,7 +98,7 @@ public:
 
             double p1 = matrix1 * 10.0 + tiny;
             double p2 = matrix2 * 20.0 + tiny;
-            // double p3 = matrix3;
+            double p3 = matrix3 * 10.0 + tiny;
             double p4 = matrix4 + tiny;
 
             for (int channel = 0; channel < block.getNumChannels(); channel++)
@@ -92,8 +108,11 @@ public:
 
                 double sinWS = cursedSinWS(x, p2);
                 double shredded = shredShape(x, p4);
+                double bounced = bounceShape(x, p3);
 
-                double res = tanhWaveShaper(x - sinWS + shredded, p1);
+                double dcRemoval = hpFilter.processSample(channel, x + bounced - sinWS + shredded);
+
+                double res = tanhWaveShaper(dcRemoval, p1);
 
                 block.setSample(channel, i, (float)res);
             }
@@ -102,6 +121,8 @@ public:
 
 private:
     double tiny = 0.001f;
+
+    juce::dsp::StateVariableTPTFilter<double> hpFilter;
 
     SmoothParam mat1Param;
     SmoothParam mat2Param;
