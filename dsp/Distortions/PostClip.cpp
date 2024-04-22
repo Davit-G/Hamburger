@@ -1,5 +1,5 @@
 #include "PostClip.h"
-#include "WaveShapers.h"
+#include "../WaveShapers.h"
 
 template <typename T>
 int sgn(T val)

@@ -49,7 +49,7 @@ void PhaseDist::processBlock(juce::dsp::AudioBlock<float>& block) noexcept {
 
 		float mono = (fmin(left, right) + fmax(left, right)) / 2.0f;
 
-		float normalised = tanhWaveShaper(mono, 4.0f + 0.00001f);
+		float normalised = approxTanhWaveshaper1(mono, 4.0f + 0.00001f);
 
 		auto phaseShiftL = (normalised + 2.0f) * amt * (sampleRate / 44100.0f);
 		

@@ -60,3 +60,31 @@ inline float softClipperFunc(float x, float threshold, float knee, float ratio =
 
 	return output * sign; // return it to the original sign afterwards
 }
+
+inline float tanhApprox1(float x)
+{
+	// this bends up at the ends (diverges away from 0)
+	// reiss optimised, much faster, bit inaccurate, doesnt matter inside of -1 to 1 tho
+	auto x2 = x * x;
+	return x * (27.0f + x2) / (27.0f + 9.0f * x2);
+}
+
+inline float tanhApprox2(float x) {
+	// this bends down at the ends (converges to 0)
+	// lambert continued fraction
+	auto x2 = x * x;
+
+	auto num = x * (135135.f + x2 * (17325.f + x2 * 378.f));
+	auto den = 135135.f + x2 * (62370.f + x2 * (3150.f + x2 * 18.f));
+	return num / den;
+}
+
+inline float approxTanhWaveshaper2(float x, float saturation)
+{
+	return tanhApprox2((saturation + 0.001f) * x) / tanhApprox2(saturation + 0.001f);
+}
+
+inline float approxTanhWaveshaper1(float x, float saturation)
+{
+	return tanhApprox1((saturation + 0.001f) * x) / tanhApprox1(saturation + 0.001f);
+}

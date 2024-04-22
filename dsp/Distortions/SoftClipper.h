@@ -1,6 +1,6 @@
 #pragma once
 
-#include "WaveShapers.h"
+#include "../WaveShapers.h"
 #include "../SmoothParam.h"
 #include "../../utils/Params.h"
 

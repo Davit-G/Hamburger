@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../SmoothParam.h"
-#include "WaveShapers.h"
+#include "../WaveShapers.h"
 #include "../../utils/Params.h"
 
 #include <melatonin_perfetto/melatonin_perfetto.h>
