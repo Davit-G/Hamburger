@@ -9,6 +9,7 @@ support mono / stereo only, dont have it break on mono
 performance optimisations
 pluginval
 make all parameters smooth to remove clicking
+auval
 
 # Should
 
