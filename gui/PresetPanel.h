@@ -37,10 +37,12 @@ public:
 		itemFont.setHeight(20.0f);
 	}
 
-	void initFiles(bool ignoreCollapsedStates = false) {
+	void initFiles(bool ignoreCollapsedStates = false)
+	{
 		updateContent();
 
-		if (!ignoreCollapsedStates) {
+		if (!ignoreCollapsedStates)
+		{
 			for (auto &file : *filesFolders)
 			{
 				isCollapsed[file->getFile().getRelativePathFrom(Preset::defaultDirectory)] = true;
@@ -54,7 +56,7 @@ public:
 	{
 		filesToRender.clear();
 
-		auto& collection = *filesFolders;
+		auto &collection = *filesFolders;
 
 		for (auto &file : collection)
 		{
@@ -103,7 +105,7 @@ public:
 	{
 		if (filesToRender.size() == 0)
 			return;
-		
+
 		auto row = filesToRender[rowNumber];
 
 		auto isDir = row.getFile().isDirectory();
@@ -152,14 +154,15 @@ public:
 
 		auto presetName = row.getFile().getFileNameWithoutExtension();
 
-		if (presetName.length() > 30) {
+		if (presetName.length() > 30)
+		{
 			presetName = presetName.substring(0, 30) + "...";
 		}
 
 		g.drawText(presetName,
 				   15 + depth * 30 + extraRoom, 0, width, height,
 				   Justification::centredLeft, true);
-		
+
 		g.setColour(Colour::fromRGB(100, 100, 100));
 		g.setFont(itemFont);
 
@@ -280,12 +283,13 @@ class PresetPanel : public Component, Button::Listener
 {
 public:
 	PresetPanel(Preset::PresetManager &pm) : presetManager(pm),
-									 listBoxModel(pm, listBox),
-									 saveButton("Save", DrawableButton::ImageOnButtonBackground),
-									 deleteButton("Delete", DrawableButton::ImageOnButtonBackground),
-									 previousPresetButton("Previous", DrawableButton::ImageOnButtonBackground),
-									 nextPresetButton("Next", DrawableButton::ImageOnButtonBackground),
-									 closeButton("Close", DrawableButton::ImageOnButtonBackground)
+											 listBoxModel(pm, listBox),
+											 saveButton("Save", DrawableButton::ImageOnButtonBackground),
+											 deleteButton("Delete", DrawableButton::ImageOnButtonBackground),
+											 previousPresetButton("Previous", DrawableButton::ImageOnButtonBackground),
+											 nextPresetButton("Next", DrawableButton::ImageOnButtonBackground),
+											 closeButton("Close", DrawableButton::ImageOnButtonBackground),
+											 openPresetFolderButton("Open Folder", DrawableButton::ImageOnButtonBackground)
 	{
 
 		auto saveIcon = makeIcon(R"svgDELIM(
@@ -313,11 +317,18 @@ public:
 		)svgDelim");
 		closeButton.setImages(closeIcon.get());
 
+		auto folderClosedIconString = makeIcon(R"svgDELIM(
+			<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-folder-closed"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/><path d="M2 10h20"/></svg>
+		)svgDELIM");
+
+		openPresetFolderButton.setImages(folderClosedIconString.get());
+
 		setupButton(saveButton, "Save");
 		setupButton(deleteButton, "Delete");
 		setupButton(previousPresetButton, "<");
 		setupButton(nextPresetButton, ">");
 		setupButton(closeButton, "X");
+		setupButton(openPresetFolderButton, "Open Folder");
 
 		closeButton.setVisible(false);
 		closeButton.onClick = [this]
@@ -327,9 +338,6 @@ public:
 			closeButton.setVisible(false);
 			resized();
 		};
-
-		// pass clicks through
-		setInterceptsMouseClicks(false, true);
 
 		listBox.setModel(&listBoxModel);
 		addAndMakeVisible(listBox);
@@ -345,6 +353,12 @@ public:
 			resized(); }));
 
 		listBox.setVisible(showPresetsList);
+
+
+		openPresetFolderButton.onClick = [this]
+		{
+			Preset::defaultDirectory.startAsProcess();
+		};
 
 		currentPresetLabel.setLookAndFeel(&comboBoxLAF);
 		currentPresetLabel.setColour(ComboBox::backgroundColourId, Colours::black);
@@ -362,13 +376,15 @@ public:
 			resized();
 		};
 
+		// pass clicks through
+		setInterceptsMouseClicks(false, true);
+
 		MessageManager::callAsync([this]
-		{
+								  {
 			loadPresetList();
 			this->listBoxModel.initFiles();
 			this->listBox.updateContent();
-			this->listBox.repaint();
-		});
+			this->listBox.repaint(); });
 
 		currentPresetLabel.setButtonText("Hamburger");
 	}
@@ -382,9 +398,14 @@ public:
 
 		saveButton.setBounds(bounds.removeFromLeft(height).reduced(4));
 		deleteButton.setBounds(bounds.removeFromLeft(height).reduced(4));
+		openPresetFolderButton.setBounds(bounds.removeFromLeft(height).reduced(4));
+
 		nextPresetButton.setBounds(bounds.removeFromRight(height).reduced(4));
 		previousPresetButton.setBounds(bounds.removeFromRight(height).reduced(4));
-		closeButton.setBounds(bounds.removeFromRight(height).reduced(8));
+
+		if (showPresetsList)
+			closeButton.setBounds(bounds.removeFromRight(height).reduced(8));
+
 		currentPresetLabel.setBounds(bounds.reduced(4));
 
 		auto presetListBounds = getLocalBounds().withTrimmedTop(height);
@@ -410,15 +431,6 @@ private:
 		p.addRoundedRectangle(getLocalBounds().removeFromTop(45).reduced(4).toFloat(), 15.0f);
 		g.setColour(juce::Colour::fromRGB(0, 0, 0));
 		g.fillPath(p);
-
-		// Rectangle<int> arrowZone(5 + 45 * 2, 0, 20, 45);
-		// Path path;
-		// path.startNewSubPath((float)arrowZone.getX() + 4.0f, (float)arrowZone.getCentreY() - 2.0f);
-		// path.lineTo((float)arrowZone.getCentreX(), (float)arrowZone.getCentreY() + 3.0f);
-		// path.lineTo((float)arrowZone.getRight() - 4.0f, (float)arrowZone.getCentreY() - 2.0f);
-
-		// g.setColour(juce::Colours::white);
-		// g.strokePath(path, PathStrokeType(2.0f, juce::PathStrokeType::JointStyle::curved, juce::PathStrokeType::EndCapStyle::rounded));
 	}
 
 	void buttonClicked(Button *button) override
@@ -481,8 +493,7 @@ private:
 					this->listBox.repaint();
 				}
 
-				delete alertWindow2;
-			}));
+				delete alertWindow2; }));
 		}
 	}
 
@@ -517,7 +528,7 @@ private:
 	}
 
 	Preset::PresetManager &presetManager;
-	DrawableButton saveButton, deleteButton, previousPresetButton, nextPresetButton, closeButton;
+	DrawableButton saveButton, deleteButton, previousPresetButton, nextPresetButton, closeButton, openPresetFolderButton;
 
 	bool showPresetsList = false;
 
