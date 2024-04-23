@@ -82,11 +82,12 @@ bool Preset::PresetManager::savePreset(const juce::String &presetName, const juc
 
 	currentPreset.setValue(presetName);
 	currentAuthor.setValue(author);
+	
+	valueTreeState.state.setProperty("version", JucePlugin_VersionString, nullptr);
 
 	const auto xml = valueTreeState.copyState().createXml();
 	const auto presetFile = juce::File(defaultDirectory.getFullPathName() + "/User/" + presetName + "." + extension);
 
-	valueTreeState.state.setProperty("version", JucePlugin_VersionString, nullptr);
 
 	if (presetFile.existsAsFile())
 	{

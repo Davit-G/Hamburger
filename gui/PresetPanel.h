@@ -486,9 +486,6 @@ private:
 		}
 		if (button == &deleteButton)
 		{
-			presetManager.deletePreset(presetManager.getCurrentPreset(), errorAlertCallback);
-			loadPresetList();
-
 			auto alertWindow2 = new BurgerAlert("Delete Preset", "Are you sure you want to delete this preset? ", MessageBoxIconType::NoIcon);
 			alertWindow2->createPresetDeleteAlert();
 			alertWindow2->enterModalState(true, juce::ModalCallbackFunction::create([this, alertWindow2](int result)

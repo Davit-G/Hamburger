@@ -35,12 +35,6 @@ public:
     {
         int additionalHeight = 0;
 
-#if PRESETS_MANAGER_VISIBLE
-        additionalHeight += 45;
-#endif
-
-        setSize(800, 500 + additionalHeight);
-
         addAndMakeVisible(leftColumn);
         addAndMakeVisible(saturationColumn);
         addAndMakeVisible(utilColumn);
@@ -48,6 +42,7 @@ public:
 
 #if PRESETS_MANAGER_VISIBLE
         addAndMakeVisible(presetPanel);
+        additionalHeight += 45;
 #endif
 
         setOpaque(true);
@@ -56,11 +51,7 @@ public:
 
         setPaintingIsUnclipped(true);
 
-        // // open the inspector window
-        // inspector.setVisible(true);
-
-        // // enable the inspector
-        // inspector.toggle(true);
+        setSize(800, 500 + additionalHeight);
     }
 
     ~EditorV2() override {}
@@ -81,7 +72,6 @@ public:
         presetPanel.setBounds(bounds);
         bounds.removeFromTop(45);
 #endif
-
         auto left = bounds.removeFromLeft(totalWidth);
         auto right = bounds.removeFromRight(totalWidth);
 
@@ -133,8 +123,6 @@ private:
     Info infoPanel;
 
     juce::Image image = juce::ImageCache::getFromMemory(BinaryData::bg4_jpg, BinaryData::bg4_jpgSize);
-
-    // melatonin::Inspector inspector { *this };
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(EditorV2)
 };
