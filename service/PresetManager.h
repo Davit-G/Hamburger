@@ -82,11 +82,12 @@ namespace Preset
 	public:
 		PresetManager(juce::AudioProcessorValueTreeState &);
 
-		bool savePreset(const juce::String &preset, const juce::String &author, const juce::String &description);
-		void deletePreset(const juce::File &preset);
-		void loadPreset(const juce::File &preset);
-		juce::File loadNextPreset();
-		juce::File loadPreviousPreset();
+		bool savePreset(const juce::String &preset, const juce::String &author, const juce::String &description, std::function<void(std::string)> cb);
+		void deletePreset(const juce::File &preset, std::function<void(std::string)> cb);
+		void loadPreset(const juce::File &preset, std::function<void(std::string)> cb);
+		
+		juce::File loadNextPreset(std::function<void(std::string)> cb);
+		juce::File loadPreviousPreset(std::function<void(std::string)> cb);
 		juce::Array<juce::File> getAllPresets() const;
 		juce::File getCurrentPreset() const;
 

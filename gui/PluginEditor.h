@@ -18,7 +18,7 @@
 
 // #include "melatonin_inspector/melatonin_inspector.h"
 
-#define PRESETS_MANAGER_VISIBLE 0
+#define PRESETS_MANAGER_VISIBLE 1
 
 class EditorV2 : public juce::AudioProcessorEditor
 {

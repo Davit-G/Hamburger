@@ -16,6 +16,15 @@ std::unique_ptr<juce::Drawable> makeIcon(const char *iconString)
 	return drawableLogoString;
 }
 
+const std::function<void(std::string)> errorAlertCallback = [](std::string result)
+{
+	DBG(result);
+	auto errorAlert = new BurgerAlert("Error", result, juce::AlertWindow::AlertIconType::WarningIcon);
+
+	errorAlert->createPresetWarning();
+	errorAlert->enterModalState(true, nullptr, true);
+};
+
 class CustomListBoxModel : public ListBoxModel
 {
 public:
@@ -132,7 +141,7 @@ public:
 
 			g.setColour(Colours::white);
 
-			auto drawArea = Rectangle<float>(5 + depth * 30, 0, height, height).reduced(12).toFloat();
+			auto drawArea = juce::Rectangle<float>(5 + depth * 30, 0, height, height).reduced(12).toFloat();
 
 			if (collapsed)
 			{
@@ -187,7 +196,7 @@ public:
 		else
 		{
 			DBG(item.getFile().getFullPathName());
-			presetManager.loadPreset(item.getFile());
+			presetManager.loadPreset(item.getFile(), errorAlertCallback);
 
 			for (auto listener : singleClickListener)
 			{
@@ -354,7 +363,6 @@ public:
 
 		listBox.setVisible(showPresetsList);
 
-
 		openPresetFolderButton.onClick = [this]
 		{
 			Preset::defaultDirectory.startAsProcess();
@@ -448,13 +456,13 @@ private:
 					auto author = alertWindow->getTextEditor("author")->getText();
 					// auto description = alertWindow->getTextEditor("description")->getText();
 
-					auto saveSuccess = presetManager.savePreset(name, author, "");
+					auto saveSuccess = presetManager.savePreset(name, author, "", errorAlertCallback);
 
 					if (!saveSuccess) {
-						auto errorAlert = new BurgerAlert("Error", "Preset was unable to be saved (it already exists?)", juce::AlertWindow::AlertIconType::WarningIcon);
+						// auto errorAlert = new BurgerAlert("Error", "Preset was unable to be saved (it already exists?)", juce::AlertWindow::AlertIconType::WarningIcon);
 
-						errorAlert->createPresetWarning();
-						errorAlert->enterModalState(true, nullptr, true);
+						// errorAlert->createPresetWarning();
+						// errorAlert->enterModalState(true, nullptr, true);
 					} else {
 						loadPresetList();
 						this->listBoxModel.initFiles();
@@ -468,17 +476,17 @@ private:
 		}
 		if (button == &previousPresetButton)
 		{
-			const auto newPreset = presetManager.loadPreviousPreset();
+			const auto newPreset = presetManager.loadPreviousPreset(errorAlertCallback);
 			currentPresetLabel.setButtonText(newPreset.getParentDirectory().getFileNameWithoutExtension() + " - " + newPreset.getFileNameWithoutExtension());
 		}
 		if (button == &nextPresetButton)
 		{
-			const auto newPreset = presetManager.loadNextPreset();
+			const auto newPreset = presetManager.loadNextPreset(errorAlertCallback);
 			currentPresetLabel.setButtonText(newPreset.getParentDirectory().getFileNameWithoutExtension() + " - " + newPreset.getFileNameWithoutExtension());
 		}
 		if (button == &deleteButton)
 		{
-			presetManager.deletePreset(presetManager.getCurrentPreset());
+			presetManager.deletePreset(presetManager.getCurrentPreset(), errorAlertCallback);
 			loadPresetList();
 
 			auto alertWindow2 = new BurgerAlert("Delete Preset", "Are you sure you want to delete this preset? ", MessageBoxIconType::NoIcon);
@@ -487,7 +495,7 @@ private:
 																					{
 				if (result == 1)
 				{
-					presetManager.deletePreset(presetManager.getCurrentPreset());
+					presetManager.deletePreset(presetManager.getCurrentPreset(), errorAlertCallback);
 					loadPresetList();
 					this->listBoxModel.initFiles(true);
 					this->listBox.repaint();
@@ -527,7 +535,8 @@ private:
 		currentPresetLabel.setButtonText("Hamburger");
 	}
 
-	Preset::PresetManager &presetManager;
+	Preset::PresetManager &
+		presetManager;
 	DrawableButton saveButton, deleteButton, previousPresetButton, nextPresetButton, closeButton, openPresetFolderButton;
 
 	bool showPresetsList = false;
