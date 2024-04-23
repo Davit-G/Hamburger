@@ -21,6 +21,8 @@ public:
 
         setSize(drawableAviary->getDrawableBounds().getWidth(), drawableAviary->getDrawableBounds().getHeight());
 
+        setMouseCursor(MouseCursor::PointingHandCursor);
+
         addAndMakeVisible(*drawableAviary);
     }
 

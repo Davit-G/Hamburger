@@ -102,7 +102,7 @@ public:
             float matrix6 = mat6Param.getNextValue();
             // float matrix7 = mat7Param.getNextValue();
             // float matrix8 = mat8Param.getNextValue();
-            // float matrix9 = mat9Param.getNextValue();
+            float matrix9 = mat9Param.getNextValue();
 
             double p1 = matrix1 * 10.0 + tiny;
             double p2 = matrix2 * 40.0 + tiny;
@@ -110,6 +110,8 @@ public:
             double p4 = matrix4 + tiny;
             double p5 = matrix5;
             double p6 = matrix6;
+
+            double p9 = matrix9;
 
             filter.setCutoffFrequency(powf(p6, 3.0f) * 20000.0f + 50.0f);
             filter2.setCutoffFrequency(powf(sin(p6 * 3.14f * 2.6f) * 0.5f + 0.5f, 2.0f) * 20000.0f + 50.0f);
@@ -147,7 +149,9 @@ public:
 
                 auto filtRes = lp + hp + bp + lp2 + hp2 + bp2;
 
-                double res = tanhWaveShaper(filtRes, p1);
+                auto filterMixed = filtRes * p9 + dcRemoval * (1.0 - p9);
+
+                double res = tanhWaveShaper(filterMixed, p1);
 
                 block.setSample(channel, i, (float)res);
             }

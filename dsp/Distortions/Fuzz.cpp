@@ -32,7 +32,7 @@ void Fuzz::processBlock(dsp::AudioBlock<float>& block) {
 
 		for (int channel = 0; channel < channels; channel++) {
 			float x = block.getSample(channel, sample) + envelope * biasAmt;
-			block.setSample(channel, sample, x / (1 + fabs(x)));
+			block.setSample(channel, sample, x);
 		}
 	}
 }

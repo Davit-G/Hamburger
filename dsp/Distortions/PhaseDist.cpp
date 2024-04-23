@@ -44,6 +44,8 @@ void PhaseDist::processBlock(juce::dsp::AudioBlock<float>& block) noexcept {
 		const float nextAmt = amount.get() * 0.01f;
 		auto amt = nextAmt * nextAmt * nextAmt * 60.0f * 20.0f;
 
+		const float nextNormalise = normalise.get() * 10.0f;
+
 		float left = block.getSample(0, i);
 		float right = block.getSample(1, i);
 
@@ -52,6 +54,7 @@ void PhaseDist::processBlock(juce::dsp::AudioBlock<float>& block) noexcept {
 		float normalised = approxTanhWaveshaper1(mono, 4.0f + 0.00001f);
 
 		auto phaseShiftL = (normalised + 2.0f) * amt * (sampleRate / 44100.0f);
+		phaseShiftL = phaseShiftL + nextNormalise * sin(mono);
 		
 		auto leftProcessed = delayLine.popSample(0, phaseShiftL);
 		auto rightProcessed = delayLine.popSample(1, phaseShiftL);
