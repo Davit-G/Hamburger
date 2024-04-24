@@ -29,11 +29,6 @@ public:
     {
     }
 
-    static Font getTheFont(int fontSize = 16)
-    {
-        return *questrialFont12;
-    }
-
     Font getLabelFont(Label &label) override
     {
         return *questrialFont14;
@@ -98,12 +93,8 @@ public:
 
 private:
     juce::Colour knobColour;
-    
-    static const std::unique_ptr<Font> questrialFont12;
-    static const std::unique_ptr<Font> questrialFont14;
-    static const std::unique_ptr<Font> questrialFont16;
-};
 
-const std::unique_ptr<juce::Font, std::default_delete<juce::Font>> KnobLAF::questrialFont12 = std::make_unique<juce::Font>(HamburgerFonts::questrialTypeface);
-const std::unique_ptr<juce::Font, std::default_delete<juce::Font>> KnobLAF::questrialFont14 = std::make_unique<juce::Font>(HamburgerFonts::questrialTypeface);
-const std::unique_ptr<juce::Font, std::default_delete<juce::Font>> KnobLAF::questrialFont16 = std::make_unique<juce::Font>(HamburgerFonts::questrialTypeface);
+    const std::unique_ptr<Font> questrialFont12 {std::make_unique<Font>(*HamburgerFonts::getFontLAF()->questrialTypeface)};
+    const std::unique_ptr<Font> questrialFont14 {std::make_unique<Font>(*HamburgerFonts::getFontLAF()->questrialTypeface)};
+    const std::unique_ptr<Font> questrialFont16 {std::make_unique<Font>(*HamburgerFonts::getFontLAF()->questrialTypeface)};
+};

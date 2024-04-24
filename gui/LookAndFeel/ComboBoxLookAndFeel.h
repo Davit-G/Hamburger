@@ -186,9 +186,6 @@ public:
 
 private:
 
-    static const std::unique_ptr<Font> questrialFont;
-    static const std::unique_ptr<Font> quicksandFont;
+    const std::unique_ptr<Font> questrialFont {std::make_unique<Font>(*HamburgerFonts::getFontLAF()->questrialTypeface)};
+    const std::unique_ptr<Font> quicksandFont {std::make_unique<Font>(*HamburgerFonts::getFontLAF()->quicksandTypeface)};
 };
-
-const std::unique_ptr<juce::Font, std::default_delete<juce::Font>> ComboBoxLookAndFeel::questrialFont = std::make_unique<juce::Font>(HamburgerFonts::questrialTypeface);
-const std::unique_ptr<juce::Font, std::default_delete<juce::Font>> ComboBoxLookAndFeel::quicksandFont = std::make_unique<juce::Font>(HamburgerFonts::quicksandTypeface);

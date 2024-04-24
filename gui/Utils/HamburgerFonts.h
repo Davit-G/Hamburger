@@ -1,17 +1,31 @@
 #pragma once
 
-class HamburgerFonts
+#include "juce_gui_basics/juce_gui_basics.h"
+#include "BinaryData.h"
+
+// dont make these static, otherwise due to various lifecycle related issues, will crash on linux
+class FontLAF : LookAndFeel_V4
 {
 public:
-    static const juce::Typeface::Ptr questrialTypeface;
-    static const juce::Typeface::Ptr quicksandTypeface;
+    const juce::Typeface::Ptr questrialTypeface = juce::Typeface::createSystemTypefaceFor(BinaryData::QuestrialRegular_ttf, BinaryData::QuestrialRegular_ttfSize);
+    const juce::Typeface::Ptr quicksandTypeface = juce::Typeface::createSystemTypefaceFor(BinaryData::QuicksandBold_ttf, BinaryData::QuicksandBold_ttfSize);
 
-    static const std::unique_ptr<Font> questrialFont;
-    static const std::unique_ptr<Font> quicksandFont;
+    const std::unique_ptr<Font> questrialFont = std::make_unique<juce::Font>(questrialTypeface);
+    const std::unique_ptr<Font> quicksandFont = std::make_unique<juce::Font>(quicksandTypeface);
 };
 
-const juce::Typeface::Ptr HamburgerFonts::questrialTypeface = juce::Typeface::createSystemTypefaceFor(BinaryData::QuestrialRegular_ttf, BinaryData::QuestrialRegular_ttfSize);
-const juce::Typeface::Ptr HamburgerFonts::quicksandTypeface = juce::Typeface::createSystemTypefaceFor(BinaryData::QuicksandBold_ttf, BinaryData::QuicksandBold_ttfSize);
+class HamburgerFonts {
+public:
+    static std::shared_ptr<FontLAF> getFontLAF() {
+        if (HamburgerFonts::fontLAF == nullptr) {
+            HamburgerFonts::fontLAF = std::make_shared<FontLAF>();
+        }
 
-const std::unique_ptr<juce::Font, std::default_delete<juce::Font>> HamburgerFonts::questrialFont = std::make_unique<juce::Font>(HamburgerFonts::questrialTypeface);
-const std::unique_ptr<juce::Font, std::default_delete<juce::Font>> HamburgerFonts::quicksandFont = std::make_unique<juce::Font>(HamburgerFonts::quicksandTypeface);
+        return fontLAF;
+    }
+
+private:
+    static std::shared_ptr<FontLAF> fontLAF;
+};
+
+std::shared_ptr<FontLAF> HamburgerFonts::fontLAF = nullptr;

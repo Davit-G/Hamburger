@@ -81,7 +81,7 @@ public:
 
         label.setColour(juce::Label::textColourId, juce::Colours::white);
         label.setJustificationType(juce::Justification::centredTop);
-        label.setFont(KnobLAF::getTheFont(12.0f));
+        label.setFont(*HamburgerFonts::getFontLAF()->questrialFont);
         addAndMakeVisible(label);
 
         label.setText(kName, juce::dontSendNotification);

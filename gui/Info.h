@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Utils/HamburgerFonts.h"
 
 class AviaryLogo : public juce::Component
 {
@@ -75,19 +76,12 @@ public:
         versionLabel.setText("Version: Release v" + String(JucePlugin_Version), NotificationType::dontSendNotification);
 #endif
 
-        #if JUCE_WINDOWS
-            questrialFont->setHeight(21.0f);
-            questrialFont->setExtraKerningFactor(0.01f);
-        #else
-            questrialFont->setHeight(16.0f);
-        #endif
-
         versionLabel.setJustificationType(Justification::bottomRight);
-        versionLabel.setFont(*questrialFont);
+        versionLabel.setFont(*HamburgerFonts::getFontLAF()->questrialFont);
 
         descriptionLabel.setJustificationType(Justification::topLeft);
         descriptionLabel.setText("Hamburger is a free but powerful distortion effect plugin with dynamics controls and equalisation designed for more control. Hamburger takes inspiration from other distortion and analog emulation plugins, and provides a tight set of controls that allow for fast pleasing results. \n \nHuge thanks to Sam (womp), Danburger (Antfactory), Bean, DEPARTURE, Sheaf, HurleybirdJr, Ewan Bristow, Alyssa, Patrhetoric, the dubstep den chaps, and anyone else I've left out, for all the help with testing, debugging and contributions.\n\nIf you want to know more about Aviary, click the logo on the top right. \n\nClick anywhere on the screen to return to the plugin", NotificationType::dontSendNotification);
-        descriptionLabel.setFont(*questrialFont);
+        descriptionLabel.setFont(*HamburgerFonts::getFontLAF()->questrialFont);
 
         drawableLogoString->setInterceptsMouseClicks(false, false);
         descriptionLabel.setInterceptsMouseClicks(false, false);
@@ -164,11 +158,7 @@ private:
     juce::Image feature3{juce::ImageCache::getFromMemory(BinaryData::feature3_jpg, BinaryData::feature3_jpgSize)};
     juce::Image feature4{juce::ImageCache::getFromMemory(BinaryData::feature4_jpg, BinaryData::feature4_jpgSize)};
 
-    static const std::unique_ptr<Font> questrialFont;
-
     AviaryLogo aviaryLogo;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Info)
 };
-
-const std::unique_ptr<juce::Font, std::default_delete<juce::Font>> Info::questrialFont = std::make_unique<juce::Font>(juce::Typeface::createSystemTypefaceFor(BinaryData::QuestrialRegular_ttf, BinaryData::QuestrialRegular_ttfSize));

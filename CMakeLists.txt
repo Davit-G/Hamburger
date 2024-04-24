@@ -60,7 +60,9 @@ set(SENTRY 0)
 if(NOT DEFINED ENV{SENTRY_URL}) 
     message(WARNING "SENTRY_URL not set, falling back to env.cmake")
 
-    include(env.cmake)
+    if(EXISTS "./env.cmake")
+        include(env.cmake)
+    endif()
     
     if(DEFINED ENV{SENTRY_URL})
         set(SENTRY_URL "$ENV{SENTRY_URL}")
