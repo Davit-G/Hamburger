@@ -163,9 +163,9 @@ public:
 
 		auto presetName = row.getFile().getFileNameWithoutExtension();
 
-		if (presetName.length() > 30)
+		if (presetName.length() > 20)
 		{
-			presetName = presetName.substring(0, 30) + "...";
+			presetName = presetName.substring(0, 20) + "...";
 		}
 
 		g.drawText(presetName,
@@ -175,7 +175,14 @@ public:
 		g.setColour(Colour::fromRGB(100, 100, 100));
 		g.setFont(itemFont);
 
-		g.drawText(row.getAuthor(),
+
+		auto authorName = row.getAuthor();
+
+		if (authorName.length() > 15) {
+			authorName = authorName.substring(0, 15) + "...";
+		}
+
+		g.drawText(authorName,
 				   0, 0, width - 20, height,
 				   Justification::centredRight, true);
 	}
