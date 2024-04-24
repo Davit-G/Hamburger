@@ -44,6 +44,12 @@ public:
 
     }
 
+    ~LeftColumn() {
+        compander->setLookAndFeel(nullptr);
+        preDistortion->setLookAndFeel(nullptr);
+        logo->setLookAndFeel(nullptr);
+    }
+
     void paint(Graphics &g) override
     {
         juce::ignoreUnused(g);

@@ -7,10 +7,8 @@ class EQPanel : public Panel
 public:
     EQPanel(AudioPluginAudioProcessor &p) : Panel(p, "EMPHASIS"),
                                             lowFreq(p, "FREQ", ParamIDs::emphasisLowFreq, ParamUnits::hz),
-                                            midFreq(p, "FREQ", ParamIDs::emphasisMidFreq, ParamUnits::hz),
                                             highFreq(p, "FREQ", ParamIDs::emphasisHighFreq, ParamUnits::hz),
                                             lowGain(p, "GAIN", ParamIDs::emphasisLowGain, ParamUnits::db),
-                                            midGain(p, "GAIN", ParamIDs::emphasisMidGain, ParamUnits::db),
                                             highGain(p, "GAIN", ParamIDs::emphasisHighGain, ParamUnits::db)
     {
 
@@ -74,9 +72,7 @@ private:
     Label band2;
 
     ParamKnob lowFreq;
-    ParamKnob midFreq;
     ParamKnob highFreq;
     ParamKnob lowGain;
-    ParamKnob midGain;
     ParamKnob highGain;
 };

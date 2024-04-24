@@ -20,7 +20,11 @@ public:
         setColour(juce::Label::ColourIds::textColourId, juce::Colours::white);
         setColour(juce::Label::ColourIds::outlineColourId, juce::Colours::white);
 
-        getTopLevelWindow(0)->setDropShadowEnabled(true);
+        // getTopLevelWindow(0)->setDropShadowEnabled(true);
+    }
+
+    ~BurgerAlert() {
+        setLookAndFeel(nullptr);
     }
 
     void createPresetSaveAlert() {

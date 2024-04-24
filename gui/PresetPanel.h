@@ -397,7 +397,10 @@ public:
 		currentPresetLabel.setButtonText("Hamburger");
 	}
 
-	~PresetPanel() override = default;
+	~PresetPanel() override {
+		currentPresetLabel.setLookAndFeel(nullptr);
+		
+	};
 
 	void resized() override
 	{

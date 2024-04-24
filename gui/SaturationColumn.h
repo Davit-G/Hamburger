@@ -77,6 +77,13 @@ public:
         addAndMakeVisible(noise.get());
     }
 
+    ~SaturationColumn() {
+        saturation->setLookAndFeel(nullptr);
+        postClip->setLookAndFeel(nullptr);
+        noise->setLookAndFeel(nullptr);
+
+    }
+
     void resized() override{
         auto bounds = getLocalBounds();
         auto height = bounds.getHeight();

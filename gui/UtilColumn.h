@@ -35,6 +35,12 @@ public:
         addAndMakeVisible(settings.get());
     }
 
+    ~UtilColumn() {
+        eq->setLookAndFeel(nullptr);
+        utility->setLookAndFeel(nullptr);
+        settings->setLookAndFeel(nullptr);
+    }
+
     void resized() override{
         auto bounds = getLocalBounds();
         auto height = bounds.getHeight();
