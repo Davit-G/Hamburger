@@ -14,7 +14,6 @@ public:
         setColour(Slider::rotarySliderFillColourId, juce::Colours::white);
         setColour(Slider::thumbColourId, juce::Colours::whitesmoke);
         setColour(Slider::rotarySliderFillColourId, color);
-        
     }
 
     ~KnobLAF()

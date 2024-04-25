@@ -35,10 +35,14 @@ public:
             questrialFont12->setHeight(18.0f);
             questrialFont14->setHeight(20.0f);
             questrialFont16->setHeight(22.0f);
+
+            quicksandFont->setHeight(22.0f);
         #else
             questrialFont12->setHeight(12.0f);
             questrialFont14->setHeight(14.0f);
             questrialFont16->setHeight(16.0f);
+
+            quicksandFont->setHeight(16.0f);
         #endif
     }
 
@@ -55,6 +59,11 @@ public:
 
     ~HamburgerLAF()
     {
+    }
+
+    Font getQuicksandFont()
+    {
+        return *quicksandFont;
     }
 
     Font getLabelFont(Label &label) override

@@ -41,7 +41,7 @@ public:
 
 		listBox.setRowHeight(36);
 
-		font = hamburgerLAF.getComboBoxFont();
+		font = hamburgerLAF.getQuicksandFont();
 		font.setHeight(20.0f);
 	}
 
