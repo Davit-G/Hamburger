@@ -15,6 +15,8 @@
 
 #include "PresetPanel.h"
 
+#include "LookAndFeel/HamburgerLAF.h"
+
 
 // #include "melatonin_inspector/melatonin_inspector.h"
 
@@ -35,6 +37,12 @@ public:
     {
         int additionalHeight = 0;
 
+        setLookAndFeel(&hamburgerLAF);
+        infoPanel.setLookAndFeel(&hamburgerLAF);
+        leftColumn.setLookAndFeel(&hamburgerLAF);
+        saturationColumn.setLookAndFeel(&hamburgerLAF);
+        utilColumn.setLookAndFeel(&hamburgerLAF);
+
         addAndMakeVisible(leftColumn);
         addAndMakeVisible(saturationColumn);
         addAndMakeVisible(utilColumn);
@@ -50,6 +58,7 @@ public:
         infoPanel.setVisible(false);
 
         setPaintingIsUnclipped(true);
+        
 
         setSize(800, 500 + additionalHeight);
     }
@@ -115,6 +124,8 @@ private:
     LeftColumn leftColumn;
     SaturationColumn saturationColumn;
     UtilColumn utilColumn;
+
+    HamburgerLAF hamburgerLAF;
 
 #if PRESETS_MANAGER_VISIBLE
     PresetPanel presetPanel;

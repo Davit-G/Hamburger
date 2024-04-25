@@ -2,9 +2,7 @@
 
 #include "juce_gui_basics/juce_gui_basics.h"
 
-#include "LookAndFeel/ComboBoxLookAndFeel.h"
 #include "BurgerAlert.h"
-#include "Utils/HamburgerFonts.h"
 
 std::unique_ptr<juce::Drawable> makeIcon(const char *iconString)
 {
@@ -28,7 +26,7 @@ const std::function<void(std::string)> errorAlertCallback = [](std::string resul
 class CustomListBoxModel : public ListBoxModel
 {
 public:
-	CustomListBoxModel(Preset::PresetManager &pm, ListBox &lb) : presetManager(pm), listBox(lb), itemFont(*HamburgerFonts::getFontLAF()->quicksandFont)
+	CustomListBoxModel(Preset::PresetManager &pm, ListBox &lb) : presetManager(pm), listBox(lb)
 	{
 		auto folderClosedIconString = R"svgDELIM(
 			<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-folder-closed"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/><path d="M2 10h20"/></svg>
@@ -43,7 +41,8 @@ public:
 
 		listBox.setRowHeight(36);
 
-		itemFont.setHeight(20.0f);
+		font = hamburgerLAF.getComboBoxFont();
+		font.setHeight(20.0f);
 	}
 
 	void initFiles(bool ignoreCollapsedStates = false)
@@ -159,7 +158,7 @@ public:
 			extraRoom = 35;
 
 		g.setColour(LookAndFeel::getDefaultLookAndFeel().findColour(Label::textColourId));
-		g.setFont(itemFont);
+		g.setFont(font);
 
 		auto presetName = row.getFile().getFileNameWithoutExtension();
 
@@ -173,7 +172,7 @@ public:
 				   Justification::centredLeft, true);
 
 		g.setColour(Colour::fromRGB(100, 100, 100));
-		g.setFont(itemFont);
+		g.setFont(font);
 
 
 		auto authorName = row.getAuthor();
@@ -255,7 +254,8 @@ private:
 	std::unique_ptr<juce::Drawable> folderClosedIcon;
 	std::unique_ptr<juce::Drawable> folderOpenIcon;
 
-	Font itemFont;
+	HamburgerLAF hamburgerLAF;
+	Font font;
 
 	JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(CustomListBoxModel)
 };
@@ -550,7 +550,7 @@ private:
 
 	TextButton currentPresetLabel;
 
-	ComboBoxLookAndFeel comboBoxLAF;
+	HamburgerLAF comboBoxLAF;
 
 	CustomPresetListBox listBox;
 	CustomListBoxModel listBoxModel;

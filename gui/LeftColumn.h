@@ -26,7 +26,6 @@ public:
         compander = std::make_unique<Module>(p, "COMP", "compressionOn", "compressionType", std::move(companderPanels));
         compander->setLookAndFeel(&knobLAF3);
         addAndMakeVisible(compander.get());
-
         
 
         std::vector<std::unique_ptr<Panel>> preDistortionPanels;
@@ -39,6 +38,7 @@ public:
 
         std::vector<std::unique_ptr<Panel>> logoPanels;
         logoPanels.push_back(std::make_unique<LogoPanel>(p));
+
         logo = std::make_unique<Module>(p, "CREDITS", "", "", std::move(logoPanels), true);
         addAndMakeVisible(logo.get());
 

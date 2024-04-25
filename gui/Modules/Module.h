@@ -2,7 +2,6 @@
 
 #include "../../PluginProcessor.h"
 #include "LightButton.h"
-#include "../LookAndFeel/ComboBoxLookAndFeel.h"
 #include "../Knob.h"
 #include "Panel.h"
 
@@ -92,11 +91,11 @@ public:
 
         if (modulePanels.size() == 1)
         {
-            header.items.add(FlexItem(titleLabel).withMinWidth(titleFont.getStringWidth(titleLabel.getText()) * 1.1f));
+            header.items.add(FlexItem(titleLabel).withMinWidth(titleFont.getStringWidth(titleLabel.getText()) * 1.8f));
         }
         else
         {
-            header.items.add(FlexItem(categorySelector).withMinWidth(titleFont.getStringWidth(categorySelector.getText()) * 1.4f + extraSpace));
+            header.items.add(FlexItem(categorySelector).withMinWidth(titleFont.getStringWidth(categorySelector.getText()) * 1.8f + extraSpace));
         }
 
         header.performLayout(titleBounds);
@@ -108,7 +107,7 @@ public:
     }
 
     std::unique_ptr<LightButton> enabledButton = nullptr;
-    ComboBoxLookAndFeel comboBoxLook;
+    HamburgerLAF comboBoxLook;
     juce::ComboBox categorySelector;
 
 private:

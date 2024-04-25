@@ -1,48 +1,128 @@
 #pragma once
-#include "../Utils/HamburgerFonts.h"
 
 
-class ComboBoxLookAndFeel : public juce::LookAndFeel_V4
+class HamburgerLAF : public juce::LookAndFeel_V4
 {
 public:
-    ComboBoxLookAndFeel()
+    HamburgerLAF(juce::Colour color = juce::Colour::fromRGB(50, 255, 205)) : knobColour(color)
     {
+        setColour(Slider::rotarySliderOutlineColourId, juce::Colours::black);
+        setColour(Slider::rotarySliderFillColourId, juce::Colours::white);
+        setColour(Slider::thumbColourId, juce::Colours::whitesmoke);
+        setColour(Slider::rotarySliderFillColourId, color);
 
         setColour(juce::ComboBox::ColourIds::backgroundColourId, juce::Colours::transparentBlack);
         setColour(juce::ComboBox::ColourIds::buttonColourId, juce::Colours::transparentBlack);
         setColour(juce::ComboBox::ColourIds::outlineColourId, juce::Colours::transparentBlack);
-        // setColour(juce::ComboBox::ColourIds::focusedOutlineColourId, juce::Colours::transparentBlack);
         setColour(juce::ComboBox::ColourIds::textColourId, juce::Colours::white);
+        setColour(juce::ComboBox::arrowColourId, juce::Colours::white);
+
+        // setColour(juce::ComboBox::ColourIds::focusedOutlineColourId, juce::Colours::transparentBlack);
+
         setColour(juce::PopupMenu::ColourIds::backgroundColourId, juce::Colours::black);
         setColour(juce::PopupMenu::ColourIds::textColourId, juce::Colours::white);
         setColour(juce::PopupMenu::ColourIds::highlightedBackgroundColourId, juce::Colour::fromHSV(0.0f, 0.0f, 0.2f, 1.0f));
         setColour(juce::PopupMenu::ColourIds::highlightedTextColourId, juce::Colours::white);
-        setColour(juce::ComboBox::arrowColourId, juce::Colours::white);
-    
-        #if JUCE_WINDOWS
-            questrialFont->setHeight(20);
-            quicksandFont->setHeight(24);
-        #else
-            questrialFont->setHeight(14);
-            quicksandFont->setHeight(18);
-        #endif
 
+
+        questrialFont12->setHeight(12.0f);
+        questrialFont14->setHeight(14.0f);
+        questrialFont16->setHeight(16.0f);
+
+        // dont use setsizeandstyle, it will remove the typeface info for windows specifically (weird bug)
+
+        #if JUCE_WINDOWS
+            questrialFont12->setHeight(18.0f);
+            questrialFont14->setHeight(20.0f);
+            questrialFont16->setHeight(22.0f);
+        #else
+            questrialFont12->setHeight(12.0f);
+            questrialFont14->setHeight(14.0f);
+            questrialFont16->setHeight(16.0f);
+        #endif
+    }
+
+
+    const juce::Typeface::Ptr questrialTypeface = juce::Typeface::createSystemTypefaceFor(BinaryData::QuestrialRegular_ttf, BinaryData::QuestrialRegular_ttfSize);
+    const juce::Typeface::Ptr quicksandTypeface = juce::Typeface::createSystemTypefaceFor(BinaryData::QuicksandBold_ttf, BinaryData::QuicksandBold_ttfSize);
+
+    const std::unique_ptr<Font> questrialFont = std::make_unique<juce::Font>(questrialTypeface);
+    const std::unique_ptr<Font> questrialFont12 = std::make_unique<juce::Font>(questrialTypeface);
+    const std::unique_ptr<Font> questrialFont14 = std::make_unique<juce::Font>(questrialTypeface);
+    const std::unique_ptr<Font> questrialFont16 = std::make_unique<juce::Font>(questrialTypeface);
+    const std::unique_ptr<Font> quicksandFont = std::make_unique<juce::Font>(quicksandTypeface);
+
+
+    ~HamburgerLAF()
+    {
+    }
+
+    Font getLabelFont(Label &label) override
+    {
+        return *questrialFont14;
+    }
+
+    Font getComboBoxFont(ComboBox &box) override
+    {
+        return *questrialFont14;
+    }
+
+    Font getPopupMenuFont() override
+    {
+        return *questrialFont16;
+    }
+
+    void drawRotarySlider(juce::Graphics &g, int x, int y, int width, int height, float sliderPos,
+                          const float rotaryStartAngle, const float rotaryEndAngle, juce::Slider &slider) override
+    {
+        auto thumb = slider.findColour(Slider::thumbColourId);
+
+        auto bounds = Rectangle<int>(x, y, width, height).toFloat().reduced(5.0f);
+
+        auto radius = jmin(bounds.getWidth(), bounds.getHeight()) / 2.0f;
+        auto toAngle = rotaryStartAngle + sliderPos * (rotaryEndAngle - rotaryStartAngle);
+        auto lineW = jmin(8.0f, radius * 0.5f);
+        auto arcRadius = radius - lineW * 0.5f;
+
+        Line<float> marker;
+
+        float xOffset = std::sin(toAngle) * arcRadius;
+        float yOffset = -std::cos(toAngle) * arcRadius;
+
+        marker.setStart(xOffset * 0.8f + bounds.getCentreX(), yOffset * 0.8f + bounds.getCentreY());
+        marker.setEnd(xOffset + bounds.getCentreX(), yOffset + bounds.getCentreY());
+
+        Path p;
+        p.addLineSegment(marker, radius * 0.08f);
+        g.setColour(thumb);
+        g.strokePath(p, PathStrokeType(radius * 0.08f, PathStrokeType::JointStyle::curved, PathStrokeType::EndCapStyle::rounded));
+    }
+
+    void drawComboBox(Graphics &g, int width, int height, bool,
+                      int, int, int, int, ComboBox &box) override
+    {
+        auto cornerSize = box.findParentComponentOfClass<ChoicePropertyComponent>() != nullptr ? 0.0f : 3.0f;
+        Rectangle<int> boxBounds(0, 0, width, height);
+
+        // g.setColour(box.findColour(ComboBox::backgroundColourId));
+        // g.fillRoundedRectangle(boxBounds.toFloat(), cornerSize);
+
+        // g.setColour(box.findColour(ComboBox::outlineColourId));
+        // g.drawRoundedRectangle(boxBounds.toFloat().reduced(0.5f, 0.5f), cornerSize, 1.0f);
+
+        Rectangle<int> arrowZone(5, 0, 20, height);
+        Path path;
+        path.startNewSubPath((float)arrowZone.getX() + 4.0f, (float)arrowZone.getCentreY() - 2.0f);
+        path.lineTo((float)arrowZone.getCentreX(), (float)arrowZone.getCentreY() + 3.0f);
+        path.lineTo((float)arrowZone.getRight() - 4.0f, (float)arrowZone.getCentreY() - 2.0f);
+
+        g.setColour(box.findColour(ComboBox::arrowColourId).withAlpha((box.isEnabled() ? 0.9f : 0.2f)));
+        g.strokePath(path, PathStrokeType(2.0f, juce::PathStrokeType::JointStyle::curved, juce::PathStrokeType::EndCapStyle::rounded));
     }
 
     Font getComboBoxFont()
     {
         
-        return *questrialFont;
-    }
-
-    Font getPopupMenuFont()
-    {
-        
-        return *questrialFont;
-    }
-
-    Font getLabelFont(Label &label) override
-    {
         return *questrialFont;
     }
 
@@ -61,36 +141,11 @@ public:
         return *quicksandFont;
     }
 
-
-    void drawComboBox(Graphics &g, int width, int height, bool,
-                      int, int, int, int, ComboBox &box)
-    {
-        auto cornerSize = box.findParentComponentOfClass<ChoicePropertyComponent>() != nullptr ? 0.0f : 3.0f;
-        Rectangle<int> boxBounds(0, 0, width, height);
-
-        g.setColour(box.findColour(ComboBox::backgroundColourId));
-        g.fillRoundedRectangle(boxBounds.toFloat(), cornerSize);
-
-        g.setColour(box.findColour(ComboBox::outlineColourId));
-        g.drawRoundedRectangle(boxBounds.toFloat().reduced(0.5f, 0.5f), cornerSize, 1.0f);
-
-        Rectangle<int> arrowZone(5, 0, 20, height);
-        Path path;
-        path.startNewSubPath((float)arrowZone.getX() + 4.0f, (float)arrowZone.getCentreY() - 2.0f);
-        path.lineTo((float)arrowZone.getCentreX(), (float)arrowZone.getCentreY() + 3.0f);
-        path.lineTo((float)arrowZone.getRight() - 4.0f, (float)arrowZone.getCentreY() - 2.0f);
-
-        g.setColour(box.findColour(ComboBox::arrowColourId).withAlpha((box.isEnabled() ? 0.9f : 0.2f)));
-        g.strokePath(path, PathStrokeType(2.0f, juce::PathStrokeType::JointStyle::curved, juce::PathStrokeType::EndCapStyle::rounded));
-    }
-
-    void positionComboBoxText(ComboBox &box, Label &label)
+    void positionComboBoxText(ComboBox &box, Label &label) override
     {
         label.setBounds(30, 1,
                         box.getWidth() - 30,
                         box.getHeight() - 2);
-
-        // label.setJustificationType(juce::Justification::centredRight);
 
         label.setFont(getComboBoxFont());
     }
@@ -100,7 +155,7 @@ public:
                            const bool isHighlighted, const bool isTicked,
                            const bool hasSubMenu, const String &text,
                            const String &shortcutKeyText,
-                           const Drawable *icon, const Colour *const textColourToUse)
+                           const Drawable *icon, const Colour *const textColourToUse) override
     {
         if (isSeparator)
         {
@@ -185,7 +240,7 @@ public:
     }
 
 private:
+    juce::Colour knobColour;
 
-    const std::unique_ptr<Font> questrialFont {std::make_unique<Font>(*HamburgerFonts::getFontLAF()->questrialTypeface)};
-    const std::unique_ptr<Font> quicksandFont {std::make_unique<Font>(*HamburgerFonts::getFontLAF()->quicksandTypeface)};
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(HamburgerLAF);
 };

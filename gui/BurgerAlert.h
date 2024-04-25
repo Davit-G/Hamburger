@@ -2,8 +2,6 @@
 
 #include "juce_gui_basics/juce_gui_basics.h"
 
-#include "LookAndFeel/ComboBoxLookAndFeel.h"
-
 class BurgerAlert : public juce::AlertWindow
 {
 public:
@@ -88,5 +86,5 @@ public:
 
 private:
 
-    ComboBoxLookAndFeel comboBoxLook;
+    HamburgerLAF comboBoxLook;
 };

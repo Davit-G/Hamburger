@@ -79,9 +79,11 @@ public:
 
         addAndMakeVisible(knob);
 
+        auto font = getParentComponent()->getLookAndFeel().getLabelFont(label);
+
         label.setColour(juce::Label::textColourId, juce::Colours::white);
         label.setJustificationType(juce::Justification::centredTop);
-        label.setFont(*HamburgerFonts::getFontLAF()->questrialFont);
+        label.setFont(font);
         addAndMakeVisible(label);
 
         label.setText(kName, juce::dontSendNotification);
