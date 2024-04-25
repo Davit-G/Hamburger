@@ -7,8 +7,6 @@ class KnobLAF : public HamburgerLAF
 public:
     KnobLAF(juce::Colour color = juce::Colour::fromRGB(50, 255, 205)) : knobColour(color)
     {
-        // call parent constructor
-        HamburgerLAF::HamburgerLAF(color);
 
         setColour(Slider::rotarySliderOutlineColourId, juce::Colours::black);
         setColour(Slider::rotarySliderFillColourId, juce::Colours::white);

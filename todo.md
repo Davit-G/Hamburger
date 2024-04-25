@@ -3,14 +3,11 @@
 double check all knob ranges are reasonable
 fill in matrix distortion section with more distortions
 give phase distortion more controls
-clean up memory leaks
 
 # Must
 
 support mono / stereo only, dont have it break on mono
 performance optimisations
-pluginval
-make all parameters smooth to remove clicking
 auval
 
 # Should
@@ -27,15 +24,10 @@ sentry.io proper pdb / breakpad minidump files to make symbols readable, or memo
 
 # feedback 
 
-allpass is mixing dry signal (?)
 correct oversampling delay compensation
-complete manual page, reupload with new info for plugin
-specify order of effect operations in manual or in plugin
-remove melatonin inspector and perfetto completely from git fetches on release builds
+complete manual page, reupload with new info for plugin (specify order of effect operations in manual or in plugin)
+remove perfetto completely from git fetches on release builds
 separate parameters that have common IDs in the apvts
-
 
 # other
 gain compensation on grunge?
-
-Revert to Release and not RelWithDebInfo once v1.0 is out
