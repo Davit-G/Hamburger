@@ -44,37 +44,20 @@ public:
         {
             float leftSample = block.getSample(0, sample);
             float rightSample = block.getSample(1, sample);
-
-            float lowResultL = 0.0f;
-            float notLowL = 0.0f;
+            
             lowCrossOver.processSample(0, leftSample, lowResultL, notLowL);
-            float midResultL = 0.0f;
-            float highResultL = 0.0f;
             highCrossOver.processSample(0, notLowL, midResultL, highResultL);
 
-            float lowResultR = 0.0f;
-            float notLowR = 0.0f;
             lowCrossOver.processSample(1, rightSample, lowResultR, notLowR);
-            float midResultR = 0.0f;
-            float highResultR = 0.0f;
             highCrossOver.processSample(1, notLowR, midResultR, highResultR);
 
             float lowGain = compressor1.processOneSampleGainStereo(lowResultL, lowResultR);
             float midGain = compressor2.processOneSampleGainStereo(midResultL, midResultR);
             float highGain = compressor3.processOneSampleGainStereo(highResultL, highResultR);
 
-            lowBuffer.setSample(0, sample, lowResultL * lowGain);
-            midBuffer.setSample(0, sample, midResultL * midGain);
-            highBuffer.setSample(0, sample, highResultL * highGain);
-            lowBuffer.setSample(1, sample, lowResultR * lowGain);
-            midBuffer.setSample(1, sample, midResultR * midGain);
-            highBuffer.setSample(1, sample, highResultR * highGain);
+            block.setSample(0, sample, (lowResultL * lowGain + midResultL * midGain + highResultL * highGain) * autoGain);
+            block.setSample(1, sample, (lowResultR * lowGain + midResultR * midGain + highResultR * highGain) * autoGain);
         }
-
-        block.copyFrom(lowBlock);
-        block.addProductOf(midBlock, 1.0f);
-        block.addProductOf(highBlock, 1.0f);
-        block.multiplyBy(autoGain);
     }
 
     void prepare(dsp::ProcessSpec &spec)
@@ -89,14 +72,6 @@ public:
         highCrossOver.setType(dsp::LinkwitzRileyFilterType::highpass);
         lowCrossOver.prepare(spec);
         highCrossOver.prepare(spec);
-
-        lowBuffer.setSize(2, spec.maximumBlockSize);
-        midBuffer.setSize(2, spec.maximumBlockSize);
-        highBuffer.setSize(2, spec.maximumBlockSize);
-
-        lowBlock = dsp::AudioBlock<float>(lowBuffer);
-        midBlock = dsp::AudioBlock<float>(midBuffer);
-        highBlock = dsp::AudioBlock<float>(highBuffer);
     }
 
 private:
@@ -110,15 +85,14 @@ private:
     SmoothParam speed;
     SmoothParam makeup;
 
-    AudioBuffer<float> lowBuffer;
-    AudioBuffer<float> midBuffer;
-    AudioBuffer<float> highBuffer;
-    dsp::AudioBlock<float> lowBlock;
-    dsp::AudioBlock<float> midBlock;
-    dsp::AudioBlock<float> highBlock;
-
-    // mid-high 2.5khz
-    // low - mid 500hz
+    float lowResultL = 0.0f;
+    float notLowL = 0.0f;
+    float midResultL = 0.0f;
+    float highResultL = 0.0f;
+    float lowResultR = 0.0f;
+    float notLowR = 0.0f;
+    float midResultR = 0.0f;
+    float highResultR = 0.0f;
 
     dsp::LinkwitzRileyFilter<float> lowCrossOver;
     dsp::LinkwitzRileyFilter<float> highCrossOver;
