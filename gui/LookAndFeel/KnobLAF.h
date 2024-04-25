@@ -16,10 +16,6 @@ public:
         setColour(Slider::rotarySliderFillColourId, color);
     }
 
-    ~KnobLAF()
-    {
-    }
-
 private:
     juce::Colour knobColour;
 };

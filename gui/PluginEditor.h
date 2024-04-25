@@ -63,7 +63,14 @@ public:
         setSize(800, 500 + additionalHeight);
     }
 
-    ~EditorV2() override {}
+    ~EditorV2()
+    {
+        setLookAndFeel(nullptr);
+        infoPanel.setLookAndFeel(nullptr);
+        leftColumn.setLookAndFeel(nullptr);
+        saturationColumn.setLookAndFeel(nullptr);
+        utilColumn.setLookAndFeel(nullptr);
+    }
 
     void paint(juce::Graphics &g) override
     {

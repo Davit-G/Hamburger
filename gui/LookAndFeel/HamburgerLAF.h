@@ -56,11 +56,6 @@ public:
     const std::unique_ptr<Font> questrialFont16 = std::make_unique<juce::Font>(questrialTypeface);
     const std::unique_ptr<Font> quicksandFont = std::make_unique<juce::Font>(quicksandTypeface);
 
-
-    ~HamburgerLAF()
-    {
-    }
-
     Font getQuicksandFont()
     {
         return *quicksandFont;
