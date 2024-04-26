@@ -37,10 +37,10 @@ public:
 
         presetTextEditor->setColour(juce::TextEditor::backgroundColourId, juce::Colour::fromRGB(22, 22, 22));
         presetTextEditor->setColour(juce::TextEditor::ColourIds::outlineColourId, juce::Colours::transparentBlack);
-        presetTextEditor->setFont(comboBoxLook.getComboBoxFont());
+        // presetTextEditor->setFont(comboBoxLook.getPopupMenuFont());
         authorTextEditor->setColour(juce::TextEditor::backgroundColourId, juce::Colour::fromRGB(22, 22, 22));
         authorTextEditor->setColour(juce::TextEditor::ColourIds::outlineColourId, juce::Colours::transparentBlack);
-        authorTextEditor->setFont(comboBoxLook.getComboBoxFont());
+        // authorTextEditor->setFont(comboBoxLook.getPopupMenuFont());
 
         auto okButton = getButton(0);
         auto cancelButton = getButton(1);

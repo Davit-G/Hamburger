@@ -24,20 +24,17 @@ public:
         setColour(juce::PopupMenu::ColourIds::highlightedBackgroundColourId, juce::Colour::fromHSV(0.0f, 0.0f, 0.2f, 1.0f));
         setColour(juce::PopupMenu::ColourIds::highlightedTextColourId, juce::Colours::white);
 
-
-        questrialFont12->setHeight(12.0f);
-        questrialFont14->setHeight(14.0f);
-        questrialFont16->setHeight(16.0f);
-
         // dont use setsizeandstyle, it will remove the typeface info for windows specifically (weird bug)
 
         #if JUCE_WINDOWS
+            questrialFont->setHeight(20.0f);
             questrialFont12->setHeight(18.0f);
             questrialFont14->setHeight(20.0f);
             questrialFont16->setHeight(22.0f);
 
             quicksandFont->setHeight(22.0f);
         #else
+            questrialFont->setHeight(14.0f);
             questrialFont12->setHeight(12.0f);
             questrialFont14->setHeight(14.0f);
             questrialFont16->setHeight(16.0f);

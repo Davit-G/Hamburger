@@ -70,6 +70,10 @@ public:
         adj4 = gain <= 0 ? 0.0000001f : exp(shape * log10(gain)) + 0.00000001f;
     }
 
+    inline float atanApprox(float x) {
+        return dsp::FastMathApproximations::tanh(x) + x * 0.08f;
+    }
+
     void processBlock(juce::dsp::AudioBlock<float> &block)
     {
         
@@ -85,8 +89,8 @@ public:
             double spl0 = (double)block.getSample(0, sample);
             double spl1 = (double)block.getSample(1, sample);
 
-            float driveKnob = drive.getNextValue() * 0.01f; // normalised between 0 - 1
-            float driveVal = juce::Decibels::decibelsToGain(driveKnob * 30.0f); 
+            double driveKnob = drive.getNextValue() * 0.01f; // normalised between 0 - 1
+            double driveVal = juce::Decibels::decibelsToGain(driveKnob * 30.0f); 
 
             spl0 = atan(spl0 * 1.3 * driveVal);
             spl1 = atan(spl1 * 1.3 * driveVal);
@@ -139,8 +143,8 @@ public:
             spl1 -= h1;
 
             // saturation
-            spl0 = atan(spl0 * delta0) / (spl0 == 0 ? 1 : (delta0 == 0 ? 0.00000000000001 : delta0));
-            spl1 = atan(spl1 * delta1) / (spl1 == 0 ? 1 : (delta1 == 0 ? 0.00000000000001 : delta1));
+            spl0 = atanApprox(spl0 * delta0) / (spl0 == 0 ? 1 : (delta0 == 0 ? 0.00000000000001 : delta0));
+            spl1 = atanApprox(spl1 * delta1) / (spl1 == 0 ? 1 : (delta1 == 0 ? 0.00000000000001 : delta1));
 
             // nested allpass
             if (buf_length1 == 0) {
@@ -190,8 +194,8 @@ public:
             l3 += ((delta1 - l3) * cut2);
             delta1 += l3;
             
-            spl0 = atan(spl0 * delta0) / (spl0 == 0 ? 1 : (delta0 == 0 ? 0.0000000000001 : delta0));
-            spl1 = atan(spl1 * delta1) / (spl1 == 0 ? 1 : (delta1 == 0 ? 0.0000000000001 : delta1));
+            spl0 = atanApprox(spl0 * delta0) / (spl0 == 0 ? 1 : (delta0 == 0 ? 0.0000000000001 : delta0));
+            spl1 = atanApprox(spl1 * delta1) / (spl1 == 0 ? 1 : (delta1 == 0 ? 0.0000000000001 : delta1));
             
             spl0 /= adj3 * (driveVal * 0.1f + 1.0f);
             spl1 /= adj4 * (driveVal * 0.1f + 1.0f);

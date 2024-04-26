@@ -91,11 +91,11 @@ public:
 
         if (modulePanels.size() == 1)
         {
-            header.items.add(FlexItem(titleLabel).withMinWidth(titleFont.getStringWidth(titleLabel.getText()) * 1.8f));
+            header.items.add(FlexItem(titleLabel).withMinWidth(titleFont.getStringWidth(titleLabel.getText()) * 1.1f));
         }
         else
         {
-            header.items.add(FlexItem(categorySelector).withMinWidth(titleFont.getStringWidth(categorySelector.getText()) * 1.8f + extraSpace));
+            header.items.add(FlexItem(categorySelector).withMinWidth(titleFont.getStringWidth(categorySelector.getText()) * 1.4f + extraSpace));
         }
 
         header.performLayout(titleBounds);
