@@ -21,6 +21,8 @@ icons in middle of saturation knobs with different cool things like tube, rubidi
 other filters before / after distortion, such as combs / phasers / filters etc  
 self hosted sentry.io?
 sentry.io proper pdb / breakpad minidump files to make symbols readable, or memory dump. might be too much for free plugin?
+allpass stack in phase path for phase distortion
+frequency shifter in phase path for phase distortion
 
 # feedback 
 
