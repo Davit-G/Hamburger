@@ -22,6 +22,7 @@ private:
     SmoothParam amount;
     SmoothParam tone;
     SmoothParam normalise;
+    SmoothParam rectify;
 
     float sampleRate;
 

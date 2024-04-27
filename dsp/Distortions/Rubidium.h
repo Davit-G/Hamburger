@@ -34,7 +34,7 @@ public:
 
         updateCoefficients();
 
-        float stepRatio = 2.0f;
+        float stepRatio = 11.0f;
         vol = 0.9f;
 
         buf_length1 = fmax((stepRatio * 2) - 1, 0);
@@ -52,18 +52,18 @@ public:
     }
 
     void updateCoefficients() {
-        float satAmt = powf((mojo.getNextValue() * 0.9f + 10.0f) * 0.01f, 1.2f) * 100.0f + 5.0f;
+        float satAmt = powf((mojo.getNextValue()) * 0.01f, 1.2f) * 100.0f + 5.0f;
         float hystAmt = powf(hysteresis.getNextValue() * 0.1f, 2.0f) * 300.f;
         float toneAmt = tone.getNextValue();
 
         highpassFreq = toneAmt;
 
-        gain = 0.125 + (satAmt / 15);
-        hys0 = 0.015625 + 0.015625 * (hystAmt / 12.5);
-        hys1 = hystAmt / 100;
-        cut0 = 2 * juce::MathConstants<float>::pi * (highpassFreq + rand0) * dt;
-        cut1 = 2 * juce::MathConstants<float>::pi * (highpassFreq + rand1) * dt;
-        cut2 = 0.f;
+        gain = 0.125 + (satAmt * 0.06666666f);
+        hys0 = 0.015625 + 0.015625 * (hystAmt * 0.08f);
+        hys1 = hystAmt * 0.01f;
+        cut0 = juce::MathConstants<float>::twoPi * (highpassFreq + rand0) * dt;
+        cut1 = juce::MathConstants<float>::twoPi * (highpassFreq + rand1) * dt;
+        cut2 = juce::MathConstants<float>::twoPi * (0.0f) * dt;
 
         // smooth fader
         adj3 = gain <= 0 ? 0.0000001f : exp(shape * log10(gain)) + 0.00000001f;
@@ -89,11 +89,11 @@ public:
             double spl0 = (double)block.getSample(0, sample);
             double spl1 = (double)block.getSample(1, sample);
 
-            double driveKnob = drive.getNextValue() * 0.01f; // normalised between 0 - 1
-            double driveVal = juce::Decibels::decibelsToGain(driveKnob * 30.0f); 
+            double driveKnob = drive.getNextValue(); // between 0 and 100
+            double driveVal = juce::Decibels::decibelsToGain(driveKnob * 0.3f); 
 
-            spl0 = atan(spl0 * 1.3 * driveVal);
-            spl1 = atan(spl1 * 1.3 * driveVal);
+            spl0 = atan(spl0 * 1.1 * driveVal);
+            spl1 = atan(spl1 * 1.1 * driveVal);
 
             spl0 *= adj3;
             spl1 *= adj4;
@@ -147,40 +147,40 @@ public:
             spl1 = atanApprox(spl1 * delta1) / (spl1 == 0 ? 1 : (delta1 == 0 ? 0.00000000000001 : delta1));
 
             // nested allpass
-            if (buf_length1 == 0) {
-                double in2 = spl0 + cDenorm;
-                double v_n2 = in2 + dataBuffer.getSample(0, v_n_buf2 + pos2) * -g;
-                double out2 = v_n2 * g + dataBuffer.getSample(0, v_n_buf2 + pos2);
-                dataBuffer.setSample(0, v_n_buf2 + pos2, v_n2);
-                pos2 += 1;
-                if (pos2 > buf_length1)
-                    pos2 = 0;
-                spl0 = out2;
-                double in3 = spl1 + cDenorm;
-                double v_n3 = in3 + dataBuffer.getSample(0, v_n_buf3 + pos3) * -g;
-                double out3 = v_n3 * g + dataBuffer.getSample(0, v_n_buf3 + pos3);
-                dataBuffer.setSample(0, v_n_buf3 + pos3, v_n3);
-                pos3 += 1;
-                if (pos3 > buf_length1)
-                    pos3 = 0;
-                spl1 = out3;
+            // if (buf_length1 == 0) {
+            //     double in2 = spl0 + cDenorm;
+            //     double v_n2 = in2 + dataBuffer.getSample(0, v_n_buf2 + pos2) * -g;
+            //     double out2 = v_n2 * g + dataBuffer.getSample(0, v_n_buf2 + pos2);
+            //     dataBuffer.setSample(0, v_n_buf2 + pos2, v_n2);
+            //     pos2 += 1;
+            //     if (pos2 > buf_length1)
+            //         pos2 = 0;
+            //     spl0 = out2;
+            //     double in3 = spl1 + cDenorm;
+            //     double v_n3 = in3 + dataBuffer.getSample(0, v_n_buf3 + pos3) * -g;
+            //     double out3 = v_n3 * g + dataBuffer.getSample(0, v_n_buf3 + pos3);
+            //     dataBuffer.setSample(0, v_n_buf3 + pos3, v_n3);
+            //     pos3 += 1;
+            //     if (pos3 > buf_length1)
+            //         pos3 = 0;
+            //     spl1 = out3;
 
-                // delta
-                double in4 = delta0 + cDenorm;
-                double v_n4 = in4 + dataBuffer.getSample(0, v_n_buf4 + pos4) * -g;
-                delta0 = v_n4 * g + dataBuffer.getSample(0, v_n_buf4 + pos4);
-                dataBuffer.setSample(0, v_n_buf4 + pos4, v_n4);
-                pos4 += 1;
-                if (pos4 > buf_length1)
-                    pos4 = 0;
-                double in5 = delta1 + cDenorm;
-                double v_n5 = in5 + dataBuffer.getSample(0, v_n_buf5 + pos5) * -g;
-                delta1 = v_n5 * g + dataBuffer.getSample(0, v_n_buf5 + pos5);
-                dataBuffer.setSample(0, v_n_buf5 + pos5, v_n5);
-                pos5 += 1;
-                if (pos5 > buf_length1)
-                    pos5 = 0;
-            }
+            //     // delta
+            //     double in4 = delta0 + cDenorm;
+            //     double v_n4 = in4 + dataBuffer.getSample(0, v_n_buf4 + pos4) * -g;
+            //     delta0 = v_n4 * g + dataBuffer.getSample(0, v_n_buf4 + pos4);
+            //     dataBuffer.setSample(0, v_n_buf4 + pos4, v_n4);
+            //     pos4 += 1;
+            //     if (pos4 > buf_length1)
+            //         pos4 = 0;
+            //     double in5 = delta1 + cDenorm;
+            //     double v_n5 = in5 + dataBuffer.getSample(0, v_n_buf5 + pos5) * -g;
+            //     delta1 = v_n5 * g + dataBuffer.getSample(0, v_n_buf5 + pos5);
+            //     dataBuffer.setSample(0, v_n_buf5 + pos5, v_n5);
+            //     pos5 += 1;
+            //     if (pos5 > buf_length1)
+            //         pos5 = 0;
+            // }
 
             // signal highpass
             h2 += ((spl0 - h2) * cut2);
@@ -197,8 +197,9 @@ public:
             spl0 = atanApprox(spl0 * delta0) / (spl0 == 0 ? 1 : (delta0 == 0 ? 0.0000000000001 : delta0));
             spl1 = atanApprox(spl1 * delta1) / (spl1 == 0 ? 1 : (delta1 == 0 ? 0.0000000000001 : delta1));
             
-            spl0 /= adj3 * (driveVal * 0.1f + 1.0f);
-            spl1 /= adj4 * (driveVal * 0.1f + 1.0f);
+            auto compensation = (driveVal * 0.1f + 1.0f);
+            spl0 /= adj3 * compensation;
+            spl1 /= adj4 * compensation;
             
             spl0 *= vol;
             spl1 *= vol;
@@ -269,7 +270,7 @@ private:
     double l3 = 0;
     // filter randomizer
     double rand0 = 0.02;
-    double rand1 = 0.02;
+    double rand1 = 0.09;
     // single pole allpass
     double ap1_k0 = -0.9;
     double ap1_k1 = -0.9;

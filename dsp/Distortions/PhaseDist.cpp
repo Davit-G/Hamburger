@@ -2,11 +2,16 @@
 
 #include "PhaseDist.h"
 
+inline float weirdRectify(float x, float a) {
+	return a * powf(abs(x) * 1.5f, 2.0f) + x * (1.0f - a);
+}
+
 //==============================================================================
 PhaseDist::PhaseDist(juce::AudioProcessorValueTreeState& treeState) : 
 	amount(treeState, ParamIDs::phaseAmount),
 	tone(treeState, ParamIDs::phaseDistTone),
-	normalise(treeState, ParamIDs::phaseDistNormalise)
+	normalise(treeState, ParamIDs::phaseDistNormalise),
+	rectify(treeState, ParamIDs::phaseRectify)
 	{};
 
 void PhaseDist::prepare(juce::dsp::ProcessSpec& spec) noexcept {
@@ -15,6 +20,7 @@ void PhaseDist::prepare(juce::dsp::ProcessSpec& spec) noexcept {
 	amount.prepare(spec);
 	tone.prepare(spec);
 	normalise.prepare(spec);
+	rectify.prepare(spec);
 
 	*filter.state = juce::dsp::IIR::ArrayCoefficients<float>::makeLowPass(spec.sampleRate, 20000.0f, 0.707f);
 	filter.prepare(spec);
@@ -28,6 +34,7 @@ void PhaseDist::processBlock(juce::dsp::AudioBlock<float>& block) noexcept {
 	amount.update();
 	tone.update();
 	normalise.update();
+	rectify.update();
 
 	// we want to move to the delay line
 	for (int i = 0; i < block.getNumSamples(); i++) {
@@ -42,7 +49,7 @@ void PhaseDist::processBlock(juce::dsp::AudioBlock<float>& block) noexcept {
 	// apply the distortion
 	for (int i = 0; i < block.getNumSamples(); i++) {
 		const float nextAmt = amount.get() * 0.01f;
-		auto amt = nextAmt * nextAmt * nextAmt * 60.0f * 20.0f;
+		auto amt = nextAmt * nextAmt * nextAmt * 1200.f;
 
 		const float nextNormalise = normalise.get() * 10.0f;
 
@@ -51,10 +58,12 @@ void PhaseDist::processBlock(juce::dsp::AudioBlock<float>& block) noexcept {
 
 		float mono = (fmin(left, right) + fmax(left, right)) / 2.0f;
 
+		mono = weirdRectify(mono, rectify.get());
+
 		float normalised = approxTanhWaveshaper1(mono, 4.0f + 0.00001f);
 
 		auto phaseShiftL = (normalised + 2.0f) * amt * (sampleRate / 44100.0f);
-		phaseShiftL = phaseShiftL + nextNormalise * sin(mono);
+		phaseShiftL = phaseShiftL + nextNormalise * sin(mono * 3.0f);
 		
 		auto leftProcessed = delayLine.popSample(0, phaseShiftL);
 		auto rightProcessed = delayLine.popSample(1, phaseShiftL);
