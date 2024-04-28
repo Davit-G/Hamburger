@@ -2,7 +2,6 @@
 
 double check all knob ranges are reasonable
 fill in matrix distortion section with more distortions
-give phase distortion more controls
 
 # Must
 

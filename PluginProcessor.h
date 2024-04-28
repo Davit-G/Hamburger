@@ -14,12 +14,10 @@
 
 #include "gui/Modules/Scope.h"
 
-#include "dsp/FIltering/EmphasisFilter.h"
+#include "dsp/Filtering/EmphasisFilter.h"
 
 #include "dsp/Fifo.h"
 #include "service/PresetManager.h"
-
-// #include "dsp/ProcessDuplicator.h"
 
 // profiling
 #include <melatonin_perfetto/melatonin_perfetto.h>
