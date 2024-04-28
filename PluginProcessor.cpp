@@ -35,6 +35,7 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor() : AudioProcessor(BusesPro
 {
 
     // sentry.io crash reporting
+#if SENTRY
 
     auto pluginWithVersion = juce::String(JucePlugin_Name);
 
@@ -57,7 +58,6 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor() : AudioProcessor(BusesPro
         }
     }
 
-#if SENTRY
 
     sentry_options_t *options = sentry_options_new();
     sentry_options_set_debug(options, false);
@@ -330,10 +330,6 @@ void AudioPluginAudioProcessor::releaseResources()
 
 bool AudioPluginAudioProcessor::isBusesLayoutSupported(const BusesLayout &layouts) const
 {
-    // This is the place where you check if the layout is supported.
-    // In this template code we only support mono or stereo.
-    // Some plugin hosts, such as certain GarageBand versions, will only
-    // load plugins that support stereo bus layouts.
     if (layouts.getMainOutputChannelSet() != juce::AudioChannelSet::mono() && layouts.getMainOutputChannelSet() != juce::AudioChannelSet::stereo())
         return false;
 
@@ -351,7 +347,6 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
 
     juce::ignoreUnused(midiMessages);
 
-    // int newSamplingRate = getSampleRate() * pow(2, oversampleAmount);
     {
         TRACE_EVENT("dsp", "oversampling config");
 
@@ -380,32 +375,17 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear(i, 0, buffer.getNumSamples());
 
-    TRACE_EVENT_BEGIN("dsp", "audio block from buffer");
-
     juce::dsp::AudioBlock<float> block(buffer);
     juce::dsp::ProcessContextReplacing<float> context(block);
 
-    TRACE_EVENT_END("dsp");
-    // dry/wet
-
-    // input gain
-    // Some computation here
     auto gainAmount = inputGainKnob->get();
     inputGain.setGainDecibels(gainAmount);
     inputGain.process(context);
 
-    // xsimd::dispatch(SIMDGain::process{})(block, juce::Decibels::decibelsToGain(gainAmount));
-
     dryWetMixer.pushDrySamples(block);
 
-    float prevEmphasis[2] = {0.f, 0.f};
-    float prevFrequencies[2] = {62.0f, 9000.0f};
-    
-
-    // before filter
     emphasisFilter.processBefore(buffer);
 
-    // companding
     {
         TRACE_EVENT("dsp", "companding");
         dynamics.processBlock(block);
@@ -430,7 +410,6 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
 
     oversamplingStack.processSamplesDown(block);
 
-    // after emphasis filter
     emphasisFilter.processAfter(buffer);
 
     {
@@ -443,7 +422,7 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
         }
         oversamplingStackPost.processSamplesDown(block);
 
-        // before output gain
+        
         scopeDataCollector.process(buffer.getReadPointer(0), buffer.getReadPointer(1), (size_t)buffer.getNumSamples());
 
         outputGain.setGainDecibels(outputGainKnob->get());
@@ -458,7 +437,7 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
 //==============================================================================
 bool AudioPluginAudioProcessor::hasEditor() const
 {
-    return true; // (change this to false if you choose to not supply an editor)
+    return true;
 }
 
 juce::AudioProcessorEditor *AudioPluginAudioProcessor::createEditor()

@@ -87,11 +87,6 @@ private:
     juce::AudioParameterInt *hq = nullptr;
     juce::AudioParameterBool *hamburgerEnabledButton = nullptr;
 
-    juce::AudioParameterFloat *emphasisLow = nullptr;
-    juce::AudioParameterFloat *emphasisHigh = nullptr;
-    juce::AudioParameterFloat *emphasisLowFreq = nullptr;
-    juce::AudioParameterFloat *emphasisHighFreq = nullptr;
-
     juce::AudioParameterChoice *oversamplingFactor = nullptr;
 
     PreDistortion preDistortionSelection;
@@ -101,8 +96,6 @@ private:
     PostClip postClip;
 
     EmphasisFilter emphasisFilter;
-
-    float filterFrequencies[2] = {62.0f, 9000.0f};
 
     dsp::Gain<float> inputGain;
     dsp::Gain<float> outputGain;
@@ -115,15 +108,13 @@ private:
 
     int oldOversamplingFactor = 0;
 
-    int filterCount[2] = {0, 0};
-
     AudioBufferQueue<float> audioBufferQueueL;
     AudioBufferQueue<float> audioBufferQueueR;
     ScopeDataCollector<float> scopeDataCollector { audioBufferQueueL, audioBufferQueueR };
 
     std::unique_ptr<Preset::PresetManager> presetManager;
 
-    #if PERFETTO // if we have the profiling
+    #if PERFETTO
         std::unique_ptr<perfetto::TracingSession> tracingSession;
     #endif
 
