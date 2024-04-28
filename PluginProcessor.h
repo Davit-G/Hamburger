@@ -14,7 +14,7 @@
 
 #include "gui/Modules/Scope.h"
 
-#include "dsp/FIlter/EmphasisFilter.h"
+#include "dsp/FIltering/EmphasisFilter.h"
 
 #include "dsp/Fifo.h"
 #include "service/PresetManager.h"
@@ -118,6 +118,6 @@ private:
         std::unique_ptr<perfetto::TracingSession> tracingSession;
     #endif
 
-    
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AudioPluginAudioProcessor)
 };
