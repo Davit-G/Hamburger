@@ -14,6 +14,8 @@
 
 #include "gui/Modules/Scope.h"
 
+#include "dsp/FIlter/EmphasisFilter.h"
+
 #include "dsp/Fifo.h"
 #include "service/PresetManager.h"
 
@@ -82,7 +84,6 @@ private:
     juce::AudioParameterFloat *outputGainKnob = nullptr;
 
     juce::AudioParameterBool *clipEnabled = nullptr;
-    juce::AudioParameterBool *enableEmphasis = nullptr;
     juce::AudioParameterInt *hq = nullptr;
     juce::AudioParameterBool *hamburgerEnabledButton = nullptr;
 
@@ -99,18 +100,7 @@ private:
     Dynamics dynamics;
     PostClip postClip;
 
-    SmoothParam emphasisLowSmooth;
-    SmoothParam emphasisHighSmooth;
-    SmoothParam emphasisLowFreqSmooth;
-    SmoothParam emphasisHighFreqSmooth;
-
-    std::vector<float> emphasisLowBuffer;
-    std::vector<float> emphasisHighBuffer;
-    std::vector<float> emphasisLowFreqBuffer;
-    std::vector<float> emphasisHighFreqBuffer;
-
-    dsp::IIR::Filter<double> peakFilterBefore[2][2];
-    dsp::IIR::Filter<double> peakFilterAfter[2][2];
+    EmphasisFilter emphasisFilter;
 
     float filterFrequencies[2] = {62.0f, 9000.0f};
 
@@ -124,6 +114,8 @@ private:
     OversamplingStack oversamplingStackPost;
 
     int oldOversamplingFactor = 0;
+
+    int filterCount[2] = {0, 0};
 
     AudioBufferQueue<float> audioBufferQueueL;
     AudioBufferQueue<float> audioBufferQueueR;
