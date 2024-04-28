@@ -60,7 +60,7 @@ set(SENTRY 0)
 if(NOT DEFINED ENV{SENTRY_URL}) 
     message(WARNING "SENTRY_URL not set, falling back to env.cmake")
 
-    if(EXISTS "./env.cmake")
+    if(EXISTS "${CMAKE_SOURCE_DIR}/env.cmake")
         include(env.cmake)
     endif()
     
@@ -77,7 +77,7 @@ else()
     set(SENTRY 1)
 endif()
 
-set(SENTRY_BACKEND "breakpad")
+set(SENTRY_BACKEND "crashpad")
 
 # set commit hash for sentry 
 execute_process(

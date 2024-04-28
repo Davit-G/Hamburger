@@ -53,7 +53,7 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor() : AudioProcessor(BusesPro
         const auto result = logsPath.createDirectory();
         if (result.failed())
         {
-            DBG("Could not create preset directory: " + result.getErrorMessage());
+            DBG("Could not create logs directory: " + result.getErrorMessage());
             jassertfalse;
         }
     }
