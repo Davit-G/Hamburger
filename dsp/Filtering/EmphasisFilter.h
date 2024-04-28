@@ -61,7 +61,7 @@ public:
         sampleRate = spec.sampleRate;
     }
 
-    void processBefore(juce::AudioBuffer<float> &buffer)
+    void processBefore(juce::dsp::AudioBlock<float>& block)
     {
         emphasisOn = enableEmphasis->get();
 
@@ -75,7 +75,7 @@ public:
 
         TRACE_EVENT("dsp", "emphasis EQ before");
 
-        for (int i = 0; i < buffer.getNumSamples(); i++)
+        for (int i = 0; i < block.getNumSamples(); i++)
         {
             emphasisLowBuffer[i] = emphasisLowSmooth.get();
             emphasisHighBuffer[i] = emphasisHighSmooth.get();
@@ -85,7 +85,7 @@ public:
 
         // figure out if coefficients need updating
 
-        for (int sample = 0; sample < buffer.getNumSamples(); sample++)
+        for (int sample = 0; sample < block.getNumSamples(); sample++)
         {
             float nextEmphasisLow = emphasisLowBuffer[sample];
             float nextEmphasisHigh = emphasisHighBuffer[sample];
@@ -95,13 +95,13 @@ public:
             auto highCoeffs = juce::dsp::IIR::ArrayCoefficients<double>::makePeakFilter(sampleRate, nextEmphasisHighFreq, 0.5f, Decibels::decibelsToGain(-nextEmphasisHigh));
             auto lowCoeffs = juce::dsp::IIR::ArrayCoefficients<double>::makePeakFilter(sampleRate, nextEmphasisLowFreq, 0.5f, Decibels::decibelsToGain(-nextEmphasisLow));
 
-            for (int channel = 0; channel < buffer.getNumChannels(); channel++)
+            for (int channel = 0; channel < block.getNumChannels(); channel++)
             {
                 *peakFilterBefore[1][channel].coefficients = highCoeffs;
                 *peakFilterBefore[0][channel].coefficients = lowCoeffs;
 
-                auto interm = peakFilterBefore[0][channel].processSample(buffer.getSample(channel, sample));
-                buffer.setSample(channel, sample, peakFilterBefore[1][channel].processSample(interm));
+                auto interm = peakFilterBefore[0][channel].processSample(block.getSample(channel, sample));
+                block.setSample(channel, sample, peakFilterBefore[1][channel].processSample(interm));
             }
         }
 
@@ -115,14 +115,14 @@ public:
         peakFilterAfter[1][1].snapToZero();
     }
 
-    void processAfter(juce::AudioBuffer<float> &buffer)
+    void processAfter(juce::dsp::AudioBlock<float>& block)
     {
         if (!emphasisOn)
             return;
 
-        for (int channel = 0; channel < buffer.getNumChannels(); channel++)
+        for (int channel = 0; channel < block.getNumChannels(); channel++)
         {
-            for (int sample = 0; sample < buffer.getNumSamples(); sample++)
+            for (int sample = 0; sample < block.getNumSamples(); sample++)
             {
                 float nextEmphasisLow = emphasisLowBuffer[sample];
                 float nextEmphasisHigh = emphasisHighBuffer[sample];
@@ -152,8 +152,8 @@ public:
 
                 float eqCompensation = (emphasisLowSmooth.getRaw() + emphasisHighSmooth.getRaw()) * 0.133f;
 
-                auto interm = peakFilterAfter[0][channel].processSample(buffer.getSample(channel, sample));
-                buffer.setSample(channel, sample, peakFilterAfter[1][channel].processSample(interm) * juce::Decibels::decibelsToGain(-eqCompensation));
+                auto interm = peakFilterAfter[0][channel].processSample(block.getSample(channel, sample));
+                block.setSample(channel, sample, peakFilterAfter[1][channel].processSample(interm) * juce::Decibels::decibelsToGain(-eqCompensation));
             }
         }
     }

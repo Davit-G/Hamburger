@@ -291,14 +291,11 @@ void AudioPluginAudioProcessor::prepareToPlay(double sampleRate, int samplesPerB
 
     inputGain.prepare(spec);
     outputGain.prepare(spec);
-    emphasisCompensationGain.prepare(spec);
 
     emphasisFilter.prepare(spec);
 
     oversamplingStack.setOversamplingFactor(hq->get());
     oversamplingStack.prepare(spec);
-    oversamplingStackPost.setOversamplingFactor(hq->get());
-    oversamplingStackPost.prepare(spec);
 
     juce::dsp::ProcessSpec oversampledSpec;
     oversampledSpec.sampleRate = sampleRate * pow(2, oversamplingStack.getOversamplingFactor());
@@ -307,14 +304,14 @@ void AudioPluginAudioProcessor::prepareToPlay(double sampleRate, int samplesPerB
 
     distortionTypeSelection.prepare(oversampledSpec);
     postClip.prepare(oversampledSpec);
+    preDistortionSelection.prepare(oversampledSpec);
+    noiseDistortionSelection.prepare(oversampledSpec);
+    dynamics.prepare(oversampledSpec);
 
-    preDistortionSelection.prepare(spec);
-    noiseDistortionSelection.prepare(spec);
+    float totalLatency = oversamplingStack.getLatencySamples();
 
-    dynamics.prepare(spec);
-
-    float totalLatency = oversamplingStack.getLatencySamples() + oversamplingStackPost.getLatencySamples();
     DBG("Total Latency: " << totalLatency);
+
     setLatencySamples((int)std::ceil(totalLatency));
 
     dryWetMixer.reset();
@@ -384,44 +381,40 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
 
     dryWetMixer.pushDrySamples(block);
 
-    emphasisFilter.processBefore(buffer);
+    dsp::AudioBlock<float> oversampledBlock = oversamplingStack.processSamplesUp(block);
+
+    emphasisFilter.processBefore(oversampledBlock);
 
     {
         TRACE_EVENT("dsp", "companding");
-        dynamics.processBlock(block);
+        dynamics.processBlock(oversampledBlock);
     }
 
     {
         TRACE_EVENT("dsp", "noise distortion");
-        noiseDistortionSelection.processBlock(block); // TODO: make order changer thingy
+        noiseDistortionSelection.processBlock(oversampledBlock);
     }
 
     {
         TRACE_EVENT("dsp", "pre distortion");
-        preDistortionSelection.processBlock(block);
+        preDistortionSelection.processBlock(oversampledBlock);
     }
-
-    dsp::AudioBlock<float> oversampledBlock = oversamplingStack.processSamplesUp(block);
 
     {
         TRACE_EVENT("dsp", "primary distortion");
         distortionTypeSelection.processBlock(oversampledBlock);
     }
 
-    oversamplingStack.processSamplesDown(block);
-
-    emphasisFilter.processAfter(buffer);
+    emphasisFilter.processAfter(oversampledBlock);
 
     {
         TRACE_EVENT("dsp", "other");
-
-        dsp::AudioBlock<float> oversampledBlock2 = oversamplingStackPost.processSamplesUp(block);
         if (clipEnabled->get())
         {
-            postClip.processBlock(oversampledBlock2);
+            postClip.processBlock(oversampledBlock);
         }
-        oversamplingStackPost.processSamplesDown(block);
 
+        oversamplingStack.processSamplesDown(block);
         
         scopeDataCollector.process(buffer.getReadPointer(0), buffer.getReadPointer(1), (size_t)buffer.getNumSamples());
 

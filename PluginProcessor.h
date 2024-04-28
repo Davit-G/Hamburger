@@ -97,12 +97,10 @@ private:
 
     dsp::Gain<float> inputGain;
     dsp::Gain<float> outputGain;
-    dsp::Gain<float> emphasisCompensationGain;
 
     dsp::DryWetMixer<float> dryWetMixer;
 
     OversamplingStack oversamplingStack;
-    OversamplingStack oversamplingStackPost;
 
     int oldOversamplingFactor = 0;
 
