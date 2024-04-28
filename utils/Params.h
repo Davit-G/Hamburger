@@ -117,7 +117,7 @@ namespace ParamIDs {
     // phase distortion
     static const juce::ParameterID phaseAmount { "phaseAmount", 1 };
     static const juce::ParameterID phaseDistTone { "phaseDistTone", 1 };
-    static const juce::ParameterID phaseDistNormalise { "phaseDistNormalise", 1 };
+    static const juce::ParameterID phaseDistStereo { "phaseDistStereo", 1 };
     static const juce::ParameterID phaseRectify { "phaseRectify", 1 };
 
     // tube distortion

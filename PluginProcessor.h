@@ -118,6 +118,6 @@ private:
         std::unique_ptr<perfetto::TracingSession> tracingSession;
     #endif
 
-    //==============================================================================
+    
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AudioPluginAudioProcessor)
 };

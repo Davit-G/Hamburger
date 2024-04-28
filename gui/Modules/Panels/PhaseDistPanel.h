@@ -11,7 +11,7 @@ public:
     PhaseDistPanel(AudioPluginAudioProcessor &p) : Panel(p, "PHASE"), 
         satKnob(p, "SATURATION", ParamIDs::phaseAmount, ParamUnits::percent),
         toneKnob(p, "TONE", ParamIDs::phaseDistTone, ParamUnits::hz),
-        normKnob(p, "NORMALIZE", ParamIDs::phaseDistNormalise),
+        normKnob(p, "STEREO", ParamIDs::phaseDistStereo),
         rectKnob(p, "RECTIFY", ParamIDs::phaseRectify)
     {
         addAndMakeVisible(satKnob);

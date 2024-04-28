@@ -10,16 +10,18 @@ inline float weirdRectify(float x, float a) {
 PhaseDist::PhaseDist(juce::AudioProcessorValueTreeState& treeState) : 
 	amount(treeState, ParamIDs::phaseAmount),
 	tone(treeState, ParamIDs::phaseDistTone),
-	normalise(treeState, ParamIDs::phaseDistNormalise),
+	stereo(treeState, ParamIDs::phaseDistStereo),
 	rectify(treeState, ParamIDs::phaseRectify)
 	{};
 
 void PhaseDist::prepare(juce::dsp::ProcessSpec& spec) noexcept {
 	this->sampleRate = spec.sampleRate;
 
+	sampleRateMult = spec.sampleRate / 44100.0f;
+
 	amount.prepare(spec);
 	tone.prepare(spec);
-	normalise.prepare(spec);
+	stereo.prepare(spec);
 	rectify.prepare(spec);
 
 	*filter.state = juce::dsp::IIR::ArrayCoefficients<float>::makeLowPass(spec.sampleRate, 20000.0f, 0.707f);
@@ -33,7 +35,7 @@ void PhaseDist::processBlock(juce::dsp::AudioBlock<float>& block) noexcept {
 	TRACE_EVENT("dsp", "PhaseDist::processBlock");
 	amount.update();
 	tone.update();
-	normalise.update();
+	stereo.update();
 	rectify.update();
 
 	// we want to move to the delay line
@@ -51,22 +53,29 @@ void PhaseDist::processBlock(juce::dsp::AudioBlock<float>& block) noexcept {
 		const float nextAmt = amount.get() * 0.01f;
 		auto amt = nextAmt * nextAmt * nextAmt * 1200.f;
 
-		const float nextNormalise = normalise.get() * 10.0f;
+		const float nextStereo = stereo.get() * 2.0f;
 
-		float left = block.getSample(0, i);
-		float right = block.getSample(1, i);
+		float l = block.getSample(0, i);
+		float r = block.getSample(1, i);
 
-		float mono = (fmin(left, right) + fmax(left, right)) / 2.0f;
+		float mono = (fmin(l, r) + fmax(l, r)) / 2.0f;
 
-		mono = weirdRectify(mono, rectify.get());
+		float left = l * nextStereo - mono;
+		float right = r * nextStereo - mono;
 
-		float normalised = approxTanhWaveshaper1(mono, 4.0f + 0.00001f);
+		auto rectAmt = rectify.get();
 
-		auto phaseShiftL = (normalised + 1.0f) * amt * (sampleRate / 44100.0f);
-		phaseShiftL = phaseShiftL + nextNormalise * sin(mono * 3.0f);
+		auto lRect = weirdRectify(left, rectAmt);
+		auto rRect = weirdRectify(right, rectAmt);
+
+		float normalisedL = approxTanhWaveshaper1(lRect, 4.00001f);
+		float normalisedR = approxTanhWaveshaper1(rRect, 4.00001f);
+
+		auto phaseShiftL = (normalisedL + 1.0f) * amt * sampleRateMult;
+		auto phaseShiftR = (normalisedR + 1.0f) * amt * sampleRateMult;
 		
 		auto leftProcessed = delayLine.popSample(0, phaseShiftL);
-		auto rightProcessed = delayLine.popSample(1, phaseShiftL);
+		auto rightProcessed = delayLine.popSample(1, phaseShiftR);
 
 		block.setSample(0, i, leftProcessed);
 		block.setSample(1, i, rightProcessed);
