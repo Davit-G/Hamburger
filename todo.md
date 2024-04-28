@@ -25,7 +25,6 @@ frequency shifter in phase path for phase distortion
 
 # feedback 
 
-correct oversampling delay compensation
 complete manual page, reupload with new info for plugin (specify order of effect operations in manual or in plugin)
 remove perfetto completely from git fetches on release builds
 separate parameters that have common IDs in the apvts

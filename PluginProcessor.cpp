@@ -299,7 +299,7 @@ void AudioPluginAudioProcessor::prepareToPlay(double sampleRate, int samplesPerB
 
     juce::dsp::ProcessSpec oversampledSpec;
     oversampledSpec.sampleRate = sampleRate * pow(2, oversamplingStack.getOversamplingFactor());
-    oversampledSpec.maximumBlockSize = samplesPerBlock;
+    oversampledSpec.maximumBlockSize = samplesPerBlock * pow(2, oversamplingStack.getOversamplingFactor());
     oversampledSpec.numChannels = getTotalNumOutputChannels();
 
     distortionTypeSelection.prepare(oversampledSpec);

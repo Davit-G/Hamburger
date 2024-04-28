@@ -96,7 +96,7 @@ public:
 
         interleaved = dsp::AudioBlock<dsp::SIMDRegister<float>>(interleavedBlockData, 1, spec.maximumBlockSize);
         zero = dsp::AudioBlock<float>(zeroData, dsp::SIMDRegister<float>::size(), spec.maximumBlockSize);
-
+        interleaved.clear();
         zero.clear();
 
         auto monoSpec = spec;
