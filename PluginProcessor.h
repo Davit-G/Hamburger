@@ -24,6 +24,11 @@
 
 #include "clap-juce-extensions/clap-juce-extensions.h"
 
+#if SENTRY
+#include <sentry.h>
+#endif
+
+
 //==============================================================================
 class AudioPluginAudioProcessor : public juce::AudioProcessor, public clap_juce_extensions::clap_properties
 
@@ -114,6 +119,20 @@ private:
         std::unique_ptr<perfetto::TracingSession> tracingSession;
     #endif
 
+    static void createSentryLogger(void *platformSpecificCrashData) {
+        auto report = juce::SystemStats::getStackBacktrace();
+
+        sentry_value_t event = sentry_value_new_event();
+        sentry_value_set_by_key(event, "message", sentry_value_new_string(report.toRawUTF8()));
+        sentry_capture_event(event);
+
+        sentry_options_free(AudioPluginAudioProcessor::options);
+        sentry_shutdown();
+    }
+    
+    static sentry_options_t *options;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AudioPluginAudioProcessor)
 };
+
+sentry_options_t *AudioPluginAudioProcessor::options = nullptr;

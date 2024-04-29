@@ -4,21 +4,6 @@
 #include <chrono>
 #include <ctime>
 
-#if SENTRY
-#include <sentry.h>
-
-void crashHandler(void *platformSpecificCrashData)
-{
-    auto report = juce::SystemStats::getStackBacktrace();
-
-    sentry_value_t event = sentry_value_new_event();
-    sentry_value_set_by_key(event, "message", sentry_value_new_string(report.toRawUTF8()));
-    sentry_capture_event(event);
-
-    sentry_close();
-}
-
-#endif
 
 //==============================================================================
 AudioPluginAudioProcessor::AudioPluginAudioProcessor() : AudioProcessor(BusesProperties()
@@ -58,7 +43,7 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor() : AudioProcessor(BusesPro
         }
     }
 
-    sentry_options_t *options = sentry_options_new();
+    options = sentry_options_new();
 
 #if JUCE_DEBUG
     sentry_options_set_debug(options, true);
@@ -115,7 +100,7 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor() : AudioProcessor(BusesPro
     // /* message */ "It works!"
     // ));
 
-    juce::SystemStats::setApplicationCrashHandler(crashHandler);
+    juce::SystemStats::setApplicationCrashHandler(createSentryLogger);
 
 #endif
 

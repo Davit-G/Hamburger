@@ -78,11 +78,11 @@ public:
     {
         auto thumb = slider.findColour(Slider::thumbColourId);
 
-        auto bounds = Rectangle<int>(x, y, width, height).toFloat().reduced(5.0f);
+        auto bounds = juce::Rectangle<int>(x, y, width, height).toFloat().reduced(5.0f);
 
-        auto radius = jmin(bounds.getWidth(), bounds.getHeight()) / 2.0f;
+        auto radius = juce::jmin(bounds.getWidth(), bounds.getHeight()) / 2.0f;
         auto toAngle = rotaryStartAngle + sliderPos * (rotaryEndAngle - rotaryStartAngle);
-        auto lineW = jmin(8.0f, radius * 0.5f);
+        auto lineW = juce::jmin(8.0f, radius * 0.5f);
         auto arcRadius = radius - lineW * 0.5f;
 
         Line<float> marker;
@@ -103,7 +103,7 @@ public:
                       int, int, int, int, ComboBox &box) override
     {
         auto cornerSize = box.findParentComponentOfClass<ChoicePropertyComponent>() != nullptr ? 0.0f : 3.0f;
-        Rectangle<int> boxBounds(0, 0, width, height);
+        juce::Rectangle<int> boxBounds(0, 0, width, height);
 
         // g.setColour(box.findColour(ComboBox::backgroundColourId));
         // g.fillRoundedRectangle(boxBounds.toFloat(), cornerSize);
@@ -111,7 +111,7 @@ public:
         // g.setColour(box.findColour(ComboBox::outlineColourId));
         // g.drawRoundedRectangle(boxBounds.toFloat().reduced(0.5f, 0.5f), cornerSize, 1.0f);
 
-        Rectangle<int> arrowZone(5, 0, 20, height);
+        juce::Rectangle<int> arrowZone(5, 0, 20, height);
         Path path;
         path.startNewSubPath((float)arrowZone.getX() + 4.0f, (float)arrowZone.getCentreY() - 2.0f);
         path.lineTo((float)arrowZone.getCentreX(), (float)arrowZone.getCentreY() + 3.0f);
@@ -151,7 +151,7 @@ public:
         label.setFont(getComboBoxFont());
     }
 
-    void drawPopupMenuItem(Graphics &g, const Rectangle<int> &area,
+    void drawPopupMenuItem(Graphics &g, const juce::Rectangle<int> &area,
                            const bool isSeparator, const bool isActive,
                            const bool isHighlighted, const bool isTicked,
                            const bool hasSubMenu, const String &text,

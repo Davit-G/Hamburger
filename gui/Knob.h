@@ -97,11 +97,11 @@ public:
         auto thumb = knob.findColour(Slider::thumbColourId);
         auto knobColour = knob.findColour(Slider::rotarySliderFillColourId);
 
-        auto bounds = Rectangle<int>(x, y, width, height).toFloat().reduced(5.0f);
+        auto bounds = juce::Rectangle<int>(x, y, width, height).toFloat().reduced(5.0f);
 
-        auto radius = jmin(bounds.getWidth(), bounds.getHeight()) / 2.0f;
+        auto radius = juce::jmin(bounds.getWidth(), bounds.getHeight()) / 2.0f;
         auto toAngle = rotaryStartAngle + sliderPos * (rotaryEndAngle - rotaryStartAngle);
-        auto lineW = jmin(8.0f, radius * 0.5f);
+        auto lineW = juce::jmin(8.0f, radius * 0.5f);
         auto arcRadius = radius - lineW * 0.5f;
 
         // g.setColour(outline);
@@ -141,21 +141,21 @@ public:
         auto outline = knob.findColour(Slider::rotarySliderOutlineColourId);
         auto knobColour = knob.findColour(Slider::rotarySliderFillColourId);
 
-        auto bounds = Rectangle<int>(knobBounds).toFloat().reduced(5.0f);
+        auto bounds = juce::Rectangle<int>(knobBounds).toFloat().reduced(5.0f);
 
         g.setColour(outline);
         
         float size = std::min(knobBounds.getWidth(), knobBounds.getHeight());
 
         // the knob background
-        g.fillEllipse(Rectangle<float>(size, size).reduced(5.0f).withCentre(bounds.getCentre()));
+        g.fillEllipse(juce::Rectangle<float>(size, size).reduced(5.0f).withCentre(bounds.getCentre()));
 
         // some circles or something
         g.setColour(knobColour);
 
         // g.drawEllipse(Rectangle<float>(size, size).reduced(7.0f).withCentre(bounds.getCentre()), 1.0f);
-        g.drawEllipse(Rectangle<float>(size, size).reduced(12.0f).withCentre(bounds.getCentre()), 2.0f);
-        g.drawEllipse(Rectangle<float>(size, size).reduced(20.0f).withCentre(bounds.getCentre()), 4.0f);
+        g.drawEllipse(juce::Rectangle<float>(size, size).reduced(12.0f).withCentre(bounds.getCentre()), 2.0f);
+        g.drawEllipse(juce::Rectangle<float>(size, size).reduced(20.0f).withCentre(bounds.getCentre()), 4.0f);
     }
 
     ~ParamKnob() override {
