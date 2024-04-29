@@ -15,7 +15,7 @@ void crashHandler(void *platformSpecificCrashData)
     sentry_value_set_by_key(event, "message", sentry_value_new_string(report.toRawUTF8()));
     sentry_capture_event(event);
 
-    sentry_shutdown();
+    sentry_close();
 }
 
 #endif
@@ -58,11 +58,16 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor() : AudioProcessor(BusesPro
         }
     }
 
-
     sentry_options_t *options = sentry_options_new();
+
+#if JUCE_DEBUG
+    sentry_options_set_debug(options, true);
+#else
     sentry_options_set_debug(options, false);
+#endif
+
     sentry_options_set_dsn(options, juce::String(SENTRY_URL).toRawUTF8());
-    sentry_options_set_handler_path(options, logsPath.getFullPathName().toRawUTF8());
+    // sentry_options_set_handler_path(options, logsPath.getFullPathName().toRawUTF8());
     sentry_options_set_database_path(options, logsPath.getFullPathName().toRawUTF8());
     sentry_options_set_release(options, pluginWithVersion.toRawUTF8());
 
@@ -415,7 +420,7 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
         }
 
         oversamplingStack.processSamplesDown(block);
-        
+
         scopeDataCollector.process(buffer.getReadPointer(0), buffer.getReadPointer(1), (size_t)buffer.getNumSamples());
 
         outputGain.setGainDecibels(outputGainKnob->get());

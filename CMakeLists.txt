@@ -10,9 +10,22 @@ set(PluginName "Hamburger")
 set(BaseTargetName Hamburger)
 set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+
 if(APPLE)
-set (CMAKE_OSX_DEPLOYMENT_TARGET "11.0" CACHE STRING "Minimum OS X deployment version" FORCE)
-set (CMAKE_OSX_ARCHITECTURES "arm64;x86_64" CACHE INTERNAL "")
+    set (CMAKE_OSX_DEPLOYMENT_TARGET "11.0" CACHE STRING "Minimum OS X deployment version" FORCE)
+    set (CMAKE_OSX_ARCHITECTURES "arm64;x86_64" CACHE INTERNAL "")
+
+    # dSYM files for Xcode release builds
+    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -g")
+    set(CMAKE_XCODE_ATTRIBUTE_GCC_GENERATE_DEBUGGING_SYMBOLS[variant=Release] "YES")
+    set(CMAKE_XCODE_ATTRIBUTE_DEBUG_INFORMATION_FORMAT[variant=Release] "dwarf-with-dsym")
+    set(CMAKE_XCODE_ATTRIBUTE_DEPLOYMENT_POSTPROCESSING[variant=Release] "YES")
+endif()
+
+# pdb files for windows release builds
+if (WIN32)
+    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /Zi")
+    set(CMAKE_SHARED_LINKER_FLAGS_RELEASE "${CMAKE_SHARED_LINKER_FLAGS_RELEASE} /DEBUG /OPT:REF /OPT:ICF")
 endif()
 
 project(Hamburger VERSION "${ProjectVersion}")
@@ -77,7 +90,7 @@ else()
     set(SENTRY 1)
 endif()
 
-set(SENTRY_BACKEND "crashpad")
+set(SENTRY_BACKEND "breakpad")
 
 # set commit hash for sentry 
 execute_process(
