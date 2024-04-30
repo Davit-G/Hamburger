@@ -134,7 +134,10 @@ AudioPluginAudioProcessor::~AudioPluginAudioProcessor()
 #if PERFETTO
     // MelatoninPerfetto::get().endSession();
 #endif
+
+#if SENTRY
     sentry_shutdown();
+#endif
 }
 
 inline auto makeRange(float start, float end)

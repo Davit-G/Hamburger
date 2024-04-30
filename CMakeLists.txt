@@ -17,9 +17,21 @@ if(APPLE)
 
     # dSYM files for Xcode release builds
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -g")
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g")
     set(CMAKE_XCODE_ATTRIBUTE_GCC_GENERATE_DEBUGGING_SYMBOLS[variant=Release] "YES")
     set(CMAKE_XCODE_ATTRIBUTE_DEBUG_INFORMATION_FORMAT[variant=Release] "dwarf-with-dsym")
     set(CMAKE_XCODE_ATTRIBUTE_DEPLOYMENT_POSTPROCESSING[variant=Release] "YES")
+    set(CMAKE_XCODE_ATTRIBUTE_CONFIGURATION_BUILD_DIR "$(inherited)")
+    set(CMAKE_XCODE_ATTRIBUTE_DWARF_DSYM_FILE_SHOULD_ACCOMPANY_PRODUCT "YES")
+
+    # find_program(DSYMUTIL_PROGRAM dsymutil)
+    # if (DSYMUTIL_PROGRAM)
+    # foreach(lang C CXX)
+    #     foreach(var LINK_EXECUTABLE CREATE_SHARED_LIBRARY)
+    #     set(CMAKE_${lang}_${var} "${CMAKE_${lang}_${var}}" "${DSYMUTIL_PROGRAM} ./Hamburger_artefacts/Release/")
+    #     endforeach()
+    # endforeach()
+    # endif()
 endif()
 
 # pdb files for windows release builds

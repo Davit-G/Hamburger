@@ -119,6 +119,8 @@ private:
         std::unique_ptr<perfetto::TracingSession> tracingSession;
     #endif
 
+    #if SENTRY
+
     static void createSentryLogger(void *platformSpecificCrashData) {
         auto report = juce::SystemStats::getStackBacktrace();
 
@@ -132,7 +134,11 @@ private:
     
     static sentry_options_t *options;
 
+    #endif
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AudioPluginAudioProcessor)
 };
 
+#if SENTRY
 sentry_options_t *AudioPluginAudioProcessor::options = nullptr;
+#endif
