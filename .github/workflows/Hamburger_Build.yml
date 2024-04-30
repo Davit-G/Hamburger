@@ -84,7 +84,7 @@ jobs:
     
     - name: install sentry cli using npm to upload debug symbols later
       run: |
-        sudo npm install -g @sentry/cli --unsafe-perm
+        npm install -g @sentry/cli --unsafe-perm
         sentry-cli login --auth-token "${{ SECRETS.SENTRY_TOKEN }}"
       
     - name: cache stuff
