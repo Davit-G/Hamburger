@@ -83,27 +83,27 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(JUCE)
 
-set(SENTRY_URL "")
+set(SENTRY_REPORTING_URL "")
 set(SENTRY 0)
 
 # load environment variable for cmake env path
-if(NOT DEFINED ENV{SENTRY_URL}) 
-    message(WARNING "SENTRY_URL not set, falling back to env.cmake")
+if(NOT DEFINED ENV{SENTRY_REPORTING_URL}) 
+    message(WARNING "SENTRY_REPORTING_URL not set, falling back to env.cmake")
 
     if(EXISTS "${CMAKE_SOURCE_DIR}/env.cmake")
         include(env.cmake)
     endif()
     
-    if(DEFINED ENV{SENTRY_URL})
-        set(SENTRY_URL "$ENV{SENTRY_URL}")
+    if(DEFINED ENV{SENTRY_REPORTING_URL})
+        set(SENTRY_REPORTING_URL "$ENV{SENTRY_REPORTING_URL}")
         set(SENTRY 1)
         message(STATUS "Ran env.cmake successfully, environment variables should be loaded.")
     else()
         message(WARNING "Unable to load environment variables.")
     endif()
 else()
-    set(SENTRY_URL "$ENV{SENTRY_URL}")
-    message(STATUS "SENTRY_URL has been set successfully")
+    set(SENTRY_REPORTING_URL "$ENV{SENTRY_REPORTING_URL}")
+    message(STATUS "SENTRY_REPORTING_URL has been set successfully")
     set(SENTRY 1)
 endif()
 
@@ -199,7 +199,7 @@ target_compile_definitions("${BaseTargetName}" PUBLIC
 	JUCE_WEB_BROWSER=0
 	JUCE_USE_WIN_WEBVIEW2=0
 	JUCE_USE_CAMERA=0
-    SENTRY_URL="${SENTRY_URL}"
+    SENTRY_REPORTING_URL="${SENTRY_REPORTING_URL}"
     GIT_HASH="${GIT_HASH}"
     SENTRY=${SENTRY}
 )

@@ -119,15 +119,15 @@ jobs:
     - name: set sentry env var
       id: sentry_env_var
       run: |
-        echo "SENTRY_URL=${{secrets.SENTRY_URL}}" >> "$GITHUB_ENV"
+        echo "SENTRY_REPORTING_URL=${{secrets.SENTRY_REPORTING_URL}}" >> "$GITHUB_ENV"
     
     - name: Set environment variable (Unix / MacOS)
       if: ${{ !startsWith(matrix.os, 'windows') }}
-      run: echo "SENTRY_URL=${{secrets.SENTRY_URL}}" >> "$GITHUB_ENV"
+      run: echo "SENTRY_REPORTING_URL=${{secrets.SENTRY_REPORTING_URL}}" >> "$GITHUB_ENV"
 
     - name: Set environment variable (Windows)
       if: ${{ startsWith(matrix.os, 'windows') }}
-      run: echo "SENTRY_URL=${{secrets.SENTRY_URL}}" | Out-File -FilePath $env:GITHUB_ENV -Append
+      run: echo "SENTRY_REPORTING_URL=${{secrets.SENTRY_REPORTING_URL}}" | Out-File -FilePath $env:GITHUB_ENV -Append
 
     - name: (windows) configure
       if: startsWith(matrix.os, 'windows')

@@ -51,7 +51,7 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor() : AudioProcessor(BusesPro
     sentry_options_set_debug(options, false);
 #endif
 
-    sentry_options_set_dsn(options, juce::String(SENTRY_URL).toRawUTF8());
+    sentry_options_set_dsn(options, juce::String(SENTRY_REPORTING_URL).toRawUTF8());
     // sentry_options_set_handler_path(options, logsPath.getFullPathName().toRawUTF8());
     sentry_options_set_database_path(options, logsPath.getFullPathName().toRawUTF8());
     sentry_options_set_release(options, pluginWithVersion.toRawUTF8());
