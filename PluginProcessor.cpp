@@ -28,7 +28,7 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor() : AudioProcessor(BusesPro
     pluginWithVersion.append(JucePlugin_VersionString, 10);
 
     auto logsPath = juce::File::getSpecialLocation(
-                        juce::File::SpecialLocationType::commonDocumentsDirectory)
+                        juce::File::SpecialLocationType::userDocumentsDirectory)
                         .getChildFile(JucePlugin_Manufacturer)
                         .getChildFile(JucePlugin_Name)
                         .getChildFile("./logs/");

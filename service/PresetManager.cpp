@@ -1,5 +1,7 @@
 #include "PresetManager.h"
 
+#include <format>
+
 /**
  * Compare version strings. Return 1 if the first string is greater than the second, -1 if the first string is less than the second, and 0 if they are equal.
  */
@@ -96,15 +98,15 @@ bool Preset::PresetManager::savePreset(const juce::String &presetName, const juc
 
 		return false;
 	}
-	else
-	{
-		presetFile.create();
-	}
+
+	auto error = presetFile.create();
 
 	if (!xml->writeTo(presetFile))
 	{
 		DBG("Could not create preset file: " + presetFile.getFullPathName());
-		cb(std::string("Could not create preset file: ") + presetFile.getFullPathName().toStdString());
+		cb(std::string("Could not create preset file (") + presetFile.getFullPathName().toStdString() + "): " + error.getErrorMessage().toStdString());
+
+
 		jassertfalse;
 		return false;
 	}

@@ -8,7 +8,7 @@ namespace Preset
 {
 
 	static const juce::File defaultDirectory{juce::File::getSpecialLocation(
-												 juce::File::SpecialLocationType::commonApplicationDataDirectory)
+												 juce::File::SpecialLocationType::userDocumentsDirectory)
 												 .getChildFile(JucePlugin_Manufacturer)
 												 .getChildFile(JucePlugin_Name)
 												 .getChildFile("./presets/")};
