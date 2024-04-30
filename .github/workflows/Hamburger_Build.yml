@@ -78,7 +78,6 @@ jobs:
       with:
         url: "https://sentry.io"
         token: ${{ SECRETS.SENTRY_TOKEN }}
-        project: ${{ SECRETS.PROJECT }}
     
     - name: cache stuff
       id: cache_stuff
@@ -150,13 +149,13 @@ jobs:
       if: startsWith(matrix.os, 'windows')
       id: win_upload_pdb
       run: |
-        sentry-cli debug-files upload "${{matrix.folder}}/${{env.NOSPACE}}_artefacts/${{env.BUILDTYPE}}/" --log-level=debug
+        sentry-cli debug-files upload "${{matrix.folder}}/${{env.NOSPACE}}_artefacts/${{env.BUILDTYPE}}/" --project "${{secrets.PROJECT}}"
     
     - name: (mac) upload dsym files
       if: startsWith(matrix.os, 'macos')
       id: mac_upload_dsym
       run: |
-        sentry-cli debug-files upload "${{matrix.folder}}/${{env.NOSPACE}}_artefacts/${{env.BUILDTYPE}}/"
+        sentry-cli debug-files upload "${{matrix.folder}}/${{env.NOSPACE}}_artefacts/${{env.BUILDTYPE}}/" --project "${{secrets.PROJECT}}"
 
     - name: (windows) package
       if: startsWith(matrix.os, 'windows')
