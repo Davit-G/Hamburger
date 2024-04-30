@@ -76,8 +76,8 @@ jobs:
     - name: setup sentry CLI to upload debug symbols later
       uses: mathieu-bour/setup-sentry-cli@v1
       with:
+        url: "https://sentry.io"
         token: ${{ SECRETS.SENTRY_TOKEN }}
-        organization: ${{ SECRETS.ORGANIZATION }}
         project: ${{ SECRETS.PROJECT }}
     
     - name: cache stuff
