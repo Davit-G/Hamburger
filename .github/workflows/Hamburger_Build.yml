@@ -150,13 +150,13 @@ jobs:
       if: startsWith(matrix.os, 'windows')
       id: win_upload_pdb
       run: |
-        sentry-cli debug-files upload "${{matrix.folder}}/${{env.NOSPACE}}_artefacts/${{env.BUILDTYPE}}/" --project "${{ secrets.PROJECT }}"
+        sentry-cli debug-files upload "${{matrix.folder}}/${{env.NOSPACE}}_artefacts/${{env.BUILDTYPE}}/"
     
     - name: (mac) upload dsym files
       if: startsWith(matrix.os, 'macos')
       id: mac_upload_dsym
       run: |
-        sentry-cli debug-files upload "${{matrix.folder}}/${{env.NOSPACE}}_artefacts/${{env.BUILDTYPE}}/" --project "${{ secrets.PROJECT }}"
+        sentry-cli debug-files upload "${{matrix.folder}}/${{env.NOSPACE}}_artefacts/${{env.BUILDTYPE}}/"
 
     - name: (windows) package
       if: startsWith(matrix.os, 'windows')
