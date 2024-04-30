@@ -100,7 +100,7 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor() : AudioProcessor(BusesPro
     // /* message */ "It works!"
     // ));
 
-    juce::SystemStats::setApplicationCrashHandler(createSentryLogger);
+    // juce::SystemStats::setApplicationCrashHandler(createSentryLogger);
 
 #endif
 
@@ -134,6 +134,7 @@ AudioPluginAudioProcessor::~AudioPluginAudioProcessor()
 #if PERFETTO
     // MelatoninPerfetto::get().endSession();
 #endif
+    sentry_shutdown();
 }
 
 inline auto makeRange(float start, float end)

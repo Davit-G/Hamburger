@@ -285,6 +285,11 @@ std::shared_ptr<juce::OwnedArray<Preset::PresetFile>> Preset::PresetManager::get
 
 juce::File Preset::PresetManager::getCurrentPreset() const
 {
+	if (currentPreset.getValue() == juce::var())
+	{
+		return juce::File();
+	}
+
 	return defaultDirectory.getChildFile(currentPreset.toString());
 }
 

@@ -71,9 +71,9 @@ public:
         jassert(drawableLogoString != nullptr);
 
 #if JUCE_DEBUG
-        versionLabel.setText("Version: Debug v" + String(JucePlugin_Version), NotificationType::dontSendNotification);
+        versionLabel.setText("Version: Debug v" + String(JucePlugin_VersionString), NotificationType::dontSendNotification);
 #else
-        versionLabel.setText("Version: Release v" + String(JucePlugin_Version), NotificationType::dontSendNotification);
+        versionLabel.setText("Version: Release v" + String(JucePlugin_VersionString), NotificationType::dontSendNotification);
 #endif
 
         auto font = hamburgerLAF.getLabelFont(descriptionLabel);

@@ -394,12 +394,13 @@ public:
 		// pass clicks through
 		setInterceptsMouseClicks(false, true);
 
-		MessageManager::callAsync([this]
-								  {
+		// MessageManager::callAsync([this]
+		// 						  {
 			loadPresetList();
 			this->listBoxModel.initFiles();
 			this->listBox.updateContent();
-			this->listBox.repaint(); });
+			this->listBox.repaint(); 
+			// });
 
 		currentPresetLabel.setButtonText("Hamburger");
 	}
@@ -529,17 +530,13 @@ private:
 
 	void loadPresetList()
 	{
-
 		const auto allPresets = presetManager.getAllPresets();
-		const auto currentPreset = presetManager.getCurrentPreset();
 
 		juce::StringArray presets;
 		for (auto &file : allPresets)
 		{
 			presets.add(file.getFileNameWithoutExtension());
 		}
-
-		currentPresetLabel.setButtonText("Hamburger");
 	}
 
 	Preset::PresetManager &
