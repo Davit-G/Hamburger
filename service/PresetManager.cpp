@@ -1,7 +1,5 @@
 #include "PresetManager.h"
 
-#include <format>
-
 /**
  * Compare version strings. Return 1 if the first string is greater than the second, -1 if the first string is less than the second, and 0 if they are equal.
  */
