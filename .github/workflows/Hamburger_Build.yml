@@ -150,7 +150,7 @@ jobs:
       if: startsWith(matrix.os, 'windows')
       id: win_upload_pdb
       run: |
-        sentry-cli debug-files upload "${{matrix.folder}}/${{env.NOSPACE}}_artefacts/${{env.BUILDTYPE}}/"
+        sentry-cli debug-files upload "${{matrix.folder}}/${{env.NOSPACE}}_artefacts/${{env.BUILDTYPE}}/" --log-level=debug
     
     - name: (mac) upload dsym files
       if: startsWith(matrix.os, 'macos')
