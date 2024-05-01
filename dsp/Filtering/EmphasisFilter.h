@@ -61,7 +61,7 @@ public:
         sampleRate = spec.sampleRate;
     }
 
-    void processBefore(juce::dsp::AudioBlock<float>& block)
+    void processBefore(juce::dsp::AudioBlock<float> &block)
     {
         emphasisOn = enableEmphasis->get();
 
@@ -115,40 +115,26 @@ public:
         peakFilterAfter[1][1].snapToZero();
     }
 
-    void processAfter(juce::dsp::AudioBlock<float>& block)
+    void processAfter(juce::dsp::AudioBlock<float> &block)
     {
         if (!emphasisOn)
             return;
 
-        for (int channel = 0; channel < block.getNumChannels(); channel++)
+        for (int sample = 0; sample < block.getNumSamples(); sample++)
         {
-            for (int sample = 0; sample < block.getNumSamples(); sample++)
+            float nextEmphasisLow = emphasisLowBuffer[sample];
+            float nextEmphasisHigh = emphasisHighBuffer[sample];
+            float nextEmphasisLowFreq = emphasisLowFreqBuffer[sample];
+            float nextEmphasisHighFreq = emphasisHighFreqBuffer[sample];
+
+            auto highCoeffs = juce::dsp::IIR::ArrayCoefficients<double>::makePeakFilter(sampleRate, nextEmphasisHighFreq, 0.5f, Decibels::decibelsToGain(nextEmphasisHigh));
+            auto lowCoeffs = juce::dsp::IIR::ArrayCoefficients<double>::makePeakFilter(sampleRate, nextEmphasisLowFreq, 0.5f, Decibels::decibelsToGain(nextEmphasisLow));
+            
+            for (int channel = 0; channel < block.getNumChannels(); channel++)
             {
-                float nextEmphasisLow = emphasisLowBuffer[sample];
-                float nextEmphasisHigh = emphasisHighBuffer[sample];
-                float nextEmphasisLowFreq = emphasisLowFreqBuffer[sample];
-                float nextEmphasisHighFreq = emphasisHighFreqBuffer[sample];
 
-                switch (channel)
-                {
-                case 0:
-                {
-                    auto highCoeffs = juce::dsp::IIR::ArrayCoefficients<double>::makePeakFilter(sampleRate, nextEmphasisHighFreq, 0.5f, Decibels::decibelsToGain(nextEmphasisHigh));
-                    auto lowCoeffs = juce::dsp::IIR::ArrayCoefficients<double>::makePeakFilter(sampleRate, nextEmphasisLowFreq, 0.5f, Decibels::decibelsToGain(nextEmphasisLow));
-
-                    *peakFilterAfter[1][0].coefficients = highCoeffs;
-                    *peakFilterAfter[0][0].coefficients = lowCoeffs;
-
-                    break;
-                }
-                case 1:
-                {
-                    peakFilterAfter[1][1].coefficients = peakFilterAfter[1][0].coefficients;
-                    peakFilterAfter[0][1].coefficients = peakFilterAfter[0][0].coefficients;
-
-                    break;
-                }
-                }
+                *peakFilterAfter[1][channel].coefficients = highCoeffs;
+                *peakFilterAfter[0][channel].coefficients = lowCoeffs;
 
                 float eqCompensation = (emphasisLowSmooth.getRaw() + emphasisHighSmooth.getRaw()) * 0.133f;
 
@@ -159,7 +145,8 @@ public:
     }
 
 private:
-    std::array<float, 6> beforeCoeffs;
+    std::array<float, 6>
+        beforeCoeffs;
     std::array<float, 6> afterCoeffs;
 
     double sampleRate = 44100.0;

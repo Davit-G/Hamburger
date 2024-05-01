@@ -286,7 +286,6 @@ void AudioPluginAudioProcessor::prepareToPlay(double sampleRate, int samplesPerB
     inputGain.prepare(spec);
     outputGain.prepare(spec);
 
-    emphasisFilter.prepare(spec);
 
     oversamplingStack.setOversamplingFactor(hq->get());
     oversamplingStack.prepare(spec);
@@ -296,6 +295,7 @@ void AudioPluginAudioProcessor::prepareToPlay(double sampleRate, int samplesPerB
     oversampledSpec.maximumBlockSize = samplesPerBlock * pow(2, oversamplingStack.getOversamplingFactor());
     oversampledSpec.numChannels = getTotalNumOutputChannels();
 
+    emphasisFilter.prepare(oversampledSpec);
     distortionTypeSelection.prepare(oversampledSpec);
     postClip.prepare(oversampledSpec);
     preDistortionSelection.prepare(oversampledSpec);

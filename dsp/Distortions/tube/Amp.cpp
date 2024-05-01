@@ -199,7 +199,7 @@ void Amp::processBlock(juce::dsp::AudioBlock<float> &block)
 
             interm *= driveGain;
             interm = triodes[2].processAudioSample(interm, ch);
-            interm = triodes[3].processAudioSample(interm, ch);
+            interm = -triodes[3].processAudioSample(interm, ch);
 
             block.setSample(ch, i, interm);
         }
