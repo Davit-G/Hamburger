@@ -1,16 +1,14 @@
-# For v0.4
-
-double check all knob ranges are reasonable
-fill in matrix distortion section with more distortions
 
 # Must
 
 support mono / stereo only, dont have it break on mono
 performance optimisations
 auval
+emphasis coefficient interpolation with smoothed values
 
 # Should
 
+fill in matrix distortion section with more distortions
 speed up DSP by replacing some direct form filters with svf ones (in the case of per-sample coefficient modulation)
 
 # Would be nice
