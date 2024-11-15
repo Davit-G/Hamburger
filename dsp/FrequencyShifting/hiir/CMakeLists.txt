@@ -3,6 +3,6 @@ target_sources("${BaseTargetName}"
         def.h
         fnc.h
         fnc.hpp
-        Polyphaseiir2Designer.cpp
-        Polyphaseiir2Designer.h
+        PolyphaseIir2Designer.cpp
+        PolyphaseIir2Designer.h
         )
