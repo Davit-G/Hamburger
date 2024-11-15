@@ -11,7 +11,8 @@ PhaseDist::PhaseDist(juce::AudioProcessorValueTreeState& treeState) :
 	amount(treeState, ParamIDs::phaseAmount),
 	tone(treeState, ParamIDs::phaseDistTone),
 	stereo(treeState, ParamIDs::phaseDistStereo),
-	rectify(treeState, ParamIDs::phaseRectify)
+	rectify(treeState, ParamIDs::phaseRectify),
+	shift(treeState, ParamIDs::phaseShift)
 	{};
 
 void PhaseDist::prepare(juce::dsp::ProcessSpec& spec) noexcept {
@@ -23,6 +24,7 @@ void PhaseDist::prepare(juce::dsp::ProcessSpec& spec) noexcept {
 	tone.prepare(spec);
 	stereo.prepare(spec);
 	rectify.prepare(spec);
+	shift.prepare(spec);
 
 	*filter.state = juce::dsp::IIR::ArrayCoefficients<float>::makeLowPass(spec.sampleRate, 20000.0f, 0.707f);
 	filter.prepare(spec);
@@ -37,6 +39,7 @@ void PhaseDist::processBlock(juce::dsp::AudioBlock<float>& block) noexcept {
 	tone.update();
 	stereo.update();
 	rectify.update();
+	shift.update();
 
 	// we want to move to the delay line
 	for (int i = 0; i < block.getNumSamples(); i++) {
@@ -50,10 +53,12 @@ void PhaseDist::processBlock(juce::dsp::AudioBlock<float>& block) noexcept {
 
 	// apply the distortion
 	for (int i = 0; i < block.getNumSamples(); i++) {
+
+		// get knob values
 		const float nextAmt = amount.get() * 0.01f;
 		auto amt = nextAmt * nextAmt * nextAmt * 1200.f;
-
 		const float nextStereo = stereo.get() * 2.0f;
+		const float nextShift = powf(shift.get(), 3.f) * 0.1f;
 
 		float l = block.getSample(0, i);
 		float r = block.getSample(1, i);
@@ -65,9 +70,15 @@ void PhaseDist::processBlock(juce::dsp::AudioBlock<float>& block) noexcept {
 
 		auto rectAmt = rectify.get();
 
+		// perform rectification here
 		auto lRect = weirdRectify(left, rectAmt);
 		auto rRect = weirdRectify(right, rectAmt);
 
+		// perform phase shift
+		lRect = hilbertTransformL.processSample(lRect, nextShift);
+		rRect = hilbertTransformR.processSample(rRect, nextShift);
+
+		// waveshape to make it more tame and/or usable
 		float normalisedL = approxTanhWaveshaper1(lRect, 4.00001f);
 		float normalisedR = approxTanhWaveshaper1(rRect, 4.00001f);
 

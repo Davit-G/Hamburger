@@ -5,7 +5,6 @@ support mono / stereo only, dont have it break on mono
 performance optimisations
 bugfixes
 emphasis coefficient interpolation with smoothed values
-remove sentry.io before v1.0 (was useless)
 
 # Should
 
@@ -19,9 +18,11 @@ add more dist types (foil?? inherit from other plugins?)
 icons in middle of saturation knobs with different cool things like tube, rubidium etc
 other filters before / after distortion, such as combs / phasers / filters etc  
 allpass stack in phase path for phase distortion (nah leave as is)
-frequency shifter in phase path for phase distortion (is more interesting than allpass stack)
 visualisations on top right for what the things are doing (phase visualiser for phase distortion plugin?)
 
+phase dist shift: provide more dynamic range for subtle movement
+phase dist: remove clipping artifacting when input is too high
+freq shift: use polyphase designer or pre-bake coefficients
 # feedback 
 
 complete manual page, reupload with new info for plugin (specify order of effect operations in manual or in plugin)

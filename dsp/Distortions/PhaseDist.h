@@ -3,6 +3,9 @@
 #include "../SmoothParam.h"
 #include "../WaveShapers.h"
 #include "../../utils/Params.h"
+#include "../FrequencyShifting/HilbertBiquad.h"
+
+
 
 #if PERFETTO
 #include <melatonin_perfetto/melatonin_perfetto.h>
@@ -24,6 +27,10 @@ private:
     SmoothParam tone;
     SmoothParam stereo;
     SmoothParam rectify;
+    SmoothParam shift;
+
+    HilbertBiquadShifter hilbertTransformL;
+    HilbertBiquadShifter hilbertTransformR;
 
     float sampleRate;
     float sampleRateMult;

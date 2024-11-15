@@ -79,7 +79,7 @@ AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::createP
     params.add(std::make_unique<AudioParameterFloat>(ParamIDs::phaseAmount, "Phase Distortion", makeRange(0.0f, 100.0f), 0.f));
     params.add(std::make_unique<AudioParameterFloat>(ParamIDs::phaseDistTone, "Phase Dist Tone", juce::NormalisableRange<float>(20.0f, 20000.0f, 0.f, 0.25f), 355.0f));
     params.add(std::make_unique<AudioParameterFloat>(ParamIDs::phaseDistStereo, "Phase Dist Stereo", makeRange(0.0f, 1.0f), 0.f));
-    params.add(std::make_unique<AudioParameterFloat>(ParamIDs::phaseDistStereo, "Phase Dist Shift", makeRange(-1.0f, 1.0f), 0.f));
+    params.add(std::make_unique<AudioParameterFloat>(ParamIDs::phaseShift, "Phase Dist Shift", makeRange(-1.0f, 1.0f), 0.f));
     params.add(std::make_unique<AudioParameterFloat>(ParamIDs::phaseRectify, "Phase Dist Rectify", makeRange(0.0f, 1.0f), 0.f));
 
     // rubidium
