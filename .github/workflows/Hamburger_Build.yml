@@ -75,17 +75,6 @@ jobs:
       run: | 
         sudo apt-get update
         sudo apt-get install g++ libasound2-dev libjack-jackd2-dev ladspa-sdk libcurl4-openssl-dev libfreetype6-dev libx11-dev libxcomposite-dev libxcursor-dev libxcursor-dev libxext-dev libxinerama-dev libxrandr-dev libxrender-dev libwebkit2gtk-4.0-dev libglu1-mesa-dev mesa-common-dev
-    
-    # - name: setup sentry CLI to upload debug symbols later
-    #   uses: mathieu-bour/setup-sentry-cli@v2
-    #   with:
-    #     url: "https://sentry.io"
-    #     token: ${{ SECRETS.SENTRY_TOKEN }}
-    
-    - name: install sentry cli using npm to upload debug symbols later
-      run: |
-        npm install -g @sentry/cli --unsafe-perm
-        sentry-cli login --auth-token "${{ SECRETS.SENTRY_TOKEN }}"
       
     - name: cache stuff
       id: cache_stuff
@@ -115,19 +104,6 @@ jobs:
         keychain-password: ${{ secrets.KEYCHAIN_PASSWORD }}
         p12-file-base64: ${{ secrets.DEV_ID_APP_CERT }}
         p12-password: ${{ secrets.DEV_ID_APP_PASSWORD }}
-    
-    - name: set sentry env var
-      id: sentry_env_var
-      run: |
-        echo "SENTRY_REPORTING_URL=${{secrets.SENTRY_REPORTING_URL}}" >> "$GITHUB_ENV"
-    
-    - name: Set environment variable (Unix / MacOS)
-      if: ${{ !startsWith(matrix.os, 'windows') }}
-      run: echo "SENTRY_REPORTING_URL=${{secrets.SENTRY_REPORTING_URL}}" >> "$GITHUB_ENV"
-
-    - name: Set environment variable (Windows)
-      if: ${{ startsWith(matrix.os, 'windows') }}
-      run: echo "SENTRY_REPORTING_URL=${{secrets.SENTRY_REPORTING_URL}}" | Out-File -FilePath $env:GITHUB_ENV -Append
 
     - name: (windows) configure
       if: startsWith(matrix.os, 'windows')
@@ -152,18 +128,6 @@ jobs:
       id: build_mac
       run: |
         cmake --build "${{matrix.folder}}" --config ${{env.BUILDTYPE}} --target ${{env.NOSPACE}}_AU -j
-    
-    - name: (windows) upload pdb files
-      if: startsWith(matrix.os, 'windows')
-      id: win_upload_pdb
-      run: |
-        sentry-cli debug-files upload "${{matrix.folder}}/${{env.NOSPACE}}_artefacts/${{env.BUILDTYPE}}/" --project "${{secrets.PROJECT}}"
-    
-    - name: (mac) upload dsym files
-      if: startsWith(matrix.os, 'macos')
-      id: mac_upload_dsym
-      run: |
-        sentry-cli debug-files upload "${{matrix.folder}}/${{env.NOSPACE}}_artefacts/${{env.BUILDTYPE}}/" --project "${{secrets.PROJECT}}"
 
     - name: (windows) package
       if: startsWith(matrix.os, 'windows')

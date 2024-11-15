@@ -32,7 +32,7 @@ void PhaseDist::prepare(juce::dsp::ProcessSpec& spec) noexcept {
 };
 
 void PhaseDist::processBlock(juce::dsp::AudioBlock<float>& block) noexcept {
-	TRACE_EVENT("dsp", "PhaseDist::processBlock");
+	// TRACE_EVENT("dsp", "PhaseDist::processBlock");
 	amount.update();
 	tone.update();
 	stereo.update();

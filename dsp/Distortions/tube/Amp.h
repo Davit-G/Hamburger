@@ -4,8 +4,6 @@
 #include "juce_dsp/juce_dsp.h"
 #include "juce_audio_processors/juce_audio_processors.h"
 
-#include <melatonin_perfetto/melatonin_perfetto.h>
-
 #include "../../../utils/Params.h"
 #include "../../SmoothParam.h"
 

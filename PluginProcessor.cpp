@@ -18,92 +18,6 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor() : AudioProcessor(BusesPro
                                                          preDistortionSelection(treeState),
                                                          emphasisFilter(treeState)
 {
-
-    // sentry.io crash reporting
-#if SENTRY
-
-    auto pluginWithVersion = juce::String(JucePlugin_Name);
-
-    pluginWithVersion.append("@", 1);
-    pluginWithVersion.append(JucePlugin_VersionString, 10);
-
-    auto logsPath = juce::File::getSpecialLocation(
-                        juce::File::SpecialLocationType::userDocumentsDirectory)
-                        .getChildFile(JucePlugin_Manufacturer)
-                        .getChildFile(JucePlugin_Name)
-                        .getChildFile("./logs/");
-
-    if (!logsPath.exists())
-    {
-        const auto result = logsPath.createDirectory();
-        if (result.failed())
-        {
-            DBG("Could not create logs directory: " + result.getErrorMessage());
-            jassertfalse;
-        }
-    }
-
-    options = sentry_options_new();
-
-#if JUCE_DEBUG
-    sentry_options_set_debug(options, true);
-#else
-    sentry_options_set_debug(options, false);
-#endif
-
-    sentry_options_set_dsn(options, juce::String(SENTRY_REPORTING_URL).toRawUTF8());
-    // sentry_options_set_handler_path(options, logsPath.getFullPathName().toRawUTF8());
-    sentry_options_set_database_path(options, logsPath.getFullPathName().toRawUTF8());
-    sentry_options_set_release(options, pluginWithVersion.toRawUTF8());
-
-    sentry_init(options);
-
-    // basic info about our plugin
-    sentry_set_tag("plugin.version", JucePlugin_VersionString); // when we find out something is wrong, we gotta know what version it was
-    sentry_set_tag("plugin.name", JucePlugin_Name);             // plugin name, duhh
-#if JUCE_DEBUG
-    sentry_set_tag("plugin.type", "Debug"); // whether the plugin was release build
-#else
-    sentry_set_tag("plugin.type", "Release"); // whether the plugin was debug build
-#endif
-    sentry_set_tag("plugin.build_hash", GIT_HASH); // the specific commit that the plugin was built from
-
-    // we find out what format the plugin is
-    if (is_clap)
-    {
-        sentry_set_tag("plugin.format", "CLAP");
-    }
-    else
-    {
-        sentry_set_tag("plugin.format", getWrapperTypeDescription(wrapperType));
-    }
-
-    // we find out the computer detail of the system running the plugin, in case we have errors related to OS or CPU differences
-    sentry_set_tag("system.os", juce::SystemStats::getOperatingSystemName().toUTF8());
-
-    sentry_value_t systemInfo = sentry_value_new_object();
-    sentry_value_set_by_key(systemInfo, "os", sentry_value_new_string(juce::SystemStats::getOperatingSystemName().toUTF8()));
-    sentry_value_set_by_key(systemInfo, "cpu", sentry_value_new_string(juce::SystemStats::getCpuModel().toUTF8()));
-    sentry_value_set_by_key(systemInfo, "vendor", sentry_value_new_string(juce::SystemStats::getCpuVendor().toUTF8()));
-    sentry_value_set_by_key(systemInfo, "model", sentry_value_new_string(juce::SystemStats::getCpuModel().toUTF8()));
-    sentry_set_context("systemInfo", systemInfo);
-
-    // keeps track of how often specific computers experience errors for the plugin.
-    // TO ANYONE READING THIS: This code does not personally identify you. This is just a way to distinguish against other machines, and only gets sent when there is an error.
-    sentry_value_t user = sentry_value_new_object();
-    sentry_value_set_by_key(user, "id", sentry_value_new_string(juce::SystemStats::getUniqueDeviceID().toUTF8()));
-    sentry_set_user(user);
-
-    // sentry_capture_event(sentry_value_new_message_event(
-    // /*   level */ SENTRY_LEVEL_INFO,
-    // /*  logger */ "custom",
-    // /* message */ "It works!"
-    // ));
-
-    // juce::SystemStats::setApplicationCrashHandler(createSentryLogger);
-
-#endif
-
     treeState.state = ValueTree("savedParams");
 
     inputGainKnob = dynamic_cast<juce::AudioParameterFloat *>(treeState.getParameter(ParamIDs::inputGain.getParamID()));
@@ -133,10 +47,6 @@ AudioPluginAudioProcessor::~AudioPluginAudioProcessor()
 {
 #if PERFETTO
     // MelatoninPerfetto::get().endSession();
-#endif
-
-#if SENTRY
-    sentry_shutdown();
 #endif
 }
 
@@ -169,6 +79,7 @@ AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::createP
     params.add(std::make_unique<AudioParameterFloat>(ParamIDs::phaseAmount, "Phase Distortion", makeRange(0.0f, 100.0f), 0.f));
     params.add(std::make_unique<AudioParameterFloat>(ParamIDs::phaseDistTone, "Phase Dist Tone", juce::NormalisableRange<float>(20.0f, 20000.0f, 0.f, 0.25f), 355.0f));
     params.add(std::make_unique<AudioParameterFloat>(ParamIDs::phaseDistStereo, "Phase Dist Stereo", makeRange(0.0f, 1.0f), 0.f));
+    params.add(std::make_unique<AudioParameterFloat>(ParamIDs::phaseDistStereo, "Phase Dist Shift", makeRange(-1.0f, 1.0f), 0.f));
     params.add(std::make_unique<AudioParameterFloat>(ParamIDs::phaseRectify, "Phase Dist Rectify", makeRange(0.0f, 1.0f), 0.f));
 
     // rubidium
@@ -339,7 +250,7 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
     juce::ignoreUnused(midiMessages);
 
     {
-        TRACE_EVENT("dsp", "oversampling config");
+        // TRACE_EVENT("dsp", "oversampling config");
 
         dryWetMixer.setWetLatency(oversamplingStack.getLatencySamples());
 
@@ -380,29 +291,29 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
     emphasisFilter.processBefore(oversampledBlock);
 
     {
-        TRACE_EVENT("dsp", "companding");
+        // TRACE_EVENT("dsp", "companding");
         dynamics.processBlock(oversampledBlock);
     }
 
     {
-        TRACE_EVENT("dsp", "noise distortion");
+        // TRACE_EVENT("dsp", "noise distortion");
         noiseDistortionSelection.processBlock(oversampledBlock);
     }
 
     {
-        TRACE_EVENT("dsp", "pre distortion");
+        // TRACE_EVENT("dsp", "pre distortion");
         preDistortionSelection.processBlock(oversampledBlock);
     }
 
     {
-        TRACE_EVENT("dsp", "primary distortion");
+        // TRACE_EVENT("dsp", "primary distortion");
         distortionTypeSelection.processBlock(oversampledBlock);
     }
 
     emphasisFilter.processAfter(oversampledBlock);
 
     {
-        TRACE_EVENT("dsp", "other");
+        // TRACE_EVENT("dsp", "other");
         if (clipEnabled->get())
         {
             postClip.processBlock(oversampledBlock);

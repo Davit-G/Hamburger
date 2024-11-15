@@ -1,1 +1,0 @@
-set(ENV{SENTRY_REPORTING_URL} "") # put sentry URL here

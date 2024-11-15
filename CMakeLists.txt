@@ -16,6 +16,7 @@ if(APPLE)
     set (CMAKE_OSX_ARCHITECTURES "arm64;x86_64" CACHE INTERNAL "")
 
     # dSYM files for Xcode release builds
+    # using ninja will mean these dont apply
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -g")
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g")
     set(CMAKE_XCODE_ATTRIBUTE_GCC_GENERATE_DEBUGGING_SYMBOLS[variant=Release] "YES")
@@ -35,31 +36,32 @@ if(APPLE)
 endif()
 
 # pdb files for windows release builds
-if (WIN32)
-    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /Zi")
-    set(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_SHARED_LINKER_FLAGS_RELEASE} /DEBUG /OPT:REF /OPT:ICF")
+# not needed if we're not using sentry
+# if (WIN32)
+#     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /Zi")
+#     set(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_SHARED_LINKER_FLAGS_RELEASE} /DEBUG /OPT:REF /OPT:ICF")
 
-    # because separate targets (vst3 / clap / etc) are built, we do module linker flags and not shared ones
-    set(CMAKE_MODULE_LINKER_FLAGS_RELEASE "${CMAKE_MODULE_LINKER_FLAGS_RELEASE} /DEBUG /OPT:REF /OPT:ICF")
-else()
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")
-endif()
+#     # because separate targets (vst3 / clap / etc) are built, we do module linker flags and not shared ones
+#     set(CMAKE_MODULE_LINKER_FLAGS_RELEASE "${CMAKE_MODULE_LINKER_FLAGS_RELEASE} /DEBUG /OPT:REF /OPT:ICF")
+# else()
+#     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")
+# endif()
 
-project(Hamburger VERSION "${ProjectVersion}")
+# project(Hamburger VERSION "${ProjectVersion}")
 
-include(CheckCXXCompilerFlag)
-if (APPLE) 
-    CHECK_CXX_COMPILER_FLAG("-march=native" COMPILER_OPT_ARCH_NATIVE_SUPPORTED)
-    if (COMPILER_OPT_ARCH_NATIVE_SUPPORTED)
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native")
-    endif()
-else()
-    # removed because we dont need AVX2 support tbh
-    # CHECK_CXX_COMPILER_FLAG("/arch:AVX2" COMPILER_OPT_ARCH_AVX2_SUPPORTED)
-    # if (COMPILER_OPT_ARCH_AVX2_SUPPORTED)
-    #     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /arch:AVX2")
-    # endif()
-endif()
+# include(CheckCXXCompilerFlag)
+# if (APPLE) 
+#     CHECK_CXX_COMPILER_FLAG("-march=native" COMPILER_OPT_ARCH_NATIVE_SUPPORTED)
+#     if (COMPILER_OPT_ARCH_NATIVE_SUPPORTED)
+#         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native")
+#     endif()
+# else()
+#     # removed because we dont need AVX2 support tbh
+#     # CHECK_CXX_COMPILER_FLAG("/arch:AVX2" COMPILER_OPT_ARCH_AVX2_SUPPORTED)
+#     # if (COMPILER_OPT_ARCH_AVX2_SUPPORTED)
+#     #     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /arch:AVX2")
+#     # endif()
+# endif()
 
 
 # if (MSVC)
@@ -84,45 +86,13 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(JUCE)
 
-set(SENTRY_REPORTING_URL "")
-set(SENTRY 0)
-
-# load environment variable for cmake env path
-if(NOT DEFINED ENV{SENTRY_REPORTING_URL}) 
-    message(WARNING "SENTRY_REPORTING_URL not set, falling back to env.cmake")
-
-    if(EXISTS "${CMAKE_SOURCE_DIR}/env.cmake")
-        include(env.cmake)
-    endif()
-    
-    if(DEFINED ENV{SENTRY_REPORTING_URL})
-        set(SENTRY_REPORTING_URL "$ENV{SENTRY_REPORTING_URL}")
-        set(SENTRY 1)
-        message(STATUS "Ran env.cmake successfully, environment variables should be loaded.")
-    else()
-        message(WARNING "Unable to load environment variables.")
-    endif()
-else()
-    set(SENTRY_REPORTING_URL "$ENV{SENTRY_REPORTING_URL}")
-    message(STATUS "SENTRY_REPORTING_URL has been set successfully")
-    set(SENTRY 1)
-endif()
-
-set(SENTRY_BACKEND "breakpad")
-
-# set commit hash for sentry 
+# set commit hash for use in general idk
 execute_process(
     COMMAND git log -1 --format=%h
     WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
     OUTPUT_VARIABLE GIT_HASH
     OUTPUT_STRIP_TRAILING_WHITESPACE
 )
-
-# generate PDB files for sentry
-# add_compile_options("$<$<NOT:$<CONFIG:Debug>>:/Zi>")
-# add_link_options("$<$<NOT:$<CONFIG:Debug>>:/DEBUG>")
-# add_link_options("$<$<NOT:$<CONFIG:Debug>>:/OPT:REF>")
-# add_link_options("$<$<NOT:$<CONFIG:Debug>>:/OPT:ICF>")
 
 
 if(APPLE)
@@ -200,9 +170,7 @@ target_compile_definitions("${BaseTargetName}" PUBLIC
 	JUCE_WEB_BROWSER=0
 	JUCE_USE_WIN_WEBVIEW2=0
 	JUCE_USE_CAMERA=0
-    SENTRY_REPORTING_URL="${SENTRY_REPORTING_URL}"
     GIT_HASH="${GIT_HASH}"
-    SENTRY=${SENTRY}
 )
 
 juce_add_binary_data("${BaseTargetName}BinaryData" HEADER_NAME BinaryData.h NAMESPACE BinaryData SOURCES
@@ -229,23 +197,23 @@ FetchContent_Declare (melatonin_perfetto
   GIT_SHALLOW 1
   GIT_TAG origin/main)
     
-FetchContent_Declare (melatonin_inspector
-    GIT_REPOSITORY https://github.com/sudara/melatonin_inspector.git
-    GIT_SHALLOW 1
-    GIT_TAG origin/main
-    SOURCE_DIR ${CMAKE_CURRENT_BINARY_DIR}/melatonin_inspector)
+# FetchContent_Declare (melatonin_inspector
+#     GIT_REPOSITORY https://github.com/sudara/melatonin_inspector.git
+#     GIT_SHALLOW 1
+#     GIT_TAG origin/main
+#     SOURCE_DIR ${CMAKE_CURRENT_BINARY_DIR}/melatonin_inspector)
 
 FetchContent_Declare (clap-juce-extensions
     GIT_REPOSITORY https://github.com/free-audio/clap-juce-extensions.git
     GIT_SHALLOW 1
     GIT_TAG origin/main)
 
-FetchContent_Declare (sentry
-    GIT_REPOSITORY https://github.com/getsentry/sentry-native.git
-    GIT_SHALLOW 1
-    GIT_TAG origin/master)
+FetchContent_MakeAvailable (clap-juce-extensions)
 
-FetchContent_MakeAvailable (melatonin_perfetto melatonin_inspector clap-juce-extensions sentry)
+if (PERFETTO)
+FetchContent_MakeAvailable (melatonin_perfetto)
+endif()
+
 
 clap_juce_extensions_plugin(TARGET "${BaseTargetName}"
 CLAP_ID "com.AviaryAudio.${PluginName}"
@@ -256,9 +224,6 @@ target_link_libraries("${BaseTargetName}"
         juce::juce_dsp
         juce::juce_audio_utils
         "${BaseTargetName}BinaryData"
-        Melatonin::Perfetto
-        # melatonin_inspector
-        sentry
     PUBLIC
         juce::juce_recommended_config_flags
         juce::juce_recommended_lto_flags

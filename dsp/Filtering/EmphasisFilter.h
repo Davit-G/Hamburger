@@ -73,7 +73,7 @@ public:
         if (!emphasisOn)
             return;
 
-        TRACE_EVENT("dsp", "emphasis EQ before");
+        // TRACE_EVENT("dsp", "emphasis EQ before");
 
         for (int i = 0; i < block.getNumSamples(); i++)
         {

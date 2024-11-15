@@ -58,7 +58,7 @@ public:
 
     void processBlock(dsp::AudioBlock<float> block, int channel)
     {
-        TRACE_EVENT("dsp", "SIMDIIR::processBlock");
+        // TRACE_EVENT("dsp", "SIMDIIR::processBlock");
         auto numSamples = block.getNumSamples();
 
         // copy block data to float array using juce::FloatVectorOperations
@@ -142,7 +142,7 @@ public:
 
     void processBlock(dsp::AudioBlock<float> &block)
     {
-        TRACE_EVENT("dsp", "SIMDAllPAss::processBlock");
+        // TRACE_EVENT("dsp", "SIMDAllPAss::processBlock");
         allPassAmount.update();
         allPassFrequency.update();
         allPassQ.update();

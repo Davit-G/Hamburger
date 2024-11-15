@@ -13,7 +13,7 @@ void Jeff::prepare(juce::dsp::ProcessSpec &spec)
 
 void Jeff::processBlock(juce::dsp::AudioBlock<float> &block)
 {
-	TRACE_EVENT("dsp", "Jeff::processBlock");
+	// TRACE_EVENT("dsp", "Jeff::processBlock");
 	amount.update();
 
 	auto rightDryData = block.getChannelPointer(1);

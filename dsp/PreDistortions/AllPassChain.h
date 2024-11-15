@@ -26,7 +26,7 @@ public:
 
     void processBlock(dsp::AudioBlock<float> &block)
     {
-        TRACE_EVENT("dsp", "AllPassChain::processBlock");
+        // TRACE_EVENT("dsp", "AllPassChain::processBlock");
         
         allPassAmount.update();
         allPassFrequency.update();

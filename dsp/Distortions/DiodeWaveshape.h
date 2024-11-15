@@ -6,7 +6,9 @@
 
 #include "juce_dsp/juce_dsp.h"
 
+#if PERFETTO
 #include <melatonin_perfetto/melatonin_perfetto.h>
+#endif // PERFETTO
 
 class DiodeWaveshape
 {

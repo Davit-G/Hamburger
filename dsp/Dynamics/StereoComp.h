@@ -20,8 +20,6 @@ public:
 
     void processBlock(dsp::AudioBlock<float> &block)
     {
-        TRACE_DSP();
-
         speed.update();
         makeup.update();
         // sLink.update();

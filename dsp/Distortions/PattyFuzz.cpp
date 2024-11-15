@@ -10,7 +10,8 @@ void PattyFuzz::prepare(juce::dsp::ProcessSpec &spec)
 
 void PattyFuzz::processBlock(juce::dsp::AudioBlock<float> &block)
 {
-	TRACE_EVENT("dsp", "PattyFuzz::processBlock");
+	// TRACE_EVENT("dsp", "PattyFuzz::processBlock");
+	
 	amount.update();
 
 	for (int channel = 0; channel < block.getNumChannels(); channel++)

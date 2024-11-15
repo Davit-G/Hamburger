@@ -12,7 +12,10 @@ void Cooked::prepare(juce::dsp::ProcessSpec& spec) noexcept {
 }
 
 void Cooked::processBlock(juce::dsp::AudioBlock<float>& block) noexcept {
-	TRACE_EVENT("dsp", "Cooked::processBlock");
+	#if PERFETTO
+	// TRACE_EVENT("dsp", "Cooked::processBlock");
+	#endif // PERFETTO
+	
 	amount.update();
 
 	if (amount.getRaw() == 0.f) {

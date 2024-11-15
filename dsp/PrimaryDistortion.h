@@ -15,7 +15,7 @@
 #include "juce_dsp/juce_dsp.h"
 #include "juce_audio_processors/juce_audio_processors.h"
 
-#include <melatonin_perfetto/melatonin_perfetto.h>
+// #include <melatonin_perfetto/melatonin_perfetto.h>
 
 class PrimaryDistortion
 {
@@ -44,7 +44,6 @@ public:
 
     void processBlock(dsp::AudioBlock<float> &block)
     {
-        TRACE_DSP();
         int distoTypeIndex = distoType->getIndex();
 
         if (distortionEnabled->get() == false)
@@ -57,7 +56,7 @@ public:
         case 0:
         { // classic
 
-            TRACE_EVENT("dsp", "classic");
+            // TRACE_EVENT("dsp", "classic");
             // patty->processBlock(block);
             fuzz->processBlock(block);
 
@@ -94,26 +93,26 @@ public:
         }
         case 1:
         { // tube
-            TRACE_EVENT("dsp", "tube");
+            // TRACE_EVENT("dsp", "tube");
             jeff->processBlock(block);
             tubeAmp->processBlock(block);
             break;
         }
         case 2:
         { // phase distortion
-            TRACE_EVENT("dsp", "phase");
+            // TRACE_EVENT("dsp", "phase");
             phaseDist->processBlock(block);
             break;
         }
         case 3:
         {// rubidium distortion
-            TRACE_EVENT("dsp", "rubidium");
+            // TRACE_EVENT("dsp", "rubidium");
             rubidium->processBlock(block);
             break;
         }
         case 4:
         {// waveshaping matrix distortion
-            TRACE_EVENT("dsp", "matrix");
+            // TRACE_EVENT("dsp", "matrix");
             matrix->processBlock(block);
             break;
         }

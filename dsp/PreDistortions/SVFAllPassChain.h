@@ -60,7 +60,7 @@ public:
 
         float allPassAmt = fmin(allPassAmount.getRaw(), 50.0f);
 
-        TRACE_EVENT_BEGIN("dsp", "SVFAllPassChain loop");
+        // TRACE_EVENT_BEGIN("dsp", "SVFAllPassChain loop");
 
         auto samples = interleavedSubBlock.getChannelPointer(0);
 
@@ -78,7 +78,7 @@ public:
             samples[sample] = sampleVal;
         }
 
-        TRACE_EVENT_END("dsp");
+        // TRACE_EVENT_END("dsp");
 
         auto outChannels = prepareChannelPointers(context.getOutputBlock());
 

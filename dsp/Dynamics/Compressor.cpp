@@ -9,7 +9,6 @@ void Compressor::prepare(juce::dsp::ProcessSpec& spec)
 
 void Compressor::processBlock(juce::dsp::AudioBlock<float>& dryBuffer)
 {
-    TRACE_DSP();
     float makeupGain = juce::Decibels::decibelsToGain(makeup_dB);
 
     for (size_t sample = 0; sample < dryBuffer.getNumSamples(); sample++)
@@ -17,12 +16,12 @@ void Compressor::processBlock(juce::dsp::AudioBlock<float>& dryBuffer)
         float leftSample = dryBuffer.getSample(0, sample);
         float rightSample = dryBuffer.getSample(1, sample);
 
-        // TRACE_EVENT_BEGIN("dsp", "envelope.processSampleStereo");
+        // // TRACE_EVENT_BEGIN("dsp", "envelope.processSampleStereo");
         float envelopeVal = envelope.processSampleStereo(leftSample, rightSample);
-        // TRACE_EVENT_END("dsp");
+        // // TRACE_EVENT_END("dsp");
         float gain = 0.0f;
 
-        // TRACE_EVENT_BEGIN("dsp", "compute different gain types");
+        // // TRACE_EVENT_BEGIN("dsp", "compute different gain types");
         switch (type)
         {
         case EXPANDER:
@@ -35,12 +34,12 @@ void Compressor::processBlock(juce::dsp::AudioBlock<float>& dryBuffer)
             gain = Curves::computeUpwardsDownwardsGain(envelopeVal, thresholdUpper, thresholdLower, ratioUpper, ratioLower, kneeWidth);
             break;
         }
-        // TRACE_EVENT_END("dsp");
+        // // TRACE_EVENT_END("dsp");
 
-        // TRACE_EVENT_BEGIN("dsp", "apply gain");
+        // // TRACE_EVENT_BEGIN("dsp", "apply gain");
         dryBuffer.setSample(0, sample, leftSample * gain);
         dryBuffer.setSample(1, sample, rightSample * gain);
-        // TRACE_EVENT_END("dsp");
+        // // TRACE_EVENT_END("dsp");
     }
 
     dryBuffer.multiplyBy(makeupGain);
@@ -52,12 +51,12 @@ float Compressor::processOneSampleGainStereo(float sampleL, float sampleR)
     float leftSample = sampleL;
     float rightSample = sampleR;
 
-    // TRACE_EVENT_BEGIN("dsp", "envelope.processSampleStereo");
+    // // TRACE_EVENT_BEGIN("dsp", "envelope.processSampleStereo");
     float envelopeVal = envelope.processSampleStereo(leftSample, rightSample);
-    // TRACE_EVENT_END("dsp");
+    // // TRACE_EVENT_END("dsp");
     float gain = 0.0f;
 
-    // TRACE_EVENT_BEGIN("dsp", "compute different gain types");
+    // // TRACE_EVENT_BEGIN("dsp", "compute different gain types");
     switch (type)
     {
     case EXPANDER:
@@ -98,7 +97,7 @@ float Compressor::processOneSampleGainMono(float sample)
 
 void Compressor::updateParameters(float atk, float rel, float mkp, float rat, float thres, float knee, float mkpDB)
 {
-    // TRACE_EVENT_BEGIN("dsp", "Compressor::updateParameters");
+    // // TRACE_EVENT_BEGIN("dsp", "Compressor::updateParameters");
     envelope.setAttackTime(atk);
     envelope.setReleaseTime(rel);
     this->attack = atk;
@@ -110,12 +109,12 @@ void Compressor::updateParameters(float atk, float rel, float mkp, float rat, fl
     this->thresholdUpper = thres + 12.0f + knee * 2.0f;
     this->kneeWidth = knee;
     this->makeup_dB = mkp;
-    // TRACE_EVENT_END("dsp");
+    // // TRACE_EVENT_END("dsp");
 }
 
 void Compressor::updateUpDown(float atk, float rel, float mkp, float ratioLow, float ratioUp, float thresholdLow, float thresholdUp, float kneeW, float mkpDB)
 {
-    // TRACE_EVENT_BEGIN("dsp", "Compressor::updateParameters");
+    // // TRACE_EVENT_BEGIN("dsp", "Compressor::updateParameters");
     envelope.setAttackTime(atk);
     envelope.setReleaseTime(rel);
     this->attack = atk;
@@ -127,5 +126,5 @@ void Compressor::updateUpDown(float atk, float rel, float mkp, float ratioLow, f
     this->thresholdUpper = thresholdUp;
     this->kneeWidth = kneeW;
     this->makeup_dB = mkp;
-    // TRACE_EVENT_END("dsp");
+    // // TRACE_EVENT_END("dsp");
 }

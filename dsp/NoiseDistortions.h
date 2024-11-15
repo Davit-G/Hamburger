@@ -36,22 +36,22 @@ public:
         switch (distoTypeIndex)
         {
         case 0: // sizzle
-            { TRACE_EVENT("dsp", "sizzle");
+            { // TRACE_EVENT("dsp", "sizzle");
             sizzle->processBlock(block);
             break;
             }
         case 1: // erosion
-            { TRACE_EVENT("dsp", "erosion");
+            { // TRACE_EVENT("dsp", "erosion");
             erosion->processBlock(block);
             break;
             }
         case 2: // downsampling
-            { TRACE_EVENT("dsp", "redux");
+            { // TRACE_EVENT("dsp", "redux");
             redux->processBlock(block);
             break;
             }
         case 3: // jeff
-            { TRACE_EVENT("dsp", "gate");
+            { // TRACE_EVENT("dsp", "gate");
             gate->processBlock(block);
             break;
             }

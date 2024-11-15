@@ -6,7 +6,9 @@
 #include "../SmoothParam.h"
 #include "../../utils/Params.h"
 
+#if PERFETTO
 #include <melatonin_perfetto/melatonin_perfetto.h>
+#endif // PERFETTO
 
 //==============================================================================
 /*

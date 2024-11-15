@@ -10,7 +10,10 @@ void DiodeWaveshape::prepare(juce::dsp::ProcessSpec &spec) noexcept
 
 void DiodeWaveshape::processBlock(juce::dsp::AudioBlock<float> &block) noexcept
 {
-    TRACE_EVENT("dsp", "DiodeWaveshape::processBlock");
+	#if PERFETTO
+    // TRACE_EVENT("dsp", "DiodeWaveshape::processBlock");
+    #endif // PERFETTO
+
     amount.update();
 
     for (int sample = 0; sample < block.getNumSamples(); sample++)

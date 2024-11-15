@@ -41,7 +41,7 @@ void Sizzle::prepare(dsp::ProcessSpec &spec)
 
 void Sizzle::processBlock(dsp::AudioBlock<float> &block)
 {
-	TRACE_EVENT("dsp", "Sizzle::processBlock");
+	// TRACE_EVENT("dsp", "Sizzle::processBlock");
 	noiseAmount.update();
 	if (noiseAmount.getRaw() == 0)
 		return;
@@ -69,7 +69,7 @@ void Sizzle::processBlock(dsp::AudioBlock<float> &block)
 
 void Sizzle::processBlockOG(dsp::AudioBlock<float> &block)
 {
-	TRACE_EVENT("dsp", "Sizzle::processBlock");
+	// TRACE_EVENT("dsp", "Sizzle::processBlock");
 	fizzAmount.update();
 
 	if (fizzAmount.getRaw() == 0)
