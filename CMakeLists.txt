@@ -47,7 +47,7 @@ endif()
 #     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")
 # endif()
 
-# project(Hamburger VERSION "${ProjectVersion}")
+project(Hamburger VERSION "${ProjectVersion}")
 
 # include(CheckCXXCompilerFlag)
 # if (APPLE) 
@@ -79,7 +79,7 @@ endif()
 FetchContent_Declare(
 	JUCE
 	GIT_REPOSITORY https://github.com/juce-framework/JUCE.git
-	GIT_TAG 7.0.11
+	GIT_TAG 51d11a2be6d5c97ccf12b4e5e827006e19f0555a
 	GIT_PROGRESS TRUE
     GIT_SHALLOW 1
 )
