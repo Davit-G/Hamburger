@@ -79,11 +79,13 @@ public:
 
         addAndMakeVisible(knob);
 
-        auto font = getParentComponent()->getLookAndFeel().getLabelFont(label);
+        if (getParentComponent() != nullptr) { // on linux the parent happens to be broken somehow
+            auto font = getParentComponent()->getLookAndFeel().getLabelFont(label);
+            label.setFont(font);
+        }
 
         label.setColour(juce::Label::textColourId, juce::Colours::white);
         label.setJustificationType(juce::Justification::centredTop);
-        label.setFont(font);
         addAndMakeVisible(label);
 
         label.setText(kName, juce::dontSendNotification);
@@ -171,6 +173,8 @@ public:
         knob.setBounds(bounds);
 
         knobBounds = bounds;
+
+        
     }
 
 private:

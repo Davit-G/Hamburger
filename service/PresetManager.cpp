@@ -64,7 +64,7 @@ Preset::PresetManager::PresetManager(juce::AudioProcessorValueTreeState &apvts) 
 	}
 
 	valueTreeState.state.addListener(this);
-	currentPreset.referTo(valueTreeState.state.getPropertyAsValue(presetPathProperty, nullptr));
+	currentPreset.referTo(valueTreeState.state.getPropertyAsValue(presetPathProperty, nullptr, true));
 }
 
 /**

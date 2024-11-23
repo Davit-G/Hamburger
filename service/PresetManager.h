@@ -24,7 +24,7 @@ namespace Preset
 
 			if (!file.existsAsFile())
 			{
-				DBG("Preset file " + file.getFullPathName() + " does not exist");
+				DBG("Preset file " + file.getFullPathName() + " does not exist (presetfile constructor)");
 				return;
 			}
 

@@ -5,6 +5,7 @@ support mono / stereo only, dont have it break on mono
 performance optimisations
 bugfixes
 emphasis coefficient interpolation with smoothed values
+improve the usage of lookandfeel classes (especially when using fonts) for better optimisation and less repeated instances of the same object.
 
 # Should
 

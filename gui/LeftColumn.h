@@ -20,6 +20,7 @@ public:
         // panel with elements already inside
         std::vector<std::unique_ptr<Panel>> companderPanels;
         // ORDERING IS VERY IMPORTANT
+        
         companderPanels.push_back(std::make_unique<StereoCompPanel>(p));
         companderPanels.push_back(std::make_unique<MBCompPanel>(p));
         companderPanels.push_back(std::make_unique<MSCompPanel>(p));
