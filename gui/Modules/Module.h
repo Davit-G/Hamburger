@@ -8,7 +8,7 @@
 class Module : public juce::Component
 {
 public:
-    Module(AudioPluginAudioProcessor &processor, const std::string &moduleName, const std::string buttonAttachmentId, std::string categoryAttachmentId, std::vector<std::unique_ptr<Panel>> panels, bool noHeader = false)
+    Module(AudioPluginAudioProcessor &processor, const std::string &moduleName, const std::string buttonAttachmentId, const std::string categoryAttachmentId, std::vector<std::unique_ptr<Panel>> panels, bool noHeader = false)
         : modulePanels(std::move(panels)),
           powerOffImage(juce::ImageCache::getFromMemory(BinaryData::poweroff_png, BinaryData::poweroff_pngSize)), // yes it's using imageCache but stop constructing new instances! unify somehow
           powerOnImage(juce::ImageCache::getFromMemory(BinaryData::poweron_png, BinaryData::poweron_pngSize))
@@ -26,8 +26,13 @@ public:
 
         setPaintingIsUnclipped(true);
 
-        if (categoryAttachmentId != "")
+        if (categoryAttachmentId.length() > 0)
         {
+            // on some linux based OSes, the category selector element overrides the parameter value, causing it to reset to default when opening the GUI.
+            // the below two lines of code fixes that.
+            auto existingCategoryParam = dynamic_cast<juce::AudioParameterChoice *>(processor.treeState.getParameter(categoryAttachmentId));
+            categorySelector.setSelectedItemIndex(existingCategoryParam->getIndex()); 
+            
             categoryAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment>(processor.treeState, categoryAttachmentId, categorySelector);
             setScreen(categorySelector.getSelectedItemIndex());
         }
@@ -35,10 +40,9 @@ public:
         {
             setScreen(0);
             categorySelector.setSelectedItemIndex(0);
-            
         }
 
-        if (buttonAttachmentId != "")
+        if (buttonAttachmentId.length() > 0)
         {
             enabledButton = std::make_unique<LightButton>(processor, powerOffImage, powerOnImage);
             attachment = std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment>(processor.treeState, buttonAttachmentId, *enabledButton);
