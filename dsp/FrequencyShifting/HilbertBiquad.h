@@ -39,11 +39,6 @@ private:
     float prevSample_;
 };
 
-struct HilbertTransformOutput {
-    float x;
-    float y;
-};
-
 class HilbertBiquadShifter {
 public:
 
@@ -51,6 +46,10 @@ public:
 
     }
     ~HilbertBiquadShifter() {}
+
+    void prepare(juce::dsp::ProcessSpec& spec) {
+        sampleRate = spec.sampleRate;
+    }
 
     float processSample(float x, float phaseIncrement) {
         float xcopy = x;
@@ -69,8 +68,8 @@ public:
         float& real = firstPhaseResult;
         float& imag = secondPhaseResult;
 
-        curPhase = fmodf(curPhase + phaseIncrement, 1.f);
-        float theta = 2 * juce::float_Pi * curPhase;
+        curPhase = fmodf(curPhase + phaseIncrement  * (44100.0 / sampleRate), 1.f); // with compensation for different sample rates, i know im supposed to change the biquads as well but eh
+        float theta = 2 * juce::MathConstants<float>::pi * curPhase;
         return 2 * (real * std::cos(theta) + imag * std::sin(theta));
     }
 
@@ -90,4 +89,6 @@ private:
     OneSampleDelay delay;
 
     float curPhase; // phase is incremented
+
+    double sampleRate = 44100;
 };

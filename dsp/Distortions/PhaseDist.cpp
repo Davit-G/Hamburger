@@ -29,6 +29,9 @@ void PhaseDist::prepare(juce::dsp::ProcessSpec& spec) noexcept {
 	*filter.state = juce::dsp::IIR::ArrayCoefficients<float>::makeLowPass(spec.sampleRate, 20000.0f, 0.707f);
 	filter.prepare(spec);
 
+	hilbertTransformL.prepare(spec);
+	hilbertTransformR.prepare(spec);
+
 	delayLine.setMaximumDelayInSamples(spec.sampleRate);
 	delayLine.prepare(spec);
 };
