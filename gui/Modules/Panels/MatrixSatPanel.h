@@ -4,12 +4,13 @@
 #include "../Panel.h"
 #include "../../Knob.h"
 
+#include "../../LookAndFeel/Palette.h"
 
 
 class MatrixSatPanel : public Panel
 {
 public:
-    MatrixSatPanel(AudioPluginAudioProcessor &p) : Panel(p, "MATRIX"), 
+    MatrixSatPanel(AudioPluginAudioProcessor &p) : Panel(p, "MATRIX", Palette::colours[6]), 
         mat1(p, "DRIVE", ParamIDs::matrix1),
         mat2(p, "GRIME", ParamIDs::matrix2),
         mat3(p, "SHARP", ParamIDs::matrix3),
@@ -29,6 +30,16 @@ public:
         addAndMakeVisible(mat7);
         addAndMakeVisible(mat8);
         addAndMakeVisible(mat9);
+
+        Palette::setKnobColoursOfComponent(&mat1, Palette::colours[6]);
+        Palette::setKnobColoursOfComponent(&mat2, Palette::colours[6]);
+        Palette::setKnobColoursOfComponent(&mat3, Palette::colours[6]);
+        Palette::setKnobColoursOfComponent(&mat4, Palette::colours[6]);
+        Palette::setKnobColoursOfComponent(&mat5, Palette::colours[6]);
+        Palette::setKnobColoursOfComponent(&mat6, Palette::colours[6]);
+        Palette::setKnobColoursOfComponent(&mat7, Palette::colours[6]);
+        Palette::setKnobColoursOfComponent(&mat8, Palette::colours[6]);
+        Palette::setKnobColoursOfComponent(&mat9, Palette::colours[6]);
 
         using fr = Grid::Fr;
         using Track = Grid::TrackInfo;

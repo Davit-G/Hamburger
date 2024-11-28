@@ -20,6 +20,11 @@ public:
         addAndMakeVisible(drive);
         addAndMakeVisible(bias);
         addAndMakeVisible(jeff);
+
+        Palette::setKnobColoursOfComponent(&tubeTone, Palette::colours[4]);
+        Palette::setKnobColoursOfComponent(&drive, Palette::colours[4]);
+        Palette::setKnobColoursOfComponent(&bias, Palette::colours[4]);
+        Palette::setKnobColoursOfComponent(&jeff, Palette::colours[4]);
     }
 
     void resized() override

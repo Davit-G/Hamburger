@@ -13,6 +13,11 @@ public:
         addAndMakeVisible(sizzleKnob);
         addAndMakeVisible(sizzleFreq);
         addAndMakeVisible(sizzleQ);
+
+        Palette::setKnobColoursOfComponent(&sizzleKnob, Palette::colours[1]);
+        Palette::setKnobColoursOfComponent(&sizzleFreq, Palette::colours[1]);
+        Palette::setKnobColoursOfComponent(&sizzleQ, Palette::colours[1]);
+        
     }
 
     void resized() override

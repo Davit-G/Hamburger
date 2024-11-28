@@ -111,7 +111,6 @@ public:
     }
 
     std::unique_ptr<LightButton> enabledButton = nullptr;
-    HamburgerLAF comboBoxLook;
     juce::ComboBox categorySelector;
 
 private:
@@ -135,7 +134,6 @@ private:
     void setupTitleLabel(const std::string &moduleName)
     {
         titleLabel.setText(moduleName, juce::dontSendNotification);
-        titleLabel.setFont(comboBoxLook.getComboBoxFont());
         titleLabel.setColour(juce::Label::textColourId, juce::Colours::white);
         
         addAndMakeVisible(titleLabel);
@@ -162,7 +160,6 @@ private:
 
     void setupCategorySelector(const std::string &moduleName)
     {
-        categorySelector.setLookAndFeel(&comboBoxLook);
         categorySelector.onChange = [this, moduleName]
         {
             auto selection = categorySelector.getSelectedItemIndex();

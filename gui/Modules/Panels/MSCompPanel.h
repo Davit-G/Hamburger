@@ -6,7 +6,7 @@
 class MSCompPanel : public Panel
 {
 public:
-    MSCompPanel(AudioPluginAudioProcessor &p) : Panel(p, "MS"),
+    MSCompPanel(AudioPluginAudioProcessor &p) : Panel(p, "MS", Palette::colours[3]),
                                                    threshold(p, "THRES", ParamIDs::MSCompThreshold, ParamUnits::db),
                                                    ratio(p, "RATIO", ParamIDs::compRatio),
                                                    tilt(p, "TILT", ParamIDs::compBandTilt, ParamUnits::db),
@@ -18,6 +18,12 @@ public:
         addAndMakeVisible(tilt);
         addAndMakeVisible(attack);
         addAndMakeVisible(makeup);
+
+        Palette::setKnobColoursOfComponent(&threshold, Palette::colours[3]);
+        Palette::setKnobColoursOfComponent(&ratio, Palette::colours[3]);
+        Palette::setKnobColoursOfComponent(&tilt, Palette::colours[3]);
+        Palette::setKnobColoursOfComponent(&attack, Palette::colours[3]);
+        Palette::setKnobColoursOfComponent(&makeup, Palette::colours[3]);
     }
 
     void resized() override

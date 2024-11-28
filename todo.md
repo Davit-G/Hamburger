@@ -5,7 +5,6 @@ support mono / stereo only, dont have it break on mono
 performance optimisations
 bugfixes
 emphasis coefficient interpolation with smoothed values
-improve the usage of lookandfeel classes (especially when using fonts) for better optimisation and less repeated instances of the same object.
 
 # Should
 
@@ -26,7 +25,6 @@ freq shift: use polyphase designer or pre-bake coefficients
 # feedback 
 
 complete manual page, reupload with new info for plugin (specify order of effect operations in manual or in plugin)
-separate parameters that have common IDs in the apvts
 
 # other
 gain compensation on grunge?

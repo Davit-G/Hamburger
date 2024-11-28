@@ -41,9 +41,12 @@ public:
 
 		listBox.setRowHeight(36);
 
-		font = hamburgerLAF.getQuicksandFont();
-		font.setHeight(20.0f);
+		// font = quicksandFont.get();
+		quicksandFont.setHeight(20.0f);
 	}
+
+    const juce::Typeface::Ptr quicksandTypeface = juce::Typeface::createSystemTypefaceFor(BinaryData::QuicksandBold_ttf, BinaryData::QuicksandBold_ttfSize);
+    Font quicksandFont = juce::Font(FontOptions(quicksandTypeface));
 
 	void initFiles(bool ignoreCollapsedStates = false)
 	{
@@ -158,7 +161,7 @@ public:
 			extraRoom = 35;
 
 		g.setColour(LookAndFeel::getDefaultLookAndFeel().findColour(Label::textColourId));
-		g.setFont(font);
+		g.setFont(quicksandFont);
 
 		auto presetName = row.getFile().getFileNameWithoutExtension();
 
@@ -172,7 +175,7 @@ public:
 				   Justification::centredLeft, true);
 
 		g.setColour(Colour::fromRGB(100, 100, 100));
-		g.setFont(font);
+		g.setFont(quicksandFont);
 
 
 		auto authorName = row.getAuthor();
@@ -253,9 +256,6 @@ private:
 
 	std::unique_ptr<juce::Drawable> folderClosedIcon;
 	std::unique_ptr<juce::Drawable> folderOpenIcon;
-
-	HamburgerLAF hamburgerLAF;
-	Font font;
 
 	JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(CustomListBoxModel)
 };
@@ -375,7 +375,7 @@ public:
 			Preset::defaultDirectory.startAsProcess();
 		};
 
-		currentPresetLabel.setLookAndFeel(&comboBoxLAF);
+		// currentPresetLabel.setLookAndFeel(&comboBoxLAF);
 		currentPresetLabel.setColour(ComboBox::backgroundColourId, Colours::black);
 		currentPresetLabel.setColour(TextButton::ColourIds::buttonColourId, Colours::black);
 
@@ -547,7 +547,7 @@ private:
 
 	TextButton currentPresetLabel;
 
-	HamburgerLAF comboBoxLAF;
+	// HamburgerLAF comboBoxLAF;
 
 	CustomPresetListBox listBox;
 	CustomListBoxModel listBoxModel;

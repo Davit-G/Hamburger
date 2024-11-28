@@ -4,11 +4,10 @@
 #include "../Panel.h"
 #include "../../Knob.h"
 
-
 class ClassicSatPanel : public Panel
 {
 public:
-    ClassicSatPanel(AudioPluginAudioProcessor &p) : Panel(p, "GRILL"), 
+    ClassicSatPanel(AudioPluginAudioProcessor &p) : Panel(p, "GRILL", Palette::colours[0]), 
         satKnob(p, "SATURATION", "saturationAmount", ParamUnits::percent),
         biasKnob(p, "BIAS", ParamIDs::grillBias),
         fuzzKnob(p, "DIODE", ParamIDs::diode),
@@ -18,6 +17,11 @@ public:
         addAndMakeVisible(biasKnob);
         addAndMakeVisible(fuzzKnob);
         addAndMakeVisible(cookedKnob);
+
+        Palette::setKnobColoursOfComponent(&satKnob, Palette::colours[0]);
+        Palette::setKnobColoursOfComponent(&biasKnob, Palette::colours[0]);
+        Palette::setKnobColoursOfComponent(&fuzzKnob, Palette::colours[0]);
+        Palette::setKnobColoursOfComponent(&cookedKnob, Palette::colours[0]);
     }
 
     void resized() override

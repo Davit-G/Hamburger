@@ -71,9 +71,9 @@ public:
         jassert(drawableLogoString != nullptr);
 
 #if JUCE_DEBUG
-        versionLabel.setText("Version: Debug v" + String(JucePlugin_VersionString), NotificationType::dontSendNotification);
+        versionLabel.setText("Version: Debug v" + String(JucePlugin_VersionString) + " (commit " + String(GIT_HASH) + ")", NotificationType::dontSendNotification);
 #else
-        versionLabel.setText("Version: Release v" + String(JucePlugin_VersionString), NotificationType::dontSendNotification);
+        versionLabel.setText("Version: Release v" + String(JucePlugin_VersionString) + " (" + String(GIT_HASH) + ")", NotificationType::dontSendNotification);
 #endif
 
         auto font = hamburgerLAF.getLabelFont(descriptionLabel);
@@ -82,7 +82,7 @@ public:
         versionLabel.setFont(font);
 
         descriptionLabel.setJustificationType(Justification::topLeft);
-        descriptionLabel.setText("Hamburger is a free but powerful distortion effect plugin with dynamics controls and equalisation designed for more control. Hamburger takes inspiration from other distortion and analog emulation plugins, and provides a tight set of controls that allow for fast pleasing results. \n \nHuge thanks to Sam (womp), Danburger (Antfactory), Bean, DEPARTURE, Sheaf, HurleybirdJr, Ewan Bristow, Alyssa, Patrhetoric, the dubstep den chaps, and anyone else I've left out, for all the help with testing, debugging and contributions.\n\nIf you want to know more about Aviary, click the logo on the top right. \n\nClick anywhere on the screen to return to the plugin", NotificationType::dontSendNotification);
+        descriptionLabel.setText("Hamburger is a powerful distortion effect plugin with dynamics controls and equalisation designed for more control. Hamburger takes inspiration from other distortion and analog emulation plugins, and provides a tight set of controls that allow for fast pleasing results. \n \nHuge thanks to Sam (womp), Danburger (Antfactory), Bean, DEPARTURE, Sheaf, HurleybirdJr, Ewan Bristow, Alyssa, Patrhetoric, the dubstep den chaps, and anyone else I've left out, for all the help with testing, debugging and contributions.\n\nIf you want to know more about Aviary, click the logo on the top right. \n\nClick anywhere on the screen to return to the plugin", NotificationType::dontSendNotification);
         descriptionLabel.setFont(font);
 
         drawableLogoString->setInterceptsMouseClicks(false, false);

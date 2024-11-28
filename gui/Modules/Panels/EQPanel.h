@@ -25,6 +25,11 @@ public:
 
         addAndMakeVisible(band1);
         addAndMakeVisible(band2);
+
+        Palette::setKnobColoursOfComponent(&lowFreq, Palette::colours[2]);
+        Palette::setKnobColoursOfComponent(&highFreq, Palette::colours[2]);
+        Palette::setKnobColoursOfComponent(&lowGain, Palette::colours[2]);
+        Palette::setKnobColoursOfComponent(&highGain, Palette::colours[2]);
     }
 
     void resized()

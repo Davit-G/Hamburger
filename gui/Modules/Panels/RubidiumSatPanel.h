@@ -9,7 +9,7 @@
 class RubidiumSatPanel : public Panel
 {
 public:
-    RubidiumSatPanel(AudioPluginAudioProcessor &p) : Panel(p, "RUBIDIUM"), 
+    RubidiumSatPanel(AudioPluginAudioProcessor &p) : Panel(p, "RUBIDIUM", Palette::colours[2]), 
         tubeTone(p, "TONE", ParamIDs::rubidiumTone, ParamUnits::hz),
         mojo(p, "MOJO", ParamIDs::rubidiumMojo),
         hysteresis(p, "ASYM", ParamIDs::rubidiumAsym),
@@ -19,6 +19,11 @@ public:
         addAndMakeVisible(drive);
         addAndMakeVisible(mojo);
         addAndMakeVisible(hysteresis);
+
+        Palette::setKnobColoursOfComponent(&tubeTone, Palette::colours[2]);
+        Palette::setKnobColoursOfComponent(&drive, Palette::colours[2]);
+        Palette::setKnobColoursOfComponent(&mojo, Palette::colours[2]);
+        Palette::setKnobColoursOfComponent(&hysteresis, Palette::colours[2]);
     }
 
     void resized() override

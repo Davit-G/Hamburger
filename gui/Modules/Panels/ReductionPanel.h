@@ -9,7 +9,7 @@
 class ReductionPanel : public Panel
 {
 public:
-    ReductionPanel(AudioPluginAudioProcessor &p) : Panel(p, "BIT"),
+    ReductionPanel(AudioPluginAudioProcessor &p) : Panel(p, "BIT", Palette::colours[1]),
                                                    downSample(p, "RATE", ParamIDs::downsampleFreq, ParamUnits::hz),
                                                    bitReduction(p, "BITS", ParamIDs::bitReduction),
                                                    downsampleMix(p, "MIX", ParamIDs::downsampleMix)
@@ -17,6 +17,11 @@ public:
         addAndMakeVisible(downSample);
         addAndMakeVisible(bitReduction);
         addAndMakeVisible(downsampleMix);
+
+        Palette::setKnobColoursOfComponent(&downSample, Palette::colours[1]);
+        Palette::setKnobColoursOfComponent(&bitReduction, Palette::colours[1]);
+        Palette::setKnobColoursOfComponent(&downsampleMix, Palette::colours[1]);
+        
     }
 
     void resized() override {

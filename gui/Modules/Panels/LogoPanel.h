@@ -9,7 +9,7 @@
 class LogoPanel : public Panel
 {
 public:
-    LogoPanel(AudioPluginAudioProcessor &p) : Panel(p, "SETTINGS")
+    LogoPanel(AudioPluginAudioProcessor &p) : Panel(p, "SETTINGS", juce::Colours::whitesmoke)
     {
         auto logoString = R"svgDELIM(
 <svg viewBox="0 0 150 56" xmlns="http://www.w3.org/2000/svg">

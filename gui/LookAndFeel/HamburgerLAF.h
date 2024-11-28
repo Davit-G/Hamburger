@@ -9,7 +9,7 @@ public:
         setColour(Slider::rotarySliderOutlineColourId, juce::Colours::black);
         setColour(Slider::rotarySliderFillColourId, juce::Colours::white);
         setColour(Slider::thumbColourId, juce::Colours::whitesmoke);
-        setColour(Slider::rotarySliderFillColourId, color);
+        // setColour(Slider::rotarySliderFillColourId, color);
 
         setColour(juce::ComboBox::ColourIds::backgroundColourId, juce::Colours::transparentBlack);
         setColour(juce::ComboBox::ColourIds::buttonColourId, juce::Colours::transparentBlack);

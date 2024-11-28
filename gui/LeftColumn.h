@@ -25,7 +25,6 @@ public:
         companderPanels.push_back(std::make_unique<MBCompPanel>(p));
         companderPanels.push_back(std::make_unique<MSCompPanel>(p));
         compander = std::make_unique<Module>(p, "COMP", "compressionOn", "compressionType", std::move(companderPanels));
-        compander->setLookAndFeel(&knobLAF3);
         addAndMakeVisible(compander.get());
         
 
@@ -34,7 +33,6 @@ public:
         preDistortionPanels.push_back(std::make_unique<AllPassPanel>(p));
         preDistortionPanels.push_back(std::make_unique<GrungePanel>(p));
         preDistortion = std::make_unique<Module>(p, "", "preDistortionEnabled", "", std::move(preDistortionPanels));
-        preDistortion->setLookAndFeel(&knobLAF2);
         addAndMakeVisible(preDistortion.get());
 
         std::vector<std::unique_ptr<Panel>> logoPanels;
@@ -67,9 +65,6 @@ public:
 
 private:
     std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> enableButtonAttachment = nullptr;
-
-    KnobLAF knobLAF2 = KnobLAF(Palette::colours[2]);
-    KnobLAF knobLAF3 = KnobLAF(Palette::colours[3]);
 
     std::unique_ptr<Module> compander = nullptr;
     std::unique_ptr<Module> preDistortion = nullptr;

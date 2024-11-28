@@ -29,11 +29,9 @@ public:
         // and add rectification to it?
 
         classic = std::make_unique<ClassicSatPanel>(p);
-        classic->setLookAndFeel(&saturationLAF);
         panels.push_back(std::move(classic));
 
         tube = std::make_unique<TubeSatPanel>(p);
-        tube->setLookAndFeel(&tubeSatLAF);
         panels.push_back(std::move(tube));
 
         // auto waveshape = std::make_unique<WaveshaperPanel>(p);
@@ -41,15 +39,12 @@ public:
         // panels.push_back(std::move(waveshape));
 
         phase = std::make_unique<PhaseDistPanel>(p);
-        phase->setLookAndFeel(&phaseLAF); // todo: customise
         panels.push_back(std::move(phase));
 
         rubidium = std::make_unique<RubidiumSatPanel>(p);
-        rubidium->setLookAndFeel(&rubidiumLAF); // todo: customise
         panels.push_back(std::move(rubidium));
 
         matrixSat = std::make_unique<MatrixSatPanel>(p);
-        matrixSat->setLookAndFeel(&matrixLAF);
         panels.push_back(std::move(matrixSat));
 
         saturation = std::make_unique<Module>(p, "DISTORTION", "primaryDistortionEnabled", "primaryDistortionType", std::move(panels));
@@ -58,7 +53,6 @@ public:
         std::vector<std::unique_ptr<Panel>> clipPanel;
 
         postClipPanel = std::make_unique<PostClipPanel>(p);
-        postClipPanel->setLookAndFeel(&tubeSatLAF);
         clipPanel.push_back(std::move(postClipPanel));
 
         postClip = std::make_unique<Module>(p, "CLIPPER", "postClipEnabled", "", std::move(clipPanel));
@@ -73,7 +67,6 @@ public:
         noisePanels.push_back(std::make_unique<SizzleOGPanel>(p));
 
         noise = std::make_unique<Module>(p, "NOISE", "noiseDistortionEnabled", "noiseDistortionType", std::move(noisePanels));
-        noise->setLookAndFeel(&knobLAF1);
         addAndMakeVisible(noise.get());
     }
 
@@ -94,13 +87,6 @@ public:
     }
 
 private:
-    KnobLAF saturationLAF = KnobLAF(Palette::colours[0]);
-    KnobLAF tubeSatLAF = KnobLAF(Palette::colours[4]);
-    KnobLAF phaseLAF = KnobLAF(Palette::colours[3]);
-    KnobLAF rubidiumLAF = KnobLAF(Palette::colours[2]);
-    KnobLAF matrixLAF = KnobLAF(Palette::colours[6]);
-    KnobLAF knobLAF1 = KnobLAF(Palette::colours[1]);
-
     std::unique_ptr<Panel> classic = nullptr;
     std::unique_ptr<Panel> tube = nullptr;
     std::unique_ptr<Panel> phase = nullptr;

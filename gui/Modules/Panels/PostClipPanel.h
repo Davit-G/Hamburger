@@ -7,11 +7,14 @@
 class PostClipPanel : public Panel
 {
 public:
-    PostClipPanel(AudioPluginAudioProcessor &p) : Panel(p, "CLIPPER"),
+    PostClipPanel(AudioPluginAudioProcessor &p) : Panel(p, "CLIPPER", Palette::colours[4]),
     gain(p, "GAIN", ParamIDs::postClipGain, ParamUnits::db),
     knee(p, "KNEE", ParamIDs::postClipKnee, ParamUnits::db) {
         addAndMakeVisible(gain);
         addAndMakeVisible(knee);
+
+        Palette::setKnobColoursOfComponent(&gain, Palette::colours[4]);
+        Palette::setKnobColoursOfComponent(&knee, Palette::colours[4]);
     }
 
     void resized() override

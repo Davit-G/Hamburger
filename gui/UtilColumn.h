@@ -18,7 +18,6 @@ public:
         // ORDERING IS VERY IMPORTANT
         eqPanels.push_back(std::make_unique<EQPanel>(p));
         eq = std::make_unique<Module>(p, "EMPHASIS", "emphasisOn", "", std::move(eqPanels));
-        eq->setLookAndFeel(&eqLookAndFeel);
         addAndMakeVisible(eq.get());
 
         std::vector<std::unique_ptr<Panel>> utilityPanels;
@@ -26,7 +25,6 @@ public:
         utilityPanels.push_back(std::make_unique<UtilityPanel>(p));
         utilityPanels.push_back(std::make_unique<OtherUtils>(p));
         utility = std::make_unique<Module>(p, "", "hamburgerEnabled", "", std::move(utilityPanels));
-        utility->setLookAndFeel(&utilityLookAndFeel);
         addAndMakeVisible(utility.get());
 
         std::vector<std::unique_ptr<Panel>> settingsPanels;
@@ -51,9 +49,6 @@ public:
     }
 
 private:
-    KnobLAF eqLookAndFeel = KnobLAF(Palette::colours[2]);
-    KnobLAF utilityLookAndFeel = KnobLAF(juce::Colours::whitesmoke);
-
     std::unique_ptr<Module> eq = nullptr;
     std::unique_ptr<Module> utility = nullptr;
     std::unique_ptr<Module> settings = nullptr;

@@ -5,7 +5,7 @@
 class ErosionPanel : public Panel
 {
 public:
-    ErosionPanel(AudioPluginAudioProcessor &p) : Panel(p, "EROSION"),
+    ErosionPanel(AudioPluginAudioProcessor &p) : Panel(p, "EROSION", Palette::colours[1]),
                                                  erosionAmt(p, "AMOUNT", ParamIDs::erosionAmount),
                                                  erosionFreq(p, "FREQ", ParamIDs::erosionFrequency, ParamUnits::hz),
                                                  erosionQ(p, "Q", ParamIDs::erosionQ)
@@ -14,6 +14,10 @@ public:
         addAndMakeVisible(erosionAmt);
         addAndMakeVisible(erosionFreq);
         addAndMakeVisible(erosionQ);
+
+        Palette::setKnobColoursOfComponent(&erosionAmt, Palette::colours[1]);
+        Palette::setKnobColoursOfComponent(&erosionFreq, Palette::colours[1]);
+        Palette::setKnobColoursOfComponent(&erosionQ, Palette::colours[1]);
     }
 
     void resized()

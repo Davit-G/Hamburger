@@ -8,12 +8,15 @@
 class GrungePanel : public Panel
 {
 public:
-    GrungePanel(AudioPluginAudioProcessor &p) : Panel(p, "GRUNGE"),
+    GrungePanel(AudioPluginAudioProcessor &p) : Panel(p, "GRUNGE", Palette::colours[2]),
     amount(p, "AMT", ParamIDs::grungeAmt),
     tone(p, "TONE", ParamIDs::grungeTone) {
 
         addAndMakeVisible(amount);
         addAndMakeVisible(tone);
+
+        Palette::setKnobColoursOfComponent(&amount, Palette::colours[2]);
+        Palette::setKnobColoursOfComponent(&tone, Palette::colours[2]);
     }
 
     void resized() override

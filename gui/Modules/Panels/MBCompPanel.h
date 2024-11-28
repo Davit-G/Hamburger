@@ -2,11 +2,12 @@
 
 #include "../Panel.h"
 
+#include "../../LookAndFeel/Palette.h"
 
 class MBCompPanel : public Panel
 {
 public:
-    MBCompPanel(AudioPluginAudioProcessor &p) : Panel(p, "MB"),
+    MBCompPanel(AudioPluginAudioProcessor &p) : Panel(p, "MB", Palette::colours[3]),
                                                    threshold(p, "THRES", ParamIDs::MBCompThreshold, ParamUnits::db),
                                                    ratio(p, "RATIO", ParamIDs::compRatio),
                                                    tilt(p, "TILT", ParamIDs::compBandTilt, ParamUnits::db),
@@ -18,6 +19,12 @@ public:
         addAndMakeVisible(tilt);
         addAndMakeVisible(attack);
         addAndMakeVisible(makeup);
+
+        Palette::setKnobColoursOfComponent(&threshold, Palette::colours[3]);
+        Palette::setKnobColoursOfComponent(&ratio, Palette::colours[3]);
+        Palette::setKnobColoursOfComponent(&tilt, Palette::colours[3]);
+        Palette::setKnobColoursOfComponent(&attack, Palette::colours[3]);
+        Palette::setKnobColoursOfComponent(&makeup, Palette::colours[3]);
     }
 
     void resized() override

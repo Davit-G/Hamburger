@@ -8,6 +8,6 @@
 class EmptyPanel : public Panel
 {
 public:
-    EmptyPanel(AudioPluginAudioProcessor &p) : Panel(p, "EMPTY") {
+    EmptyPanel(AudioPluginAudioProcessor &p) : Panel(p, "EMPTY", Palette::colours[0]) {
     }
 };

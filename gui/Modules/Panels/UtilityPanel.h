@@ -17,6 +17,10 @@ public:
         addAndMakeVisible(inGain);
         addAndMakeVisible(mix);
         addAndMakeVisible(outGain);
+
+        Palette::setKnobColoursOfComponent(&inGain, juce::Colours::whitesmoke);
+        Palette::setKnobColoursOfComponent(&mix, juce::Colours::whitesmoke);
+        Palette::setKnobColoursOfComponent(&outGain, juce::Colours::whitesmoke);
     }
 
     void resized() {

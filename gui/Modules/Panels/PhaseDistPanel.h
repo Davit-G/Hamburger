@@ -8,7 +8,7 @@
 class PhaseDistPanel : public Panel
 {
 public:
-    PhaseDistPanel(AudioPluginAudioProcessor &p) : Panel(p, "PHASE"), 
+    PhaseDistPanel(AudioPluginAudioProcessor &p) : Panel(p, "PHASE", Palette::colours[3]), 
         satKnob(p, "SATURATION", ParamIDs::phaseAmount, ParamUnits::percent),
         toneKnob(p, "TONE", ParamIDs::phaseDistTone, ParamUnits::hz),
         normKnob(p, "STEREO", ParamIDs::phaseDistStereo),
@@ -20,6 +20,12 @@ public:
         addAndMakeVisible(normKnob);
         addAndMakeVisible(shiftKnob);
         addAndMakeVisible(rectKnob);
+
+        Palette::setKnobColoursOfComponent(&satKnob, Palette::colours[3]);
+        Palette::setKnobColoursOfComponent(&toneKnob, Palette::colours[3]);
+        Palette::setKnobColoursOfComponent(&normKnob, Palette::colours[3]);
+        Palette::setKnobColoursOfComponent(&rectKnob, Palette::colours[3]);
+        Palette::setKnobColoursOfComponent(&shiftKnob, Palette::colours[3]);
     }
 
     void resized() override
