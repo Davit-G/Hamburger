@@ -47,6 +47,9 @@ public:
         matrixSat = std::make_unique<MatrixSatPanel>(p);
         panels.push_back(std::move(matrixSat));
 
+        // tape = std::make_unique<RubidiumSatPanel>(p);
+        // panels.push_back(std::move(tape));
+
         saturation = std::make_unique<Module>(p, "DISTORTION", "primaryDistortionEnabled", "primaryDistortionType", std::move(panels));
         addAndMakeVisible(saturation.get());
 
@@ -92,6 +95,7 @@ private:
     std::unique_ptr<Panel> phase = nullptr;
     std::unique_ptr<Panel> rubidium = nullptr;
     std::unique_ptr<Panel> matrixSat = nullptr;
+    std::unique_ptr<Panel> tape = nullptr;
     std::unique_ptr<Panel> postClipPanel = nullptr;
 
     std::unique_ptr<Module> noise = nullptr;

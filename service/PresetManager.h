@@ -20,7 +20,7 @@ namespace Preset
 	public:
 		PresetFile(juce::File file = juce::File()) : file(file)
 		{
-			id = file.getRelativePathFrom(defaultDirectory);
+			// id = file.getRelativePathFrom(defaultDirectory);
 
 			if (!file.existsAsFile())
 			{
@@ -85,6 +85,9 @@ namespace Preset
 		bool savePreset(const juce::String &preset, const juce::String &author, const juce::String &description, std::function<void(std::string)> cb);
 		void deletePreset(const juce::File &preset, std::function<void(std::string)> cb);
 		void loadPreset(const juce::File &preset, std::function<void(std::string)> cb);
+
+		void setPresetDirectory(const juce::File &directory);
+		juce::File getPresetDirectory() const;
 		
 		juce::File loadNextPreset(std::function<void(std::string)> cb);
 		juce::File loadPreviousPreset(std::function<void(std::string)> cb);
@@ -95,6 +98,7 @@ namespace Preset
 
 		std::shared_ptr<juce::OwnedArray<Preset::PresetFile>> getPresetFileHierarchy();
 
+		juce::ApplicationProperties appProperties;
 	private:
 		void valueTreeRedirected(juce::ValueTree &treeWhichHasBeenChanged) override;
 
@@ -103,6 +107,11 @@ namespace Preset
 		juce::AudioProcessorValueTreeState &valueTreeState;
 		juce::Value currentPreset;
 		juce::Value currentAuthor;
+
+		juce::PropertiesFile::Options options;
+
+		// this is different to the default one, which is selected when we dont have a custom preset folder
+		std::unique_ptr<juce::File> customPresetDirectory = nullptr;
 	};
 
 }

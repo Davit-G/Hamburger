@@ -105,7 +105,7 @@ public:
         float size = std::min(knobBounds.getWidth(), knobBounds.getHeight());
 
         // the knob background
-        g.fillEllipse(juce::Rectangle<float>(size, size).reduced(5.0f).withCentre(bounds.getCentre()));
+        // g.fillEllipse(juce::Rectangle<float>(size, size).reduced(5.0f).withCentre(bounds.getCentre()));
 
         // some circles or something
         g.setColour(knobColour);

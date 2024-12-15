@@ -35,14 +35,54 @@ int compareVersionStrings(juce::String v1, juce::String v2)
 	return 0;
 }
 
+void Preset::PresetManager::setPresetDirectory(const juce::File &directory)
+{
+	customPresetDirectory.reset(new juce::File(directory));
+}
+
+juce::File Preset::PresetManager::getPresetDirectory() const
+{
+	if (customPresetDirectory == nullptr)
+	{
+		DBG("Preset directory is null, using default");
+		return defaultDirectory;
+	}
+	return *customPresetDirectory;
+}
+
+
 Preset::PresetManager::PresetManager(juce::AudioProcessorValueTreeState &apvts) : valueTreeState(apvts)
 {
+	options.applicationName = JucePlugin_Name;
+	options.filenameSuffix = ".settings";
+	options.osxLibrarySubFolder = "Application Support/AviaryAudio";
+	options.folderName = juce::String(JucePlugin_Manufacturer) + "/" + juce::String(JucePlugin_Name);
+	options.storageFormat = juce::PropertiesFile::storeAsXML;
+
+	appProperties.setStorageParameters(options);
+
+	auto propertiesFile = appProperties.getUserSettings();
+
+	DBG("Loading preset directory from config file at " + propertiesFile->getFile().getFullPathName());
+
+	auto configPresetDir = propertiesFile->getValue("presetFolder", "");
+
+	if (configPresetDir != "")
+	{
+		DBG("Preset directory found in config file, set to " + configPresetDir);
+		setPresetDirectory(juce::File(configPresetDir));
+	}
+
+	auto presetDir = getPresetDirectory();
+
+	DBG("Preset directory is " + presetDir.getFullPathName());
+
 	// Create a default Preset Directory, if it doesn't exist
-	if (!defaultDirectory.exists())
+	if (!presetDir.exists())
 	{
 		// todo: load defaults here?
 
-		const auto result = defaultDirectory.createDirectory();
+		const auto result = presetDir.createDirectory();
 		if (result.failed())
 		{
 			DBG("Could not create preset directory: " + result.getErrorMessage());
@@ -51,7 +91,7 @@ Preset::PresetManager::PresetManager(juce::AudioProcessorValueTreeState &apvts) 
 	}
 
 	// does a child path called /user exist?
-	auto child = juce::File(defaultDirectory.getFullPathName() + "/User");
+	auto child = juce::File(presetDir.getFullPathName() + "/User");
 
 	if (!child.exists())
 	{
@@ -80,13 +120,15 @@ bool Preset::PresetManager::savePreset(const juce::String &presetName, const juc
 		return false;
 	}
 
+	auto presetDir = getPresetDirectory();
+
 	currentPreset.setValue(presetName);
 	currentAuthor.setValue(author);
 	
 	valueTreeState.state.setProperty("version", JucePlugin_VersionString, nullptr);
 
 	const auto xml = valueTreeState.copyState().createXml();
-	const auto presetFile = juce::File(defaultDirectory.getFullPathName() + "/User/" + presetName + "." + extension);
+	const auto presetFile = juce::File(presetDir.getFullPathName() + "/User/" + presetName + "." + extension);
 
 
 	if (presetFile.existsAsFile())
@@ -109,7 +151,7 @@ bool Preset::PresetManager::savePreset(const juce::String &presetName, const juc
 		return false;
 	}
 
-	currentPreset.setValue(presetFile.getRelativePathFrom(defaultDirectory));
+	currentPreset.setValue(presetFile.getRelativePathFrom(presetDir));
 
 	return true;
 }
@@ -138,7 +180,8 @@ void Preset::PresetManager::deletePreset(const juce::File &presetFile, std::func
 
 void Preset::PresetManager::loadPreset(const juce::File &presetFile, std::function<void(std::string)> cb)
 {
-	auto relativePath = presetFile.getRelativePathFrom(defaultDirectory);
+	auto presetDir = getPresetDirectory();
+	auto relativePath = presetFile.getRelativePathFrom(presetDir);
 
 	if (!presetFile.existsAsFile())
 	{
@@ -189,7 +232,7 @@ juce::File Preset::PresetManager::loadNextPreset(std::function<void(std::string)
 
 	for (int i = 0; i < allPresets.size(); i++)
 	{
-		if (allPresets[i].getRelativePathFrom(defaultDirectory) == currentPreset.toString())
+		if (allPresets[i].getRelativePathFrom(getPresetDirectory()) == currentPreset.toString())
 		{
 			DBG("Current preset: " + currentPreset.toString());
 			DBG("Index: " + juce::String(i));
@@ -214,7 +257,7 @@ juce::File Preset::PresetManager::loadPreviousPreset(std::function<void(std::str
 
 	for (int i = 0; i < allPresets.size(); i++)
 	{
-		if (allPresets[i].getRelativePathFrom(defaultDirectory) == currentPreset.toString())
+		if (allPresets[i].getRelativePathFrom(getPresetDirectory()) == currentPreset.toString())
 		{
 			DBG("Current preset: " + currentPreset.toString());
 			DBG("Index: " + juce::String(i));
@@ -232,7 +275,7 @@ juce::File Preset::PresetManager::loadPreviousPreset(std::function<void(std::str
 juce::Array<juce::File> Preset::PresetManager::getAllPresets() const
 {
 	juce::StringArray presets;
-	const auto fileArray = defaultDirectory.findChildFiles(
+	const auto fileArray = getPresetDirectory().findChildFiles(
 		juce::File::TypesOfFileToFind::findFiles, true, "*." + extension);
 
 	return fileArray;
@@ -276,7 +319,7 @@ std::shared_ptr<juce::OwnedArray<Preset::PresetFile>> Preset::PresetManager::get
 {
 	auto files = std::make_shared<juce::OwnedArray<Preset::PresetFile>>();
 
-	recursiveSortedTraverse(defaultDirectory, files);
+	recursiveSortedTraverse(getPresetDirectory(), files);
 
 	this->presetsCache = files;
 
@@ -290,7 +333,7 @@ juce::File Preset::PresetManager::getCurrentPreset() const
 		return juce::File();
 	}
 
-	return defaultDirectory.getChildFile(currentPreset.toString());
+	return getPresetDirectory().getChildFile(currentPreset.toString());
 }
 
 void Preset::PresetManager::valueTreeRedirected(juce::ValueTree &treeWhichHasBeenChanged)

@@ -147,40 +147,40 @@ public:
             spl1 = atanApprox(spl1 * delta1) / (spl1 == 0 ? 1 : (delta1 == 0 ? 0.00000000000001 : delta1));
 
             // nested allpass
-            // if (buf_length1 == 0) {
-            //     double in2 = spl0 + cDenorm;
-            //     double v_n2 = in2 + dataBuffer.getSample(0, v_n_buf2 + pos2) * -g;
-            //     double out2 = v_n2 * g + dataBuffer.getSample(0, v_n_buf2 + pos2);
-            //     dataBuffer.setSample(0, v_n_buf2 + pos2, v_n2);
-            //     pos2 += 1;
-            //     if (pos2 > buf_length1)
-            //         pos2 = 0;
-            //     spl0 = out2;
-            //     double in3 = spl1 + cDenorm;
-            //     double v_n3 = in3 + dataBuffer.getSample(0, v_n_buf3 + pos3) * -g;
-            //     double out3 = v_n3 * g + dataBuffer.getSample(0, v_n_buf3 + pos3);
-            //     dataBuffer.setSample(0, v_n_buf3 + pos3, v_n3);
-            //     pos3 += 1;
-            //     if (pos3 > buf_length1)
-            //         pos3 = 0;
-            //     spl1 = out3;
+            if (0 == 0) {
+                double in2 = spl0 + cDenorm;
+                double v_n2 = in2 + dataBuffer.getSample(0, v_n_buf2 + pos2) * -g;
+                double out2 = v_n2 * g + dataBuffer.getSample(0, v_n_buf2 + pos2);
+                dataBuffer.setSample(0, v_n_buf2 + pos2, v_n2);
+                pos2 += 1;
+                if (pos2 > buf_length1)
+                    pos2 = 0;
+                spl0 = out2;
+                double in3 = spl1 + cDenorm;
+                double v_n3 = in3 + dataBuffer.getSample(0, v_n_buf3 + pos3) * -g;
+                double out3 = v_n3 * g + dataBuffer.getSample(0, v_n_buf3 + pos3);
+                dataBuffer.setSample(0, v_n_buf3 + pos3, v_n3);
+                pos3 += 1;
+                if (pos3 > buf_length1)
+                    pos3 = 0;
+                spl1 = out3;
 
-            //     // delta
-            //     double in4 = delta0 + cDenorm;
-            //     double v_n4 = in4 + dataBuffer.getSample(0, v_n_buf4 + pos4) * -g;
-            //     delta0 = v_n4 * g + dataBuffer.getSample(0, v_n_buf4 + pos4);
-            //     dataBuffer.setSample(0, v_n_buf4 + pos4, v_n4);
-            //     pos4 += 1;
-            //     if (pos4 > buf_length1)
-            //         pos4 = 0;
-            //     double in5 = delta1 + cDenorm;
-            //     double v_n5 = in5 + dataBuffer.getSample(0, v_n_buf5 + pos5) * -g;
-            //     delta1 = v_n5 * g + dataBuffer.getSample(0, v_n_buf5 + pos5);
-            //     dataBuffer.setSample(0, v_n_buf5 + pos5, v_n5);
-            //     pos5 += 1;
-            //     if (pos5 > buf_length1)
-            //         pos5 = 0;
-            // }
+                // delta
+                double in4 = delta0 + cDenorm;
+                double v_n4 = in4 + dataBuffer.getSample(0, v_n_buf4 + pos4) * -g;
+                delta0 = v_n4 * g + dataBuffer.getSample(0, v_n_buf4 + pos4);
+                dataBuffer.setSample(0, v_n_buf4 + pos4, v_n4);
+                pos4 += 1;
+                if (pos4 > buf_length1)
+                    pos4 = 0;
+                double in5 = delta1 + cDenorm;
+                double v_n5 = in5 + dataBuffer.getSample(0, v_n_buf5 + pos5) * -g;
+                delta1 = v_n5 * g + dataBuffer.getSample(0, v_n_buf5 + pos5);
+                dataBuffer.setSample(0, v_n_buf5 + pos5, v_n5);
+                pos5 += 1;
+                if (pos5 > buf_length1)
+                    pos5 = 0;
+            }
 
             // signal highpass
             h2 += ((spl0 - h2) * cut2);
@@ -248,7 +248,7 @@ private:
     double adj_s3 = 1;
     double adj_s4 = 1;
     // nested allpass
-    double cDenorm = 10 ^ -30;
+    double cDenorm = 1e-30;
 
     int v_n_buf0 = 1000;
     int v_n_buf1 = 2000;

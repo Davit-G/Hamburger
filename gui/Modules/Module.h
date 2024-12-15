@@ -42,11 +42,23 @@ public:
             categorySelector.setSelectedItemIndex(0);
         }
 
+        
+        hamburgerEnabled = dynamic_cast<juce::AudioParameterBool *>(processor.treeState.getParameter(ParamIDs::hamburgerEnabled.getParamID()));
+        jassert(hamburgerEnabled);
+
         if (buttonAttachmentId.length() > 0)
         {
             enabledButton = std::make_unique<LightButton>(processor, powerOffImage, powerOnImage);
             attachment = std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment>(processor.treeState, buttonAttachmentId, *enabledButton);
             addAndMakeVisible(enabledButton.get());
+
+            enabledButton->onClick = [this]
+            {
+                hideElements();
+                repaint();
+            };
+
+            hideElements();
         }
         else
         {
@@ -54,6 +66,33 @@ public:
         }
 
         setCategoryText(moduleName);
+        
+    }
+
+    void hideElements()
+    {
+        if (enabledButton != nullptr || hamburgerEnabled != nullptr)
+        {
+            for (auto &panel : modulePanels)
+            {
+                panel->setAlpha(1.0f);
+            }
+        }
+
+        if (enabledButton->getToggleState())
+            {
+
+                for (auto &panel : modulePanels)
+                {
+                    panel->setAlpha(1.0f);
+                }
+            } else {
+
+                for (auto &panel : modulePanels)
+                {
+                    panel->setAlpha(0.6f);
+                }
+            }
     }
 
     ~Module() override = default;
@@ -62,7 +101,17 @@ public:
     {
         Path p;
         p.addRoundedRectangle(getLocalBounds().reduced(4).toFloat(), 15.0f);
-        g.setColour(juce::Colour::fromRGB(0, 0, 0));
+
+        if (enabledButton == nullptr) {
+            g.setColour(juce::Colour::fromRGB(0, 0, 0));
+        } else {
+            if (enabledButton->getToggleState()) {
+                g.setColour(juce::Colour::fromRGBA(0, 0, 0, 255));
+            } else {
+                g.setColour(juce::Colour::fromRGBA(0, 0, 0, 150));
+            }
+        }
+
         g.fillPath(p);
     }
 
@@ -191,6 +240,9 @@ private:
 
     std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment> categoryAttachment = nullptr;
     std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> attachment = nullptr;
+
+    juce::AudioParameterBool* hamburgerEnabled;
+    
     // array of pointers of panel
     std::vector<std::unique_ptr<Panel>> modulePanels;
 

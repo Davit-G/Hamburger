@@ -22,7 +22,7 @@ namespace ParamIDs {
     };
 
     static const PanelInfo distortion = {
-        "DISTORTION", "", juce::StringArray({"GRILL", "TUBE", "PHASE", "RUBIDIUM", "MATRIX"})
+        "DISTORTION", "", juce::StringArray({"GRILL", "TUBE", "PHASE", "RUBIDIUM", "MATRIX"}) // "TAPE"
     };
 
     static const PanelInfo preDistortionTypes = {

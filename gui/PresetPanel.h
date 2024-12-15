@@ -56,7 +56,7 @@ public:
 		{
 			for (auto &file : *filesFolders)
 			{
-				isCollapsed[file->getFile().getRelativePathFrom(Preset::defaultDirectory)] = true;
+				isCollapsed[file->getFile().getRelativePathFrom(presetManager.getPresetDirectory())] = true;
 			}
 		}
 
@@ -71,7 +71,7 @@ public:
 
 		for (auto &file : collection)
 		{
-			auto relativePath = file->getFile().getRelativePathFrom(Preset::defaultDirectory);
+			auto relativePath = file->getFile().getRelativePathFrom(presetManager.getPresetDirectory());
 			auto depth = relativePath.retainCharacters("/\\").length();
 
 			if (depth == 0)
@@ -85,16 +85,16 @@ public:
 
 			int tries = 0;
 
-			while (current != Preset::defaultDirectory)
+			while (current != presetManager.getPresetDirectory())
 			{
-				auto currentFile = current.getRelativePathFrom(Preset::defaultDirectory);
+				auto currentFile = current.getRelativePathFrom(presetManager.getPresetDirectory());
 				if (isCollapsed[currentFile] || tries++ > 40)
 					break;
 
 				current = current.getParentDirectory();
 			}
 
-			if (!isCollapsed[current.getRelativePathFrom(Preset::defaultDirectory)])
+			if (!isCollapsed[current.getRelativePathFrom(presetManager.getPresetDirectory())])
 			{
 				filesToRender.add(file->getFile());
 			}
@@ -126,11 +126,11 @@ public:
 			g.fillAll(Colour::fromRGB(33, 33, 33));
 		}
 
-		auto depth = row.getFile().getRelativePathFrom(Preset::defaultDirectory).retainCharacters("/\\").length();
+		auto depth = row.getFile().getRelativePathFrom(presetManager.getPresetDirectory()).retainCharacters("/\\").length();
 
 		if (isDir)
 		{
-			bool collapsed = isCollapsed[row.getFile().getRelativePathFrom(Preset::defaultDirectory)];
+			bool collapsed = isCollapsed[row.getFile().getRelativePathFrom(presetManager.getPresetDirectory())];
 			int delta = 0;
 
 			// Path p;
@@ -197,7 +197,7 @@ public:
 
 		if (isDir)
 		{
-			auto relativePath = item.getFile().getRelativePathFrom(Preset::defaultDirectory);
+			auto relativePath = item.getFile().getRelativePathFrom(presetManager.getPresetDirectory());
 			isCollapsed[relativePath] = !isCollapsed[relativePath];
 			refreshFilesToRender();
 			listBox.updateContent();
@@ -370,9 +370,9 @@ public:
 
 		listBox.setVisible(showPresetsList);
 
-		openPresetFolderButton.onClick = [this]
+		openPresetFolderButton.onClick = [this, &pm]
 		{
-			Preset::defaultDirectory.startAsProcess();
+			pm.getPresetDirectory().startAsProcess();
 		};
 
 		// currentPresetLabel.setLookAndFeel(&comboBoxLAF);

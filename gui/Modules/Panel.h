@@ -10,7 +10,11 @@ public:
         setName(theName);
 
         Palette::setKnobColoursOfComponent(this, color);
+
+
     }
+
+    
 
     virtual ~Panel() = default;
 

@@ -30,7 +30,7 @@ public:
     {
         auto bounds = getLocalBounds();
 
-        using fr = Grid::Fr;
+        using fr = juce::Grid::Fr;
         using Track = Grid::TrackInfo;
 
         grid.templateRows = {Track(fr(1)), Track(fr(1))};
