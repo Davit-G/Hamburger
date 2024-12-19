@@ -422,8 +422,8 @@ public:
 		nextPresetButton.setBounds(bounds.removeFromRight(height).reduced(4));
 		previousPresetButton.setBounds(bounds.removeFromRight(height).reduced(4));
 
-		if (showPresetsList)
-			closeButton.setBounds(bounds.removeFromRight(height).reduced(8));
+		// if (showPresetsList)
+		closeButton.setBounds(bounds.removeFromRight(height).reduced(8));
 
 		currentPresetLabel.setBounds(bounds.reduced(4));
 
@@ -434,8 +434,9 @@ public:
 		presetListBounds.removeFromBottom(presetListBounds.getHeight() / 4);
 		presetListBounds.reduce(4, 4);
 
-		if (showPresetsList)
-			listBox.setBounds(presetListBounds);
+		// if (showPresetsList)
+		listBox.setBounds(presetListBounds);
+		DBG(listBox.getX());
 	}
 
 	void updatePresetLabel(juce::String &text)

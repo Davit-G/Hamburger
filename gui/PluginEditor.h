@@ -17,8 +17,6 @@
 
 #include "LookAndFeel/HamburgerLAF.h"
 
-#define PRESETS_MANAGER_VISIBLE 1
-
 class EditorV2 : public juce::AudioProcessorEditor
 {
 public:
@@ -27,10 +25,7 @@ public:
                                              saturationColumn(p),
                                              utilColumn(p),
                                              infoPanel(p)
-                                             
-#if PRESETS_MANAGER_VISIBLE 
                                              ,presetPanel(p.getPresetManager())
-#endif
     {
         int additionalHeight = 0;
 
@@ -44,11 +39,8 @@ public:
         addAndMakeVisible(saturationColumn);
         addAndMakeVisible(utilColumn);
         addAndMakeVisible(infoPanel);
-
-#if PRESETS_MANAGER_VISIBLE
         addAndMakeVisible(presetPanel);
         additionalHeight += 45;
-#endif
 
         setOpaque(true);
 
@@ -81,10 +73,9 @@ public:
 
         infoPanel.setBounds(bounds);
 
-#if PRESETS_MANAGER_VISIBLE
         presetPanel.setBounds(bounds);
         bounds.removeFromTop(45);
-#endif
+
         auto left = bounds.removeFromLeft(totalWidth);
         auto right = bounds.removeFromRight(totalWidth);
 
@@ -95,33 +86,14 @@ public:
 
     void handleCommandMessage(int command) override
     {
-        if (command == 0)
-        {
-            infoPanel.setVisible(true);
+        bool show = command == 1;
 
-            leftColumn.setVisible(false);
-            saturationColumn.setVisible(false);
-            utilColumn.setVisible(false);
-        }
-        else if (command == 1)
-        {
-            infoPanel.setVisible(false);
-
-            leftColumn.setVisible(true);
-            saturationColumn.setVisible(true);
-            utilColumn.setVisible(true);
-        }
-
-#if PRESETS_MANAGER_VISIBLE
-        if (command == 0)
-        {
-            presetPanel.setVisible(false);
-        }
-        else if (command == 1)
-        {
-            presetPanel.setVisible(true);
-        }
-#endif
+        infoPanel.setVisible(!show);
+        
+        leftColumn.setVisible(show);
+        saturationColumn.setVisible(show);
+        utilColumn.setVisible(show);
+        presetPanel.setVisible(show);
     }
 
 private:
@@ -131,9 +103,7 @@ private:
 
     HamburgerLAF hamburgerLAF;
 
-#if PRESETS_MANAGER_VISIBLE
     PresetPanel presetPanel;
-#endif
 
     Info infoPanel;
 

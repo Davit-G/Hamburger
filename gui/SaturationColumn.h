@@ -77,7 +77,6 @@ public:
         saturation->setLookAndFeel(nullptr);
         postClip->setLookAndFeel(nullptr);
         noise->setLookAndFeel(nullptr);
-
     }
 
     void resized() override{
@@ -99,8 +98,8 @@ private:
     std::unique_ptr<Panel> postClipPanel = nullptr;
 
     std::unique_ptr<Module> noise = nullptr;
-    std::unique_ptr<Module> saturation;
-    std::unique_ptr<Module> postClip;
+    std::unique_ptr<Module> saturation = nullptr;
+    std::unique_ptr<Module> postClip = nullptr;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SaturationColumn)
 };

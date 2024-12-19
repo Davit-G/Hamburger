@@ -9,7 +9,6 @@ bugfixes
 support mono / stereo only, dont have it break on mono
 
 UX:
-still needs ui bug fixing where listbox component duplicates
 allow for overwriting presets with the same name in the user folder
 Autofill the name of the preset as well as the author into the save box if a preset is currently selected
 

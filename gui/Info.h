@@ -82,6 +82,14 @@ public:
  
                 presetFolderChooser->launchAsync (folderChooserFlags, [&] (const FileChooser& chooser)
                 {
+                    auto result = chooser.getResult();
+
+                    if (!result.exists())
+                    {
+                        DBG("No folder selected");
+                        return;
+                    }
+
                     File directory (chooser.getResult());
             
                     auto userSettings = presetManager.appProperties.getUserSettings();
