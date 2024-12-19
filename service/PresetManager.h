@@ -54,6 +54,11 @@ namespace Preset
 			// description = valueTreeToLoad.getProperty("description");
 		}
 
+		juce::String getDescription() const
+		{
+			return description;
+		}
+
 		juce::String getAuthor() const
 		{
 			return author;
@@ -86,6 +91,9 @@ namespace Preset
 		void deletePreset(const juce::File &preset, std::function<void(std::string)> cb);
 		void loadPreset(const juce::File &preset, std::function<void(std::string)> cb);
 
+		juce::String getCurrentPresetName() const;
+		juce::String getCurrentAuthor() const;
+
 		void setPresetDirectory(const juce::File &directory);
 		juce::File getPresetDirectory() const;
 		
@@ -106,6 +114,7 @@ namespace Preset
 
 		juce::AudioProcessorValueTreeState &valueTreeState;
 		juce::Value currentPreset;
+		juce::Value currentPresetName;
 		juce::Value currentAuthor;
 
 		juce::PropertiesFile::Options options;

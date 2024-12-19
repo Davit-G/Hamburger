@@ -25,9 +25,11 @@ public:
         setLookAndFeel(nullptr);
     }
 
-    void createPresetSaveAlert() {
-        addTextEditor("presetName", "MyBurger", "Preset Name");
-        addTextEditor("author", "me", "Author");
+    void createPresetSaveAlert(juce::String defaultName, juce::String defaultAuthor) {
+
+
+        addTextEditor("presetName", defaultName, "Preset Name");
+        addTextEditor("author", defaultAuthor, "Author");
 
 		addButton("Save", 1, KeyPress(KeyPress::returnKey, 0, 0));
 		addButton("Cancel", 0, KeyPress(KeyPress::escapeKey, 0, 0));

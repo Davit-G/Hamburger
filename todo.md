@@ -6,6 +6,8 @@ bugfixes
 
 # for v1.0
 
+add source files for everything apparently
+
 support mono / stereo only, dont have it break on mono
 
 UX:

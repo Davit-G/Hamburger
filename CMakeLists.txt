@@ -144,6 +144,7 @@ target_sources("${BaseTargetName}"
         )
 
 add_subdirectory(dsp)
+add_subdirectory(gui)
 add_subdirectory(service)
 
 target_compile_features("${BaseTargetName}" PUBLIC cxx_std_17)

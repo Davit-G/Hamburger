@@ -459,7 +459,7 @@ private:
 		{
 			auto alertWindow = new BurgerAlert("Save Preset", "Enter a name for your new preset: ", MessageBoxIconType::NoIcon);
 
-			alertWindow->createPresetSaveAlert();
+			alertWindow->createPresetSaveAlert(presetManager.getCurrentPresetName(), presetManager.getCurrentAuthor());
 
 			alertWindow->enterModalState(true, juce::ModalCallbackFunction::create([this, alertWindow](int result)
 																				   {

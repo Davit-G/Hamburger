@@ -107,6 +107,16 @@ Preset::PresetManager::PresetManager(juce::AudioProcessorValueTreeState &apvts) 
 	currentPreset.referTo(valueTreeState.state.getPropertyAsValue(presetPathProperty, nullptr, true));
 }
 
+juce::String Preset::PresetManager::getCurrentPresetName() const
+{
+	return currentPreset.toString().replaceSection(0, currentPreset.toString().lastIndexOf("/") + 1, "");
+}
+
+juce::String Preset::PresetManager::getCurrentAuthor() const
+{
+	return currentAuthor.toString();
+}
+
 /**
  * @brief Save a preset to the default directory.
  * Returns true if the preset was saved successfully, false otherwise.
@@ -207,9 +217,8 @@ void Preset::PresetManager::loadPreset(const juce::File &presetFile, std::functi
 
 	if (compareVersions > 0)
 	{
-		DBG("Preset file " + relativePath.toStdString() + " was saved with a newer version of the plugin (v" + versionStd + "). Preset will not be loaded.");
-		cb(std::string("Preset file ") + relativePath.toStdString() + " was saved with a newer version of the plugin (v" + versionStd + "). Preset will not be loaded.");
-		return;
+		DBG("Preset file " + relativePath.toStdString() + " was saved with a newer version of the plugin (v" + versionStd + "). Preset will sound different, but will be loaded anyway.");
+		cb(std::string("Preset file ") + relativePath.toStdString() + " was saved with a newer version of the plugin (v" + versionStd + "). Preset will sound different, but will be loaded anyway.");
 	}
 	else if (compareVersions < 0)
 	{
@@ -218,7 +227,7 @@ void Preset::PresetManager::loadPreset(const juce::File &presetFile, std::functi
 	}
 
 	valueTreeState.replaceState(valueTreeToLoad);
-	currentPreset.setValue(relativePath);
+	// currentPreset.setValue(relativePath);
 	// currentAuthor.setValue(valueTreeToLoad.getChildWithName("author").getProperty("author", ""));
 }
 
@@ -340,4 +349,5 @@ void Preset::PresetManager::valueTreeRedirected(juce::ValueTree &treeWhichHasBee
 {
 	currentPreset.referTo(treeWhichHasBeenChanged.getPropertyAsValue(presetPathProperty, nullptr));
 	currentAuthor.referTo(treeWhichHasBeenChanged.getPropertyAsValue("author", nullptr));
+	// currentPresetName.referTo(treeWhichHasBeenChanged.getPropertyAsValue("author", nullptr));
 }
