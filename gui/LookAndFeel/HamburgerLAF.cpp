@@ -42,25 +42,7 @@ HamburgerLAF::HamburgerLAF(juce::Colour color) : knobColour(color)
 #endif
 }
 
-juce::Font HamburgerLAF::getQuicksandFont()
-{
-    return *quicksandFont;
-}
 
-juce::Font HamburgerLAF::getLabelFont(juce::Label &label)
-{
-    return *questrialFont14;
-}
-
-juce::Font HamburgerLAF::getComboBoxFont(juce::ComboBox &box)
-{
-    return *questrialFont14;
-}
-
-juce::Font HamburgerLAF::getPopupMenuFont()
-{
-    return *questrialFont16;
-}
 
 void HamburgerLAF::drawRotarySlider(juce::Graphics &g, int x, int y, int width, int height, float sliderPos,
                         const float rotaryStartAngle, const float rotaryEndAngle, juce::Slider &slider)
@@ -108,6 +90,26 @@ void HamburgerLAF::drawComboBox(juce::Graphics &g, int width, int height, bool,
 
     g.setColour(box.findColour(juce::ComboBox::arrowColourId).withAlpha((box.isEnabled() ? 0.9f : 0.2f)));
     g.strokePath(path, juce::PathStrokeType(2.0f, juce::PathStrokeType::JointStyle::curved, juce::PathStrokeType::EndCapStyle::rounded));
+}
+
+juce::Font HamburgerLAF::getQuicksandFont()
+{
+    return *quicksandFont;
+}
+
+juce::Font HamburgerLAF::getLabelFont(juce::Label &label)
+{
+    return *questrialFont14;
+}
+
+juce::Font HamburgerLAF::getComboBoxFont(juce::ComboBox &box)
+{
+    return *questrialFont14;
+}
+
+juce::Font HamburgerLAF::getPopupMenuFont()
+{
+    return *questrialFont16;
 }
 
 juce::Font HamburgerLAF::getComboBoxFont()

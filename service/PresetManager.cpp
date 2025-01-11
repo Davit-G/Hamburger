@@ -349,5 +349,4 @@ void Preset::PresetManager::valueTreeRedirected(juce::ValueTree &treeWhichHasBee
 {
 	currentPreset.referTo(treeWhichHasBeenChanged.getPropertyAsValue(presetPathProperty, nullptr));
 	currentAuthor.referTo(treeWhichHasBeenChanged.getPropertyAsValue("author", nullptr));
-	// currentPresetName.referTo(treeWhichHasBeenChanged.getPropertyAsValue("author", nullptr));
 }

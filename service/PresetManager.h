@@ -114,7 +114,6 @@ namespace Preset
 
 		juce::AudioProcessorValueTreeState &valueTreeState;
 		juce::Value currentPreset;
-		juce::Value currentPresetName;
 		juce::Value currentAuthor;
 
 		juce::PropertiesFile::Options options;

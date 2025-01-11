@@ -12,7 +12,6 @@ support mono / stereo only, dont have it break on mono
 
 UX:
 allow for overwriting presets with the same name in the user folder
-Autofill the name of the preset as well as the author into the save box if a preset is currently selected
 
 make presets hehe (maybe change the suffix from borgir to some other suffix)
 
