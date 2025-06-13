@@ -50,7 +50,7 @@ endif()
 project(Hamburger VERSION "${ProjectVersion}")
 
 # include(CheckCXXCompilerFlag)
-# if (APPLE) 
+# if (APPLE)
 #     CHECK_CXX_COMPILER_FLAG("-march=native" COMPILER_OPT_ARCH_NATIVE_SUPPORTED)
 #     if (COMPILER_OPT_ARCH_NATIVE_SUPPORTED)
 #         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native")
@@ -105,7 +105,7 @@ else()
     endif()
 endif()
 
- 
+
 juce_add_plugin("${BaseTargetName}"
     VERSION "${ProjectVersion}"                 # Set this if the plugin version is different to the project version
     PRODUCT_NAME "${PluginName}"                # The name of the final executable, which can differ from the target name
@@ -128,8 +128,9 @@ juce_add_plugin("${BaseTargetName}"
     VST3_COPY_DIR "${outdir}"
 	VST_COPY_DIR "${outdir}"
 	AU_COPY_DIR "${outdir}"
-    FORMATS VST3 Standalone AU                  # The formats to build. Other valid formats are: AAX Unity VST AU AUv3
+    FORMATS VST3 Standalone AU LV2                  # The formats to build. Other valid formats are: AAX Unity VST AU AUv3
     VST3_CATEGORIES Fx Distortion Dynamics
+    LV2URI "https://aviaryaudio.com/plugins/hamburgerv2"
 )
 
 # add_custom_command(
@@ -197,7 +198,7 @@ FetchContent_Declare (melatonin_perfetto
   GIT_REPOSITORY https://github.com/sudara/melatonin_perfetto.git
   GIT_SHALLOW 1
   GIT_TAG origin/main)
-    
+
 # FetchContent_Declare (melatonin_inspector
 #     GIT_REPOSITORY https://github.com/sudara/melatonin_inspector.git
 #     GIT_SHALLOW 1
@@ -229,4 +230,3 @@ target_link_libraries("${BaseTargetName}"
         juce::juce_recommended_config_flags
         juce::juce_recommended_lto_flags
         juce::juce_recommended_warning_flags)
-
