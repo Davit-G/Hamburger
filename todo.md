@@ -6,27 +6,35 @@ bugfixes
 
 # for v1.0
 
-add source files for everything apparently
-
 support mono / stereo only, dont have it break on mono
-
-UX:
 allow for overwriting presets with the same name in the user folder
-
 make presets hehe (maybe change the suffix from borgir to some other suffix)
-
-
 go back to the companding based distortion (the trick is to link the level on both segments)
 rework matrix distortion into a more flexible waveshaping variant
-
 speed up dsp performance by replacing some direct form filters with svf ones (emphasis coefficient interpolation with smoothed values) (in the case of per-sample coefficient modulation) (or optionally utilise coefficient interpolation for IIR filters) (OR JUST DONT RECOMPUTE COEFFICIENTS? that's not great for automation though)
-
 auval
-
 remove ai image stuff and fill it in with something else
+
+
+hamburger delay?
+- time (ms, or bpm sync)
+- feedback (-100%, 100%)
+- offset (either opposite LR or same LR)
+- mod (mod freq + mod amt)
+
+high / low filter in clipper section
+
+
+hysteresis from chowtape
+pnch for extra noise filter
+
 
 # Would be cool
 
+
+add source files for everything apparently
+
+envelope follower filtered noise for the tapey lofi type sounds
 
 add more dist types (foil?? inherit from other plugins?)
 tape hysteresis???? 
