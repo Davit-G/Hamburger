@@ -238,7 +238,7 @@ jobs:
         mv "${{matrix.folder}}/${{env.PLUG}}.clap" "./gh_artifacts/Manual Install/"
         mv "${{env.PLUG}} Installer.pkg" "./gh_artifacts"
     
-    - uses: actions/upload-artifact@v3
+    - uses: actions/upload-artifact@v4
       with:
         name: ${{env.PLUG}} ${{ matrix.name }}
         path: "./gh_artifacts"
