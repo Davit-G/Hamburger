@@ -7,6 +7,7 @@
 #include "Distortions/DiodeWaveshape.h"
 #include "Distortions/PhaseDist.h"
 #include "Distortions/Rubidium.h"
+#include "Distortions/hysteresis/TapeDistortionProcessor.h"
 
 #include "Distortions/MatrixWaveshaper.h"
 #include "./Noise/Jeff.h"
@@ -39,7 +40,7 @@ public:
         diodeWaveshape = std::make_unique<DiodeWaveshape>(state);
         rubidium = std::make_unique<RubidiumDistortion>(state);
         matrix = std::make_unique<MatrixWaveshaper>(state);
-        // tape = std::make_unique<TapeHysteresis>(state);
+        tape = std::make_unique<TapeDistortionProcessor>(state);
     }
 
     ~PrimaryDistortion() {}
@@ -121,7 +122,8 @@ public:
         case 5:
         {// tape hysteresis
             // TRACE_EVENT("dsp", "tape");
-            // tape->processBlock(block);
+            tape->processBlock(block);
+
             break;
         }
         }
@@ -139,8 +141,7 @@ public:
         diodeWaveshape->prepare(spec);
         rubidium->prepare(spec);
         matrix->prepare(spec);
-        // tape->prepare(spec);
-
+        tape->prepareToPlay(spec.sampleRate, spec.maximumBlockSize, spec.numChannels);
 
         // init iir filter
         iirFilter.reset();
@@ -171,7 +172,7 @@ private:
     std::unique_ptr<PhaseDist> phaseDist = nullptr;
     std::unique_ptr<RubidiumDistortion> rubidium = nullptr;
     std::unique_ptr<MatrixWaveshaper> matrix = nullptr;
-    // std::unique_ptr<TapeHysteresis> tape = nullptr;
+    std::unique_ptr<TapeDistortionProcessor> tape = nullptr;
 
     dsp::ProcessorDuplicator<dsp::IIR::Filter<double>, dsp::IIR::Coefficients<double>> iirFilter;
 

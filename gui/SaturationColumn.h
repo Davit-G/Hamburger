@@ -5,6 +5,7 @@
 #include "Modules/Panels/ClassicSatPanel.h"
 #include "Modules/Panels/MatrixSatPanel.h"
 #include "Modules/Panels/TubeSatPanel.h"
+#include "Modules/Panels/TapeSatPanel.h"
 #include "Modules/Panels/RubidiumSatPanel.h" 
 #include "Modules/Panels/PhaseDistPanel.h"
 #include "Modules/Panels/PostClipPanel.h"
@@ -47,8 +48,8 @@ public:
         matrixSat = std::make_unique<MatrixSatPanel>(p);
         panels.push_back(std::move(matrixSat));
 
-        // tape = std::make_unique<RubidiumSatPanel>(p);
-        // panels.push_back(std::move(tape));
+        tape = std::make_unique<TapeSatPanel>(p);
+        panels.push_back(std::move(tape));
 
         saturation = std::make_unique<Module>(p, "DISTORTION", "primaryDistortionEnabled", "primaryDistortionType", std::move(panels));
         addAndMakeVisible(saturation.get());
