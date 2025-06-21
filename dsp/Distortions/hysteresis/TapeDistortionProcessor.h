@@ -14,7 +14,7 @@ class TapeDistortionProcessor
 public:
     TapeDistortionProcessor(juce::AudioProcessorValueTreeState &treeState) : 
         driveParam(treeState, ParamIDs::tapeDrive),
-        satParam(treeState, ParamIDs::tapeSaturation),
+        biasParam(treeState, ParamIDs::tapeBias),
         widthParam(treeState, ParamIDs::tapeWidth)
     {}
 
@@ -58,7 +58,7 @@ private:
     juce::AudioBuffer<double> doubleBuffer;
 
     SmoothParam driveParam;
-    SmoothParam satParam;
+    SmoothParam biasParam;
     SmoothParam widthParam;
 
 #if HYSTERESIS_USE_SIMD

@@ -128,7 +128,7 @@ namespace ParamIDs {
     static const juce::ParameterID jeffAmount { "jeffAmount", 1 };
 
     // tape hysteresis
-    static const juce::ParameterID tapeSaturation { "tapeSaturation", 1 };
+    static const juce::ParameterID tapeBias { "tapeBias", 1 };
     static const juce::ParameterID tapeDrive { "tapeDrive", 1 };
     static const juce::ParameterID tapeWidth { "tapeWidth", 1 };
 

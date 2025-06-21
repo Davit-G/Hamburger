@@ -101,7 +101,7 @@ AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::createP
     
     // tape
     params.add(std::make_unique<AudioParameterFloat>(ParamIDs::tapeDrive, "Tape Drive", makeRange(0.0f, 1.0f), 0.f));
-    params.add(std::make_unique<AudioParameterFloat>(ParamIDs::tapeSaturation, "Tape Saturation", makeRange(0.0f, 1.0f), 0.f));
+    params.add(std::make_unique<AudioParameterFloat>(ParamIDs::tapeBias, "Tape Bias", makeRange(0.0f, 1.0f), 0.f));
     params.add(std::make_unique<AudioParameterFloat>(ParamIDs::tapeWidth, "Tape Width", makeRange(0.0f, 1.0f), 0.f));
 
     // categorical

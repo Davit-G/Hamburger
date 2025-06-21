@@ -119,6 +119,10 @@ void TapeDistortionProcessor::prepareToPlay (double sampleRate, int samplesPerBl
     spec.maximumBlockSize = (uint32_t) samplesPerBlock;
     spec.numChannels = (uint32_t) numChannels;
 
+    biasParam.prepare (spec);
+    driveParam.prepare (spec);
+    widthParam.prepare (spec);
+
     iirFilter.reset();
     *iirFilter.state = juce::dsp::IIR::ArrayCoefficients<double>::makeFirstOrderHighPass(spec.sampleRate, 4.0f);
     iirFilter.prepare(spec);
@@ -149,7 +153,7 @@ float TapeDistortionProcessor::getLatencySamples() const noexcept
 void TapeDistortionProcessor::processBlock (juce::dsp::AudioBlock<float>& buffer)
 {
     setParameter(TapeDistortionProcessor::Param::Drive, driveParam.getRaw() * 10.0f + 1.0f);
-    setParameter(TapeDistortionProcessor::Param::Saturation, satParam.getRaw());
+    setParameter(TapeDistortionProcessor::Param::Saturation, driveParam.getRaw());
     setParameter(TapeDistortionProcessor::Param::Bias, 1.0f - powf(widthParam.getRaw(), 2.0f));
 
     const auto numChannels = buffer.getNumChannels();
@@ -175,7 +179,7 @@ void TapeDistortionProcessor::processBlock (juce::dsp::AudioBlock<float>& buffer
         auto* src = buffer.getChannelPointer(ch);
         auto* dst = doubleBuffer.getWritePointer(ch);
         for (int i = 0; i < buffer.getNumSamples(); ++i)
-            dst[i] = static_cast<double>(src[i]);
+            dst[i] = static_cast<double>(src[i] + powf(biasParam.getRaw(), 2.0f) * 0.7);
     }
 
     juce::dsp::AudioBlock<double> block (doubleBuffer);
