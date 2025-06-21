@@ -113,6 +113,7 @@ namespace ParamIDs {
     static const juce::ParameterID rubidiumMojo { "rubidiumMojo", 1 };
     static const juce::ParameterID rubidiumAsym { "rubidiumAsym", 1 };
     static const juce::ParameterID rubidiumTone { "rubidiumTone", 1 };
+    static const juce::ParameterID rubidiumBias { "rubidiumBias", 1 };
 
     // phase distortion
     static const juce::ParameterID phaseAmount { "phaseAmount", 1 };
