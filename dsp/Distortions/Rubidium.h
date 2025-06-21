@@ -9,7 +9,8 @@ public:
     RubidiumDistortion(juce::AudioProcessorValueTreeState &treeState) : drive(treeState, "rubidiumAmount"),
                                                                         hysteresis(treeState, "rubidiumAsym"),
                                                                         tone(treeState, "rubidiumTone"),
-                                                                        mojo(treeState, "rubidiumMojo")
+                                                                        mojo(treeState, "rubidiumMojo"),
+                                                                        bias(treeState, "rubidiumBias")
     {
     }
 
@@ -31,6 +32,7 @@ public:
         hysteresis.prepare(spec);
         drive.prepare(spec);
         tone.prepare(spec);
+        bias.prepare(spec);
 
         updateCoefficients();
 
@@ -81,13 +83,17 @@ public:
         mojo.update();
         hysteresis.update();
         tone.update();
+        bias.update();
 
         for (int sample = 0; sample < block.getNumSamples(); sample++)
         {
             updateCoefficients();
 
-            double spl0 = (double)block.getSample(0, sample);
-            double spl1 = (double)block.getSample(1, sample);
+            double biasKnob = bias.getNextValue(); // between 0 and 1
+            double bias = powf(biasKnob, 3.0f) * 0.6f;
+
+            double spl0 = (double)block.getSample(0, sample) - bias;
+            double spl1 = (double)block.getSample(1, sample) - bias;
 
             double driveKnob = drive.getNextValue(); // between 0 and 100
             double driveVal = juce::Decibels::decibelsToGain(driveKnob * 0.3f); 
@@ -214,6 +220,7 @@ private:
     SmoothParam mojo;
     SmoothParam hysteresis;
     SmoothParam tone;
+    SmoothParam bias;
 
     juce::AudioBuffer<double> dataBuffer;
 
