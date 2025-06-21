@@ -9,7 +9,7 @@ public:
     TapeSatPanel(AudioPluginAudioProcessor &p) : Panel(p, "TAPE"), 
         drive(p, "DRIVE", ParamIDs::tapeDrive),
         bias(p, "BIAS", ParamIDs::tapeBias),
-        tapeWidth(p, "WIDTH", ParamIDs::tapeWidth)
+        tapeWidth(p, "AGE", ParamIDs::tapeWidth)
     {
         addAndMakeVisible(drive);
         addAndMakeVisible(bias);
