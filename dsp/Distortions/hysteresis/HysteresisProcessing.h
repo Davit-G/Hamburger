@@ -1,6 +1,8 @@
 #ifndef HYSTERESISPROCESSING_H_INCLUDED
 #define HYSTERESISPROCESSING_H_INCLUDED
 
+#include <cmath>
+
 #include "HysteresisOps.h"
 
 /*
@@ -37,7 +39,6 @@ public:
         M = illCondition ? 0.0 : M;
         H_d = illCondition ? 0.0 : H_d;
 #endif
-
         M_n1 = M;
         H_n1 = H;
         H_d_n1 = H_d;

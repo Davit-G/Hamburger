@@ -22,7 +22,7 @@ namespace ParamIDs {
     };
 
     static const PanelInfo distortion = {
-        "DISTORTION", "", juce::StringArray({"GRILL", "TUBE", "PHASE", "RUBIDIUM", "MATRIX"}) // "TAPE"
+        "DISTORTION", "", juce::StringArray({"GRILL", "TUBE", "PHASE", "RUBIDIUM", "MATRIX", "TAPE"})
     };
 
     static const PanelInfo preDistortionTypes = {
@@ -126,6 +126,11 @@ namespace ParamIDs {
     static const juce::ParameterID tubeTone { "tubeTone", 1 };
     static const juce::ParameterID tubeBias { "tubeBias", 1 };
     static const juce::ParameterID jeffAmount { "jeffAmount", 1 };
+
+    // tape hysteresis
+    static const juce::ParameterID tapeSaturation { "tapeSaturation", 1 };
+    static const juce::ParameterID tapeDrive { "tapeDrive", 1 };
+    static const juce::ParameterID tapeWidth { "tapeWidth", 1 };
 
     // sizzle
     static const juce::ParameterID sizzleAmount { "sizzleAmount", 1 };

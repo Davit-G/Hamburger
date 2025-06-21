@@ -1,17 +1,25 @@
 #pragma once
 
-#include "../shared/chowdsp_utils/chowdsp_SIMDAudioBlock.h"
+// #include "../shared/chowdsp_utils/chowdsp_SIMDAudioBlock.h"
 #include "HysteresisProcessing.h"
-#include "DCBlocker.h"
+#include "juce_dsp/juce_dsp.h"
+#include "juce_audio_processors/juce_audio_processors.h"
+
+#include "../../SmoothParam.h"
+#include "../../../utils/Params.h"
 
 /* Hysteresis Processor for tape. */
 class TapeDistortionProcessor
 {
 public:
-    TapeDistortionProcessor() = default;
+    TapeDistortionProcessor(juce::AudioProcessorValueTreeState &treeState) : 
+        driveParam(treeState, ParamIDs::tapeDrive),
+        satParam(treeState, ParamIDs::tapeSaturation),
+        widthParam(treeState, ParamIDs::tapeWidth)
+    {}
 
     void prepareToPlay (double sampleRate, int samplesPerBlock, int numChannels);
-    void processBlock (juce::AudioBuffer<float>& buffer);
+    void processBlock (juce::dsp::AudioBlock<float>& buffer);
     float getLatencySamples() const noexcept;
 
     // all params are scaled from [0, 1]
@@ -31,23 +39,27 @@ private:
     double calcMakeup();
 
     template <typename T>
-    void process (chowdsp::AudioBlock<T>& block);
+    void process (juce::dsp::AudioBlock<T>& block);
     template <typename T>
-    void processSmooth (chowdsp::AudioBlock<T>& block);
+    void processSmooth (juce::dsp::AudioBlock<T>& block);
 
     std::vector<juce::SmoothedValue<double, juce::ValueSmoothingTypes::Linear>> drive;
     std::vector<juce::SmoothedValue<double, juce::ValueSmoothingTypes::Linear>> width;
     std::vector<juce::SmoothedValue<double, juce::ValueSmoothingTypes::Linear>> sat;
     juce::SmoothedValue<double, juce::ValueSmoothingTypes::Multiplicative> makeup;
 
+    juce::dsp::ProcessorDuplicator<juce::dsp::IIR::Filter<double>, juce::dsp::IIR::Coefficients<double>> iirFilter;
+
     std::unique_ptr<juce::dsp::Oversampling<double>> oversampling;
     std::vector<HysteresisProcessing> hProcs;
-    std::vector<DCBlocker> dcBlocker;
 
-    static constexpr double dcFreq = 35.0;
     float clipLevel = 20.0f;
 
     juce::AudioBuffer<double> doubleBuffer;
+
+    SmoothParam driveParam;
+    SmoothParam satParam;
+    SmoothParam widthParam;
 
 #if HYSTERESIS_USE_SIMD
     using Vec2 = xsimd::batch<double>;

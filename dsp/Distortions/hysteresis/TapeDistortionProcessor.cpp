@@ -114,9 +114,18 @@ void TapeDistortionProcessor::prepareToPlay (double sampleRate, int samplesPerBl
 
     makeup.reset (numSteps);
 
-    dcBlocker.resize ((size_t) numChannels);
-    for (auto& filt : dcBlocker)
-        filt.prepare (sampleRate, dcFreq);
+    juce::dsp::ProcessSpec spec;
+    spec.sampleRate = sampleRate * (double) oversampling->getOversamplingFactor();
+    spec.maximumBlockSize = (uint32_t) samplesPerBlock;
+    spec.numChannels = (uint32_t) numChannels;
+
+    iirFilter.reset();
+    *iirFilter.state = juce::dsp::IIR::ArrayCoefficients<double>::makeFirstOrderHighPass(spec.sampleRate, 4.0f);
+    iirFilter.prepare(spec);
+
+    // dcBlocker.resize ((size_t) numChannels);
+    // for (auto& filt : dcBlocker)
+    //     filt.prepare (sampleRate, dcFreq);
 
     doubleBuffer.setSize (numChannels, samplesPerBlock);
 
@@ -137,8 +146,12 @@ float TapeDistortionProcessor::getLatencySamples() const noexcept
     return (float) oversampling->getLatencyInSamples() + 1.4f;
 }
 
-void TapeDistortionProcessor::processBlock (juce::AudioBuffer<float>& buffer)
+void TapeDistortionProcessor::processBlock (juce::dsp::AudioBlock<float>& buffer)
 {
+    setParameter(TapeDistortionProcessor::Param::Drive, driveParam.getRaw() * 10.0f + 1.0f);
+    setParameter(TapeDistortionProcessor::Param::Saturation, satParam.getRaw());
+    setParameter(TapeDistortionProcessor::Param::Bias, 1.0f - powf(widthParam.getRaw(), 2.0f));
+
     const auto numChannels = buffer.getNumChannels();
 
     makeup.setTargetValue (calcMakeup());
@@ -147,7 +160,7 @@ void TapeDistortionProcessor::processBlock (juce::AudioBuffer<float>& buffer)
     // clip input to avoid unstable hysteresis
     for (int ch = 0; ch < numChannels; ++ch)
     {
-        auto* bufferPtr = buffer.getWritePointer (ch);
+        auto* bufferPtr = buffer.getChannelPointer (ch);
         juce::FloatVectorOperations::clip (bufferPtr,
                                      bufferPtr,
                                      -clipLevel,
@@ -155,7 +168,15 @@ void TapeDistortionProcessor::processBlock (juce::AudioBuffer<float>& buffer)
                                      buffer.getNumSamples());
     }
 
-    doubleBuffer.makeCopyOf (buffer, true);
+    // Manually copy float buffer to double buffer
+    doubleBuffer.setSize(buffer.getNumChannels(), buffer.getNumSamples(), false, false, true);
+    for (int ch = 0; ch < buffer.getNumChannels(); ++ch)
+    {
+        auto* src = buffer.getChannelPointer(ch);
+        auto* dst = doubleBuffer.getWritePointer(ch);
+        for (int i = 0; i < buffer.getNumSamples(); ++i)
+            dst[i] = static_cast<double>(src[i]);
+    }
 
     juce::dsp::AudioBlock<double> block (doubleBuffer);
     juce::dsp::AudioBlock<double> osBlock = oversampling->processSamplesUp (block);
@@ -202,15 +223,23 @@ void TapeDistortionProcessor::processBlock (juce::AudioBuffer<float>& buffer)
 
     oversampling->processSamplesDown (block);
 
-    buffer.makeCopyOf (doubleBuffer, true);
-
+    auto context = juce::dsp::ProcessContextReplacing(block);
+    
     // apply DC blocker
-    for (int ch = 0; ch < buffer.getNumChannels(); ++ch)
-        dcBlocker[(size_t) ch].processBlock (buffer.getWritePointer (ch), buffer.getNumSamples());
+    iirFilter.process(context);
+
+    // buffer.makeCopyOf (doubleBuffer, true);
+    for (int ch = 0; ch < numChannels; ++ch)
+    {
+        auto* src = doubleBuffer.getReadPointer(ch);
+        auto* dst = buffer.getChannelPointer(ch);
+        for (int i = 0; i < buffer.getNumSamples(); ++i)
+            dst[i] = static_cast<float>(src[i]);
+    }
 }
 
 template <typename T, typename SmoothType>
-void applyMakeup (chowdsp::AudioBlock<T>& block, SmoothType& makeup)
+void applyMakeup (juce::dsp::AudioBlock<T>& block, SmoothType& makeup)
 {
 #if HYSTERESIS_USE_SIMD
     const auto numSamples = block.getNumSamples();
@@ -242,7 +271,7 @@ void applyMakeup (chowdsp::AudioBlock<T>& block, SmoothType& makeup)
 }
 
 template <typename T>
-void TapeDistortionProcessor::process (chowdsp::AudioBlock<T>& block)
+void TapeDistortionProcessor::process (juce::dsp::AudioBlock<T>& block)
 {
     const auto numChannels = block.getNumChannels();
     const auto numSamples = block.getNumSamples();
@@ -251,15 +280,16 @@ void TapeDistortionProcessor::process (chowdsp::AudioBlock<T>& block)
     {
         auto* x = block.getChannelPointer (channel);
         auto& hProc = hProcs[channel];
-        for (size_t samp = 0; samp < numSamples; samp++)
+        for (size_t samp = 0; samp < numSamples; samp++) {
             x[samp] = hProc.process (x[samp]);
+        }
     }
 
     applyMakeup<T> (block, makeup);
 }
 
 template <typename T>
-void TapeDistortionProcessor::processSmooth (chowdsp::AudioBlock<T>& block)
+void TapeDistortionProcessor::processSmooth (juce::dsp::AudioBlock<T>& block)
 {
     const auto numChannels = block.getNumChannels();
     const auto numSamples = block.getNumSamples();
