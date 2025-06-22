@@ -40,7 +40,18 @@ namespace Preset
 				return;
 			}
 
-			loadMetadata();
+			// check if file is empty
+			if (file.getSize() == 0)
+			{
+				DBG("Preset file " + file.getFullPathName() + " is empty");
+				return;
+			}
+
+			try {
+				loadMetadata();
+			} catch (const std::exception &e) {
+				DBG("Error loading metadata for preset file " + file.getFullPathName() + ": " + e.what());
+			}
 		}
 
 		void loadMetadata()

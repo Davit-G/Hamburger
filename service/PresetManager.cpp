@@ -201,6 +201,15 @@ void Preset::PresetManager::loadPreset(const juce::File &presetFile, std::functi
 		return;
 	}
 
+	// Check if the file is empty
+	if (presetFile.getSize() == 0)
+	{
+		DBG("Preset file " + presetFile.getFullPathName() + " is empty");
+		cb(std::string("Preset file ") + presetFile.getFullPathName().toStdString() + " is empty");
+		jassertfalse;
+		return;
+	}
+
 	juce::XmlDocument xmlDocument{presetFile};
 	const auto valueTreeToLoad = juce::ValueTree::fromXml(*xmlDocument.getDocumentElement());
 
