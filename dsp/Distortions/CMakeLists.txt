@@ -10,3 +10,4 @@ DiodeWaveshape.cpp
 )
 
 add_subdirectory(tube)
+add_subdirectory(hysteresis)
