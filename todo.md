@@ -10,7 +10,6 @@ complete manual page, reupload with new info for plugin (specify order of effect
 lots of bugs with preset loading
 - some presets from different versions claim to load but don't change anything
 - after saving a new preset, only session presets are visible until plugin is reloaded
-- no ability to overwrite existing presets with same name, might need new modal to fix issue
 - preset names with OS-unsupported characters create corrupted files
 
 in / out / mix might have to be moved somewhere else to avoid it being treated as it's own module, maybe a bottom bar with a slider?
@@ -105,4 +104,5 @@ never stops creeping with scope
 
 # done (i made this pretty late so there's stuff i've deleted that is finished)
 
+- no ability to overwrite existing presets with same name, might need new modal to fix issue
 - author field: sometimes the author field isn't being saved

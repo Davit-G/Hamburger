@@ -1,6 +1,8 @@
 #pragma once
 
 #include "juce_gui_basics/juce_gui_basics.h"
+#include "./LookAndFeel/HamburgerLAF.h"
+#include "./LookAndFeel/Palette.h"
 
 class BurgerAlert : public juce::AlertWindow
 {
@@ -19,6 +21,13 @@ public:
         setColour(juce::Label::ColourIds::outlineColourId, juce::Colours::white);
 
         // getTopLevelWindow(0)->setDropShadowEnabled(true);
+
+        // auto okButton = getButton(0);
+        // okButton->onClick = [this]() {
+        //     // Force text editors to commit their content
+        //     unfocusAllComponents();
+        //     exitModalState(1);
+        // };
     }
 
     ~BurgerAlert() {
@@ -31,8 +40,8 @@ public:
         addTextEditor("presetName", defaultName, "Preset Name");
         addTextEditor("author", defaultAuthor, "Author");
 
-		addButton("Save", 1, KeyPress(KeyPress::returnKey, 0, 0));
-		addButton("Cancel", 0, KeyPress(KeyPress::escapeKey, 0, 0));
+		addButton("Save", 1, juce::KeyPress(juce::KeyPress::returnKey, 0, 0));
+		addButton("Cancel", 0, juce::KeyPress(juce::KeyPress::escapeKey, 0, 0));
 
         auto presetTextEditor = getTextEditor("presetName");
         auto authorTextEditor = getTextEditor("author");
@@ -69,8 +78,8 @@ public:
     }
 
     void createPresetDeleteAlert() {
-        addButton("Delete", 1, KeyPress(KeyPress::returnKey, 0, 0));
-        addButton("Cancel", 0, KeyPress(KeyPress::escapeKey, 0, 0));
+        addButton("Delete", 1, juce::KeyPress(juce::KeyPress::returnKey, 0, 0));
+        addButton("Cancel", 0, juce::KeyPress(juce::KeyPress::escapeKey, 0, 0));
 
         auto deleteButton = getButton(0);
         auto cancelButton = getButton(1);

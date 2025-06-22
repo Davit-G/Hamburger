@@ -102,6 +102,8 @@ namespace Preset
 		void deletePreset(const juce::File &preset, std::function<void(std::string)> cb);
 		void loadPreset(const juce::File &preset, std::function<void(std::string)> cb);
 
+		bool saveFile(const juce::File &presetFile, std::function<void(std::string)> cb);
+
 		juce::String getCurrentPresetName() const;
 		juce::String getCurrentAuthor() const;
 

@@ -1,5 +1,7 @@
 #include "PresetManager.h"
 
+#include "../gui/BurgerAlert.h"
+
 /**
  * Compare version strings. Return 1 if the first string is greater than the second, -1 if the first string is less than the second, and 0 if they are equal.
  */
@@ -117,6 +119,22 @@ juce::String Preset::PresetManager::getCurrentAuthor() const
 	return currentAuthor.toString();
 }
 
+bool Preset::PresetManager::saveFile(const juce::File &presetFile, std::function<void(std::string)> cb) {
+	auto error = presetFile.create();
+	auto presetDir = getPresetDirectory();
+	const auto xml = valueTreeState.copyState().createXml();
+
+	if (!xml->writeTo(presetFile))
+	{
+		DBG("Could not create preset file: " + presetFile.getFullPathName());
+		cb(std::string("Could not create preset file (") + presetFile.getFullPathName().toStdString() + "): " + error.getErrorMessage().toStdString());
+		return false;
+	}
+	
+	currentPreset.setValue(presetFile.getRelativePathFrom(presetDir));
+	return true;
+}
+
 /**
  * @brief Save a preset to the default directory.
  * Returns true if the preset was saved successfully, false otherwise.
@@ -140,28 +158,41 @@ bool Preset::PresetManager::savePreset(const juce::String &presetName, const juc
 	const auto xml = valueTreeState.copyState().createXml();
 	const auto presetFile = juce::File(presetDir.getFullPathName() + "/User/" + presetName + "." + extension);
 
-
 	if (presetFile.existsAsFile())
 	{
-		DBG("Preset file " + presetFile.getFullPathName() + " already exists");
-		cb(std::string("Preset file ") + presetFile.getFullPathName().toStdString() + " already exists");
+		// DBG("Preset file " + presetFile.getFullPathName() + " already exists, overwriting preset...");
+		// cb(std::string("Preset file ") + presetFile.getFullPathName().toStdString() + " already exists, overwriting preset...");
 
-		return false;
-	}
+		// create new modal for confirmation
+		auto alertWindow = new BurgerAlert("Overwrite Preset", "Are you sure you want to overwrite the preset " + presetName + "?", juce::AlertWindow::AlertIconType::WarningIcon);
+		alertWindow->addButton("Yes", 1);
+		alertWindow->addButton("No", 0);
 
-	auto error = presetFile.create();
+		alertWindow->enterModalState(true, juce::ModalCallbackFunction::create([this, presetFile, presetName, presetDir, alertWindow, cb](int result)
+		{
+			if (result == 1) {
+				if (!presetFile.deleteFile())
+				{
+					DBG("Preset file " + presetFile.getFullPathName() + " could not be deleted");
+					cb(std::string("Preset file ") + presetFile.getFullPathName().toStdString() + " could not be deleted");
+					jassertfalse;
+					return;
+				}
 
-	if (!xml->writeTo(presetFile))
-	{
-		DBG("Could not create preset file: " + presetFile.getFullPathName());
-		cb(std::string("Could not create preset file (") + presetFile.getFullPathName().toStdString() + "): " + error.getErrorMessage().toStdString());
+				this->saveFile(presetFile, cb);
+			} else {
+				DBG("Preset file " + presetFile.getFullPathName() + " was not overwritten");
+				cb(std::string("Preset file ") + presetFile.getFullPathName().toStdString() + " was not overwritten");
+				return;
+			}
 
+			delete alertWindow; // delete the alert window after the modal is closed
+		}));
+	} else {
+		saveFile(presetFile, cb);
 
-		jassertfalse;
-		return false;
-	}
-
-	currentPreset.setValue(presetFile.getRelativePathFrom(presetDir));
+		currentPreset.setValue(presetFile.getRelativePathFrom(presetDir));
+	}	
 
 	return true;
 }
@@ -226,13 +257,13 @@ void Preset::PresetManager::loadPreset(const juce::File &presetFile, std::functi
 
 	if (compareVersions > 0)
 	{
-		DBG("Preset file " + relativePath.toStdString() + " was saved with a newer version of the plugin (v" + versionStd + "). Preset will sound different, but will be loaded anyway.");
-		cb(std::string("Preset file ") + relativePath.toStdString() + " was saved with a newer version of the plugin (v" + versionStd + "). Preset will sound different, but will be loaded anyway.");
+		DBG("Preset file " + relativePath.toStdString() + " was saved with a newer version (v" + versionStd + "). Loading anyway...");
+		cb(std::string("Preset file ") + relativePath.toStdString() + " was saved with a newer version (v" + versionStd + "). Loading anyway...");
 	}
 	else if (compareVersions < 0)
 	{
-		DBG("Preset file " + relativePath.toStdString() + " was saved with an older version of the plugin (v" + versionStd + "). Preset will sound different, but will be loaded anyway.");
-		cb(std::string("Preset file ") + relativePath.toStdString() + " was saved with an older version of the plugin (v" + versionStd + "). Preset will sound different, but will be loaded anyway.");
+		DBG("Preset file " + relativePath.toStdString() + " was saved with an older version (v" + versionStd + "). Loading anyway...");
+		cb(std::string("Preset file ") + relativePath.toStdString() + " was saved with an older version (v" + versionStd + "). Loading anyway...");
 	}
 
 	valueTreeState.replaceState(valueTreeToLoad);
