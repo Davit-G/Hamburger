@@ -13,7 +13,6 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor() : AudioProcessor(BusesPro
                                                          dynamics(treeState),
                                                          postClip(treeState),
                                                          dryWetMixer(30),
-                                                         distortionTypeSelection(treeState),
                                                          noiseDistortionSelection(treeState),
                                                          preDistortionSelection(treeState),
                                                          emphasisFilter(treeState)
@@ -30,6 +29,9 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor() : AudioProcessor(BusesPro
     hamburgerEnabledButton = dynamic_cast<juce::AudioParameterBool *>(treeState.getParameter(ParamIDs::hamburgerEnabled.getParamID()));
     jassert(hamburgerEnabledButton);
 
+    stages = dynamic_cast<juce::AudioParameterInt *>(treeState.getParameter(ParamIDs::stages.getParamID()));
+    jassert(stages);
+
     hq = dynamic_cast<juce::AudioParameterInt *>(treeState.getParameter(ParamIDs::oversamplingFactor.getParamID()));
     jassert(hq);
 
@@ -37,6 +39,10 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor() : AudioProcessor(BusesPro
     jassert(clipEnabled);
 
     presetManager = std::make_unique<Preset::PresetManager>(treeState);
+
+    for (int i = 0; i < 4; i++) {
+        distortionTypeSelection.push_back(std::make_unique<PrimaryDistortion>(treeState));
+    }
 
 #if PERFETTO
     // MelatoninPerfetto::get().beginSession(300000);
@@ -164,6 +170,7 @@ AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::createP
     params.add(std::make_unique<AudioParameterBool>(ParamIDs::postClipEnabled, "SoftClip Enabled", true));
 
     params.add(std::make_unique<AudioParameterInt>(ParamIDs::oversamplingFactor, "Oversampling Factor", 0, 2, 0));
+    params.add(std::make_unique<AudioParameterInt>(ParamIDs::stages, "Stages", 1, 4, 1));
 
     // utility
     params.add(std::make_unique<AudioParameterFloat>(ParamIDs::postClipGain, "SoftClip Gain", makeRange(-18.0f, 18.0f), 0.f));
@@ -212,8 +219,11 @@ void AudioPluginAudioProcessor::prepareToPlay(double sampleRate, int samplesPerB
     oversampledSpec.maximumBlockSize = samplesPerBlock * pow(2, oversamplingStack.getOversamplingFactor());
     oversampledSpec.numChannels = getTotalNumOutputChannels();
 
+    for (int i = 0; i < 4; i++) {
+        distortionTypeSelection[i]->prepare(oversampledSpec);
+    }
+
     emphasisFilter.prepare(oversampledSpec);
-    distortionTypeSelection.prepare(oversampledSpec);
     postClip.prepare(oversampledSpec);
     preDistortionSelection.prepare(oversampledSpec);
     noiseDistortionSelection.prepare(oversampledSpec);
@@ -312,8 +322,22 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
     }
 
     {
+        int stagesAmt = stages->get();
+
         // TRACE_EVENT("dsp", "primary distortion");
-        distortionTypeSelection.processBlock(oversampledBlock);
+        for (int i = 0; i < stagesAmt; i++) {
+            if (i != 0) {
+                juce::FloatVectorOperations::multiply(oversampledBlock.getChannelPointer(0), oversampledBlock.getChannelPointer(0), -1.0f, oversampledBlock.getNumSamples());
+                juce::FloatVectorOperations::multiply(oversampledBlock.getChannelPointer(1), oversampledBlock.getChannelPointer(1), -1.0f, oversampledBlock.getNumSamples());
+            }
+            distortionTypeSelection[i]->processBlock(oversampledBlock);
+        }
+        if (stagesAmt % 2 == 0) {
+            // when it's even, we need to flip the phase around again one more time
+            // to avoid phase cancellation during mixing
+            juce::FloatVectorOperations::multiply(oversampledBlock.getChannelPointer(0), oversampledBlock.getChannelPointer(0), -1.0f, oversampledBlock.getNumSamples());
+            juce::FloatVectorOperations::multiply(oversampledBlock.getChannelPointer(1), oversampledBlock.getChannelPointer(1), -1.0f, oversampledBlock.getNumSamples());
+        }
     }
 
     emphasisFilter.processAfter(oversampledBlock);

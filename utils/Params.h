@@ -41,11 +41,12 @@ namespace ParamIDs {
         "QUALITY", "", juce::StringArray({"FAST", "STANDARD", "HIGH"})
     };
 
-
+    
     static const juce::ParameterID inputGain { "inputGain", 1 };
     static const juce::ParameterID outputGain { "outputGain", 1 };
     static const juce::ParameterID mix { "mix", 1 };
-
+    
+    static const juce::ParameterID stages { "stages", 1 };
 
     static const juce::ParameterID emphasisLowGain { "emphasisLowGain", 1 };
     static const juce::ParameterID emphasisMidGain { "emphasisMidGain", 1 };

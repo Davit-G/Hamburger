@@ -85,11 +85,14 @@ private:
     juce::AudioParameterBool *clipEnabled = nullptr;
     juce::AudioParameterInt *hq = nullptr;
     juce::AudioParameterBool *hamburgerEnabledButton = nullptr;
+    juce::AudioParameterInt *stages = nullptr;
 
     juce::AudioParameterChoice *oversamplingFactor = nullptr;
 
     PreDistortion preDistortionSelection;
-    PrimaryDistortion distortionTypeSelection;
+    
+    std::vector<std::unique_ptr<PrimaryDistortion>> distortionTypeSelection;
+
     NoiseDistortions noiseDistortionSelection;
     Dynamics dynamics;
     PostClip postClip;
