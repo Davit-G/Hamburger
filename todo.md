@@ -12,7 +12,6 @@ lots of bugs with preset loading
 - after saving a new preset, only session presets are visible until plugin is reloaded
 - no ability to overwrite existing presets with same name, might need new modal to fix issue
 - preset names with OS-unsupported characters create corrupted files
-- author field: sometimes the author field isn't being saved
 
 in / out / mix might have to be moved somewhere else to avoid it being treated as it's own module, maybe a bottom bar with a slider?
 users cant understand signal chain ordering, so either provide info in-plugin or via documentation
@@ -106,3 +105,4 @@ never stops creeping with scope
 
 # done (i made this pretty late so there's stuff i've deleted that is finished)
 
+- author field: sometimes the author field isn't being saved

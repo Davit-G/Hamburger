@@ -133,6 +133,13 @@ public:
         addAndMakeVisible(descriptionLabel);
     }
 
+    ~Info() override
+    {
+        changePresetFolderButton.setLookAndFeel(nullptr);
+        setLookAndFeel(nullptr);
+        presetFolderChooser.reset();
+    }
+
     void mouseUp(const juce::MouseEvent &event) override
     {
         DBG("Mouse clicked");
