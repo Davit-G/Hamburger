@@ -154,9 +154,14 @@ void TapeDistortionProcessor::processBlock (juce::dsp::AudioBlock<float>& buffer
 {
     float driveAmt = driveParam.getRaw();
 
-    setParameter(TapeDistortionProcessor::Param::Drive, powf(driveAmt, 2.0f) * 4.0f + 1.0f);
+    float ageParam = widthParam.getRaw();
+    float invAgeParam = 1.0f - ageParam;
+
+    float biasAmt = biasParam.getRaw();
+
+    setParameter(TapeDistortionProcessor::Param::Drive, driveAmt * driveAmt * 4.0f + 1.0f);
     setParameter(TapeDistortionProcessor::Param::Saturation, driveAmt);
-    setParameter(TapeDistortionProcessor::Param::Bias, powf(1.0f - widthParam.getRaw(), 2.0f));
+    setParameter(TapeDistortionProcessor::Param::Bias, invAgeParam * invAgeParam);
 
     const auto numChannels = buffer.getNumChannels();
 
@@ -181,7 +186,7 @@ void TapeDistortionProcessor::processBlock (juce::dsp::AudioBlock<float>& buffer
         auto* src = buffer.getChannelPointer(ch);
         auto* dst = doubleBuffer.getWritePointer(ch);
         for (int i = 0; i < buffer.getNumSamples(); ++i)
-            dst[i] = static_cast<double>(src[i] + powf(biasParam.getRaw(), 2.0f) * 0.7);
+            dst[i] = static_cast<double>(src[i] + biasAmt * biasAmt * 0.7);
     }
 
     juce::dsp::AudioBlock<double> block (doubleBuffer);
