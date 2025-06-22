@@ -327,8 +327,10 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
         // TRACE_EVENT("dsp", "primary distortion");
         for (int i = 0; i < stagesAmt; i++) {
             if (i != 0) {
-                juce::FloatVectorOperations::multiply(oversampledBlock.getChannelPointer(0), oversampledBlock.getChannelPointer(0), -1.0f, oversampledBlock.getNumSamples());
-                juce::FloatVectorOperations::multiply(oversampledBlock.getChannelPointer(1), oversampledBlock.getChannelPointer(1), -1.0f, oversampledBlock.getNumSamples());
+                float decreaseVolumeAmt = -0.7f; // negative includes the dc flip
+                
+                juce::FloatVectorOperations::multiply(oversampledBlock.getChannelPointer(0), oversampledBlock.getChannelPointer(0), decreaseVolumeAmt, oversampledBlock.getNumSamples());
+                juce::FloatVectorOperations::multiply(oversampledBlock.getChannelPointer(1), oversampledBlock.getChannelPointer(1), decreaseVolumeAmt, oversampledBlock.getNumSamples());
             }
             distortionTypeSelection[i]->processBlock(oversampledBlock);
         }

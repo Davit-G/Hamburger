@@ -5,6 +5,8 @@ bugfixes
 
 # feedback 
 
+malachite distortion (?)
+
 complete manual page, reupload with new info for plugin (specify order of effect operations in manual or in plugin)
 
 lots of bugs with preset loading
