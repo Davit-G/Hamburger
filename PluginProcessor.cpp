@@ -40,7 +40,7 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor() : AudioProcessor(BusesPro
 
     presetManager = std::make_unique<Preset::PresetManager>(treeState);
 
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < ParamIDs::maxStages; i++) {
         distortionTypeSelection.push_back(std::make_unique<PrimaryDistortion>(treeState));
     }
 
@@ -170,7 +170,7 @@ AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::createP
     params.add(std::make_unique<AudioParameterBool>(ParamIDs::postClipEnabled, "SoftClip Enabled", true));
 
     params.add(std::make_unique<AudioParameterInt>(ParamIDs::oversamplingFactor, "Oversampling Factor", 0, 2, 0));
-    params.add(std::make_unique<AudioParameterInt>(ParamIDs::stages, "Stages", 1, 4, 1));
+    params.add(std::make_unique<AudioParameterInt>(ParamIDs::stages, "Stages", 1, ParamIDs::maxStages, 1));
 
     // utility
     params.add(std::make_unique<AudioParameterFloat>(ParamIDs::postClipGain, "SoftClip Gain", makeRange(-18.0f, 18.0f), 0.f));
@@ -219,7 +219,7 @@ void AudioPluginAudioProcessor::prepareToPlay(double sampleRate, int samplesPerB
     oversampledSpec.maximumBlockSize = samplesPerBlock * pow(2, oversamplingStack.getOversamplingFactor());
     oversampledSpec.numChannels = getTotalNumOutputChannels();
 
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < ParamIDs::maxStages; i++) {
         distortionTypeSelection[i]->prepare(oversampledSpec);
     }
 
