@@ -152,8 +152,10 @@ float TapeDistortionProcessor::getLatencySamples() const noexcept
 
 void TapeDistortionProcessor::processBlock (juce::dsp::AudioBlock<float>& buffer)
 {
-    setParameter(TapeDistortionProcessor::Param::Drive, powf(driveParam.getRaw(), 2.0f) * 5.0f + 1.0f);
-    setParameter(TapeDistortionProcessor::Param::Saturation, driveParam.getRaw());
+    float driveAmt = driveParam.getRaw();
+
+    setParameter(TapeDistortionProcessor::Param::Drive, powf(driveAmt, 2.0f) * 4.0f + 1.0f);
+    setParameter(TapeDistortionProcessor::Param::Saturation, driveAmt);
     setParameter(TapeDistortionProcessor::Param::Bias, powf(1.0f - widthParam.getRaw(), 2.0f));
 
     const auto numChannels = buffer.getNumChannels();
@@ -238,7 +240,7 @@ void TapeDistortionProcessor::processBlock (juce::dsp::AudioBlock<float>& buffer
         auto* src = doubleBuffer.getReadPointer(ch);
         auto* dst = buffer.getChannelPointer(ch);
         for (int i = 0; i < buffer.getNumSamples(); ++i)
-            dst[i] = static_cast<float>(src[i]);
+            dst[i] = static_cast<float>(src[i] * (1.0f - driveAmt * 0.5f));
     }
 }
 
