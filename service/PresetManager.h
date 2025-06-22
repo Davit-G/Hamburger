@@ -40,7 +40,18 @@ namespace Preset
 				return;
 			}
 
-			loadMetadata();
+			// check if file is empty
+			if (file.getSize() == 0)
+			{
+				DBG("Preset file " + file.getFullPathName() + " is empty");
+				return;
+			}
+
+			try {
+				loadMetadata();
+			} catch (const std::exception &e) {
+				DBG("Error loading metadata for preset file " + file.getFullPathName() + ": " + e.what());
+			}
 		}
 
 		void loadMetadata()
@@ -90,6 +101,8 @@ namespace Preset
 		bool savePreset(const juce::String &preset, const juce::String &author, const juce::String &description, std::function<void(std::string)> cb);
 		void deletePreset(const juce::File &preset, std::function<void(std::string)> cb);
 		void loadPreset(const juce::File &preset, std::function<void(std::string)> cb);
+
+		bool saveFile(const juce::File &presetFile, std::function<void(std::string)> cb);
 
 		juce::String getCurrentPresetName() const;
 		juce::String getCurrentAuthor() const;

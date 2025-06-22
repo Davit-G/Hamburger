@@ -464,8 +464,16 @@ private:
 			alertWindow->enterModalState(true, juce::ModalCallbackFunction::create([this, alertWindow](int result)
 																				   {
 				if (result == 1) {
-					auto name = alertWindow->getTextEditor("presetName")->getText();
-					auto author = alertWindow->getTextEditor("author")->getText();
+					auto presetTextEditor = alertWindow->getTextEditor("presetName");
+					auto authorTextEditor = alertWindow->getTextEditor("author");
+					
+					presetTextEditor->unfocusAllComponents();
+					authorTextEditor->unfocusAllComponents();
+					// or alternatively:
+					// alertWindow->unfocusAllComponents();
+					
+					auto name = presetTextEditor->getText();
+					auto author = authorTextEditor->getText();
 					// auto description = alertWindow->getTextEditor("description")->getText();
 
 					auto saveSuccess = presetManager.savePreset(name, author, "", errorAlertCallback);
