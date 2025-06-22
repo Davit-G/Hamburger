@@ -103,7 +103,7 @@ AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::createP
     // tape
     params.add(std::make_unique<AudioParameterFloat>(ParamIDs::tapeDrive, "Tape Drive", makeRange(0.0f, 1.0f), 0.f));
     params.add(std::make_unique<AudioParameterFloat>(ParamIDs::tapeBias, "Tape Bias", makeRange(0.0f, 1.0f), 0.f));
-    params.add(std::make_unique<AudioParameterFloat>(ParamIDs::tapeWidth, "Tape Age", makeRange(0.0f, 1.0f), 0.f));
+    params.add(std::make_unique<AudioParameterFloat>(ParamIDs::tapeWidth, "Tape Age", makeRange(0.0f, 1.0f), 0.3f));
 
     // categorical
     params.add(std::make_unique<AudioParameterChoice>(ParamIDs::primaryDistortionType, "Distortion Type", ParamIDs::distortion.categories, 0));
