@@ -3,6 +3,35 @@
 performance optimisations
 bugfixes
 
+# feedback 
+
+complete manual page, reupload with new info for plugin (specify order of effect operations in manual or in plugin)
+
+lots of bugs with preset loading
+- some presets from different versions claim to load but don't change anything
+- after saving a new preset, only session presets are visible until plugin is reloaded
+- no ability to overwrite existing presets with same name, might need new modal to fix issue
+- preset names with OS-unsupported characters create corrupted files
+- author field: sometimes the author field isn't being saved
+
+in / out / mix might have to be moved somewhere else to avoid it being treated as it's own module, maybe a bottom bar with a slider?
+users cant understand signal chain ordering, so either provide info in-plugin or via documentation
+- maybe a little modal with info? or explanation to replace the ai images currently there on the side?
+
+suggestion: dynamic audio reactive distortion controls which respond to the input?
+make hamburger parameter values typable
+convolution could be interesting but outside the scope of this plugin
+
+# personal notes
+
+diode in grill distortion isnt super useful?
+tube tone knob is not super useful either I don't think
+several stages of distortion would be very cool, probably not worth having options for separate stages just multiple of the same stage.
+downsampling jitter could be cool
+upwards comp on multiband?
+matrix distortion is useless
+50% mix on rubidium and tape sounds like its phase cancelling. phase distortion as well but cause thats literally phase shifting.
+simd in more places, also look at FloatVectorOperations for simple things
 
 # for v1.0
 
@@ -10,7 +39,7 @@ support mono / stereo only, dont have it break on mono
 allow for overwriting presets with the same name in the user folder
 make presets hehe (maybe change the suffix from borgir to some other suffix)
 
-linear phase high pass filter option on all the dsp modules
+linear phase high pass filter option after everything?
 
 tape hysteresis???? 
 bias in rubidium
@@ -46,19 +75,15 @@ envelope follower filtered noise for the tapey lofi type sounds
 
 add more dist types (foil?? inherit from other plugins?)
 
-modulation options (lfo, etc)
+modulation options (lfo, etc) ?
 
 user driven theming / customisation (either via png or svg)?
 
 icons in middle of saturation knobs with different cool things like tube, rubidium etc (maybe not?)
 
 phase dist shift: provide more dynamic range for subtle movement
-phase dist: remove clipping artifacting when input is too high (as a result of losing information when going backward in phase distortion)
-
-
-# feedback 
-
-complete manual page, reupload with new info for plugin (specify order of effect operations in manual or in plugin)
+phase dist: remove clipping artifacting when input is too high (as a result of not having information when going forward in phase distortion)
+- might need some sort of buffering, and then delay compensation?
 
 # other
 gain compensation on grunge?
@@ -66,7 +91,7 @@ gain compensation on grunge?
 # not a priority (no)
 
 freq shift: use polyphase designer or pre-bake coefficients (not needed)
-other filters before / after distortion, such as combs / phasers / filters etc  (nah plugin will do too much)
+other filters before / after distortion, such as combs / phasers / filters etc  (nah plugin will do too much?)
 allpass stack in phase path for phase distortion (nah leave as is)
 visualisations on top right for what the things are doing (phase visualiser for phase distortion plugin?)
 
@@ -77,3 +102,7 @@ visualisations on top right for what the things are doing (phase visualiser for 
 
 
 never stops creeping with scope
+
+
+# done (i made this pretty late so there's stuff i've deleted that is finished)
+
