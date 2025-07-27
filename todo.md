@@ -24,6 +24,11 @@ convolution could be interesting but outside the scope of this plugin
 
 # personal notes
 
+auto gain on important parameters? Class for 1D / 2D / 3D / 4D autogain?
+
+
+
+
 diode in grill distortion isnt super useful?
 tube tone knob is not super useful either I don't think
 several stages of distortion would be very cool, probably not worth having options for separate stages just multiple of the same stage.

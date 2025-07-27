@@ -46,7 +46,7 @@ public:
 		dcBlockingFilter[1].coefficients = dcBlockingFilter[0].coefficients;
 
 		// --- LPF (upper edge), technically supposed to be second order
-		auto upperBandwidthFilterCoeffs = juce::dsp::IIR::ArrayCoefficients<float>::makeLowPass(sampleRate, millerHF_Hz, 0.89f);
+		auto upperBandwidthFilterCoeffs = juce::dsp::IIR::ArrayCoefficients<float>::makeLowPass(sampleRate, millerHF_Hz, 0.76f);
 		*upperBandwidthFilter1stOrder[0].coefficients = upperBandwidthFilterCoeffs;
 		*upperBandwidthFilter2ndOrder[0].coefficients = upperBandwidthFilterCoeffs;
 		upperBandwidthFilter1stOrder[1].coefficients = upperBandwidthFilter1stOrder[0].coefficients;

@@ -23,6 +23,7 @@ public:
     void prepare(juce::dsp::ProcessSpec& spec) noexcept;
 
 private:
+    // SmoothParam stages;
     SmoothParam amount;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Cooked)

@@ -65,6 +65,8 @@ AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::createP
 {
     AudioProcessorValueTreeState::ParameterLayout params;
 
+    std::cout << "Creating parameters..." << std::endl;
+
     params.add(std::make_unique<AudioParameterFloat>(ParamIDs::inputGain, "Input Gain", makeRange(-24.0f, 24.0f), 0.f));
     params.add(std::make_unique<AudioParameterFloat>(ParamIDs::outputGain, "Out Gain", makeRange(-24.0f, 24.0f), 0.f));
     params.add(std::make_unique<AudioParameterFloat>(ParamIDs::mix, "Mix", makeRange(0.0f, 100.0f), 100.f));
