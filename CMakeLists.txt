@@ -3,6 +3,8 @@
 include (FetchContent)
 Set(FETCHCONTENT_QUIET FALSE)
 
+set(BUILD_CLAP TRUE)
+
 cmake_minimum_required(VERSION 3.15)
 set(ProjectVersion 0.6.0)
 set(PluginName "Hamburger")
@@ -216,10 +218,11 @@ if (PERFETTO)
 FetchContent_MakeAvailable (melatonin_perfetto)
 endif()
 
-
-clap_juce_extensions_plugin(TARGET "${BaseTargetName}"
-CLAP_ID "com.AviaryAudio.${PluginName}"
-CLAP_FEATURES effect "distortion analog compressor" audio-effect)
+if (BUILD_CLAP)
+    clap_juce_extensions_plugin(TARGET "${BaseTargetName}"
+    CLAP_ID "com.AviaryAudio.${PluginName}"
+    CLAP_FEATURES effect "distortion analog compressor" audio-effect)
+endif()
 
 target_link_libraries("${BaseTargetName}"
     PRIVATE
