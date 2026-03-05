@@ -124,10 +124,14 @@ AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::createP
     params.add(std::make_unique<AudioParameterFloat>(ParamIDs::compStereoLink, "Stereo Link", makeRange(0.0f, 100.0f), 100.f));
     params.add(std::make_unique<AudioParameterFloat>(ParamIDs::compRatio, "Comp Ratio", makeRange(1.0f, 10.0f), 3.5f));
     params.add(std::make_unique<AudioParameterFloat>(ParamIDs::compOut, "Comp Makeup", makeRange(-24.0f, 24.0f), 0.f));
-
+    
     params.add(std::make_unique<AudioParameterFloat>(ParamIDs::stereoCompThreshold, "Stereo Comp Threshold", makeRange(-48.0f, 0.0f), -24.f));
     params.add(std::make_unique<AudioParameterFloat>(ParamIDs::MBCompThreshold, "MB Comp Threshold", makeRange(-48.0f, 0.0f), -24.f));
     params.add(std::make_unique<AudioParameterFloat>(ParamIDs::MSCompThreshold, "MS Comp Threshold", makeRange(-48.0f, 0.0f), -24.f));
+    
+    params.add(std::make_unique<AudioParameterFloat>(ParamIDs::TypeAThreshold, "Type A Threshold", makeRange(-48.0f, 0.0f), -40.f));
+    params.add(std::make_unique<AudioParameterFloat>(ParamIDs::TypeARatio, "Type A Ratio", makeRange(1.0f, 4.0f), 2.0f));
+    params.add(std::make_unique<AudioParameterFloat>(ParamIDs::TypeAOut, "Type A Out", makeRange(-24.0f, 24.0f), -12.0f));
 
     // noise distortions
     params.add(std::make_unique<AudioParameterFloat>(ParamIDs::sizzleAmount, "Sizzle Amt", makeRange(0.0f, 100.0f), 5.f));

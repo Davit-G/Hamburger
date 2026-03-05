@@ -34,7 +34,7 @@ namespace ParamIDs {
     };
 
     static const PanelInfo dynamics = {
-        "DYNAMICS", "", juce::StringArray({"STEREO", "OTT", "MID-SIDE"})
+        "DYNAMICS", "", juce::StringArray({"STEREO", "OTT", "MID-SIDE", "TYPE-A", "DUAL-MONO"})
     };
 
     static const PanelInfo quality = {
@@ -76,10 +76,14 @@ namespace ParamIDs {
     static const juce::ParameterID compStereoLink { "compStereoLink", 1 };
     static const juce::ParameterID compRatio { "compRatio", 1 };
     static const juce::ParameterID compOut { "compOut", 1 };
-
+    
     static const juce::ParameterID stereoCompThreshold { "stereoCompThreshold", 1 };
     static const juce::ParameterID MBCompThreshold { "MBCompThreshold", 1 };
     static const juce::ParameterID MSCompThreshold { "MSCompThreshold", 1 };
+    
+    static const juce::ParameterID TypeAThreshold { "TypeAThreshold", 1 };
+    static const juce::ParameterID TypeARatio { "TypeARatio", 1 };
+    static const juce::ParameterID TypeAOut { "TypeAOut", 1 };
 
      // gate (noise distortion)
     static const juce::ParameterID gateAmt { "gateAmt", 1 };

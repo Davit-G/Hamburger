@@ -7,6 +7,7 @@
 #include "MBComp.h"
 #include "MSComp.h"
 #include "StereoComp.h"
+#include "TypeA.h"
 
 // todo: add compander class, omfg imagine multiband compander
 // todo: add gate?
@@ -17,7 +18,8 @@ public:
     Dynamics(juce::AudioProcessorValueTreeState &state) :
         mbComp(state),
         msComp(state),
-        stereoComp(state)
+        stereoComp(state),
+        typeA(state)
     {
         distoType = dynamic_cast<juce::AudioParameterChoice *>(state.getParameter(ParamIDs::compressionType.getParamID())); jassert(distoType);
         enabled = dynamic_cast<juce::AudioParameterBool *>(state.getParameter(ParamIDs::compressionOn.getParamID())); jassert(enabled);
@@ -40,7 +42,12 @@ public:
             msComp.processBlock(block);
             break;
         case 3:
-            
+            // "TYPE A"
+            typeA.processBlock(block);
+            break;
+        case 4: // "DUAL-MONO"
+            // currently same as stereo :(
+            stereoComp.processBlock(block);
             break;
         default:
             break;
@@ -52,6 +59,7 @@ public:
         mbComp.prepare(spec);
         msComp.prepare(spec);
         stereoComp.prepare(spec);
+        typeA.prepareToPlay(spec.sampleRate, spec.maximumBlockSize, spec.numChannels);
     }
 
 private:
@@ -63,6 +71,7 @@ private:
     MBComp mbComp;
     MSComp msComp;
     StereoComp stereoComp;
+    TypeAProcessor typeA;
     
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Dynamics)

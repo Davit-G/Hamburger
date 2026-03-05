@@ -9,6 +9,7 @@
 #include "Modules/Panels/AllPassPanel.h"
 #include "Modules/Panels/GrungePanel.h"
 #include "Modules/Panels/LogoPanel.h"
+#include "Modules/Panels/TypeAPanel.h"
 
 #include "LookAndFeel/Palette.h"
 
@@ -24,6 +25,8 @@ public:
         companderPanels.push_back(std::make_unique<StereoCompPanel>(p));
         companderPanels.push_back(std::make_unique<MBCompPanel>(p));
         companderPanels.push_back(std::make_unique<MSCompPanel>(p));
+        companderPanels.push_back(std::make_unique<TypeAPanel>(p));
+        companderPanels.push_back(std::make_unique<StereoCompPanel>(p));
         compander = std::make_unique<Module>(p, "COMP", "compressionOn", "compressionType", std::move(companderPanels));
         addAndMakeVisible(compander.get());
         
@@ -69,6 +72,7 @@ private:
     std::unique_ptr<Module> compander = nullptr;
     std::unique_ptr<Module> preDistortion = nullptr;
     std::unique_ptr<Module> logo = nullptr;
+    std::unique_ptr<Module> typeA = nullptr;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(LeftColumn)
 };
