@@ -131,6 +131,7 @@ AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::createP
     
     params.add(std::make_unique<AudioParameterFloat>(ParamIDs::TypeAThreshold, "Type A Threshold", makeRange(-48.0f, 0.0f), -40.f));
     params.add(std::make_unique<AudioParameterFloat>(ParamIDs::TypeARatio, "Type A Ratio", makeRange(1.0f, 4.0f), 2.0f));
+    params.add(std::make_unique<AudioParameterFloat>(ParamIDs::TypeATilt, "Type A Tilt", makeRange(-20.0f, 20.0f), -2.f));
     params.add(std::make_unique<AudioParameterFloat>(ParamIDs::TypeAOut, "Type A Out", makeRange(-24.0f, 24.0f), -12.0f));
 
     // noise distortions

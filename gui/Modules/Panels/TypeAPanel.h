@@ -10,7 +10,7 @@ public:
                                                threshold(p, "THRES", ParamIDs::TypeAThreshold, ParamUnits::db),
                                                brightness(p, "BRIGHT", ParamIDs::TypeARatio),
                                                out(p, "OUT", ParamIDs::TypeAOut, ParamUnits::db),
-                                               tilt(p, "TILT", ParamIDs::compBandTilt, ParamUnits::db)
+                                               tilt(p, "TILT", ParamIDs::TypeATilt, ParamUnits::db)
     {
         addAndMakeVisible(threshold);
         addAndMakeVisible(brightness);

@@ -83,6 +83,7 @@ namespace ParamIDs {
     
     static const juce::ParameterID TypeAThreshold { "TypeAThreshold", 1 };
     static const juce::ParameterID TypeARatio { "TypeARatio", 1 };
+    static const juce::ParameterID TypeATilt { "TypeATilt", 1 };
     static const juce::ParameterID TypeAOut { "TypeAOut", 1 };
 
      // gate (noise distortion)

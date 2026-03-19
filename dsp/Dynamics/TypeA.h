@@ -24,7 +24,7 @@ public:
         brightnessParam(treeState, ParamIDs::TypeARatio),
         thresholdParam(treeState, ParamIDs::TypeAThreshold),
         outParam(treeState, ParamIDs::TypeAOut),
-        tiltParam(treeState, ParamIDs::compBandTilt)
+        tiltParam(treeState, ParamIDs::TypeATilt)
     {}
 
     void prepareToPlay(double sampleRate, int samplesPerBlock, int numChannels);

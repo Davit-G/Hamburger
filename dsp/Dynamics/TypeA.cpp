@@ -84,7 +84,7 @@ void TypeAProcessor::processBlock(juce::dsp::AudioBlock<float>& buffer)
         const auto* high = highBuffer.getReadPointer(ch);
 
         juce::FloatVectorOperations::copy(mid, input, numSamples);
-        juce::FloatVectorOperations::subtract(mid, low, numSamples);
+        juce::FloatVectorOperations::add(mid, low, numSamples);
         juce::FloatVectorOperations::subtract(mid, high, numSamples);
     }
 
@@ -112,13 +112,13 @@ void TypeAProcessor::processBlock(juce::dsp::AudioBlock<float>& buffer)
         const auto* extraHigh = extraHighBuffer.getReadPointer(ch);
 
         // Start with low band
-        juce::FloatVectorOperations::copy(output, low, numSamples);
+        juce::FloatVectorOperations::copyWithMultiply(output, low, -1.0f, numSamples);
         // Add mid band
         juce::FloatVectorOperations::add(output, mid, numSamples);
         // Add high band
-        juce::FloatVectorOperations::add(output, high, numSamples);
+        juce::FloatVectorOperations::subtract(output, high, numSamples);
         // Add extra high band (stacked on high for additional noise reduction above 9 kHz)
-        juce::FloatVectorOperations::add(output, extraHigh, numSamples);
+        juce::FloatVectorOperations::subtract(output, extraHigh, numSamples);
     }
 }
 
