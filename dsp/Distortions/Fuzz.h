@@ -16,8 +16,8 @@ public:
 	Fuzz(juce::AudioProcessorValueTreeState& treeState);
 	~Fuzz();
 
-	void processBlock(dsp::AudioBlock<float>& block);
-	void prepare(dsp::ProcessSpec& spec);
+	void processBlock(juce::dsp::AudioBlock<float>& block);
+	void prepare(juce::dsp::ProcessSpec& spec);
 
 private:
     SmoothParam bias;

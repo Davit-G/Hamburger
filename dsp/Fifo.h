@@ -24,7 +24,7 @@ namespace Utility
             const int ve = writePos.load();
             const int localReadSize = readSize.load();
 
-            numToWrite = jmin(numToWrite, bufferSize - localReadSize);
+            numToWrite = juce::jmin(numToWrite, bufferSize - localReadSize);
 
             if (numToWrite <= 0)
             {
@@ -37,9 +37,9 @@ namespace Utility
             {
                 startIndex1 = ve;
                 startIndex2 = 0;
-                blockSize1 = jmin(bufferSize - ve, numToWrite);
+                blockSize1 = juce::jmin(bufferSize - ve, numToWrite);
                 numToWrite -= blockSize1;
-                blockSize2 = numToWrite <= 0 ? 0 : jmin(numToWrite, bufferSize - localReadSize);
+                blockSize2 = numToWrite <= 0 ? 0 : juce::jmin(numToWrite, bufferSize - localReadSize);
             }
         }
 
@@ -66,7 +66,7 @@ namespace Utility
 
             startIndex1 = vs;
             startIndex2 = 0;
-            blockSize1 = jmin(bufferSize - vs, localReadSize);
+            blockSize1 = juce::jmin(bufferSize - vs, localReadSize);
             numWanted -= blockSize1;
             blockSize2 = numWanted <= 0 ? 0 : numWanted;
         }
@@ -94,7 +94,7 @@ namespace Utility
             buffer.setSize(numberOfChannels, capacity, true, false, true);
         }
 
-        void push(const AudioBuffer<float>& data)
+        void push(const juce::AudioBuffer<float>& data)
         {            
             const auto numberOfItems = data.getNumSamples();
             jassert(numberOfItems < buffer.getNumSamples());
@@ -112,7 +112,7 @@ namespace Utility
             fifo.finishedWrite(size1 + size2);
         }
 
-        void pull(AudioBuffer<float>& data, int numberOfItems)
+        void pull(juce::AudioBuffer<float>& data, int numberOfItems)
         {
             jassert(numberOfItems < buffer.getNumSamples());
             jassert(data.getNumChannels() == buffer.getNumChannels());
@@ -146,6 +146,6 @@ namespace Utility
         }
     private:
         AbstractWriter fifo;
-        AudioBuffer<float> buffer;
+        juce::AudioBuffer<float> buffer;
     };
 }

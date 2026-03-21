@@ -18,7 +18,7 @@ public:
                                                         makeup(state, ParamIDs::compOut) {}
     ~StereoComp() {}
 
-    void processBlock(dsp::AudioBlock<float> &block)
+    void processBlock(juce::dsp::AudioBlock<float> &block)
     {
         speed.update();
         makeup.update();
@@ -54,7 +54,7 @@ public:
         }
     }
 
-    void prepare(dsp::ProcessSpec &spec)
+    void prepare(juce::dsp::ProcessSpec &spec)
     {
         // compressorL.prepare(spec);
         // compressorR.prepare(spec);

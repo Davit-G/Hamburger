@@ -45,14 +45,14 @@ public:
 
     ~PrimaryDistortion() {}
 
-    void processBlock(dsp::AudioBlock<float> &block)
+    void processBlock(juce::dsp::AudioBlock<float> &block)
     {
         int distoTypeIndex = distoType->getIndex();
 
         if (distortionEnabled->get() == false)
             return;
 
-        auto context = dsp::ProcessContextReplacing<float>(block);
+        auto context = juce::dsp::ProcessContextReplacing<float>(block);
 
         switch (distoTypeIndex)
         {
@@ -79,7 +79,7 @@ public:
                 }
             }
 
-            auto doubleContext = dsp::ProcessContextReplacing<double>(blockDouble);
+            auto doubleContext = juce::dsp::ProcessContextReplacing<double>(blockDouble);
 
             iirFilter.process(doubleContext);
             
@@ -129,7 +129,7 @@ public:
         }
     }
 
-    void prepare(dsp::ProcessSpec &spec)
+    void prepare(juce::dsp::ProcessSpec &spec)
     {
         softClipper->prepare(spec);
         fold->prepare(spec);
@@ -145,7 +145,7 @@ public:
 
         // init iir filter
         iirFilter.reset();
-        *iirFilter.state = dsp::IIR::ArrayCoefficients<double>::makeFirstOrderHighPass(spec.sampleRate, 8.0f);
+        *iirFilter.state = juce::dsp::IIR::ArrayCoefficients<double>::makeFirstOrderHighPass(spec.sampleRate, 8.0f);
         iirFilter.prepare(spec);
 
         setSampleRate(spec.sampleRate);
@@ -174,7 +174,7 @@ private:
     std::unique_ptr<MatrixWaveshaper> matrix = nullptr;
     std::unique_ptr<TapeDistortionProcessor> tape = nullptr;
 
-    dsp::ProcessorDuplicator<dsp::IIR::Filter<double>, dsp::IIR::Coefficients<double>> iirFilter;
+    juce::dsp::ProcessorDuplicator<juce::dsp::IIR::Filter<double>, juce::dsp::IIR::Coefficients<double>> iirFilter;
 
     float sampleRate;
 

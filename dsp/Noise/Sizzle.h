@@ -19,9 +19,9 @@ public:
 	Sizzle(juce::AudioProcessorValueTreeState& treeState);
 	~Sizzle();
 
-	void processBlock(dsp::AudioBlock<float>& block);
-	void processBlockOG(dsp::AudioBlock<float>& block);
-	void prepare(dsp::ProcessSpec& spec);
+	void processBlock(juce::dsp::AudioBlock<float>& block);
+	void processBlockOG(juce::dsp::AudioBlock<float>& block);
+	void prepare(juce::dsp::ProcessSpec& spec);
 
 	void setSampleRate(float sampleRate) { envelopeDetector.setSampleRate(sampleRate);}
 
@@ -67,7 +67,7 @@ private:
 	SmoothParam filterQ;
 	
 	// filter to filter out sizzle tone
-	dsp::IIR::Filter<float> filter;
+	juce::dsp::IIR::Filter<float> filter;
 
 	double sampleRate;
 };

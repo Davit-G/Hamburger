@@ -2,6 +2,7 @@
 
 #include "juce_core/juce_core.h"
 #include "ACoffs.h"
+#include "chowdsp_filters/chowdsp_filters.h"
 
 class EmphasisFilter
 {
@@ -15,28 +16,14 @@ public:
         jassert(enableEmphasis);
     };
 
-    void prepare(dsp::ProcessSpec &spec)
+    void prepare(juce::dsp::ProcessSpec &spec)
     {
-        // Initialize the filter
-
-        auto defaultCoeffs = ACoffs<double>::makeDualPeakFilter(spec.sampleRate, 500.0f, 0.5f, 1.0f);
-        auto lowCoeffs = defaultCoeffs[0];
-        auto highCoeffs = defaultCoeffs[1];
-
-        for (int channel = 0; channel < 2; channel++)
-        {
-            *peakFilterBefore[0][channel].coefficients = lowCoeffs;
-            *peakFilterBefore[1][channel].coefficients = highCoeffs;
-            *peakFilterAfter[0][channel].coefficients = lowCoeffs;
-            *peakFilterAfter[1][channel].coefficients = highCoeffs;
-        }
-
         for (int channel = 0; channel < 2; channel++)
         {
             for (int i = 0; i < 2; i++)
             {
-                peakFilterBefore[i][channel].prepare(spec);
-                peakFilterAfter[i][channel].prepare(spec);
+                peakFilterBeforeSVF[i].prepare(spec);
+                peakFilterAfterSVF[i].prepare(spec);
             }
         }
 
@@ -44,6 +31,8 @@ public:
         emphasisHighSmooth.prepare(spec);
         emphasisLowFreqSmooth.prepare(spec);
         emphasisHighFreqSmooth.prepare(spec);
+
+        sampleRate = spec.sampleRate;
 
         emphasisLowBuffer.reserve(spec.maximumBlockSize);
         emphasisHighBuffer.reserve(spec.maximumBlockSize);
@@ -57,8 +46,6 @@ public:
             emphasisLowFreqBuffer.push_back(0.0f);
             emphasisHighFreqBuffer.push_back(0.0f);
         }
-
-        sampleRate = spec.sampleRate;
     }
 
     void processBefore(juce::dsp::AudioBlock<float> &block)
@@ -92,27 +79,22 @@ public:
             float nextEmphasisLowFreq = emphasisLowFreqBuffer[sample];
             float nextEmphasisHighFreq = emphasisHighFreqBuffer[sample];
 
-            auto highCoeffs = juce::dsp::IIR::ArrayCoefficients<double>::makePeakFilter(sampleRate, nextEmphasisHighFreq, 0.5f, Decibels::decibelsToGain(-nextEmphasisHigh));
-            auto lowCoeffs = juce::dsp::IIR::ArrayCoefficients<double>::makePeakFilter(sampleRate, nextEmphasisLowFreq, 0.5f, Decibels::decibelsToGain(-nextEmphasisLow));
-
             for (int channel = 0; channel < block.getNumChannels(); channel++)
             {
-                *peakFilterBefore[1][channel].coefficients = highCoeffs;
-                *peakFilterBefore[0][channel].coefficients = lowCoeffs;
+                peakFilterBeforeSVF[0].setCutoffFrequency(nextEmphasisLowFreq);
+                peakFilterBeforeSVF[0].setQValue(0.5f);
+                peakFilterBeforeSVF[0].setGainDecibels(-nextEmphasisLow);
+                peakFilterBeforeSVF[1].setCutoffFrequency(nextEmphasisHighFreq);
+                peakFilterBeforeSVF[1].setQValue(0.5f);
+                peakFilterBeforeSVF[1].setGainDecibels(-nextEmphasisHigh);
 
-                auto interm = peakFilterBefore[0][channel].processSample(block.getSample(channel, sample));
-                block.setSample(channel, sample, peakFilterBefore[1][channel].processSample(interm));
+                auto interm = peakFilterBeforeSVF[0].processSample(channel, block.getSample(channel, sample));
+                block.setSample(channel, sample, peakFilterBeforeSVF[1].processSample(channel, interm));
             }
         }
 
-        peakFilterBefore[0][0].snapToZero();
-        peakFilterBefore[1][0].snapToZero();
-        peakFilterBefore[0][1].snapToZero();
-        peakFilterBefore[1][1].snapToZero();
-        peakFilterAfter[0][0].snapToZero();
-        peakFilterAfter[1][0].snapToZero();
-        peakFilterAfter[0][1].snapToZero();
-        peakFilterAfter[1][1].snapToZero();
+        peakFilterBeforeSVF[0].snapToZero();
+        peakFilterBeforeSVF[1].snapToZero();
     }
 
     void processAfter(juce::dsp::AudioBlock<float> &block)
@@ -127,21 +109,25 @@ public:
             float nextEmphasisLowFreq = emphasisLowFreqBuffer[sample];
             float nextEmphasisHighFreq = emphasisHighFreqBuffer[sample];
 
-            auto highCoeffs = juce::dsp::IIR::ArrayCoefficients<double>::makePeakFilter(sampleRate, nextEmphasisHighFreq, 0.5f, Decibels::decibelsToGain(nextEmphasisHigh));
-            auto lowCoeffs = juce::dsp::IIR::ArrayCoefficients<double>::makePeakFilter(sampleRate, nextEmphasisLowFreq, 0.5f, Decibels::decibelsToGain(nextEmphasisLow));
+            peakFilterAfterSVF[0].setCutoffFrequency(nextEmphasisLowFreq);
+            peakFilterAfterSVF[0].setQValue(0.5f);
+            peakFilterAfterSVF[0].setGainDecibels(nextEmphasisLow);
+            peakFilterAfterSVF[1].setCutoffFrequency(nextEmphasisHighFreq);
+            peakFilterAfterSVF[1].setQValue(0.5f);
+            peakFilterAfterSVF[1].setGainDecibels(nextEmphasisHigh);
             
             for (int channel = 0; channel < block.getNumChannels(); channel++)
             {
 
-                *peakFilterAfter[1][channel].coefficients = highCoeffs;
-                *peakFilterAfter[0][channel].coefficients = lowCoeffs;
-
                 float eqCompensation = (emphasisLowSmooth.getRaw() + emphasisHighSmooth.getRaw()) * 0.133f;
 
-                auto interm = peakFilterAfter[0][channel].processSample(block.getSample(channel, sample));
-                block.setSample(channel, sample, peakFilterAfter[1][channel].processSample(interm) * juce::Decibels::decibelsToGain(-eqCompensation));
+                auto interm = peakFilterAfterSVF[0].processSample(channel, block.getSample(channel, sample));
+                block.setSample(channel, sample, peakFilterAfterSVF[1].processSample(channel, interm) * juce::Decibels::decibelsToGain(-eqCompensation));
             }
         }
+
+        peakFilterAfterSVF[0].snapToZero();
+        peakFilterAfterSVF[1].snapToZero();
     }
 
 private:
@@ -164,6 +150,6 @@ private:
 
     juce::AudioParameterBool *enableEmphasis = nullptr;
 
-    dsp::IIR::Filter<double> peakFilterBefore[2][2];
-    dsp::IIR::Filter<double> peakFilterAfter[2][2];
+    chowdsp::SVFBell<double> peakFilterBeforeSVF[2];
+    chowdsp::SVFBell<double> peakFilterAfterSVF[2];
 };

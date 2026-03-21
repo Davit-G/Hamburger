@@ -17,11 +17,11 @@ public:
         addAndMakeVisible(lowGain);
         addAndMakeVisible(highGain);
 
-        band1.setText("Low", NotificationType::dontSendNotification);
-        band2.setText("High", NotificationType::dontSendNotification);
+        band1.setText("Low", juce::NotificationType::dontSendNotification);
+        band2.setText("High", juce::NotificationType::dontSendNotification);
 
-        band1.setJustificationType(Justification::centred);
-        band2.setJustificationType(Justification::centred);
+        band1.setJustificationType(juce::Justification::centred);
+        band2.setJustificationType(juce::Justification::centred);
 
         addAndMakeVisible(band1);
         addAndMakeVisible(band2);
@@ -41,17 +41,17 @@ public:
         band1.setBounds(headerTitles.removeFromLeft(headerTitles.getWidth() / 2));
         band2.setBounds(headerTitles);
 
-        using fr = Grid::Fr;
-        using Track = Grid::TrackInfo;
+        using fr = juce::Grid::Fr;
+        using Track = juce::Grid::TrackInfo;
 
         grid.templateRows = {Track(fr(1)), Track(fr(1))};
         grid.templateColumns = {Track(fr(1)), Track(fr(1))};
 
         grid.items = {
-            GridItem(lowFreq).withArea(1, 1),
-            GridItem(highFreq).withArea(1, 2),
-            GridItem(lowGain).withArea(2, 1),
-            GridItem(highGain).withArea(2, 2)};
+            juce::GridItem(lowFreq).withArea(1, 1),
+            juce::GridItem(highFreq).withArea(1, 2),
+            juce::GridItem(lowGain).withArea(2, 1),
+            juce::GridItem(highGain).withArea(2, 2)};
 
         grid.performLayout(bounds);
     }
@@ -71,10 +71,10 @@ public:
     }
 
 private:
-    Grid grid;
+    juce::Grid grid;
 
-    Label band1;
-    Label band2;
+    juce::Label band1;
+    juce::Label band2;
 
     ParamKnob lowFreq;
     ParamKnob highFreq;

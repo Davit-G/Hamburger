@@ -41,22 +41,22 @@ public:
         Palette::setKnobColoursOfComponent(&mat8, Palette::colours[6]);
         Palette::setKnobColoursOfComponent(&mat9, Palette::colours[6]);
 
-        using fr = Grid::Fr;
-        using Track = Grid::TrackInfo;
+        using fr = juce::Grid::Fr;
+        using Track = juce::Grid::TrackInfo;
 
         grid.templateRows = {Track(fr(1)), Track(fr(1)), Track(fr(1))}; // todo: optimise this
         grid.templateColumns = {Track(fr(1)), Track(fr(1)), Track(fr(1))};
 
         grid.items = {
-            GridItem(mat1).withArea(1, 1),
-            GridItem(mat2).withArea(1, 2),
-            GridItem(mat3).withArea(1, 3),
-            GridItem(mat4).withArea(2, 1),
-            GridItem(mat5).withArea(2, 2),
-            GridItem(mat6).withArea(2, 3),
-            GridItem(mat7).withArea(3, 1),
-            GridItem(mat8).withArea(3, 2),
-            GridItem(mat9).withArea(3, 3)
+            juce::GridItem(mat1).withArea(1, 1),
+            juce::GridItem(mat2).withArea(1, 2),
+            juce::GridItem(mat3).withArea(1, 3),
+            juce::GridItem(mat4).withArea(2, 1),
+            juce::GridItem(mat5).withArea(2, 2),
+            juce::GridItem(mat6).withArea(2, 3),
+            juce::GridItem(mat7).withArea(3, 1),
+            juce::GridItem(mat8).withArea(3, 2),
+            juce::GridItem(mat9).withArea(3, 3)
         };
             
     }

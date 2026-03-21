@@ -3,6 +3,7 @@
 #include "juce_core/juce_core.h"
 #include "juce_audio_processors/juce_audio_processors.h"
 #include "juce_dsp/juce_dsp.h"
+#include "chowdsp_simd/chowdsp_simd.h"
 
 /* Only for use with floats / knobs, not categorical parameters */
 class SmoothParam

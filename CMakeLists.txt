@@ -196,6 +196,13 @@ juce_add_binary_data("${BaseTargetName}BinaryData" HEADER_NAME BinaryData.h NAME
 )
 set_target_properties("${BaseTargetName}BinaryData" PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
 
+FetchContent_Declare (chowdsp_utils
+  GIT_REPOSITORY https://github.com/Chowdhury-DSP/chowdsp_utils.git
+  GIT_SHALLOW 1
+  GIT_TAG origin/master)
+
+FetchContent_MakeAvailable (chowdsp_utils)
+
 FetchContent_Declare (melatonin_perfetto
   GIT_REPOSITORY https://github.com/sudara/melatonin_perfetto.git
   GIT_SHALLOW 1
@@ -232,4 +239,7 @@ target_link_libraries("${BaseTargetName}"
     PUBLIC
         juce::juce_recommended_config_flags
         juce::juce_recommended_lto_flags
-        juce::juce_recommended_warning_flags)
+        juce::juce_recommended_warning_flags
+        chowdsp::chowdsp_filters
+        chowdsp_simd
+)

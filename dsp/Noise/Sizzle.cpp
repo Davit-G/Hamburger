@@ -22,7 +22,7 @@ Sizzle::~Sizzle()
 {
 }
 
-void Sizzle::prepare(dsp::ProcessSpec &spec)
+void Sizzle::prepare(juce::dsp::ProcessSpec &spec)
 {
 	this->sampleRate = spec.sampleRate;
 
@@ -35,11 +35,11 @@ void Sizzle::prepare(dsp::ProcessSpec &spec)
 	envelopeDetector.setReleaseTime(2);
 	envelopeDetector.prepare(spec);
 
-	*filter.coefficients = dsp::IIR::ArrayCoefficients<float>::makeBandPass(spec.sampleRate, 10000.0f, 0.707f);
+	*filter.coefficients = juce::dsp::IIR::ArrayCoefficients<float>::makeBandPass(spec.sampleRate, 10000.0f, 0.707f);
 	filter.prepare(spec);
 }
 
-void Sizzle::processBlock(dsp::AudioBlock<float> &block)
+void Sizzle::processBlock(juce::dsp::AudioBlock<float> &block)
 {
 	// TRACE_EVENT("dsp", "Sizzle::processBlock");
 	noiseAmount.update();
@@ -52,7 +52,7 @@ void Sizzle::processBlock(dsp::AudioBlock<float> &block)
 	auto sizzleFreq = filterTone.getRaw();
 
 	if (filterTone.isChanged())
-		*filter.coefficients = dsp::IIR::ArrayCoefficients<float>::makeLowPass(sampleRate, sizzleFreq, 0.707f);
+		*filter.coefficients = juce::dsp::IIR::ArrayCoefficients<float>::makeLowPass(sampleRate, sizzleFreq, 0.707f);
 
 	for (int sample = 0; sample < block.getNumSamples(); sample++)
 	{
@@ -67,7 +67,7 @@ void Sizzle::processBlock(dsp::AudioBlock<float> &block)
 	}
 }
 
-void Sizzle::processBlockOG(dsp::AudioBlock<float> &block)
+void Sizzle::processBlockOG(juce::dsp::AudioBlock<float> &block)
 {
 	// TRACE_EVENT("dsp", "Sizzle::processBlock");
 	fizzAmount.update();

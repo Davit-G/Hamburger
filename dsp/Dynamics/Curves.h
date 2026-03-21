@@ -3,8 +3,6 @@
 #include <cmath>
 #include "juce_core/juce_core.h"
 
-using namespace juce;
-
 
 class Curves {
 public:

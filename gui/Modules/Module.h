@@ -99,7 +99,7 @@ public:
 
     void paint(juce::Graphics &g) override
     {
-        Path p;
+        juce::Path p;
         p.addRoundedRectangle(getLocalBounds().reduced(4).toFloat(), 15.0f);
 
         if (enabledButton == nullptr) {
@@ -136,7 +136,7 @@ public:
         header.items.clear();
         if (enabledButton != nullptr)
         {
-            header.items.add(FlexItem(*enabledButton).withMinWidth(15.0f).withMargin(7.5f));
+            header.items.add(juce::FlexItem(*enabledButton).withMinWidth(15.0f).withMargin(7.5f));
             extraSpace = 15.0f + 7.5f;
         }
 
@@ -144,11 +144,11 @@ public:
 
         if (modulePanels.size() == 1)
         {
-            header.items.add(FlexItem(titleLabel).withMinWidth(titleFont.getStringWidth(titleLabel.getText()) * 1.1f));
+            header.items.add(juce::FlexItem(titleLabel).withMinWidth(titleFont.getStringWidth(titleLabel.getText()) * 1.1f));
         }
         else
         {
-            header.items.add(FlexItem(categorySelector).withMinWidth(titleFont.getStringWidth(categorySelector.getText()) * 1.4f + extraSpace));
+            header.items.add(juce::FlexItem(categorySelector).withMinWidth(titleFont.getStringWidth(categorySelector.getText()) * 1.4f + extraSpace));
         }
 
         header.performLayout(titleBounds);

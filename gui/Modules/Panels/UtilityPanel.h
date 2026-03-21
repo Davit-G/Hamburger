@@ -34,7 +34,7 @@ public:
         outGain.setBounds(bot);
     }
 private:
-    Grid grid;
+    juce::Grid grid;
     ParamKnob inGain;
     ParamKnob mix;
     ParamKnob outGain;

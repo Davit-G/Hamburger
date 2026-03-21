@@ -99,10 +99,10 @@ private:
 
     EmphasisFilter emphasisFilter;
 
-    dsp::Gain<float> inputGain;
-    dsp::Gain<float> outputGain;
+    juce::dsp::Gain<float> inputGain;
+    juce::dsp::Gain<float> outputGain;
 
-    dsp::DryWetMixer<float> dryWetMixer;
+    juce::dsp::DryWetMixer<float> dryWetMixer;
 
     OversamplingStack oversamplingStack;
 

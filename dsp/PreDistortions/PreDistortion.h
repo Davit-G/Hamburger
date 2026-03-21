@@ -15,7 +15,7 @@ public:
     }
     ~PreDistortion() {}
 
-    void processBlock(dsp::AudioBlock<float>& block) {
+    void processBlock(juce::dsp::AudioBlock<float>& block) {
         // int qualitySetting = quality->getIndex();
 
         if (preDistortionEnabled->get() == false) return;
@@ -24,7 +24,7 @@ public:
         grungeDSP->processBlock(block);
     }
 
-    void prepare(dsp::ProcessSpec& spec) {
+    void prepare(juce::dsp::ProcessSpec& spec) {
         svfAllPass->prepare(spec);
         grungeDSP->prepare(spec);
     }

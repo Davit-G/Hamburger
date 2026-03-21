@@ -5,14 +5,14 @@ Fuzz::Fuzz(juce::AudioProcessorValueTreeState& treeState) : bias(treeState, Para
 
 Fuzz::~Fuzz() {}
 
-void Fuzz::prepare(dsp::ProcessSpec& spec) {
+void Fuzz::prepare(juce::dsp::ProcessSpec& spec) {
 	follower.prepare(spec);
 	bias.prepare(spec);
 	follower.setAttackTime(50);
 	follower.setReleaseTime(50);
 }
 
-void Fuzz::processBlock(dsp::AudioBlock<float>& block) {
+void Fuzz::processBlock(juce::dsp::AudioBlock<float>& block) {
 	#if PERFETTO
 	// TRACE_EVENT("dsp", "Fuzz::processBlock");
 	#endif // PERFETTO

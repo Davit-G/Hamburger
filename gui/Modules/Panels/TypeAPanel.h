@@ -28,22 +28,22 @@ public:
         auto bounds = getLocalBounds();
 
         using fr = juce::Grid::Fr;
-        using Track = Grid::TrackInfo;
+        using Track = juce::Grid::TrackInfo;
 
         grid.templateRows = {Track(fr(1)), Track(fr(1))};
         grid.templateColumns = {Track(fr(1)), Track(fr(1))};
 
         grid.items = {
-            GridItem(threshold).withArea(1, 1),
-            GridItem(brightness).withArea(1, 2),
-            GridItem(tilt).withArea(2, 1),
-            GridItem(out).withArea(2, 2)};
+            juce::GridItem(threshold).withArea(1, 1),
+            juce::GridItem(brightness).withArea(1, 2),
+            juce::GridItem(tilt).withArea(2, 1),
+            juce::GridItem(out).withArea(2, 2)};
 
         grid.performLayout(bounds);
     }
 
 private:
-    Grid grid;
+    juce::Grid grid;
 
     ParamKnob threshold;
     ParamKnob brightness;

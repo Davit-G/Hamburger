@@ -27,7 +27,7 @@ public:
     }
     ~NoiseDistortions(){}
 
-    void processBlock(dsp::AudioBlock<float> &block)
+    void processBlock(juce::dsp::AudioBlock<float> &block)
     {
         int distoTypeIndex = distoType->getIndex();
 
@@ -63,7 +63,7 @@ public:
         }
     }
 
-    void prepare(dsp::ProcessSpec& spec)
+    void prepare(juce::dsp::ProcessSpec& spec)
     {
         sizzle->prepare(spec);
         erosion->prepare(spec);

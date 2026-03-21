@@ -15,14 +15,14 @@ public:
         </svg>
         )svgDELIM";
         
-        auto parsedLogoStringAviary{XmlDocument::parse(String(aviaryString))};
+        auto parsedLogoStringAviary{juce::XmlDocument::parse(juce::String(aviaryString))};
         jassert(parsedLogoStringAviary != nullptr);
-        drawableAviary = Drawable::createFromSVG(*parsedLogoStringAviary);
+        drawableAviary = juce::Drawable::createFromSVG(*parsedLogoStringAviary);
         jassert(drawableAviary != nullptr);
 
         setSize(drawableAviary->getDrawableBounds().getWidth(), drawableAviary->getDrawableBounds().getHeight());
 
-        setMouseCursor(MouseCursor::PointingHandCursor);
+        setMouseCursor(juce::MouseCursor::PointingHandCursor);
 
         addAndMakeVisible(*drawableAviary);
     }
@@ -30,7 +30,7 @@ public:
     void mouseUp(const juce::MouseEvent &event) override
     {
         DBG("Mouse up");
-        URL("https://aviaryaudio.com").launchInDefaultBrowser();
+        juce::URL("https://aviaryaudio.com").launchInDefaultBrowser();
     }
 
     void resized() override
@@ -66,9 +66,9 @@ public:
 
         changePresetFolderButton.setLookAndFeel(&hamburgerLAF);
 
-        changePresetFolderButton.setColour(TextButton::buttonColourId, juce::Colours::black);
-        changePresetFolderButton.setColour(TextButton::textColourOffId, juce::Colours::white);
-        changePresetFolderButton.setColour(TextButton::textColourOnId, juce::Colours::white);
+        changePresetFolderButton.setColour(juce::TextButton::buttonColourId, juce::Colours::black);
+        changePresetFolderButton.setColour(juce::TextButton::textColourOffId, juce::Colours::white);
+        changePresetFolderButton.setColour(juce::TextButton::textColourOnId, juce::Colours::white);
 
         addAndMakeVisible(changePresetFolderButton);
 
@@ -78,9 +78,9 @@ public:
             // browse for files
             presetFolderChooser = std::make_unique<juce::FileChooser>("Select a folder to save presets to", Preset::defaultDirectory, "*.*", true);
 
-                auto folderChooserFlags = FileBrowserComponent::openMode | FileBrowserComponent::canSelectDirectories;
+                auto folderChooserFlags = juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectDirectories;
  
-                presetFolderChooser->launchAsync (folderChooserFlags, [&] (const FileChooser& chooser)
+                presetFolderChooser->launchAsync (folderChooserFlags, [&] (const juce::FileChooser& chooser)
                 {
                     auto result = chooser.getResult();
 
@@ -90,7 +90,7 @@ public:
                         return;
                     }
 
-                    File directory (chooser.getResult());
+                    juce::File directory (chooser.getResult());
             
                     auto userSettings = presetManager.appProperties.getUserSettings();
 
@@ -102,24 +102,24 @@ public:
                 });
         };
 
-        auto parsedLogoString{XmlDocument::parse(String(logoString))};
+        auto parsedLogoString{juce::XmlDocument::parse(juce::String(logoString))};
         jassert(parsedLogoString != nullptr);
-        drawableLogoString = Drawable::createFromSVG(*parsedLogoString);
+        drawableLogoString = juce::Drawable::createFromSVG(*parsedLogoString);
         jassert(drawableLogoString != nullptr);
 
 #if JUCE_DEBUG
-        versionLabel.setText("Version: Debug v" + String(JucePlugin_VersionString) + " (commit " + String(GIT_HASH) + ")", NotificationType::dontSendNotification);
+        versionLabel.setText("Version: Debug v" + juce::String(JucePlugin_VersionString) + " (commit " + juce::String(GIT_HASH) + ")", juce::NotificationType::dontSendNotification);
 #else
-        versionLabel.setText("Version: Release v" + String(JucePlugin_VersionString) + " (" + String(GIT_HASH) + ")", NotificationType::dontSendNotification);
+        versionLabel.setText("Version: Release v" + juce::String(JucePlugin_VersionString) + " (" + juce::String(GIT_HASH) + ")", juce::NotificationType::dontSendNotification);
 #endif
 
         auto font = hamburgerLAF.getLabelFont(descriptionLabel);
 
-        versionLabel.setJustificationType(Justification::bottomRight);
+        versionLabel.setJustificationType(juce::Justification::bottomRight);
         versionLabel.setFont(font);
 
-        descriptionLabel.setJustificationType(Justification::topLeft);
-        descriptionLabel.setText("Hamburger is a powerful distortion effect plugin with dynamics controls and equalisation designed for more control. Hamburger takes inspiration from other distortion and analog emulation plugins, and provides a tight set of controls that allow for fast pleasing results. \n \nHuge thanks to Sam (womp), Danburger (Antfactory), Bean, DEPARTURE, Sheaf, HurleybirdJr, Ewan Bristow, Alyssa, Patrhetoric, the dubstep den chaps, all the people in the Aviary Audio discord server and anyone else I've left out, for all the help with development, testing, debugging and contributions.\n\nIf you want to know more about Aviary or join the community, click the aviary logo on the top right (opens a page to https://aviaryaudio.com). \n\nClick anywhere on the screen to return to the plugin", NotificationType::dontSendNotification);
+        descriptionLabel.setJustificationType(juce::Justification::topLeft);
+        descriptionLabel.setText("Hamburger is a powerful distortion effect plugin with dynamics controls and equalisation designed for more control. Hamburger takes inspiration from other distortion and analog emulation plugins, and provides a tight set of controls that allow for fast pleasing results. \n \nHuge thanks to Sam (womp), Danburger (Antfactory), Bean, DEPARTURE, Sheaf, HurleybirdJr, Ewan Bristow, Alyssa, Patrhetoric, the dubstep den chaps, all the people in the Aviary Audio discord server and anyone else I've left out, for all the help with development, testing, debugging and contributions.\n\nIf you want to know more about Aviary or join the community, click the aviary logo on the top right (opens a page to https://aviaryaudio.com). \n\nClick anywhere on the screen to return to the plugin", juce::NotificationType::dontSendNotification);
         descriptionLabel.setFont(font);
 
         drawableLogoString->setInterceptsMouseClicks(false, false);
@@ -146,9 +146,9 @@ public:
         getParentComponent()->postCommandMessage(1);
     }
 
-    void paint(Graphics &g) override
+    void paint(juce::Graphics &g) override
     {
-        Path p;
+        juce::Path p;
         p.addRoundedRectangle(getLocalBounds().reduced(4).toFloat(), 15.0f);
         g.setColour(juce::Colour::fromRGB(0, 0, 0));
         g.fillPath(p);
@@ -157,27 +157,27 @@ public:
 
         auto logoArea = bounds.removeFromBottom(80);
 
-        g.drawImage(vstLogo, logoArea.removeFromLeft(100).toFloat(), Justification::centred);
+        g.drawImage(vstLogo, logoArea.removeFromLeft(100).toFloat(), juce::Justification::centred);
         logoArea.removeFromLeft(10);
-        g.drawImage(clapLogo, logoArea.removeFromLeft(70).toFloat(), Justification::centred);
+        g.drawImage(clapLogo, logoArea.removeFromLeft(70).toFloat(), juce::Justification::centred);
         logoArea.removeFromLeft(10);
-        g.drawImage(gplLogo, logoArea.removeFromLeft(110).toFloat(), Justification::centred);
+        g.drawImage(gplLogo, logoArea.removeFromLeft(110).toFloat(), juce::Justification::centred);
         logoArea.removeFromLeft(10);
-        g.drawImage(womp, logoArea.removeFromLeft(130).toFloat(), Justification::centred);
+        g.drawImage(womp, logoArea.removeFromLeft(130).toFloat(), juce::Justification::centred);
 
         const juce::Image features[4] = {feature1, feature2, feature3, feature4};
 
         auto featureArea = getLocalBounds().removeFromRight(bounds.getWidth() / 2).reduced(40);
 
         // pick random feature to display
-        auto feature = Random::getSystemRandom().nextInt(Range<int>(0, 4));
+        auto feature = juce::Random::getSystemRandom().nextInt(juce::Range<int>(0, 4));
 
-        g.drawImage(features[feature], featureArea.toFloat(), Justification::centred);
+        g.drawImage(features[feature], featureArea.toFloat(), juce::Justification::centred);
     }
 
     void resized() override
     {
-        drawableLogoString->setBoundsToFit(getLocalBounds().reduced(20), Justification::topLeft, true);
+        drawableLogoString->setBoundsToFit(getLocalBounds().reduced(20), juce::Justification::topLeft, true);
 
 
         versionLabel.setBounds(getLocalBounds().reduced(20).removeFromBottom(20));
@@ -194,8 +194,8 @@ public:
 private:
     std::unique_ptr<juce::Drawable> drawableLogoString = nullptr;
 
-    Label versionLabel;
-    Label descriptionLabel;
+    juce::Label versionLabel;
+    juce::Label descriptionLabel;
 
     std::unique_ptr<juce::FileChooser> presetFolderChooser;
 

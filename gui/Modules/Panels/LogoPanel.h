@@ -23,24 +23,24 @@ public:
 </svg>
 )svgDELIM";
 
-        auto parsedLogoString {XmlDocument::parse (String (logoString))};
+        auto parsedLogoString {juce::XmlDocument::parse (juce::String (logoString))};
         jassert(parsedLogoString != nullptr);
-        drawableLogoString = Drawable::createFromSVG (*parsedLogoString);
+        drawableLogoString = juce::Drawable::createFromSVG (*parsedLogoString);
         jassert(drawableLogoString != nullptr);
 
-        setMouseCursor(MouseCursor::PointingHandCursor);
+        setMouseCursor(juce::MouseCursor::PointingHandCursor);
 
         addAndMakeVisible(*drawableLogoString);
     }
 
-    void mouseUp(const MouseEvent &event) override
+    void mouseUp(const juce::MouseEvent &event) override
     {
         getParentComponent()->getParentComponent()->getParentComponent()->postCommandMessage(0);
     }
 
     void resized() override
     {
-        drawableLogoString->setBoundsToFit(getLocalBounds(), Justification::centred, true);
+        drawableLogoString->setBoundsToFit(getLocalBounds(), juce::Justification::centred, true);
     }
 
 private:

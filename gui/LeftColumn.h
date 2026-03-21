@@ -26,7 +26,6 @@ public:
         companderPanels.push_back(std::make_unique<MBCompPanel>(p));
         companderPanels.push_back(std::make_unique<MSCompPanel>(p));
         companderPanels.push_back(std::make_unique<TypeAPanel>(p));
-        companderPanels.push_back(std::make_unique<StereoCompPanel>(p));
         compander = std::make_unique<Module>(p, "COMP", "compressionOn", "compressionType", std::move(companderPanels));
         addAndMakeVisible(compander.get());
         
@@ -52,7 +51,7 @@ public:
         logo->setLookAndFeel(nullptr);
     }
 
-    void paint(Graphics &g) override
+    void paint(juce::Graphics &g) override
     {
         juce::ignoreUnused(g);
     }

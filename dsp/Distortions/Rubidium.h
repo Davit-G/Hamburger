@@ -73,7 +73,7 @@ public:
     }
 
     inline float atanApprox(float x) {
-        return dsp::FastMathApproximations::tanh(x) + x * 0.08f;
+        return juce::dsp::FastMathApproximations::tanh(x) + x * 0.08f;
     }
 
     void processBlock(juce::dsp::AudioBlock<float> &block)

@@ -26,7 +26,7 @@ public:
     }
     ~Dynamics() {}
 
-    void processBlock(dsp::AudioBlock<float>& block) {
+    void processBlock(juce::dsp::AudioBlock<float>& block) {
         if (!enabled->get()) return;
         int distoTypeIndex = distoType->getIndex();
 
@@ -55,7 +55,7 @@ public:
 
     }
 
-    void prepare(dsp::ProcessSpec& spec) {
+    void prepare(juce::dsp::ProcessSpec& spec) {
         mbComp.prepare(spec);
         msComp.prepare(spec);
         stereoComp.prepare(spec);

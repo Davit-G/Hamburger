@@ -6,9 +6,9 @@
 // ok onwards to my code
 
 template <typename T>
-static T *toBasePointer(dsp::SIMDRegister<T> *r) noexcept { return reinterpret_cast<T *>(r); }
-constexpr auto simdRegSize = dsp::SIMDRegister<float>::size();
-using Format = AudioData::Format<AudioData::Float32, AudioData::NativeEndian>;
+static T *toBasePointer(juce::dsp::SIMDRegister<T> *r) noexcept { return reinterpret_cast<T *>(r); }
+constexpr auto simdRegSize = juce::dsp::SIMDRegister<float>::size();
+using Format = juce::AudioData::Format<juce::AudioData::Float32, juce::AudioData::NativeEndian>;
 
 class SVFAllPassChain
 {
@@ -25,7 +25,7 @@ public:
     }
 
     template <typename SampleType>
-    auto prepareChannelPointers(const dsp::AudioBlock<SampleType> &block)
+    auto prepareChannelPointers(const juce::dsp::AudioBlock<SampleType> &block)
     {
         // pads the input channels with zero buffers if the number of channels is less than the register size
         std::array<SampleType *, simdRegSize> result{};
@@ -36,27 +36,27 @@ public:
         return result;
     }
 
-    void processBlock(dsp::AudioBlock<float> block)
+    void processBlock(juce::dsp::AudioBlock<float> block)
     {
         allPassAmount.update();
         allPassFrequency.update();
         allPassQ.update();
 
         auto interleavedSubBlock = interleaved.getSubBlock(0, block.getNumSamples());
-        auto context = dsp::ProcessContextReplacing<float>(block);
+        auto context = juce::dsp::ProcessContextReplacing<float>(block);
 
         const auto &input = context.getInputBlock();
         auto numSamples = block.getNumSamples();
 
         auto inChannels = prepareChannelPointers(input);
 
-        AudioData::interleaveSamples(AudioData::NonInterleavedSource<Format>{
+        juce::AudioData::interleaveSamples(juce::AudioData::NonInterleavedSource<Format>{
                                          inChannels.data(),
                                          simdRegSize,
                                      },
-                                     AudioData::InterleavedDest<Format>{toBasePointer(interleavedSubBlock.getChannelPointer(0)), simdRegSize}, numSamples);
+                                     juce::AudioData::InterleavedDest<Format>{toBasePointer(interleavedSubBlock.getChannelPointer(0)), simdRegSize}, numSamples);
 
-        dsp::ProcessContextReplacing<dsp::SIMDRegister<float>> newCtx(interleavedSubBlock);
+        juce::dsp::ProcessContextReplacing<juce::dsp::SIMDRegister<float>> newCtx(interleavedSubBlock);
 
         float allPassAmt = fmin(allPassAmount.getRaw(), 50.0f);
 
@@ -82,20 +82,20 @@ public:
 
         auto outChannels = prepareChannelPointers(context.getOutputBlock());
 
-        AudioData::deinterleaveSamples(AudioData::InterleavedSource<Format>{toBasePointer(interleavedSubBlock.getChannelPointer(0)), simdRegSize},
-                                       AudioData::NonInterleavedDest<Format>{outChannels.data(), simdRegSize},
+        juce::AudioData::deinterleaveSamples(juce::AudioData::InterleavedSource<Format>{toBasePointer(interleavedSubBlock.getChannelPointer(0)), simdRegSize},
+                                       juce::AudioData::NonInterleavedDest<Format>{outChannels.data(), simdRegSize},
                                        numSamples);
     }
 
-    void prepare(dsp::ProcessSpec &spec)
+    void prepare(juce::dsp::ProcessSpec &spec)
     {
         allPassFrequency.prepare(spec);
         allPassQ.prepare(spec);
         allPassAmount.prepare(spec);
         sampleRate = spec.sampleRate;
 
-        interleaved = dsp::AudioBlock<dsp::SIMDRegister<float>>(interleavedBlockData, 1, spec.maximumBlockSize);
-        zero = dsp::AudioBlock<float>(zeroData, dsp::SIMDRegister<float>::size(), spec.maximumBlockSize);
+        interleaved = juce::dsp::AudioBlock<juce::dsp::SIMDRegister<float>>(interleavedBlockData, 1, spec.maximumBlockSize);
+        zero = juce::dsp::AudioBlock<float>(zeroData, juce::dsp::SIMDRegister<float>::size(), spec.maximumBlockSize);
         interleaved.clear();
         zero.clear();
 
@@ -116,7 +116,7 @@ public:
 
         const float w = juce::MathConstants<float>::pi * (cutoff / sampleRate);
 
-        g0 = dsp::FastMathApproximations::tan(w);
+        g0 = juce::dsp::FastMathApproximations::tan(w);
 
         k0 = (1.0f / resonance);
         const auto gk = g0 + k0;
@@ -131,7 +131,7 @@ public:
     }
 
 private:
-    using SIMDReg = dsp::SIMDRegister<float>;
+    using SIMDReg = juce::dsp::SIMDRegister<float>;
 
     inline void processCore(SIMDReg &x, SIMDReg &s1, SIMDReg &s2) noexcept
     {
@@ -141,7 +141,7 @@ private:
         const auto v1 = v3 * a2 + s1 * a1;
         const auto v2 = v3 * a3 + s1 * a2 + s2;
 
-        // update state
+        // update state 
         s1 = two * v1 - s1;
         s2 = two * v2 - s2;
 
@@ -161,10 +161,10 @@ private:
 
     std::array<SIMDReg, 50> ic1eq, ic2eq;
 
-    dsp::AudioBlock<SIMDReg> interleaved;
-    dsp::AudioBlock<float> zero;
+    juce::dsp::AudioBlock<SIMDReg> interleaved;
+    juce::dsp::AudioBlock<float> zero;
 
-    HeapBlock<char> interleavedBlockData, zeroData;
+    juce::HeapBlock<char> interleavedBlockData, zeroData;
 
     SmoothParam allPassFrequency;
     SmoothParam allPassQ;

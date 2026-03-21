@@ -17,7 +17,7 @@ public:
                                                         makeup(state, ParamIDs::compOut) {}
     ~MBComp() {}
 
-    void processBlock(dsp::AudioBlock<float> &block)
+    void processBlock(juce::dsp::AudioBlock<float> &block)
     {
 
         speed.update();
@@ -59,7 +59,7 @@ public:
         }
     }
 
-    void prepare(dsp::ProcessSpec &spec)
+    void prepare(juce::dsp::ProcessSpec &spec)
     {
         compressor1.prepare(spec);
         compressor2.prepare(spec);
@@ -67,8 +67,8 @@ public:
 
         lowCrossOver.setCutoffFrequency(200.0f);
         highCrossOver.setCutoffFrequency(3000.0f);
-        lowCrossOver.setType(dsp::LinkwitzRileyFilterType::lowpass);
-        highCrossOver.setType(dsp::LinkwitzRileyFilterType::highpass);
+        lowCrossOver.setType(juce::dsp::LinkwitzRileyFilterType::lowpass);
+        highCrossOver.setType(juce::dsp::LinkwitzRileyFilterType::highpass);
         lowCrossOver.prepare(spec);
         highCrossOver.prepare(spec);
     }
@@ -93,6 +93,6 @@ private:
     float midResultR = 0.0f;
     float highResultR = 0.0f;
 
-    dsp::LinkwitzRileyFilter<float> lowCrossOver;
-    dsp::LinkwitzRileyFilter<float> highCrossOver;
+    juce::dsp::LinkwitzRileyFilter<float> lowCrossOver;
+    juce::dsp::LinkwitzRileyFilter<float> highCrossOver;
 };

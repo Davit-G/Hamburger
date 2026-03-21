@@ -21,7 +21,7 @@ public:
         stages.setBounds(bounds);
     }
 private:
-    Grid grid;
+    juce::Grid grid;
     ParamKnob quality;
     ParamKnob stages;
 };

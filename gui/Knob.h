@@ -95,8 +95,8 @@ public:
     {
         // auto bounds = getLocalBounds();
         // drawRotarySlider(g, bounds.getX(), bounds.getY(), bounds.getWidth(), bounds.getHeight(), knob.valueToProportionOfLength(knob.getValue()), 0.0f, 1.0f);
-        auto outline = this->findColour(Slider::rotarySliderOutlineColourId);
-        auto knobColour = this->findColour(Slider::rotarySliderFillColourId);
+        auto outline = this->findColour(juce::Slider::rotarySliderOutlineColourId);
+        auto knobColour = this->findColour(juce::Slider::rotarySliderFillColourId);
 
         auto bounds = juce::Rectangle<int>(knobBounds).toFloat().reduced(5.0f);
 
@@ -134,8 +134,8 @@ private:
     AudioPluginAudioProcessor &processorRef;
     std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> knobAttachment = nullptr;
 
-    Slider knob;
-    Label label;
+    juce::Slider knob;
+    juce::Label label;
 
     juce::Rectangle<int> knobBounds;
 

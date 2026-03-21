@@ -6,9 +6,9 @@
 
 std::unique_ptr<juce::Drawable> makeIcon(const char *iconString)
 {
-	auto parsedIconString{XmlDocument::parse(String(iconString))};
+	auto parsedIconString{juce::XmlDocument::parse(juce::String(iconString))};
 	jassert(parsedIconString != nullptr);
-	auto drawableLogoString = Drawable::createFromSVG(*parsedIconString);
+	auto drawableLogoString = juce::Drawable::createFromSVG(*parsedIconString);
 	jassert(drawableLogoString != nullptr);
 
 	return drawableLogoString;
@@ -23,10 +23,10 @@ const std::function<void(std::string)> errorAlertCallback = [](std::string resul
 	errorAlert->enterModalState(true, nullptr, true);
 };
 
-class CustomListBoxModel : public ListBoxModel
+class CustomListBoxModel : public juce::ListBoxModel
 {
 public:
-	CustomListBoxModel(Preset::PresetManager &pm, ListBox &lb) : presetManager(pm), listBox(lb)
+	CustomListBoxModel(Preset::PresetManager &pm, juce::ListBox &lb) : presetManager(pm), listBox(lb)
 	{
 		auto folderClosedIconString = R"svgDELIM(
 			<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-folder-closed"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/><path d="M2 10h20"/></svg>
@@ -46,7 +46,7 @@ public:
 	}
 
     const juce::Typeface::Ptr quicksandTypeface = juce::Typeface::createSystemTypefaceFor(BinaryData::QuicksandBold_ttf, BinaryData::QuicksandBold_ttfSize);
-    Font quicksandFont = juce::Font(FontOptions(quicksandTypeface));
+    juce::Font quicksandFont = juce::Font(juce::FontOptions(quicksandTypeface));
 
 	void initFiles(bool ignoreCollapsedStates = false)
 	{
@@ -81,7 +81,7 @@ public:
 			}
 
 			auto parent = file->getFile().getParentDirectory();
-			File current = parent;
+			juce::File current = parent;
 
 			int tries = 0;
 
@@ -106,12 +106,12 @@ public:
 		return filesToRender.size();
 	}
 
-	MouseCursor getMouseCursorForRow(int row) override
+	juce::MouseCursor getMouseCursorForRow(int row) override
 	{
-		return MouseCursor::PointingHandCursor;
+		return juce::MouseCursor::PointingHandCursor;
 	}
 
-	void paintListBoxItem(int rowNumber, Graphics &g,
+	void paintListBoxItem(int rowNumber, juce::Graphics &g,
 						  int width, int height, bool rowIsSelected) override
 	{
 		if (filesToRender.size() == 0)
@@ -123,7 +123,7 @@ public:
 
 		if (rowIsSelected && !isDir)
 		{
-			g.fillAll(Colour::fromRGB(33, 33, 33));
+			g.fillAll(juce::Colour::fromRGB(33, 33, 33));
 		}
 
 		auto depth = row.getFile().getRelativePathFrom(presetManager.getPresetDirectory()).retainCharacters("/\\").length();
@@ -141,17 +141,17 @@ public:
 
 			// g.fillAll(juce::Colour::fromRGB(22, 22, 22));
 
-			g.setColour(Colours::white);
+			g.setColour(juce::Colours::white);
 
 			auto drawArea = juce::Rectangle<float>(5 + depth * 30, 0, height, height).reduced(12).toFloat();
 
 			if (collapsed)
 			{
-				folderClosedIcon->drawWithin(g, drawArea, RectanglePlacement::centred, 1.0f);
+				folderClosedIcon->drawWithin(g, drawArea, juce::RectanglePlacement::centred, 1.0f);
 			}
 			else
 			{
-				folderOpenIcon->drawWithin(g, drawArea, RectanglePlacement::centred, 1.0f);
+				folderOpenIcon->drawWithin(g, drawArea, juce::RectanglePlacement::centred, 1.0f);
 			}
 		}
 
@@ -160,7 +160,7 @@ public:
 		if (isDir)
 			extraRoom = 35;
 
-		g.setColour(LookAndFeel::getDefaultLookAndFeel().findColour(Label::textColourId));
+		g.setColour(juce::LookAndFeel::getDefaultLookAndFeel().findColour(juce::Label::textColourId));
 		g.setFont(quicksandFont);
 
 		auto presetName = row.getFile().getFileNameWithoutExtension();
@@ -172,9 +172,9 @@ public:
 
 		g.drawText(presetName,
 				   15 + depth * 30 + extraRoom, 0, width, height,
-				   Justification::centredLeft, true);
+				   juce::Justification::centredLeft, true);
 
-		g.setColour(Colour::fromRGB(100, 100, 100));
+		g.setColour(juce::Colour::fromRGB(100, 100, 100));
 		g.setFont(quicksandFont);
 
 
@@ -186,10 +186,10 @@ public:
 
 		g.drawText(authorName,
 				   0, 0, width - 20, height,
-				   Justification::centredRight, true);
+				   juce::Justification::centredRight, true);
 	}
 
-	void listBoxItemClicked(int row, const MouseEvent &mouseEvent) override
+	void listBoxItemClicked(int row, const juce::MouseEvent &mouseEvent) override
 	{
 		auto item = filesToRender[row];
 
@@ -214,7 +214,7 @@ public:
 		}
 	}
 
-	void listBoxItemDoubleClicked(int row, const MouseEvent &mouseEvent) override
+	void listBoxItemDoubleClicked(int row, const juce::MouseEvent &mouseEvent) override
 	{
 		auto item = filesToRender[row];
 		if (item.getFile().isDirectory())
@@ -227,12 +227,12 @@ public:
 	}
 
 	// function to add lambdas that take a string argument
-	void addSingleClickListener(std::function<void(String)> listener)
+	void addSingleClickListener(std::function<void(juce::String)> listener)
 	{
 		singleClickListener.push_back(listener);
 	}
 
-	void addDoubleClickListener(std::function<void(String)> listener)
+	void addDoubleClickListener(std::function<void(juce::String)> listener)
 	{
 		doubleClickListener.push_back(listener);
 	}
@@ -244,15 +244,15 @@ public:
 
 private:
 	Preset::PresetManager &presetManager;
-	ListBox &listBox;
+	juce::ListBox &listBox;
 
-	std::vector<std::function<void(String)>> singleClickListener;
-	std::vector<std::function<void(String)>> doubleClickListener;
+	std::vector<std::function<void(juce::String)>> singleClickListener;
+	std::vector<std::function<void(juce::String)>> doubleClickListener;
 
 	std::shared_ptr<juce::OwnedArray<Preset::PresetFile>> filesFolders = nullptr;
 	juce::Array<Preset::PresetFile> filesToRender;
 
-	std::map<String, bool> isCollapsed;
+	std::map<juce::String, bool> isCollapsed;
 
 	std::unique_ptr<juce::Drawable> folderClosedIcon;
 	std::unique_ptr<juce::Drawable> folderOpenIcon;
@@ -260,23 +260,23 @@ private:
 	JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(CustomListBoxModel)
 };
 
-class CustomPresetListBox : public ListBox
+class CustomPresetListBox : public juce::ListBox
 {
 public:
 	CustomPresetListBox()
 	{
 
-		setColour(ListBox::ColourIds::backgroundColourId, Colours::transparentBlack);
-		setColour(ListBox::ColourIds::textColourId, Colours::white);
-		setColour(ListBox::ColourIds::outlineColourId, Colours::black);
+		setColour(juce::ListBox::ColourIds::backgroundColourId, juce::Colours::transparentBlack);
+		setColour(juce::ListBox::ColourIds::textColourId, juce::Colours::white);
+		setColour(juce::ListBox::ColourIds::outlineColourId, juce::Colours::black);
 
 		setOpaque(false);
 
 		auto &vertScroll = this->getVerticalScrollBar();
 
-		vertScroll.setColour(ScrollBar::ColourIds::thumbColourId, Palette::colours[3]);
-		vertScroll.setColour(ScrollBar::ColourIds::trackColourId, Palette::colours[3]);
-		vertScroll.setColour(ScrollBar::ColourIds::backgroundColourId, Colours::black);
+		vertScroll.setColour(juce::ScrollBar::ColourIds::thumbColourId, Palette::colours[3]);
+		vertScroll.setColour(juce::ScrollBar::ColourIds::trackColourId, Palette::colours[3]);
+		vertScroll.setColour(juce::ScrollBar::ColourIds::backgroundColourId, juce::Colours::black);
 	}
 
 	void paint(juce::Graphics &g) override
@@ -285,7 +285,7 @@ public:
 		// 	updateContent()
 		// }
 
-		Path p;
+		juce::Path p;
 		p.addRoundedRectangle(getLocalBounds().reduced(4).withTrimmedTop(-4).toFloat(), 15.0f);
 		g.setColour(juce::Colour::fromRGB(0, 0, 0));
 		g.fillPath(p);
@@ -295,17 +295,17 @@ private:
 	JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(CustomPresetListBox)
 };
 
-class PresetPanel : public Component, Button::Listener
+class PresetPanel : public juce::Component, juce::Button::Listener
 {
 public:
 	PresetPanel(Preset::PresetManager &pm) : presetManager(pm),
 											 listBoxModel(pm, listBox),
-											 saveButton("Save", DrawableButton::ImageOnButtonBackground),
-											 deleteButton("Delete", DrawableButton::ImageOnButtonBackground),
-											 previousPresetButton("Previous", DrawableButton::ImageOnButtonBackground),
-											 nextPresetButton("Next", DrawableButton::ImageOnButtonBackground),
-											 closeButton("Close", DrawableButton::ImageOnButtonBackground),
-											 openPresetFolderButton("Open Folder", DrawableButton::ImageOnButtonBackground)
+											 saveButton("Save", juce::DrawableButton::ImageOnButtonBackground),
+											 deleteButton("Delete", juce::DrawableButton::ImageOnButtonBackground),
+											 previousPresetButton("Previous", juce::DrawableButton::ImageOnButtonBackground),
+											 nextPresetButton("Next", juce::DrawableButton::ImageOnButtonBackground),
+											 closeButton("Close", juce::DrawableButton::ImageOnButtonBackground),
+											 openPresetFolderButton("Open Folder", juce::DrawableButton::ImageOnButtonBackground)
 	{
 
 		auto saveIcon = makeIcon(R"svgDELIM(
@@ -358,10 +358,10 @@ public:
 		listBox.setModel(&listBoxModel);
 		addAndMakeVisible(listBox);
 
-		listBoxModel.addSingleClickListener(std::function<void(String)>([&](String presetName)
+		listBoxModel.addSingleClickListener(std::function<void(juce::String)>([&](juce::String presetName)
 																		{ currentPresetLabel.setButtonText(presetName); }));
 
-		listBoxModel.addDoubleClickListener(std::function<void(String)>([&](String presetName)
+		listBoxModel.addDoubleClickListener(std::function<void(juce::String)>([&](juce::String presetName)
 																		{
 			showPresetsList = false;
 			listBox.setVisible(showPresetsList);
@@ -376,10 +376,10 @@ public:
 		};
 
 		// currentPresetLabel.setLookAndFeel(&comboBoxLAF);
-		currentPresetLabel.setColour(ComboBox::backgroundColourId, Colours::black);
-		currentPresetLabel.setColour(TextButton::ColourIds::buttonColourId, Colours::black);
+		currentPresetLabel.setColour(juce::ComboBox::backgroundColourId, juce::Colours::black);
+		currentPresetLabel.setColour(juce::TextButton::ColourIds::buttonColourId, juce::Colours::black);
 
-		currentPresetLabel.setMouseCursor(MouseCursor::PointingHandCursor);
+		currentPresetLabel.setMouseCursor(juce::MouseCursor::PointingHandCursor);
 		addAndMakeVisible(currentPresetLabel);
 		currentPresetLabel.addListener(this);
 
@@ -447,17 +447,17 @@ public:
 private:
 	void paint(juce::Graphics &g) override
 	{
-		Path p;
+		juce::Path p;
 		p.addRoundedRectangle(getLocalBounds().removeFromTop(45).reduced(4).toFloat(), 15.0f);
 		g.setColour(juce::Colour::fromRGB(0, 0, 0));
 		g.fillPath(p);
 	}
 
-	void buttonClicked(Button *button) override
+	void buttonClicked(juce::Button *button) override
 	{
 		if (button == &saveButton)
 		{
-			auto alertWindow = new BurgerAlert("Save Preset", "Enter a name for your new preset: ", MessageBoxIconType::NoIcon);
+			auto alertWindow = new BurgerAlert("Save Preset", "Enter a name for your new preset: ", juce::MessageBoxIconType::NoIcon);
 
 			alertWindow->createPresetSaveAlert(presetManager.getCurrentPresetName(), presetManager.getCurrentAuthor());
 
@@ -506,7 +506,7 @@ private:
 		}
 		if (button == &deleteButton)
 		{
-			auto alertWindow2 = new BurgerAlert("Delete Preset", "Are you sure you want to delete this preset? ", MessageBoxIconType::NoIcon);
+			auto alertWindow2 = new BurgerAlert("Delete Preset", "Are you sure you want to delete this preset? ", juce::MessageBoxIconType::NoIcon);
 			alertWindow2->createPresetDeleteAlert();
 			alertWindow2->enterModalState(true, juce::ModalCallbackFunction::create([this, alertWindow2](int result)
 																					{
@@ -522,16 +522,16 @@ private:
 		}
 	}
 
-	void setupButton(Button &button, const String &buttonText)
+	void setupButton(juce::Button &button, const juce::String &buttonText)
 	{
 		juce::ignoreUnused(buttonText);
 		// button.setButtonText(buttonText);
-		button.setMouseCursor(MouseCursor::PointingHandCursor);
+		button.setMouseCursor(juce::MouseCursor::PointingHandCursor);
 
-		button.setColour(TextButton::ColourIds::buttonOnColourId, Colour::fromRGB(0, 0, 0));
-		button.setColour(TextButton::ColourIds::buttonColourId, Colour::fromRGB(0, 0, 0));
-		button.setColour(TextButton::ColourIds::textColourOffId, Colour::fromRGB(255, 255, 255));
-		button.setColour(ComboBox::outlineColourId, Colour::fromRGB(0, 0, 0));
+		button.setColour(juce::TextButton::ColourIds::buttonOnColourId, juce::Colour::fromRGB(0, 0, 0));
+		button.setColour(juce::TextButton::ColourIds::buttonColourId, juce::Colour::fromRGB(0, 0, 0));
+		button.setColour(juce::TextButton::ColourIds::textColourOffId, juce::Colour::fromRGB(255, 255, 255));
+		button.setColour(juce::ComboBox::outlineColourId, juce::Colour::fromRGB(0, 0, 0));
 
 		addAndMakeVisible(button);
 		button.addListener(this);
@@ -550,11 +550,11 @@ private:
 
 	Preset::PresetManager &
 		presetManager;
-	DrawableButton saveButton, deleteButton, previousPresetButton, nextPresetButton, closeButton, openPresetFolderButton;
+	juce::DrawableButton saveButton, deleteButton, previousPresetButton, nextPresetButton, closeButton, openPresetFolderButton;
 
 	bool showPresetsList = false;
 
-	TextButton currentPresetLabel;
+	juce::TextButton currentPresetLabel;
 
 	// HamburgerLAF comboBoxLAF;
 

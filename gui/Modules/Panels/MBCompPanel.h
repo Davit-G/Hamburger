@@ -31,24 +31,24 @@ public:
     {
         auto bounds = getLocalBounds();
 
-        using fr = Grid::Fr;
-        using Track = Grid::TrackInfo;
+        using fr = juce::Grid::Fr;
+        using Track = juce::Grid::TrackInfo;
 
         grid.templateRows = {Track(fr(1)), Track(fr(1))};
         grid.templateColumns = {Track(fr(1)), Track(fr(1)), Track(fr(1))};
 
         grid.items = {
-            GridItem(threshold).withArea(1, 1),
-            GridItem(tilt).withArea(1, 2),
-            GridItem(ratio).withArea(1, 3),
-            GridItem(attack).withArea(2, 1),
-            GridItem(makeup).withArea(2, 3)};
+            juce::GridItem(threshold).withArea(1, 1),
+            juce::GridItem(tilt).withArea(1, 2),
+            juce::GridItem(ratio).withArea(1, 3),
+            juce::GridItem(attack).withArea(2, 1),
+            juce::GridItem(makeup).withArea(2, 3)};
 
         grid.performLayout(bounds);
     }
 
 private:
-    Grid grid;
+    juce::Grid grid;
 
     ParamKnob threshold;
     ParamKnob ratio;

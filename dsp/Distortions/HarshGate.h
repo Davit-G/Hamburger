@@ -11,7 +11,7 @@ class HarshGate
 public:
     HarshGate(juce::AudioProcessorValueTreeState& treeState): amount(treeState, ParamIDs::gateAmt), mix(treeState, ParamIDs::gateMix) {};
 
-    void processBlock(dsp::AudioBlock<float>& block) {
+    void processBlock(juce::dsp::AudioBlock<float>& block) {
         amount.update();
         mix.update();
 
@@ -48,7 +48,7 @@ public:
         }
     }
     
-    void prepare(dsp::ProcessSpec& spec) {
+    void prepare(juce::dsp::ProcessSpec& spec) {
         amount.prepare(spec);
     }
 private:
