@@ -34,7 +34,7 @@ namespace ParamIDs {
     };
 
     static const PanelInfo dynamics = {
-        "DYNAMICS", "", juce::StringArray({"STEREO", "OTT", "MID-SIDE", "TYPE-A", "DUAL-MONO"})
+        "DYNAMICS", "", juce::StringArray({"STEREO", "OTT", "MID-SIDE", "TYPE-A"})
     };
 
     static const PanelInfo quality = {
