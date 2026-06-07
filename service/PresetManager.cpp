@@ -262,8 +262,9 @@ void Preset::PresetManager::loadPreset(const juce::File &presetFile, std::functi
 	}
 	else if (compareVersions < 0)
 	{
-		DBG("Preset file " + relativePath.toStdString() + " was saved with an older version (v" + versionStd + "). Loading anyway...");
-		cb(std::string("Preset file ") + relativePath.toStdString() + " was saved with an older version (v" + versionStd + "). Loading anyway...");
+		// Older presets are expected; load them silently without reporting an error to the caller.
+		DBG("Preset file " + relativePath.toStdString() + " was saved with an older version (v" + versionStd + "). Loading...");
+		// Do not call the callback here — don't complain when opening old presets.
 	}
 
 	valueTreeState.replaceState(valueTreeToLoad);

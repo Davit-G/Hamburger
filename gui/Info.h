@@ -164,15 +164,6 @@ public:
         g.drawImage(gplLogo, logoArea.removeFromLeft(110).toFloat(), juce::Justification::centred);
         logoArea.removeFromLeft(10);
         g.drawImage(womp, logoArea.removeFromLeft(130).toFloat(), juce::Justification::centred);
-
-        const juce::Image features[4] = {feature1, feature2, feature3, feature4};
-
-        auto featureArea = getLocalBounds().removeFromRight(bounds.getWidth() / 2).reduced(40);
-
-        // pick random feature to display
-        auto feature = juce::Random::getSystemRandom().nextInt(juce::Range<int>(0, 4));
-
-        g.drawImage(features[feature], featureArea.toFloat(), juce::Justification::centred);
     }
 
     void resized() override
@@ -203,11 +194,6 @@ private:
     juce::Image clapLogo{juce::ImageCache::getFromMemory(BinaryData::clapicon_png, BinaryData::clapicon_pngSize)};
     juce::Image gplLogo{juce::ImageCache::getFromMemory(BinaryData::gplv3icon_png, BinaryData::gplv3icon_pngSize)};
     juce::Image womp{juce::ImageCache::getFromMemory(BinaryData::wompwuzhere_png, BinaryData::wompwuzhere_pngSize)};
-
-    juce::Image feature1{juce::ImageCache::getFromMemory(BinaryData::feature1_jpg, BinaryData::feature1_jpgSize)};
-    juce::Image feature2{juce::ImageCache::getFromMemory(BinaryData::feature2_jpg, BinaryData::feature2_jpgSize)};
-    juce::Image feature3{juce::ImageCache::getFromMemory(BinaryData::feature3_jpg, BinaryData::feature3_jpgSize)};
-    juce::Image feature4{juce::ImageCache::getFromMemory(BinaryData::feature4_jpg, BinaryData::feature4_jpgSize)};
 
     juce::TextButton changePresetFolderButton;
 

@@ -6,3 +6,7 @@ JUCE is licensed under the GNU Affero General Public License (GNU AGPL) for this
 
 # Fonts 
 Questrial-Regular.ttf: Copyright 2011 The Questrial Project Authors (https://github.com/googlefonts/questrial)
+
+# chowdsp_filters
+
+chowdsp_filters (contained in the [chowdsp_utils](https://github.com/Chowdhury-DSP/chowdsp_utils) repository) is licensed under GPLv3
