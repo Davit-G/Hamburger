@@ -23,10 +23,6 @@ void Grunge::prepare(juce::dsp::ProcessSpec &spec)
 
 void Grunge::processBlock(juce::dsp::AudioBlock<float> &block)
 {
-    // TRACE_EVENT("dsp", "Grunge::processBlock");
-    if (amount.getRaw() == 0.0f)
-        return;
-
     amount.update();
     tone.update();
 

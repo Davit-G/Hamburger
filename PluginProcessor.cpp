@@ -117,6 +117,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::c
     params.add(std::make_unique<juce::AudioParameterChoice>(ParamIDs::primaryDistortionType, "Distortion Type", ParamIDs::distortion.categories, 0));
     params.add(std::make_unique<juce::AudioParameterChoice>(ParamIDs::noiseDistortionType, "Noise Type", ParamIDs::noiseTypes.categories, 0));
     params.add(std::make_unique<juce::AudioParameterChoice>(ParamIDs::compressionType, "Compression Type", ParamIDs::dynamics.categories, 0));
+    params.add(std::make_unique<juce::AudioParameterChoice>(ParamIDs::preDistortionType, "Pre-Distortion Type", ParamIDs::preDistortionTypes.categories, 0));
 
     // compressorjuce::
     params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::compSpeed, "Comp Speed", juce::NormalisableRange<float>(0.0f, 400.0f, 0.f, 0.25f), 100.f));

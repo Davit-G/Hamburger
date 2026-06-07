@@ -34,7 +34,7 @@ public:
         // ORDERING IS VERY IMPORTANT
         preDistortionPanels.push_back(std::make_unique<AllPassPanel>(p));
         preDistortionPanels.push_back(std::make_unique<GrungePanel>(p));
-        preDistortion = std::make_unique<Module>(p, "", "preDistortionEnabled", "", std::move(preDistortionPanels));
+        preDistortion = std::make_unique<Module>(p, "", "preDistortionEnabled", "preDistortionType", std::move(preDistortionPanels));
         addAndMakeVisible(preDistortion.get());
 
         std::vector<std::unique_ptr<Panel>> logoPanels;

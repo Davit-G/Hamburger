@@ -130,7 +130,7 @@ juce_add_plugin("${BaseTargetName}"
     VST3_COPY_DIR "${outdir}"
 	VST_COPY_DIR "${outdir}"
 	AU_COPY_DIR "${outdir}"
-    FORMATS VST3 Standalone AU LV2                  # The formats to build. Other valid formats are: AAX Unity VST AU AUv3
+    FORMATS VST3 Standalone AU                  # The formats to build. Other valid formats are: AAX Unity VST AU AUv3
     VST3_CATEGORIES Fx Distortion Dynamics
     LV2URI "https://aviaryaudio.com/plugins/hamburgerv2"
 )

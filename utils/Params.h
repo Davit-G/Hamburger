@@ -26,7 +26,7 @@ namespace ParamIDs {
     };
 
     static const PanelInfo preDistortionTypes = {
-        "PRE-DISTORTION", "", juce::StringArray({"DISPERSER"})
+        "PRE-DISTORTION", "", juce::StringArray({"DISPERSER", "GRUNGE"})
     };
 
     static const PanelInfo noiseTypes = {
@@ -63,6 +63,7 @@ namespace ParamIDs {
     static const juce::ParameterID compressionOn { "compressionOn", 1 };
     static const juce::ParameterID emphasisOn { "emphasisOn", 1 };
     static const juce::ParameterID preDistortionEnabled { "preDistortionEnabled", 1 };
+    static const juce::ParameterID preDistortionType { "preDistortionType", 1 };
     static const juce::ParameterID primaryDistortionEnabled { "primaryDistortionEnabled", 1 };
     static const juce::ParameterID noiseDistortionEnabled { "noiseDistortionEnabled", 1 };
     static const juce::ParameterID postClipEnabled { "postClipEnabled", 1 };
