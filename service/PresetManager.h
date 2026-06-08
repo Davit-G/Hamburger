@@ -106,6 +106,7 @@ namespace Preset
 
 		juce::String getCurrentPresetName() const;
 		juce::String getCurrentAuthor() const;
+		juce::String getLastAuthor();
 
 		void setPresetDirectory(const juce::File &directory);
 		juce::File getPresetDirectory() const;

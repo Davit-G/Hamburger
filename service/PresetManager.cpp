@@ -111,12 +111,20 @@ Preset::PresetManager::PresetManager(juce::AudioProcessorValueTreeState &apvts) 
 
 juce::String Preset::PresetManager::getCurrentPresetName() const
 {
-	return currentPreset.toString().replaceSection(0, currentPreset.toString().lastIndexOf("/") + 1, "");
+	return currentPreset.toString().replaceSection(0, currentPreset.toString().lastIndexOf("/") + 1, "").replaceSection(currentPreset.toString().lastIndexOf("."), currentPreset.toString().length(), "");
 }
 
 juce::String Preset::PresetManager::getCurrentAuthor() const
 {
 	return currentAuthor.toString();
+}
+
+juce::String Preset::PresetManager::getLastAuthor()
+{
+	auto* settings = appProperties.getUserSettings();
+	if (settings != nullptr)
+		return settings->getValue("lastAuthor", "");
+	return {};
 }
 
 bool Preset::PresetManager::saveFile(const juce::File &presetFile, std::function<void(std::string)> cb) {
@@ -152,7 +160,17 @@ bool Preset::PresetManager::savePreset(const juce::String &presetName, const juc
 
 	currentPreset.setValue(presetName);
 	currentAuthor.setValue(author);
-	
+
+	if (author.isNotEmpty())
+	{
+		auto* settings = appProperties.getUserSettings();
+		if (settings != nullptr)
+		{
+			settings->setValue("lastAuthor", author);
+			settings->saveIfNeeded();
+		}
+	}
+
 	valueTreeState.state.setProperty("version", JucePlugin_VersionString, nullptr);
 
 	const auto xml = valueTreeState.copyState().createXml();
