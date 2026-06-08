@@ -11,7 +11,7 @@ void TypeAProcessor::prepareToPlay(double sampleRate, int samplesPerBlock, int n
     spec.numChannels = static_cast<juce::uint32>(numChannels);
 
     tiltParam.prepare(spec);
-    brightnessParam.prepare(spec);
+    speedParam.prepare(spec);
     thresholdParam.prepare(spec);
     outParam.prepare(spec);
 
@@ -124,36 +124,37 @@ void TypeAProcessor::processBlock(juce::dsp::AudioBlock<float>& buffer)
 
 void TypeAProcessor::updateCompressorParameters()
 {
-    const float brightness = brightnessParam.getRaw();
     const float threshold = thresholdParam.getRaw();
-    // const float speed = speedParam.getRaw();
+    const float speed = speedParam.getRaw(); // ms
     const float tilt = tiltParam.getRaw();
 
     const float outValue = outParam.getRaw();
 
-    // Brightness affects ratio: 0 = baseRatio, 1 = higher ratio (more compression on highs)
-    const float ratio = 1.0f + brightness * (baseRatio - 1.0f);
+    const float ratio = baseRatio;
+
+    const float atk = attack * (speed * 2.0f);
+    const float rel = release * (speed * 1.0f);
 
     // Set compressor parameters
     lowCompressor.setThreshold(threshold);
     lowCompressor.setRatio(ratio);
-    lowCompressor.setAttack(attack);
-    lowCompressor.setRelease(release);
+    lowCompressor.setAttack(atk);
+    lowCompressor.setRelease(rel);
 
     midCompressor.setThreshold(threshold);
     midCompressor.setRatio(ratio);
-    midCompressor.setAttack(attack);
-    midCompressor.setRelease(release);
+    midCompressor.setAttack(atk);
+    midCompressor.setRelease(rel);
 
     highCompressor.setThreshold(threshold);
     highCompressor.setRatio(ratio);
-    highCompressor.setAttack(attack);
-    highCompressor.setRelease(release);
+    highCompressor.setAttack(atk);
+    highCompressor.setRelease(rel);
 
     extraHighCompressor.setThreshold(threshold);
     extraHighCompressor.setRatio(ratio);
-    extraHighCompressor.setAttack(attack);
-    extraHighCompressor.setRelease(release);
+    extraHighCompressor.setAttack(atk);
+    extraHighCompressor.setRelease(rel);
 
     const float makeupGain = calculateMakeupGain(ratio, threshold) + outValue;
 

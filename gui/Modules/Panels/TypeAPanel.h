@@ -8,17 +8,17 @@ class TypeAPanel : public Panel
 public:
     TypeAPanel(AudioPluginAudioProcessor &p) : Panel(p, "TYPE A"),
                                                threshold(p, "THRES", ParamIDs::TypeAThreshold, ParamUnits::db),
-                                               brightness(p, "BRIGHT", ParamIDs::TypeARatio),
+                                               speed(p, "SPEED", ParamIDs::compSpeed, ParamUnits::ms),
                                                out(p, "OUT", ParamIDs::TypeAOut, ParamUnits::db),
                                                tilt(p, "TILT", ParamIDs::TypeATilt, ParamUnits::db)
     {
         addAndMakeVisible(threshold);
-        addAndMakeVisible(brightness);
+        addAndMakeVisible(speed);
         addAndMakeVisible(out);
         addAndMakeVisible(tilt);
 
         Palette::setKnobColoursOfComponent(&threshold, Palette::colours[3]);
-        Palette::setKnobColoursOfComponent(&brightness, Palette::colours[3]);
+        Palette::setKnobColoursOfComponent(&speed, Palette::colours[3]);
         Palette::setKnobColoursOfComponent(&out, Palette::colours[3]);
         Palette::setKnobColoursOfComponent(&tilt, Palette::colours[3]);
     }
@@ -35,8 +35,8 @@ public:
 
         grid.items = {
             juce::GridItem(threshold).withArea(1, 1),
-            juce::GridItem(brightness).withArea(1, 2),
-            juce::GridItem(tilt).withArea(2, 1),
+            juce::GridItem(tilt).withArea(1, 2),
+            juce::GridItem(speed).withArea(2, 1),
             juce::GridItem(out).withArea(2, 2)};
 
         grid.performLayout(bounds);
@@ -46,7 +46,7 @@ private:
     juce::Grid grid;
 
     ParamKnob threshold;
-    ParamKnob brightness;
+    ParamKnob speed;
     ParamKnob out;
     ParamKnob tilt;
 };

@@ -21,7 +21,7 @@ class TypeAProcessor
 {
 public:
     TypeAProcessor(juce::AudioProcessorValueTreeState &treeState) : 
-        brightnessParam(treeState, ParamIDs::TypeARatio),
+        speedParam(treeState, ParamIDs::compSpeed),
         thresholdParam(treeState, ParamIDs::TypeAThreshold),
         outParam(treeState, ParamIDs::TypeAOut),
         tiltParam(treeState, ParamIDs::TypeATilt)
@@ -34,7 +34,7 @@ private:
     void updateCompressorParameters();
     float calculateMakeupGain(float ratio, float threshold) const;
 
-    SmoothParam brightnessParam; // ratio
+    SmoothParam speedParam;
     SmoothParam thresholdParam;
     SmoothParam outParam;
     SmoothParam tiltParam;
