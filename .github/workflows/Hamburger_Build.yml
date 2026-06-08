@@ -50,14 +50,14 @@ jobs:
         - {
             name: "MacOS (arm64, Apple Silicon)",
             os: macos-14,
-            compiler: "Xcode",
+            compiler: "Ninja",
             folder: "build_mac",
             arch: "arm64"
           }
         - {
             name: "MacOS (x86_64, Intel)",
             os: macos-13,
-            compiler: "Xcode",
+            compiler: "Ninja",
             folder: "build_mac",
             arch: "x86_64"
           }
