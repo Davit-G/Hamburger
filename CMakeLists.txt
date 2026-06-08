@@ -204,6 +204,12 @@ FetchContent_Declare (melatonin_perfetto
   GIT_SHALLOW 1
   GIT_TAG origin/main)
 
+FetchContent_Declare (xsimd
+  GIT_REPOSITORY https://github.com/xtensor-stack/xsimd.git
+  GIT_SHALLOW 1
+  GIT_TAG origin/master)
+
+
 # FetchContent_Declare (melatonin_inspector
 #     GIT_REPOSITORY https://github.com/sudara/melatonin_inspector.git
 #     GIT_SHALLOW 1
@@ -216,6 +222,7 @@ FetchContent_Declare (clap-juce-extensions
     GIT_TAG origin/main)
 
 FetchContent_MakeAvailable (clap-juce-extensions)
+FetchContent_MakeAvailable (xsimd)
 
 if (PERFETTO)
 FetchContent_MakeAvailable (melatonin_perfetto)
@@ -238,4 +245,5 @@ target_link_libraries("${BaseTargetName}"
         juce::juce_recommended_warning_flags
         chowdsp::chowdsp_filters
         chowdsp_simd
+        xsimd
 )

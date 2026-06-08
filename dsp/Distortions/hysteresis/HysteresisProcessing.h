@@ -4,6 +4,7 @@
 #include <cmath>
 
 #include "HysteresisOps.h"
+#include "xsimd/xsimd.hpp"
 
 /*
     Hysteresis processing for a model of an analog tape machine.

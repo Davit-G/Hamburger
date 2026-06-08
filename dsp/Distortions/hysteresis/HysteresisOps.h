@@ -1,8 +1,9 @@
 #pragma once
 
 // #include "../shared/chowdsp_utils/chowdsp_SampleTypeHelpers.h"
+#include "xsimd/xsimd.hpp"
 
-#define HYSTERESIS_USE_SIMD 0
+#define HYSTERESIS_USE_SIMD 1
 
 namespace HysteresisOps {
     struct HysteresisState

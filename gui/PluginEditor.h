@@ -40,6 +40,7 @@ public:
         addAndMakeVisible(utilColumn);
         addAndMakeVisible(infoPanel);
         addAndMakeVisible(presetPanel);
+
         additionalHeight += 45;
 
         setOpaque(true);
@@ -75,6 +76,9 @@ public:
 
         presetPanel.setBounds(bounds);
         bounds.removeFromTop(45);
+
+        // this is where I would add a panel for switching between screens
+        
 
         auto left = bounds.removeFromLeft(totalWidth);
         auto right = bounds.removeFromRight(totalWidth);

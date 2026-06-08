@@ -11,7 +11,6 @@ class SmoothParam
 public:
     SmoothParam(juce::AudioProcessorValueTreeState &treeState, juce::ParameterID attachmentID) {
         param = dynamic_cast<juce::AudioParameterFloat *>(treeState.getParameter(attachmentID.getParamID()));
-        DBG(juce::String("SmoothParam: ") + attachmentID.getParamID());
         jassert(param); // heads up if the parameter doesn't exist
     }
 

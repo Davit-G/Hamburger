@@ -1,9 +1,10 @@
 #pragma once
 
-// #include "../shared/chowdsp_utils/chowdsp_SIMDAudioBlock.h"
 #include "HysteresisProcessing.h"
 #include "juce_dsp/juce_dsp.h"
 #include "juce_audio_processors/juce_audio_processors.h"
+#include "chowdsp_buffers/chowdsp_buffers.h"
+#include "xsimd/xsimd.hpp"
 
 #include "../../SmoothParam.h"
 #include "../../../utils/Params.h"
@@ -38,10 +39,10 @@ private:
     void setWidth (float newWidth);
     double calcMakeup();
 
-    template <typename T>
-    void process (juce::dsp::AudioBlock<T>& block);
-    template <typename T>
-    void processSmooth (juce::dsp::AudioBlock<T>& block);
+    template <typename BlockType>
+    void process (BlockType& block);
+    template <typename BlockType>
+    void processSmooth (BlockType& block);
 
     std::vector<juce::SmoothedValue<double, juce::ValueSmoothingTypes::Linear>> drive;
     std::vector<juce::SmoothedValue<double, juce::ValueSmoothingTypes::Linear>> width;

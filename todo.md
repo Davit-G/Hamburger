@@ -3,6 +3,11 @@
 performance optimisations
 bugfixes
 
+- make DSP modules agnostic to parameters (so we can do arbitrary chains within hamburger)
+- separate preset panel into its own section
+- context aware visualisations for the scope (dynamic audio reactive distortion controls which respond to the input)
+    - visualisations on top right for what the things are doing (phase visualiser for phase distortion plugin?)
+
 # feedback 
 
 malachite distortion (?)
@@ -13,21 +18,16 @@ lots of bugs with preset loading
 - some presets from different versions claim to load but don't change anything
 - after saving a new preset, only session presets are visible until plugin is reloaded
 - preset names with OS-unsupported characters create corrupted files
+- remember last preset author when saving presets (so it doesnt have to be typed again)
 
 in / out / mix might have to be moved somewhere else to avoid it being treated as it's own module, maybe a bottom bar with a slider?
 users cant understand signal chain ordering, so either provide info in-plugin or via documentation
-- maybe a little modal with info? or explanation to replace the ai images currently there on the side?
+- maybe a little modal with info?
 
-suggestion: dynamic audio reactive distortion controls which respond to the input?
 make hamburger parameter values typable
 convolution could be interesting but outside the scope of this plugin
 
 # personal notes
-
-auto gain on important parameters? Class for 1D / 2D / 3D / 4D autogain?
-
-
-
 
 diode in grill distortion isnt super useful?
 tube tone knob is not super useful either I don't think
@@ -46,22 +46,15 @@ make presets hehe (maybe change the suffix from borgir to some other suffix)
 
 linear phase high pass filter option after everything?
 
-tape hysteresis???? 
-bias in rubidium
-
 go back to the companding based distortion (the trick is to link the level on both segments)
 - actually, companding is really hard to do right, would be cool to have but hamburger is not subtle enough for this to be useful
 
 rework matrix distortion into a more flexible waveshaping variant
 speed up dsp performance by replacing some direct form filters with svf ones (emphasis coefficient interpolation with smoothed values) (in the case of per-sample coefficient modulation) (or optionally utilise coefficient interpolation for IIR filters) (OR JUST DONT RECOMPUTE COEFFICIENTS? that's not great for automation though)
 auval
-remove ai image stuff and fill it in with something else
+fill in info space with something else
 
 high / low filter in clipper section?
-
-hysteresis from chowtape
-
-
 
 # Would be cool
 
@@ -75,8 +68,6 @@ hamburger delay?
 pnch for extra noise filter?
 
 add source files for everything apparently
-
-envelope follower filtered noise for the tapey lofi type sounds
 
 add more dist types (foil?? inherit from other plugins?)
 
@@ -98,12 +89,6 @@ gain compensation on grunge?
 freq shift: use polyphase designer or pre-bake coefficients (not needed)
 other filters before / after distortion, such as combs / phasers / filters etc  (nah plugin will do too much?)
 allpass stack in phase path for phase distortion (nah leave as is)
-visualisations on top right for what the things are doing (phase visualiser for phase distortion plugin?)
-
-
-
-
-
 
 
 never stops creeping with scope

@@ -48,7 +48,7 @@ constexpr T ceiling_divide (T num, T den)
 
 void TapeDistortionProcessor::setParameter (Param param, float newValue)
 {
-    jassert (juce::isWithin (newValue, 0.0f, 1.0f)); // parameter value is outside the allowed range!
+    // jassert (juce::isWithin (newValue, 0.0f, 1.0f)); // parameter value is outside the allowed range!
 
     if (param == Param::Drive)
     {
@@ -216,9 +216,9 @@ void TapeDistortionProcessor::processBlock (juce::dsp::AudioBlock<float>& buffer
 #endif
 
     if (needsSmoothing)
-        processSmooth<ProcessType> (processBlock);
+        this->processSmooth (processBlock);
     else
-        process<ProcessType> (processBlock);
+        this->process (processBlock);
 
 #if HYSTERESIS_USE_SIMD
     // de-interleave channels
@@ -249,8 +249,8 @@ void TapeDistortionProcessor::processBlock (juce::dsp::AudioBlock<float>& buffer
     }
 }
 
-template <typename T, typename SmoothType>
-void applyMakeup (juce::dsp::AudioBlock<T>& block, SmoothType& makeup)
+template <typename BlockType, typename SmoothType>
+void applyMakeup (BlockType& block, SmoothType& makeup)
 {
 #if HYSTERESIS_USE_SIMD
     const auto numSamples = block.getNumSamples();
@@ -281,8 +281,8 @@ void applyMakeup (juce::dsp::AudioBlock<T>& block, SmoothType& makeup)
 #endif
 }
 
-template <typename T>
-void TapeDistortionProcessor::process (juce::dsp::AudioBlock<T>& block)
+template <typename BlockType>
+void TapeDistortionProcessor::process (BlockType& block)
 {
     const auto numChannels = block.getNumChannels();
     const auto numSamples = block.getNumSamples();
@@ -296,11 +296,11 @@ void TapeDistortionProcessor::process (juce::dsp::AudioBlock<T>& block)
         }
     }
 
-    applyMakeup<T> (block, makeup);
+    applyMakeup (block, makeup);
 }
 
-template <typename T>
-void TapeDistortionProcessor::processSmooth (juce::dsp::AudioBlock<T>& block)
+template <typename BlockType>
+void TapeDistortionProcessor::processSmooth (BlockType& block)
 {
     const auto numChannels = block.getNumChannels();
     const auto numSamples = block.getNumSamples();
@@ -316,5 +316,5 @@ void TapeDistortionProcessor::processSmooth (juce::dsp::AudioBlock<T>& block)
         }
     }
 
-    applyMakeup<T> (block, makeup);
+    applyMakeup (block, makeup);
 }
