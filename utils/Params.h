@@ -46,7 +46,7 @@ namespace ParamIDs {
     static const juce::ParameterID outputGain { "outputGain", 1 };
     static const juce::ParameterID mix { "mix", 1 };
     
-    static const juce::ParameterID stages { "stages", 1 };
+    static const juce::ParameterID stages { "stages", 2 };
     static const int maxStages = 4;
 
     static const juce::ParameterID emphasisLowGain { "emphasisLowGain", 1 };
@@ -63,7 +63,7 @@ namespace ParamIDs {
     static const juce::ParameterID compressionOn { "compressionOn", 1 };
     static const juce::ParameterID emphasisOn { "emphasisOn", 1 };
     static const juce::ParameterID preDistortionEnabled { "preDistortionEnabled", 1 };
-    static const juce::ParameterID preDistortionType { "preDistortionType", 1 };
+    static const juce::ParameterID preDistortionType { "preDistortionType", 2 };
     static const juce::ParameterID primaryDistortionEnabled { "primaryDistortionEnabled", 1 };
     static const juce::ParameterID noiseDistortionEnabled { "noiseDistortionEnabled", 1 };
     static const juce::ParameterID postClipEnabled { "postClipEnabled", 1 };
@@ -82,10 +82,10 @@ namespace ParamIDs {
     static const juce::ParameterID MBCompThreshold { "MBCompThreshold", 1 };
     static const juce::ParameterID MSCompThreshold { "MSCompThreshold", 1 };
     
-    static const juce::ParameterID TypeAThreshold { "TypeAThreshold", 1 };
-    static const juce::ParameterID TypeARatio { "TypeARatio", 1 };
-    static const juce::ParameterID TypeATilt { "TypeATilt", 1 };
-    static const juce::ParameterID TypeAOut { "TypeAOut", 1 };
+    static const juce::ParameterID TypeAThreshold { "TypeAThreshold", 2 };
+    static const juce::ParameterID TypeARatio { "TypeARatio", 2 };
+    static const juce::ParameterID TypeATilt { "TypeATilt", 2 };
+    static const juce::ParameterID TypeAOut { "TypeAOut", 2 };
 
      // gate (noise distortion)
     static const juce::ParameterID gateAmt { "gateAmt", 1 };
@@ -121,7 +121,7 @@ namespace ParamIDs {
     static const juce::ParameterID rubidiumMojo { "rubidiumMojo", 1 };
     static const juce::ParameterID rubidiumAsym { "rubidiumAsym", 1 };
     static const juce::ParameterID rubidiumTone { "rubidiumTone", 1 };
-    static const juce::ParameterID rubidiumBias { "rubidiumBias", 1 };
+    static const juce::ParameterID rubidiumBias { "rubidiumBias", 2 };
 
     // phase distortion
     static const juce::ParameterID phaseAmount { "phaseAmount", 1 };
@@ -137,9 +137,9 @@ namespace ParamIDs {
     static const juce::ParameterID jeffAmount { "jeffAmount", 1 };
 
     // tape hysteresis
-    static const juce::ParameterID tapeBias { "tapeBias", 1 };
-    static const juce::ParameterID tapeDrive { "tapeDrive", 1 };
-    static const juce::ParameterID tapeWidth { "tapeWidth", 1 };
+    static const juce::ParameterID tapeBias { "tapeBias", 2 };
+    static const juce::ParameterID tapeDrive { "tapeDrive", 2 };
+    static const juce::ParameterID tapeWidth { "tapeWidth", 2 };
 
     // sizzle
     static const juce::ParameterID sizzleAmount { "sizzleAmount", 1 };
