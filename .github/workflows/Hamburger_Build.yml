@@ -38,7 +38,7 @@ jobs:
         - {
             name: "Windows 64bit (x86_64)",
             os: windows-latest,
-            compiler: "Visual Studio 17 2022",
+            compiler: "Visual Studio 18 2026",
             folder: "build_windows"
           }
         - {
@@ -57,7 +57,7 @@ jobs:
         - {
             name: "MacOS (x86_64, Intel)",
             os: macos-15-intel,
-            compiler: "Ninja",
+            compiler: "Xcode",
             folder: "build_mac",
             arch: "x86_64"
           }
