@@ -104,7 +104,12 @@ execute_process(
 
 
 if(APPLE)
-    set(outdir "../build_mac")
+    # distinction between arm and x86
+    if(CMAKE_OSX_ARCHITECTURES MATCHES "x86_64")
+        set(outdir "../build_mac_intel")
+    else()
+        set(outdir "../build_mac")
+    endif()
 else()
     if(UNIX)
         set(outdir "../build_linux")
