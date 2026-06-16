@@ -6,14 +6,12 @@ Set(FETCHCONTENT_QUIET FALSE)
 set(BUILD_CLAP TRUE)
 
 cmake_minimum_required(VERSION 3.15)
-set(ProjectVersion 0.6.0)
+set(ProjectVersion 0.6.1)
 set(PluginName "Hamburger")
 
 set(BaseTargetName Hamburger)
 set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
-
-set(CMAKE_OSX_ARCHITECTURES "x86_64")
 
 if(APPLE)
     set (CMAKE_OSX_DEPLOYMENT_TARGET "11.0" CACHE STRING "Minimum OS X deployment version" FORCE)
