@@ -58,7 +58,7 @@ jobs:
             name: "MacOS (x86_64, Intel)",
             os: macos-15-intel,
             compiler: "Xcode",
-            folder: "build_mac",
+            folder: "build_mac_intel",
             arch: "x86_64"
           }
     runs-on: ${{ matrix.os }}
