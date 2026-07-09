@@ -1,5 +1,7 @@
 #include "TapeDistortionProcessor.h"
 
+// why is this twice as slow as chowtape?
+
 namespace
 {
 enum
@@ -305,13 +307,14 @@ void TapeDistortionProcessor::processSmooth (BlockType& block)
     const auto numChannels = block.getNumChannels();
     const auto numSamples = block.getNumSamples();
 
+    
     for (size_t channel = 0; channel < numChannels; ++channel)
     {
         auto* x = block.getChannelPointer (channel);
         auto& hProc = hProcs[channel];
+        hProc.cook (drive[channel].getTargetValue(), width[channel].getTargetValue(), sat[channel].getTargetValue());
         for (size_t samp = 0; samp < numSamples; samp++)
         {
-            hProc.cook (drive[channel].getNextValue(), width[channel].getNextValue(), sat[channel].getNextValue());
             x[samp] = hProc.process (x[samp]);
         }
     }

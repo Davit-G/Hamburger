@@ -13,6 +13,8 @@
 #include "Modules/Panels/SizzlePanel.h"
 #include "Modules/Panels/ReductionPanel.h"
 #include "Modules/Panels/GatePanel.h"
+#include "Modules/Panels/PreisachPanel.h"
+#include "Modules/Panels/SlewSaturator.h"
 
 #include "LookAndFeel/Palette.h"
 
@@ -50,6 +52,12 @@ public:
 
         tape = std::make_unique<TapeSatPanel>(p);
         panels.push_back(std::move(tape));
+
+        preisach = std::make_unique<PreisachPanel>(p);
+        panels.push_back(std::move(preisach));
+        
+        slew = std::make_unique<SlewRatePanel>(p);
+        panels.push_back(std::move(slew));
 
         saturation = std::make_unique<Module>(p, "DISTORTION", "primaryDistortionEnabled", "primaryDistortionType", std::move(panels));
         addAndMakeVisible(saturation.get());
@@ -96,6 +104,9 @@ private:
     std::unique_ptr<Panel> rubidium = nullptr;
     std::unique_ptr<Panel> matrixSat = nullptr;
     std::unique_ptr<Panel> tape = nullptr;
+    std::unique_ptr<Panel> preisach = nullptr;
+    std::unique_ptr<Panel> slew = nullptr;
+    
     std::unique_ptr<Panel> postClipPanel = nullptr;
 
     std::unique_ptr<Module> noise = nullptr;

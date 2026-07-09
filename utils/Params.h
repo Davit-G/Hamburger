@@ -22,7 +22,7 @@ namespace ParamIDs {
     };
 
     static const PanelInfo distortion = {
-        "DISTORTION", "", juce::StringArray({"GRILL", "TUBE", "PHASE", "RUBIDIUM", "MATRIX", "TAPE"})
+        "DISTORTION", "", juce::StringArray({"GRILL", "TUBE", "PHASE", "RUBIDIUM", "MATRIX", "TAPE", "PREISACH", "SLEW"})
     };
 
     static const PanelInfo preDistortionTypes = {
@@ -162,4 +162,16 @@ namespace ParamIDs {
     static const juce::ParameterID allPassFreq { "allPassFreq", 1 };
     static const juce::ParameterID allPassQ { "allPassQ", 1 };
     static const juce::ParameterID allPassAmount { "allPassAmount", 1 };
+
+
+    static const juce::ParameterID emaParam { "emaAlpha", 3 };
+    static const juce::ParameterID alphaParam { "alphaParam", 3 };
+    static const juce::ParameterID slewBias { "slewBias", 3 };
+    static const juce::ParameterID directionality { "directionality", 3 };
+    static const juce::ParameterID slewType { "slewType", 3 };
+
+    static const juce::ParameterID preisachDrive { "preisachDrive", 3 };
+    static const juce::ParameterID preisachCoercivity { "preisachCoercivity", 3 };
+    static const juce::ParameterID preisachRemanence { "preisachRemanence", 3 };
+    
 }

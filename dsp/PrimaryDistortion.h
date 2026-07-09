@@ -8,6 +8,8 @@
 #include "Distortions/PhaseDist.h"
 #include "Distortions/Rubidium.h"
 #include "Distortions/hysteresis/TapeDistortionProcessor.h"
+#include "Distortions/preisach/Preisach.h"
+#include "Distortions/nonlinslew/NonlinSlew.h"
 
 #include "Distortions/MatrixWaveshaper.h"
 #include "./Noise/Jeff.h"
@@ -16,6 +18,7 @@
 #include "juce_core/juce_core.h"
 #include "juce_dsp/juce_dsp.h"
 #include "juce_audio_processors/juce_audio_processors.h"
+
 
 // #include <melatonin_perfetto/melatonin_perfetto.h>
 
@@ -41,6 +44,8 @@ public:
         rubidium = std::make_unique<RubidiumDistortion>(state);
         matrix = std::make_unique<MatrixWaveshaper>(state);
         tape = std::make_unique<TapeDistortionProcessor>(state);
+        preisach = std::make_unique<Preisach>(state);
+        nonlinSlew = std::make_unique<NonlinSlew>(state);
     }
 
     ~PrimaryDistortion() {}
@@ -126,7 +131,73 @@ public:
 
             break;
         }
+        case 6:
+        {// preisach hysteresis
+            preisach->processBlock(block);
+
+            // maybe i shouldnt be duplicating code for my high pass lmao
+            juce::AudioBuffer<double> bufferDouble(static_cast<int>(block.getNumChannels()), static_cast<int>(block.getNumSamples()));
+            juce::dsp::AudioBlock<double> blockDouble(bufferDouble);
+
+
+            for (int channel = 0; channel < block.getNumChannels(); channel++)
+            {
+                for (int sample = 0; sample < block.getNumSamples(); sample++)
+                {
+                    blockDouble.setSample(channel, sample, block.getSample(channel, sample));
+                }
+            }
+
+            auto doubleContext = juce::dsp::ProcessContextReplacing<double>(blockDouble);
+
+            iirFilter.process(doubleContext);
+            
+            for (int channel = 0; channel < block.getNumChannels(); channel++)
+            {
+                for (int sample = 0; sample < block.getNumSamples(); sample++)
+                {
+                    block.setSample(channel, sample, static_cast<float>(bufferDouble.getSample(channel, sample)));
+                }
+            }
+            break;
+            
         }
+        case 7:
+        {
+            nonlinSlew->processBlock(block);
+
+            juce::AudioBuffer<double> bufferDouble(static_cast<int>(block.getNumChannels()), static_cast<int>(block.getNumSamples()));
+            juce::dsp::AudioBlock<double> blockDouble(bufferDouble);
+
+
+            for (int channel = 0; channel < block.getNumChannels(); channel++)
+            {
+                for (int sample = 0; sample < block.getNumSamples(); sample++)
+                {
+                    blockDouble.setSample(channel, sample, block.getSample(channel, sample));
+                }
+            }
+
+            auto doubleContext = juce::dsp::ProcessContextReplacing<double>(blockDouble);
+
+            iirFilter.process(doubleContext);
+            
+            for (int channel = 0; channel < block.getNumChannels(); channel++)
+            {
+                for (int sample = 0; sample < block.getNumSamples(); sample++)
+                {
+                    block.setSample(channel, sample, static_cast<float>(bufferDouble.getSample(channel, sample)));
+                }
+            }
+            break;
+        }
+        default:
+            break;
+        }
+
+
+
+
     }
 
     void prepare(juce::dsp::ProcessSpec &spec)
@@ -141,6 +212,8 @@ public:
         diodeWaveshape->prepare(spec);
         rubidium->prepare(spec);
         matrix->prepare(spec);
+        preisach->prepare(spec);
+        nonlinSlew->prepare(spec);
         tape->prepareToPlay(spec.sampleRate, spec.maximumBlockSize, spec.numChannels);
 
         // init iir filter
@@ -173,6 +246,8 @@ private:
     std::unique_ptr<RubidiumDistortion> rubidium = nullptr;
     std::unique_ptr<MatrixWaveshaper> matrix = nullptr;
     std::unique_ptr<TapeDistortionProcessor> tape = nullptr;
+    std::unique_ptr<Preisach> preisach = nullptr;
+    std::unique_ptr<NonlinSlew> nonlinSlew = nullptr;
 
     juce::dsp::ProcessorDuplicator<juce::dsp::IIR::Filter<double>, juce::dsp::IIR::Coefficients<double>> iirFilter;
 

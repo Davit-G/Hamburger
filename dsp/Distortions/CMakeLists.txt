@@ -11,3 +11,5 @@ DiodeWaveshape.cpp
 
 add_subdirectory(tube)
 add_subdirectory(hysteresis)
+add_subdirectory(preisach)
+add_subdirectory(nonlinslew)

@@ -18,69 +18,12 @@ if(APPLE)
     if(NOT DEFINED CMAKE_OSX_ARCHITECTURES OR CMAKE_OSX_ARCHITECTURES STREQUAL "")
         # Default to native architecture for local builds
         execute_process(COMMAND uname -m OUTPUT_VARIABLE HOST_ARCH OUTPUT_STRIP_TRAILING_WHITESPACE)
-        set (CMAKE_OSX_ARCHITECTURES "${HOST_ARCH}" CACHE STRING "" FORCE)
+        set (CMAKE_OSX_ARCHITECTURES "${n. }" CACHE STRING "" FORCE)
     endif()
-
-    # dSYM files for Xcode release builds
-    # using ninja will mean these dont apply
-    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -g")
-    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g")
-    set(CMAKE_XCODE_ATTRIBUTE_GCC_GENERATE_DEBUGGING_SYMBOLS[variant=Release] "YES")
-    set(CMAKE_XCODE_ATTRIBUTE_DEBUG_INFORMATION_FORMAT[variant=Release] "dwarf-with-dsym")
-    set(CMAKE_XCODE_ATTRIBUTE_DEPLOYMENT_POSTPROCESSING[variant=Release] "YES")
-    set(CMAKE_XCODE_ATTRIBUTE_CONFIGURATION_BUILD_DIR "$(inherited)")
-    set(CMAKE_XCODE_ATTRIBUTE_DWARF_DSYM_FILE_SHOULD_ACCOMPANY_PRODUCT "YES")
-
-    # find_program(DSYMUTIL_PROGRAM dsymutil)
-    # if (DSYMUTIL_PROGRAM)
-    # foreach(lang C CXX)
-    #     foreach(var LINK_EXECUTABLE CREATE_SHARED_LIBRARY)
-    #     set(CMAKE_${lang}_${var} "${CMAKE_${lang}_${var}}" "${DSYMUTIL_PROGRAM} ./Hamburger_artefacts/Release/")
-    #     endforeach()
-    # endforeach()
-    # endif()
 endif()
-
-# pdb files for windows release builds
-# not needed if we're not using sentry
-# if (WIN32)
-#     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /Zi")
-#     set(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_SHARED_LINKER_FLAGS_RELEASE} /DEBUG /OPT:REF /OPT:ICF")
-
-#     # because separate targets (vst3 / clap / etc) are built, we do module linker flags and not shared ones
-#     set(CMAKE_MODULE_LINKER_FLAGS_RELEASE "${CMAKE_MODULE_LINKER_FLAGS_RELEASE} /DEBUG /OPT:REF /OPT:ICF")
-# else()
-#     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")
-# endif()
 
 project(Hamburger VERSION "${ProjectVersion}")
 
-# include(CheckCXXCompilerFlag)
-# if (APPLE)
-#     CHECK_CXX_COMPILER_FLAG("-march=native" COMPILER_OPT_ARCH_NATIVE_SUPPORTED)
-#     if (COMPILER_OPT_ARCH_NATIVE_SUPPORTED)
-#         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native")
-#     endif()
-# else()
-#     # removed because we dont need AVX2 support tbh
-#     # CHECK_CXX_COMPILER_FLAG("/arch:AVX2" COMPILER_OPT_ARCH_AVX2_SUPPORTED)
-#     # if (COMPILER_OPT_ARCH_AVX2_SUPPORTED)
-#     #     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /arch:AVX2")
-#     # endif()
-# endif()
-
-
-# if (MSVC)
-# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /fp:fast")
-# elseif (CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ffast-math")
-# endif()
-
-# if (MSVC)
-# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Ox")
-# elseif (CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Ofast")
-# endif()
 
 FetchContent_Declare(
 	JUCE
@@ -144,12 +87,6 @@ juce_add_plugin("${BaseTargetName}"
     LV2URI "https://aviaryaudio.com/plugins/hamburgerv2"
 )
 
-# add_custom_command(
-#         TARGET ${BaseTargetName} POST_BUILD
-#         COMMAND ${CMAKE_COMMAND} -E copy
-#                 ${CMAKE_SOURCE_DIR}/${build_path}/${BaseTargetName}_artefacts/Release/CLAP/${PluginName}.clap
-#                 ${CMAKE_SOURCE_DIR}/${build_path}/${PluginName}.clap)
-
 target_sources("${BaseTargetName}"
     PRIVATE
         PluginProcessor.cpp
@@ -161,12 +98,21 @@ add_subdirectory(service)
 
 target_compile_features("${BaseTargetName}" PUBLIC cxx_std_17)
 
+target_compile_options(Hamburger PRIVATE
+    $<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>,$<CXX_COMPILER_ID:GNU>>:
+        -O3 -ffast-math -flto>
+    $<$<CXX_COMPILER_ID:MSVC>:
+        /O2 /fp:fast /GL>
+)
+
+
 target_compile_definitions("${BaseTargetName}" PUBLIC
     PERFETTO=0
     #DONT_SET_USING_JUCE_NAMESPACE=1 # if i ever want to remove juce as being included in the namespace by default
 	JUCE_DISPLAY_SPLASH_SCREEN=0
     JUCE_REPORT_APP_USAGE=0
 	JUCE_USE_FLAC=0
+    JUCE_DSP_ENABLE_SIMD=1
 	JUCE_USE_OGGVORBIS=0
 	JUCE_USE_MP3AUDIOFORMAT=0
 	JUCE_USE_LAME_AUDIO_FORMAT=0

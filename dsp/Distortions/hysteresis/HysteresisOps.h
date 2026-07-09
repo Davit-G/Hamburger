@@ -41,19 +41,19 @@ namespace HysteresisOps {
     constexpr double ONE_THIRD = 1.0 / 3.0;
     constexpr double NEG_TWO_OVER_15 = -2.0 / 15.0;
     
-    constexpr inline int sign(double x)
-    {
-        return int(x > 0.0) - int(x < 0.0);
-    }
-    
-    // template <typename T>
-    // inline xsimd::batch<T> sign(xsimd::batch<T> val)
+    // constexpr inline int sign(double x)
     // {
-    //     using v_type = xsimd::batch<T>;
-    //     const auto positive = xsimd::select(val > v_type((T)0), v_type((T)1), v_type((T)0));
-    //     const auto negative = xsimd::select(val < v_type((T)0), v_type((T)1), v_type((T)0));
-    //     return positive - negative;
+    //     return int(x > 0.0) - int(x < 0.0);
     // }
+    
+    template <typename T>
+    inline xsimd::batch<T> sign(xsimd::batch<T> val)
+    {
+        using v_type = xsimd::batch<T>;
+        const auto positive = xsimd::select(val > v_type((T)0), v_type((T)1), v_type((T)0));
+        const auto negative = xsimd::select(val < v_type((T)0), v_type((T)1), v_type((T)0));
+        return positive - negative;
+    }
     
     /** Langevin function */
     template <typename Float>

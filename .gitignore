@@ -10,6 +10,7 @@ JUCE
 *.bat
 
 build_mac
+build_mac_intel
 build_windows
 build_linux
 

@@ -183,6 +183,16 @@ juce::AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::c
     // utilityjuce::
     params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::postClipGain, "SoftClip Gain", makeRange(-18.0f, 18.0f), 0.f));
     params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::postClipKnee, "SoftClip Knee", makeRange(0.0f, 4.0f), 0.5f));
+    
+    params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::emaParam, "Drive", makeRange(0.0f, 1.0f), 0.5f));
+    params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::alphaParam, "Strength", makeRange(0.0f, 1.0f), 0.5f));
+    params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::slewBias, "Slew Tone", makeRange(0.0f, 1.0f), 1.0f));
+    params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::directionality, "Slew Bias", makeRange(-1.0f, 1.0f), 0.f));
+    params.add(std::make_unique<juce::AudioParameterInt>(ParamIDs::slewType, "Slew Type", 0, 3, 0));
+    
+    params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::preisachDrive, "PreisachDrive", makeRange(0.0f, 5.0f), 0.5f));
+    params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::preisachCoercivity, "PreisachCoercivity", makeRange(-0.5f, 6.0f), 1.0f));
+    params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::preisachRemanence, "PreisachRemanence", makeRange(0.0f, 1.0f), 0.8f));
 
     return params;
 }
