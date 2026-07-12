@@ -151,11 +151,13 @@ public:
 
         if (modulePanels.size() == 1)
         {
-            header.items.add(juce::FlexItem(titleLabel).withMinWidth(titleFont.getStringWidth(titleLabel.getText()) * 1.1f));
+            header.items.add(juce::FlexItem(titleLabel).withMinWidth(juce::GlyphArrangement::getStringWidth(titleFont, titleLabel.getText()) * 1.1f));
+
+            
         }
         else
         {
-            header.items.add(juce::FlexItem(categorySelector).withMinWidth(titleFont.getStringWidth(categorySelector.getText()) * 1.4f + extraSpace));
+            header.items.add(juce::FlexItem(categorySelector).withMinWidth(juce::GlyphArrangement::getStringWidth(titleFont, categorySelector.getText()) * 1.4f + extraSpace));
         }
 
         header.performLayout(titleBounds);

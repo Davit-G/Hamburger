@@ -28,7 +28,7 @@ project(Hamburger VERSION "${ProjectVersion}")
 FetchContent_Declare(
 	JUCE
 	GIT_REPOSITORY https://github.com/juce-framework/JUCE.git
-	GIT_TAG 51d11a2be6d5c97ccf12b4e5e827006e19f0555a
+	GIT_TAG 2cdfca8feb300fb424002ba2c2751569e5bacb64
 	GIT_PROGRESS TRUE
     GIT_SHALLOW 1
 )
