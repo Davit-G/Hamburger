@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../../utils/Params.h"
+#include "../WaveShapers.h"
 
 #include "../SmoothParam.h"
 #include "../EnvelopeFollower.h"
@@ -50,8 +51,8 @@ public:
 
 	float newSizzleV3(float inputSample, float nextSizzle, float envelope, float nextRand)
 	{
-		float sign = inputSample < 0 ? -1.0f : 1.0f;
-		float rectifiedSample = fabs(inputSample);
+		float sign = sgn(inputSample);
+		float rectifiedSample = inputSample * sign;
 		float sizzleLevel = nextSizzle * 4.0f * pow(fmax(envelope - rectifiedSample, 0.0f), 0.8f + 0.5f / filterQ.getRaw(0));
 
 		return inputSample + (sizzleLevel * nextRand - (sizzleLevel * 0.5f)) * sign;

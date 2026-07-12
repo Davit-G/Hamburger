@@ -2,10 +2,12 @@
 
 #include <cmath>
 
-inline float sgn(float xn)
+template <typename T>
+int sgn(T val)
 {
-	return (xn > 0.f) - (xn < 0.f);
+    return (T(0) < val) - (val < T(0));
 }
+
 
 inline float calcWSGain(float xn, float saturation, float asymmetry)
 {

@@ -23,7 +23,7 @@ float EnvelopeFollower::processSample(float xn)
 
     currEnvelope = fmax(currEnvelope, 0.0f);
     lastEnvelope = currEnvelope;
-    currEnvelope = pow(currEnvelope, 0.5f);
+    currEnvelope = sqrtf(currEnvelope);
 
     if (!useLog) // just skip the log stuff for now, make it into var later
     {
@@ -56,7 +56,7 @@ float EnvelopeFollower::processSampleStereo(float xL, float xR)
     // why would an envelope be below 0. It won't. so clip it.
     currEnvelope = fmax(currEnvelope, 0.0f);
     lastEnvelope = currEnvelope; // store envelope for future
-    currEnvelope = pow(currEnvelope, 0.5f); // then some random RMS bullshittery
+    currEnvelope = sqrtf(currEnvelope); // then some random RMS bullshittery
 
     if (!useLog) // just skip the log stuff for now, make it into var later
     {

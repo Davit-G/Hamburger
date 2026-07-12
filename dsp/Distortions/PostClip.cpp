@@ -1,11 +1,6 @@
 #include "PostClip.h"
 #include "../WaveShapers.h"
 
-template <typename T>
-int sgn(T val)
-{
-    return (T(0) < val) - (val < T(0));
-}
 
 PostClip::PostClip(juce::AudioProcessorValueTreeState &treeState) : gainKnob(treeState, ParamIDs::postClipGain),
                                                                     kneeKnob(treeState, ParamIDs::postClipKnee)
