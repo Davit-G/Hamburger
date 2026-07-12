@@ -13,7 +13,6 @@
 #include "Modules/Panels/SizzlePanel.h"
 #include "Modules/Panels/ReductionPanel.h"
 #include "Modules/Panels/GatePanel.h"
-#include "Modules/Panels/PreisachPanel.h"
 #include "Modules/Panels/SlewSaturator.h"
 
 #include "LookAndFeel/Palette.h"
@@ -52,9 +51,6 @@ public:
 
         tape = std::make_unique<TapeSatPanel>(p);
         panels.push_back(std::move(tape));
-
-        preisach = std::make_unique<PreisachPanel>(p);
-        panels.push_back(std::move(preisach));
         
         slew = std::make_unique<SlewRatePanel>(p);
         panels.push_back(std::move(slew));

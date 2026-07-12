@@ -32,8 +32,10 @@ private:
     float cachedHistoricalAreaL = 0.0f;
     float cachedHistoricalAreaR = 0.0f;
 
+    float dynamicEMax = 0.0f;
+
     SmoothParam drive;
-    SmoothParam coercivity;
+    SmoothParam bias;
     SmoothParam remanence;
 
     double getInterpolatedArea(double alpha, double beta) const;

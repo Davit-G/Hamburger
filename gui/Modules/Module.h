@@ -152,8 +152,6 @@ public:
         if (modulePanels.size() == 1)
         {
             header.items.add(juce::FlexItem(titleLabel).withMinWidth(juce::GlyphArrangement::getStringWidth(titleFont, titleLabel.getText()) * 1.1f));
-
-            
         }
         else
         {

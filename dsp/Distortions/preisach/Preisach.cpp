@@ -5,9 +5,9 @@
 #include "../../../utils/Params.h"
 
 Preisach::Preisach(juce::AudioProcessorValueTreeState& treeState) :
-    drive(treeState, ParamIDs::preisachDrive),
-    coercivity(treeState, ParamIDs::preisachCoercivity),
-    remanence(treeState, ParamIDs::preisachRemanence) {}
+    drive(treeState, ParamIDs::tapeDrive),
+    bias(treeState, ParamIDs::tapeBias),
+    remanence(treeState, ParamIDs::tapeWidth) {}
 
 Preisach::~Preisach() {
 }
@@ -36,7 +36,7 @@ void Preisach::prepare(juce::dsp::ProcessSpec& spec) {
 
     drive.prepare(spec);
     remanence.prepare(spec);
-    coercivity.prepare(spec);
+    bias.prepare(spec);
 }
 
 template <typename T>
@@ -69,12 +69,12 @@ float Preisach::getAnalyticalArea(float alpha, float beta, float drive, float co
     const float f_beta  = fastTanh(drive * beta);
     const float reversible = f_alpha - f_beta;
 
-    const float g_alpha = fastTanh(coercivity * alpha);
-    const float g_beta  = fastTanh(coercivity * beta);
+    const float g_alpha = fastTanh(drive * alpha);
+    const float g_beta  = fastTanh(drive * beta);
     
     const float g_alpha_beta = g_alpha - g_beta;
 
-    const float irreversible = remanence * g_alpha_beta * g_alpha_beta;
+    const float irreversible = 2.0f * remanence * g_alpha_beta * g_alpha_beta;
 
     return reversible + irreversible;
 }
@@ -82,19 +82,25 @@ float Preisach::getAnalyticalArea(float alpha, float beta, float drive, float co
 void Preisach::processBlock(juce::dsp::AudioBlock<float> &block) {
     drive.update();
     remanence.update();
-    coercivity.update();
+    bias.update();
     
-    float currentDrive = drive.getRaw(0);
-    float currentCoercivity = coercivity.getRaw(0) * 2;
-    float currentRemanence = remanence.getRaw(0) * 2;
+    float driveRaw = drive.getRaw(0);
+    float driveSquared = driveRaw * driveRaw;
+    float gainMult = powf(1.0f - driveSquared, 3.0f) + 1.0f;
+
+    float currentDrive = driveSquared * 6.0f + 0.5f;
+    float currentCoercivity = bias.getRaw(0) * 2.0f;
     
-    bool parameterChanged = drive.isChanged() || coercivity.isChanged() || remanence.isChanged();
+    float rem = remanence.getRaw(0);
+    float currentRemanence = (rem * rem) * 2.0f + 0.000001f;
+    
+    bool parameterChanged = drive.isChanged() || bias.isChanged() || remanence.isChanged();
 
     const int numChannels = block.getNumChannels();
     const int numSamples = block.getNumSamples();
     
     // used for normalisation
-    float dynamicEMax = getAnalyticalArea(1.0f, -1.0f, currentDrive, currentCoercivity, currentRemanence);
+    dynamicEMax = getAnalyticalArea(5.0f, -5.0f, currentDrive, currentCoercivity, currentRemanence);
     if (dynamicEMax <= 0.0f) dynamicEMax = 1.0f;
 
     for (int ch = 0; ch < numChannels; ++ch) {
@@ -108,15 +114,13 @@ void Preisach::processBlock(juce::dsp::AudioBlock<float> &block) {
         
         // once per block per channel, compute runnning sum in case parameters change
         // might be expensive if block size is 1
-        if (parameterChanged) {
-            cachedArea = 0.0f;
-            for (size_t k = 0; k < stackM.size(); ++k) {
-                if (k < stackm.size()) {
-                    cachedArea += getAnalyticalArea(stackM[k], stackm[k], currentDrive, currentCoercivity, currentRemanence);
-                }
-                if (k + 1 < stackm.size()) {
-                    cachedArea -= getAnalyticalArea(stackM[k], stackm[k + 1], currentDrive, currentCoercivity, currentRemanence);
-                }
+        cachedArea = 0.0f;
+        for (size_t k = 0; k < stackM.size(); ++k) {
+            if (k < stackm.size()) {
+                cachedArea += getAnalyticalArea(stackM[k], stackm[k], currentDrive, currentCoercivity, currentRemanence);
+            }
+            if (k + 1 < stackm.size()) {
+                cachedArea -= getAnalyticalArea(stackM[k], stackm[k + 1], currentDrive, currentCoercivity, currentRemanence);
             }
         }
 
@@ -185,7 +189,8 @@ void Preisach::processBlock(juce::dsp::AudioBlock<float> &block) {
             }
 
             float finalOutput = -1.0f + (2.0f * accumulatedArea / dynamicEMax);
-            channelData[i] = std::tanh(finalOutput);
+            finalOutput *= gainMult;
+            channelData[i] = finalOutput;
             
             lastSignal = x;
         }

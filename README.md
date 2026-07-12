@@ -33,7 +33,8 @@ Main page
     - Phase Distortion (for watery slick tones, adds interesting harmonics in a controllable way)
     - Rubidium Distortion (dynamic and delicious module that extends the laws of physics of a transformer saturation model)
     - Matrix Distortion (an entirely random assortment of waveshaping functions for your pleasure)
-    - Tape Distortion (A tape hysteresis model written by [Jatin Chowdhury](https://github.com/jatinchowdhury18/ComplexNonlinearities/tree/master) (thank you 🙏) enhanced with extra features)
+    - Tape Distortion (A tape hysteresis model built to emulate the real behaviour of magnetic materials like cassette tapes and transistors)
+    - Slew Distortion (A custom built slew based distortion mode that makes some very unique distortion tones)
     - Clipper at the end of the chain to help with controlling unnecessary peaks, and for your own safety :D
 
 - Pre-filtering effects

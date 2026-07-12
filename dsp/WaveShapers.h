@@ -55,12 +55,12 @@ inline float softClipperFunc(float x, float threshold, float knee)
 	}
 	else if (twoXMinusThreshold > knee)
 	{
-		output = threshold + (x - threshold);
+		output = threshold;
 	}
 	else
 	{
-		auto temp = (x - threshold + knee * 0.5f);
-		output = x + (-0.5f * temp * temp / knee);
+		auto temp = (x - threshold + knee * 0.5);
+		output = x - ((temp * temp) / (2.0f * knee));
 	}
 
 	return output * sign; // return it to the original sign afterwards

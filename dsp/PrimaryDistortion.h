@@ -7,7 +7,6 @@
 #include "Distortions/DiodeWaveshape.h"
 #include "Distortions/PhaseDist.h"
 #include "Distortions/Rubidium.h"
-#include "Distortions/hysteresis/TapeDistortionProcessor.h"
 #include "Distortions/preisach/Preisach.h"
 #include "Distortions/nonlinslew/NonlinSlew.h"
 
@@ -43,7 +42,6 @@ public:
         diodeWaveshape = std::make_unique<DiodeWaveshape>(state);
         rubidium = std::make_unique<RubidiumDistortion>(state);
         matrix = std::make_unique<MatrixWaveshaper>(state);
-        tape = std::make_unique<TapeDistortionProcessor>(state);
         preisach = std::make_unique<Preisach>(state);
         nonlinSlew = std::make_unique<NonlinSlew>(state);
     }
@@ -127,15 +125,8 @@ public:
         case 5:
         {// tape hysteresis
             // TRACE_EVENT("dsp", "tape");
-            tape->processBlock(block);
-
-            break;
-        }
-        case 6:
-        {// preisach hysteresis
             preisach->processBlock(block);
 
-            // maybe i shouldnt be duplicating code for my high pass lmao
             juce::AudioBuffer<double> bufferDouble(static_cast<int>(block.getNumChannels()), static_cast<int>(block.getNumSamples()));
             juce::dsp::AudioBlock<double> blockDouble(bufferDouble);
 
@@ -159,10 +150,10 @@ public:
                     block.setSample(channel, sample, static_cast<float>(bufferDouble.getSample(channel, sample)));
                 }
             }
+
             break;
-            
         }
-        case 7:
+        case 6:
         {
             nonlinSlew->processBlock(block);
 
@@ -214,7 +205,6 @@ public:
         matrix->prepare(spec);
         preisach->prepare(spec);
         nonlinSlew->prepare(spec);
-        tape->prepareToPlay(spec.sampleRate, spec.maximumBlockSize, spec.numChannels);
 
         // init iir filter
         iirFilter.reset();
@@ -245,7 +235,6 @@ private:
     std::unique_ptr<PhaseDist> phaseDist = nullptr;
     std::unique_ptr<RubidiumDistortion> rubidium = nullptr;
     std::unique_ptr<MatrixWaveshaper> matrix = nullptr;
-    std::unique_ptr<TapeDistortionProcessor> tape = nullptr;
     std::unique_ptr<Preisach> preisach = nullptr;
     std::unique_ptr<NonlinSlew> nonlinSlew = nullptr;
 
