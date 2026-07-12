@@ -26,7 +26,7 @@ void Grunge::processBlock(juce::dsp::AudioBlock<float> &block)
     amount.update();
     tone.update();
 
-    float toneFloat = tone.getRaw() * 61.0f + 0.5f;
+    float toneFloat = tone.getRaw(0) * 61.0f + 0.5f;
     auto dcCoeffs = juce::dsp::IIR::ArrayCoefficients<float>::makeHighPass(sampleRate, toneFloat);
 
     *dcBlockerL.coefficients = dcCoeffs;
@@ -34,7 +34,7 @@ void Grunge::processBlock(juce::dsp::AudioBlock<float> &block)
 
     for (int i = 0; i < block.getNumSamples(); i++)
     {
-        float fbKnobAmt = amount.getNextValue() * 0.975f;
+        float fbKnobAmt = amount.getNextValue(0) * 0.975f;
         float fbAmt = -(fbKnobAmt * fbKnobAmt) + 2.0f * fbKnobAmt;
 
         float sampleL = block.getSample(0, i);

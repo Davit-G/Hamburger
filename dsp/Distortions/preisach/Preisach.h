@@ -5,6 +5,8 @@
 #include "juce_audio_processors/juce_audio_processors.h"
 #include "../../SmoothParam.h"
 
+#define PREISACH_USING_SIMD 1
+
 class Preisach {
 public:
     Preisach(juce::AudioProcessorValueTreeState& treeState);

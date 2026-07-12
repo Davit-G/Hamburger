@@ -124,11 +124,11 @@ void TypeAProcessor::processBlock(juce::dsp::AudioBlock<float>& buffer)
 
 void TypeAProcessor::updateCompressorParameters()
 {
-    const float threshold = thresholdParam.getRaw();
-    const float speed = speedParam.getRaw(); // ms
-    const float tilt = tiltParam.getRaw();
+    const float threshold = thresholdParam.getRaw(0);
+    const float speed = speedParam.getRaw(0); // ms
+    const float tilt = tiltParam.getRaw(0);
 
-    const float outValue = outParam.getRaw();
+    const float outValue = outParam.getRaw(0);
 
     const float ratio = baseRatio;
 

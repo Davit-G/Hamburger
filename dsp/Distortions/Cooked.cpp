@@ -19,25 +19,23 @@ void Cooked::processBlock(juce::dsp::AudioBlock<float>& block) noexcept {
 	// TRACE_EVENT("dsp", "Cooked::processBlock");
 	#endif // PERFETTO
 	
+	if (amount.getRaw(0) == 0.f) {
+		return;
+	}
+	
 	amount.update();
 	// stages.update();
 
-	if (amount.getRaw() == 0.f) {
-		return;
-	}
+	for (int channel = 0; channel < block.getNumChannels(); channel++) {
+		for (int sample = 0; sample < block.getNumSamples(); sample++) {
+			// float stagesClamped = std::max(1.0f, stages.getNextValue());
+			float nextCooked = amount.getNextValue(channel) * 0.01f;
 
-	for (int sample = 0; sample < block.getNumSamples(); sample++) {
-		// float stagesClamped = std::max(1.0f, stages.getNextValue());
-		float stagesClamped = 1.0f;
-		
-		float nextCooked = amount.getNextValue() * 0.01f / stagesClamped;
-
-		for (int channel = 0; channel < block.getNumChannels(); channel++) {
 			auto dryData = block.getChannelPointer(channel);
 
 			if (nextCooked != 0.f) {
 				auto x = dryData[sample] * (nextCooked * 20.0f + 1.0f);
-				dryData[sample] = (4.0f * (abs(0.25*x + 0.25 - round(0.25*x + 0.25)) - 0.25));
+				dryData[sample] = (4.0f * (abs(0.25f*x + 0.25f - round(0.25f*x + 0.25f)) - 0.25f));
 			}
 		}
 	}

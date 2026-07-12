@@ -35,7 +35,7 @@ inline float fuzzExp1WaveShaper(float xn, float saturation, float asymmetry)
 	return sgn(xn) * (1.0f - exp(-fabs(wsGain * xn))) / (1.0f - exp(-wsGain));
 }
 
-inline float softClipperFunc(float x, float threshold, float knee, float ratio = 0.00000001f)
+inline float softClipperFunc(float x, float threshold, float knee)
 {
 	// this is the soft-clip function from the compressor
 	// https://www.desmos.com/calculator/f8zazgtwpe
@@ -45,17 +45,20 @@ inline float softClipperFunc(float x, float threshold, float knee, float ratio =
 
 	float output = 0.0;
 
-	if (2 * (x - threshold) < -knee)
+	float twoXMinusThreshold = 2 * (x - threshold);
+
+	if (twoXMinusThreshold < -knee)
 	{
 		output = x;
 	}
-	else if (2 * (x - threshold) > knee)
+	else if (twoXMinusThreshold > knee)
 	{
-		output = threshold + (x - threshold) * ratio;
+		output = threshold + (x - threshold);
 	}
 	else
 	{
-		output = x + ((ratio - 1.0f) * pow((x - threshold + knee * 0.5f), 2.0f) / (2.0f * knee));
+		auto temp = (x - threshold + knee * 0.5f);
+		output = x + (-0.5f * temp * temp / knee);
 	}
 
 	return output * sign; // return it to the original sign afterwards

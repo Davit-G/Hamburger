@@ -19,13 +19,13 @@ void Jeff::processBlock(juce::dsp::AudioBlock<float> &block)
 	auto rightDryData = block.getChannelPointer(1);
 	auto leftDryData = block.getChannelPointer(0);
 
-	for (int sample = 0; sample < block.getNumSamples(); sample++)
+	for (size_t channel = 0; channel < block.getNumChannels(); channel++)
 	{
-		float nextJeff = amount.get() * 0.01f;
+		auto dryData = block.getChannelPointer(channel);
 
-		for (int channel = 0; channel < block.getNumChannels(); channel++)
+		for (int sample = 0; sample < block.getNumSamples(); sample++)
 		{
-			auto dryData = block.getChannelPointer(channel);
+			float nextJeff = amount.getNextValue(channel) * 0.01f;
 
 			auto x = dryData[sample];
 			auto a = x * nextJeff;

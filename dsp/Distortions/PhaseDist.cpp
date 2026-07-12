@@ -51,17 +51,17 @@ void PhaseDist::processBlock(juce::dsp::AudioBlock<float>& block) noexcept {
 	}
 
 	// filter the phase buffer
-	*filter.state = juce::dsp::IIR::ArrayCoefficients<float>::makeLowPass(sampleRate, tone.getRaw(), 1.1f);
+	*filter.state = juce::dsp::IIR::ArrayCoefficients<float>::makeLowPass(sampleRate, tone.getRaw(0), 1.1f);
 	filter.process(juce::dsp::ProcessContextReplacing<float>(block));
 
 	// apply the distortion
 	for (int i = 0; i < block.getNumSamples(); i++) {
 
 		// get knob values
-		const float nextAmt = amount.get() * 0.01f;
+		const float nextAmt = amount.getRaw(0) * 0.01f;
 		auto amt = nextAmt * nextAmt * nextAmt * 1200.f;
-		const float nextStereo = stereo.get() * 2.0f;
-		const float nextShift = powf(shift.get(), 3.f) * 0.1f;
+		const float nextStereo = stereo.getRaw(0) * 2.0f;
+		const float nextShift = powf(shift.getRaw(0), 3.f) * 0.1f;
 
 		float l = block.getSample(0, i);
 		float r = block.getSample(1, i);
@@ -71,7 +71,7 @@ void PhaseDist::processBlock(juce::dsp::AudioBlock<float>& block) noexcept {
 		float left = l * nextStereo - mono;
 		float right = r * nextStereo - mono;
 
-		auto rectAmt = rectify.get();
+		auto rectAmt = rectify.getRaw(0);
 
 		// perform rectification here
 		auto lRect = weirdRectify(left, rectAmt);

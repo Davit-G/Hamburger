@@ -19,7 +19,7 @@ void PattyFuzz::processBlock(juce::dsp::AudioBlock<float> &block)
 		auto dryData = block.getChannelPointer(channel);
 		for (int sample = 0; sample < block.getNumSamples(); sample++)
 		{
-			float nextPatty = 1.f - (amount.getNextValue() * 0.006f);
+			float nextPatty = 1.f - (amount.getNextValue(0) * 0.006f);
 			auto x = dryData[sample];
 			if (x > 0)
 			{

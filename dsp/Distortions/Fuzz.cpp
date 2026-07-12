@@ -31,10 +31,9 @@ void Fuzz::processBlock(juce::dsp::AudioBlock<float>& block) {
 		else if (channels == 2) {
 			envelope = follower.processSampleStereo(block.getSample(0, sample), block.getSample(1, sample));
 		}
-
-		float biasAmt = bias.getNextValue() * 3.0f;
-
+		
 		for (int channel = 0; channel < channels; channel++) {
+			float biasAmt = bias.getNextValue(channel) * 3.0f;
 			float x = block.getSample(channel, sample) + envelope * biasAmt;
 			block.setSample(channel, sample, x);
 		}

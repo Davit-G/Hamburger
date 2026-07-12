@@ -54,9 +54,9 @@ public:
     }
 
     void updateCoefficients() {
-        float satAmt = powf((mojo.getNextValue()) * 0.01f, 1.2f) * 100.0f + 5.0f;
-        float hystAmt = powf(hysteresis.getNextValue() * 0.1f, 2.0f) * 300.f;
-        float toneAmt = tone.getNextValue();
+        float satAmt = powf((mojo.getNextValue(0)) * 0.01f, 1.2f) * 100.0f + 5.0f;
+        float hystAmt = powf(hysteresis.getNextValue(0) * 0.1f, 2.0f) * 300.f;
+        float toneAmt = tone.getNextValue(0);
 
         highpassFreq = toneAmt;
 
@@ -89,13 +89,13 @@ public:
         {
             updateCoefficients();
 
-            double biasKnob = bias.getNextValue(); // between 0 and 1
+            double biasKnob = bias.getNextValue(0); // between 0 and 1
             double bias = powf(biasKnob, 3.0f) * 0.6f;
 
             double spl0 = (double)block.getSample(0, sample) - bias;
             double spl1 = (double)block.getSample(1, sample) - bias;
 
-            double driveKnob = drive.getNextValue(); // between 0 and 100
+            double driveKnob = drive.getNextValue(0); // between 0 and 100
             double driveVal = juce::Decibels::decibelsToGain(driveKnob * 0.3f); 
 
             spl0 = atan(spl0 * 1.1 * driveVal);

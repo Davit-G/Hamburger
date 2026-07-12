@@ -154,12 +154,12 @@ float TapeDistortionProcessor::getLatencySamples() const noexcept
 
 void TapeDistortionProcessor::processBlock (juce::dsp::AudioBlock<float>& buffer)
 {
-    float driveAmt = driveParam.getRaw();
+    float driveAmt = driveParam.getRaw(0);
 
-    float ageParam = widthParam.getRaw();
+    float ageParam = widthParam.getRaw(0);
     float invAgeParam = 1.0f - ageParam;
 
-    float biasAmt = biasParam.getRaw();
+    float biasAmt = biasParam.getRaw(0);
 
     setParameter(TapeDistortionProcessor::Param::Drive, driveAmt * driveAmt * 4.0f + 1.0f);
     setParameter(TapeDistortionProcessor::Param::Saturation, driveAmt);

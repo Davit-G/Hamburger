@@ -58,11 +58,11 @@ void NonlinSlew::processBlock(juce::dsp::AudioBlock<float> &block) {
                 int signL = sgn(deltaL);
                 int signR = sgn(deltaR);
         
-                float alpha = safePow(alphaParam.getNextValue(), 0.3f);
-                float ema_a = safePow(emaParam.getNextValue(), 3.0f) * 50.0f;
-                float slewRaw = slewBias.getNextValue();
+                float alpha = safePow(alphaParam.getNextValue(0), 0.3f);
+                float ema_a = safePow(emaParam.getNextValue(0), 3.0f) * 50.0f;
+                float slewRaw = slewBias.getNextValue(0);
                 float slew_bias = safePow(std::fabs(slewRaw), 3.0f) * (slewRaw < 0.0f ? -1.0f : 1.0f);
-                float bend = directionality.getNextValue() * 4.0f;
+                float bend = directionality.getNextValue(0) * 4.0f;
         
                 float jumpDistL = (tanh(deltaL * ema_a + bend) - tanh(bend)) * slew_bias;
                 float jumpDistR = (tanh(deltaR * ema_a + bend) - tanh(bend)) * slew_bias;
@@ -94,10 +94,10 @@ void NonlinSlew::processBlock(juce::dsp::AudioBlock<float> &block) {
                 float deltaL = inL - lastSampleL;
                 float deltaR = inR - lastSampleR;
         
-                float alpha = safePow(alphaParam.getNextValue(), 3.0f) * 50.0f;
-                float ema_a = safePow(emaParam.getNextValue(), 3.0f);
-                float slew_bias = slewBias.getNextValue();
-                float bend = directionality.getNextValue();
+                float alpha = safePow(alphaParam.getNextValue(0), 3.0f) * 50.0f;
+                float ema_a = safePow(emaParam.getNextValue(0), 3.0f);
+                float slew_bias = slewBias.getNextValue(0);
+                float bend = directionality.getNextValue(0);
 
                 float bL = (deltaL + ema_L * bend);
                 float bR = (deltaR + ema_R * bend);

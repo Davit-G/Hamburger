@@ -16,17 +16,17 @@ void DiodeWaveshape::processBlock(juce::dsp::AudioBlock<float> &block) noexcept
 
     amount.update();
 
-    for (int sample = 0; sample < block.getNumSamples(); sample++)
+    for (int channel = 0; channel < block.getNumChannels(); channel++)
     {
-        float a = amount.getNextValue() * 0.01f * 3.0f + 0.000001f;
-        float amt = a*a*a;
+        auto channelData = block.getChannelPointer(channel);
 
-        for (int channel = 0; channel < block.getNumChannels(); channel++)
+        for (int sample = 0; sample < block.getNumSamples(); sample++)
         {
-            auto dryData = block.getChannelPointer(channel);
+            float a = amount.getNextValue(channel) * 0.01f * 3.0f + 0.000001f;
+            float amt = a*a*a;
 
             float blend = fmin(amt * 0.8f, 1.0f);
-            auto x = dryData[sample];
+            auto x = channelData[sample];
 
             float newComponent = 0.0f;
 
@@ -43,7 +43,7 @@ void DiodeWaveshape::processBlock(juce::dsp::AudioBlock<float> &block) noexcept
                 newComponent = juce::dsp::FastMathApproximations::sin(x * amt);
             }
 
-            dryData[sample] = newComponent * blend + x * (1.0f - blend);
+            channelData[sample] = newComponent * blend + x * (1.0f - blend);
         }
     }
 }

@@ -31,7 +31,14 @@ public:
             // on some linux based OSes, the category selector element overrides the parameter value, causing it to reset to default when opening the GUI.
             // the below two lines of code fixes that.
             auto existingCategoryParam = dynamic_cast<juce::AudioParameterChoice *>(processor.treeState.getParameter(categoryAttachmentId));
-            categorySelector.setSelectedItemIndex(existingCategoryParam->getIndex()); 
+            if (existingCategoryParam != nullptr)
+            {
+                categorySelector.setSelectedItemIndex(existingCategoryParam->getIndex());
+            }
+            else
+            {
+                categorySelector.setSelectedItemIndex(0);
+            }
             
             categoryAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment>(processor.treeState, categoryAttachmentId, categorySelector);
             setScreen(categorySelector.getSelectedItemIndex());
@@ -79,20 +86,20 @@ public:
             }
         }
 
-        if (enabledButton->getToggleState())
+        if (enabledButton != nullptr && enabledButton->getToggleState())
+        {
+            for (auto &panel : modulePanels)
             {
-
-                for (auto &panel : modulePanels)
-                {
-                    panel->setAlpha(1.0f);
-                }
-            } else {
-
-                for (auto &panel : modulePanels)
-                {
-                    panel->setAlpha(0.6f);
-                }
+                panel->setAlpha(1.0f);
             }
+        }
+        else if (enabledButton != nullptr)
+        {
+            for (auto &panel : modulePanels)
+            {
+                panel->setAlpha(0.6f);
+            }
+        }
     }
 
     ~Module() override = default;

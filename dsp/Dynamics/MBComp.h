@@ -26,11 +26,11 @@ public:
         ratio.update();
         threshold.update();
 
-        float spd = speed.getRaw();
-        float mkp = makeup.getRaw();
-        float rat = ratio.getRaw();
-        float tlt = tilt.getRaw();
-        float thr = threshold.getRaw();
+        float spd = speed.getRaw(0);
+        float mkp = makeup.getRaw(0);
+        float rat = ratio.getRaw(0);
+        float tlt = tilt.getRaw(0);
+        float thr = threshold.getRaw(0);
 
         // float atk, float rel, float mkp, float ratioLow, float ratioUp, float thresholdLow, float thresholdUp, float kneeW, float mkpDB)
         compressor1.updateUpDown(spd, spd * 0.8f, mkp, rat, rat, thr - tlt, thr + 2.0f - tlt, 0.1f, 0.f);

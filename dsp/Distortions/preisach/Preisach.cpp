@@ -83,10 +83,12 @@ void Preisach::processBlock(juce::dsp::AudioBlock<float> &block) {
     drive.update();
     remanence.update();
     coercivity.update();
-
-    float currentDrive = drive.getRaw();
-    float currentCoercivity = coercivity.getRaw();
-    float currentRemanence = remanence.getRaw();
+    
+    float currentDrive = drive.getRaw(0);
+    float currentCoercivity = coercivity.getRaw(0) * 2;
+    float currentRemanence = remanence.getRaw(0) * 2;
+    
+    bool parameterChanged = drive.isChanged() || coercivity.isChanged() || remanence.isChanged();
 
     const int numChannels = block.getNumChannels();
     const int numSamples = block.getNumSamples();
@@ -106,13 +108,15 @@ void Preisach::processBlock(juce::dsp::AudioBlock<float> &block) {
         
         // once per block per channel, compute runnning sum in case parameters change
         // might be expensive if block size is 1
-        cachedArea = 0.0f;
-        for (size_t k = 0; k < stackM.size(); ++k) {
-            if (k < stackm.size()) {
-                cachedArea += getAnalyticalArea(stackM[k], stackm[k], currentDrive, currentCoercivity, currentRemanence);
-            }
-            if (k + 1 < stackm.size()) {
-                cachedArea -= getAnalyticalArea(stackM[k], stackm[k + 1], currentDrive, currentCoercivity, currentRemanence);
+        if (parameterChanged) {
+            cachedArea = 0.0f;
+            for (size_t k = 0; k < stackM.size(); ++k) {
+                if (k < stackm.size()) {
+                    cachedArea += getAnalyticalArea(stackM[k], stackm[k], currentDrive, currentCoercivity, currentRemanence);
+                }
+                if (k + 1 < stackm.size()) {
+                    cachedArea -= getAnalyticalArea(stackM[k], stackm[k + 1], currentDrive, currentCoercivity, currentRemanence);
+                }
             }
         }
 
@@ -163,6 +167,7 @@ void Preisach::processBlock(juce::dsp::AudioBlock<float> &block) {
             
             if (stackM.empty()) cachedArea = 0.0f;
             
+            // trim array if we're reaching limit
             if (stackM.size() > 100 && stackm.size() > 1) {
                 cachedArea += getAnalyticalArea(stackM.back(), stackm.back(), currentDrive, currentCoercivity, currentRemanence);
                 stackm.pop_back();

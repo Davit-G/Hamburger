@@ -58,7 +58,7 @@ public:
 
         juce::dsp::ProcessContextReplacing<juce::dsp::SIMDRegister<float>> newCtx(interleavedSubBlock);
 
-        float allPassAmt = fmin(allPassAmount.getRaw(), 50.0f);
+        float allPassAmt = fmin(allPassAmount.getRaw(0), 50.0f);
 
         // TRACE_EVENT_BEGIN("dsp", "SVFAllPassChain loop");
 
@@ -66,7 +66,7 @@ public:
 
         for (size_t sample = 0; sample < numSamples; ++sample)
         {
-            updateAllCoefficients(sampleRate, allPassFrequency.getNextValue(), allPassQ.getNextValue());
+            updateAllCoefficients(sampleRate, allPassFrequency.getNextValue(0), allPassQ.getNextValue(0));
 
             auto sampleVal = samples[sample];
 

@@ -20,23 +20,32 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor() : AudioProcessor(BusesPro
     treeState.state = juce::ValueTree("savedParams");
 
     inputGainKnob = dynamic_cast<juce::AudioParameterFloat *>(treeState.getParameter(ParamIDs::inputGain.getParamID()));
-    jassert(inputGainKnob);
+    if (inputGainKnob == nullptr)
+        jassertfalse;
+
     outputGainKnob = dynamic_cast<juce::AudioParameterFloat *>(treeState.getParameter(ParamIDs::outputGain.getParamID()));
-    jassert(outputGainKnob);
+    if (outputGainKnob == nullptr)
+        jassertfalse;
+
     mixKnob = dynamic_cast<juce::AudioParameterFloat *>(treeState.getParameter(ParamIDs::mix.getParamID()));
-    jassert(mixKnob);
+    if (mixKnob == nullptr)
+        jassertfalse;
 
     hamburgerEnabledButton = dynamic_cast<juce::AudioParameterBool *>(treeState.getParameter(ParamIDs::hamburgerEnabled.getParamID()));
-    jassert(hamburgerEnabledButton);
+    if (hamburgerEnabledButton == nullptr)
+        jassertfalse;
 
     stages = dynamic_cast<juce::AudioParameterInt *>(treeState.getParameter(ParamIDs::stages.getParamID()));
-    jassert(stages);
+    if (stages == nullptr)
+        jassertfalse;
 
     hq = dynamic_cast<juce::AudioParameterInt *>(treeState.getParameter(ParamIDs::oversamplingFactor.getParamID()));
-    jassert(hq);
+    if (hq == nullptr)
+        jassertfalse;
 
     clipEnabled = dynamic_cast<juce::AudioParameterBool *>(treeState.getParameter(ParamIDs::postClipEnabled.getParamID()));
-    jassert(clipEnabled);
+    if (clipEnabled == nullptr)
+        jassertfalse;
 
     presetManager = std::make_unique<Preset::PresetManager>(treeState);
 
@@ -229,7 +238,8 @@ void AudioPluginAudioProcessor::prepareToPlay(double sampleRate, int samplesPerB
     outputGain.prepare(spec);
 
 
-    oversamplingStack.setOversamplingFactor(hq->get());
+    const auto oversamplingFactor = (hq != nullptr) ? hq->get() : 0;
+    oversamplingStack.setOversamplingFactor(oversamplingFactor);
     oversamplingStack.prepare(spec);
 
     juce::dsp::ProcessSpec oversampledSpec;
@@ -278,7 +288,7 @@ bool AudioPluginAudioProcessor::isBusesLayoutSupported(const BusesLayout &layout
 void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
                                              juce::MidiBuffer &midiMessages)
 {
-    if (hamburgerEnabledButton->get() == false)
+    if (hamburgerEnabledButton != nullptr && hamburgerEnabledButton->get() == false)
         return;
 
     juce::ignoreUnused(midiMessages);
@@ -288,7 +298,7 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
 
         dryWetMixer.setWetLatency(oversamplingStack.getLatencySamples());
 
-        int oversampleAmount = hq->get();
+        const int oversampleAmount = (hq != nullptr) ? hq->get() : 0;
 
         oversamplingStack.setOversamplingFactor(oversampleAmount);
         if (oldOversamplingFactor != oversampleAmount)
@@ -314,7 +324,7 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
     juce::dsp::AudioBlock<float> block(buffer);
     juce::dsp::ProcessContextReplacing<float> context(block);
 
-    auto gainAmount = inputGainKnob->get();
+    const auto gainAmount = (inputGainKnob != nullptr) ? inputGainKnob->get() : 0.0f;
     inputGain.setGainDecibels(gainAmount);
     inputGain.process(context);
 
@@ -340,7 +350,7 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
     }
 
     {
-        int stagesAmt = stages->get();
+        const int stagesAmt = (stages != nullptr) ? stages->get() : 1;
 
         // TRACE_EVENT("dsp", "primary distortion");
         for (int i = 0; i < stagesAmt; i++) {
@@ -364,7 +374,7 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
 
     {
         // TRACE_EVENT("dsp", "other");
-        if (clipEnabled->get())
+        if (clipEnabled == nullptr || clipEnabled->get())
         {
             postClip.processBlock(oversampledBlock);
         }
@@ -373,10 +383,10 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
 
         scopeDataCollector.process(buffer.getReadPointer(0), buffer.getReadPointer(1), (size_t)buffer.getNumSamples());
 
-        outputGain.setGainDecibels(outputGainKnob->get());
+        outputGain.setGainDecibels((outputGainKnob != nullptr) ? outputGainKnob->get() : 0.0f);
         outputGain.process(context);
 
-        dryWetMixer.setWetMixProportion(mixKnob->get() * 0.01f);
+        dryWetMixer.setWetMixProportion((mixKnob != nullptr) ? (mixKnob->get() * 0.01f) : 1.0f);
 
         dryWetMixer.mixWetSamples(block);
     }

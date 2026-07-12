@@ -24,10 +24,10 @@ void Amp::prepare(juce::dsp::ProcessSpec &spec)
 }
 
 void Amp::calcCoefficientsPerSample() {
-    float nextDrive = drive.getNextValue();
+    float nextDrive = drive.getNextValue(0);
     float driv = nextDrive * 0.02f;
 
-    auto tubeToneValue = tubeTone.getNextValue();
+    auto tubeToneValue = tubeTone.getNextValue(0);
     auto skewedTone = tubeToneValue*tubeToneValue*tubeToneValue;
 
     auto &triode1 = triodes[0];
@@ -103,7 +103,7 @@ void Amp::calcCoefficients()
 
 void Amp::calcCoefficients2()
 {
-    float driv = drive.getRaw() * 0.02f;
+    float driv = drive.getRaw(0) * 0.02f;
 
     auto &triode1 = triodes[0];
     auto &triode2 = triodes[1];
@@ -113,18 +113,18 @@ void Amp::calcCoefficients2()
     auto lowFreqShelfHz = (9.0f);
     auto loShelfGain = (-6.0f);
 
-    auto biasAmt = bias.getRaw() * 2.0f;
+    auto biasAmt = bias.getRaw(0) * 2.0f;
 
     auto inGain = 1.f + driv * 0.4f;
     auto outGain = 1.1f;
 
-    auto blend = drive.getRaw() * 0.005f;
+    auto blend = drive.getRaw(0) * 0.005f;
 
     for (int i = 0; i < 4; i++)
     {
         // triodes[i].blend = blend;
         // triodes[i].blend = blend * 4;
-        triodes[i].waveshaperSaturation = 0.01f + drive.getRaw() * 0.03;
+        triodes[i].waveshaperSaturation = 0.01f + drive.getRaw(0) * 0.03;
         triodes[i].clipPointPositive = 4.0f;
         triodes[i].clipPointNegative = (-1.5f);
         triodes[i].gridConductionThreshold = (1.5f);
@@ -134,7 +134,7 @@ void Amp::calcCoefficients2()
         triodes[i].dcBlockingLF_Hz = (5.0f);
     }
 
-    auto skewedTone = powf(tubeTone.getRaw(), 3.0f);
+    auto skewedTone = powf(tubeTone.getRaw(0), 3.0f);
 
     triode1.millerHF_Hz = fmin(16000.0f + 8000.0f * skewedTone, 21000.0f);
     triode1.outputGain = outGain;
@@ -157,7 +157,7 @@ void Amp::calcCoefficients2()
 
     // trioesL[3].millerHF_Hz = 6400.0;
     triode4.millerHF_Hz = 21000.0f;
-    triode4.outputGain = pow(10.0f, (-drive.getRaw() * 0.01f * 6.f) / 20.0f);
+    triode4.outputGain = pow(10.0f, (-drive.getRaw(0) * 0.01f * 6.f) / 20.0f);
     triode4.dcShiftCoefficient = 1.2f;
 
     for (int i = 0; i < 4; i++)
@@ -188,7 +188,7 @@ void Amp::processBlock(juce::dsp::AudioBlock<float> &block)
     {   
         calcCoefficientsPerSample();
 
-        float biasAmt = bias.getNextValue();
+        float biasAmt = bias.getNextValue(0);
         float biasToAdd = biasAmt * biasAmt * -1.6f;
 
         for (int ch = 0; ch < block.getNumChannels(); ++ch)

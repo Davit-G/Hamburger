@@ -15,12 +15,12 @@ void Erosion::processBlock(juce::dsp::AudioBlock<float>& block)
         delayLine.pushSample(1, block.getSample(1, i));
     }
 
-    float erosionFreqVal = erosionFrequency.getRaw();
+    float erosionFreqVal = erosionFrequency.getRaw(0);
 
-    float erosionAmtValue = erosionAmount.getRaw() * 0.01f;
+    float erosionAmtValue = erosionAmount.getRaw(0) * 0.01f;
     float saturationAmount = erosionAmtValue * erosionAmtValue * 100.0f * 0.1f;
 
-    float q = erosionQ.getRaw();
+    float q = erosionQ.getRaw(0);
 
     *iirFilter.coefficients = juce::dsp::IIR::ArrayCoefficients<float>::makeBandPass(oldSampleRate, erosionFreqVal, q);
 

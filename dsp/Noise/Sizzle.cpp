@@ -43,20 +43,20 @@ void Sizzle::processBlock(juce::dsp::AudioBlock<float> &block)
 {
 	// TRACE_EVENT("dsp", "Sizzle::processBlock");
 	noiseAmount.update();
-	if (noiseAmount.getRaw() == 0)
+	if (noiseAmount.getRaw(0) == 0)
 		return;
 
 	auto rightDryData = block.getChannelPointer(1);
 	auto leftDryData = block.getChannelPointer(0);
 
-	auto sizzleFreq = filterTone.getRaw();
+	auto sizzleFreq = filterTone.getRaw(0);
 
 	if (filterTone.isChanged())
 		*filter.coefficients = juce::dsp::IIR::ArrayCoefficients<float>::makeLowPass(sampleRate, sizzleFreq, 0.707f);
 
 	for (int sample = 0; sample < block.getNumSamples(); sample++)
 	{
-		float nextSizzle = noiseAmount.getNextValue() * 0.02f;
+		float nextSizzle = noiseAmount.getNextValue(0) * 0.02f;
 		float filtRandFloat = filter.processSample(random.nextFloat() * 2.0f - 1.0f) * 0.5f + 0.5f;
 
 		float envelope = envelopeDetector.processSampleStereo(leftDryData[sample], rightDryData[sample]);
@@ -72,7 +72,7 @@ void Sizzle::processBlockOG(juce::dsp::AudioBlock<float> &block)
 	// TRACE_EVENT("dsp", "Sizzle::processBlock");
 	fizzAmount.update();
 
-	if (fizzAmount.getRaw() == 0)
+	if (fizzAmount.getRaw(0) == 0)
 		return;
 
 	auto rightDryData = block.getChannelPointer(1);
@@ -80,7 +80,7 @@ void Sizzle::processBlockOG(juce::dsp::AudioBlock<float> &block)
 
 	for (int sample = 0; sample < block.getNumSamples(); sample++)
 	{
-		float nextSizzle = fizzAmount.getNextValue() * 0.04f;
+		float nextSizzle = fizzAmount.getNextValue(0) * 0.04f;
 
 		rightDryData[sample] = oldSizzleFunction(rightDryData[sample], nextSizzle);
 		leftDryData[sample] = oldSizzleFunction(leftDryData[sample], nextSizzle);

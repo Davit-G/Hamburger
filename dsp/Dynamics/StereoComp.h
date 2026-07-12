@@ -26,11 +26,11 @@ public:
         ratio.update();
         threshold.update();
 
-        float spd = speed.getRaw();
-        float mkp = makeup.getRaw();
-        float rat = ratio.getRaw();
+        float spd = speed.getRaw(0);
+        float mkp = makeup.getRaw(0);
+        float rat = ratio.getRaw(0);
         // float stereoLink = sLink.getRaw() * 0.01f; // used to be a percentage
-        float thr = threshold.getRaw();
+        float thr = threshold.getRaw(0);
 
         // float atk, float rel, float mkp, float ratioLow, float ratioUp, float thresholdLow, float thresholdUp, float kneeW, float mkpDB)
         // compressorL.updateUpDown(spd, spd * 0.8f, mkp, rat, rat, thr, thr + 2.0f, 0.1f, 0.f);

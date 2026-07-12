@@ -33,11 +33,11 @@ void Redux::antiAliasingStep(juce::dsp::AudioBlock<float> &block)
 	// TRACE_EVENT("dsp", "Redux::antiAliasingStep");
 
 	downsample.update();
-	if (oldDownsample != downsample.getRaw())
+	if (oldDownsample != downsample.getRaw(0))
 	{
 		for (int i = 0; i < 4; i++)
 		{
-			*antialiasingFilter[i].state = juce::dsp::IIR::ArrayCoefficients<float>::makeLowPass(this->sampleRate, fmin(downsample.getRaw() * 2.f - 40.0f, 20000.0), 0.7f);
+			*antialiasingFilter[i].state = juce::dsp::IIR::ArrayCoefficients<float>::makeLowPass(this->sampleRate, fmin(downsample.getRaw(0) * 2.f - 40.0f, 20000.0), 0.7f);
 		}
 	}
 	for (int i = 0; i < 4; i++)
@@ -58,11 +58,11 @@ void Redux::processBlock(juce::dsp::AudioBlock<float> &block)
 
 	for (int sample = 0; sample < block.getNumSamples(); sample++)
 	{
-		float dsmplFreq = downsample.get();
+		float dsmplFreq = downsample.getRaw(0);
 		float downsamplingValue = sampleRate * 0.5f / dsmplFreq;
 
-		float bitReductionValue = bitReduction.getNextValue();
-		float mixAmount = downsampleMix.getNextValue();
+		float bitReductionValue = bitReduction.getNextValue(0);
+		float mixAmount = downsampleMix.getNextValue(0);
 
 		// sample and hold process L channel
 		if (floor(fmodf(sample, downsamplingValue)) == 0)

@@ -94,15 +94,15 @@ public:
 
         for (int i = 0; i < block.getNumSamples(); i++)
         {
-            float matrix1 = mat1Param.getNextValue();
-            float matrix2 = mat2Param.getNextValue();
-            float matrix3 = mat3Param.getNextValue();
-            float matrix4 = mat4Param.getNextValue();
-            float matrix5 = mat5Param.getNextValue();
-            float matrix6 = mat6Param.getNextValue();
+            float matrix1 = mat1Param.getNextValue(0);
+            float matrix2 = mat2Param.getNextValue(0);
+            float matrix3 = mat3Param.getNextValue(0);
+            float matrix4 = mat4Param.getNextValue(0);
+            float matrix5 = mat5Param.getNextValue(0);
+            float matrix6 = mat6Param.getNextValue(0);
             // float matrix7 = mat7Param.getNextValue();
             // float matrix8 = mat8Param.getNextValue();
-            float matrix9 = mat9Param.getNextValue();
+            float matrix9 = mat9Param.getNextValue(0);
 
             double p1 = matrix1 * 10.0 + tiny;
             double p2 = matrix2 * 40.0 + tiny;

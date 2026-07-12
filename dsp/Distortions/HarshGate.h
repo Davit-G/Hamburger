@@ -19,7 +19,7 @@ public:
         auto leftDryData = block.getChannelPointer(0);
 
         for (int sample = 0; sample < block.getNumSamples(); sample++) {
-            float amt = amount.getNextValue() * 0.8f;
+            float amt = amount.getNextValue(0) * 0.8f;
             amt = amt * amt * amt * 3.0f;
 
             float l = leftDryData[sample];
@@ -28,7 +28,7 @@ public:
             auto lr = l + r;
             
             
-            float blend = mix.getNextValue();
+            float blend = mix.getNextValue(0);
 
             if (abs(lr) < amt) {
                 block.setSample(0, sample, (0.0f) * blend + l * (1 - blend));
