@@ -166,7 +166,7 @@ namespace ParamIDs {
 
     static const juce::ParameterID emaParam { "emaAlpha", 3 };
     static const juce::ParameterID alphaParam { "alphaParam", 3 };
-    static const juce::ParameterID slewBias { "slewBias", 3 };
+    static const juce::ParameterID slewSpeed { "slewSpeed", 3 };
     static const juce::ParameterID directionality { "directionality", 3 };
     static const juce::ParameterID slewType { "slewType", 3 };
 }

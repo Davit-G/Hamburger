@@ -10,7 +10,7 @@ public:
     NonlinSlew(juce::AudioProcessorValueTreeState& treeState) 
     : emaParam(treeState, ParamIDs::emaParam), 
     alphaParam(treeState, ParamIDs::alphaParam),
-    slewBias(treeState, ParamIDs::slewBias),
+    slewSpeed(treeState, ParamIDs::slewSpeed),
     directionality(treeState, ParamIDs::directionality),
     type(nullptr),
     lastSampleL(0.0f),
@@ -34,7 +34,7 @@ private:
 
     SmoothParam emaParam;
     SmoothParam alphaParam;
-    SmoothParam slewBias;
+    SmoothParam slewSpeed;
     SmoothParam directionality;
     juce::AudioParameterInt* type;
 

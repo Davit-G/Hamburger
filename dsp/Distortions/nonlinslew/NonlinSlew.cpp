@@ -27,7 +27,7 @@ void NonlinSlew::resetState() {
 void NonlinSlew::prepare(juce::dsp::ProcessSpec& spec) {
     emaParam.prepare(spec);
     alphaParam.prepare(spec);
-    slewBias.prepare(spec);
+    slewSpeed.prepare(spec);
     directionality.prepare(spec);
     lastMode = -1;
     resetState();
@@ -36,7 +36,7 @@ void NonlinSlew::prepare(juce::dsp::ProcessSpec& spec) {
 void NonlinSlew::processBlock(juce::dsp::AudioBlock<float> &block) {
     emaParam.update();
     alphaParam.update();
-    slewBias.update();
+    slewSpeed.update();
     directionality.update();
 
     int mode = type->get();
@@ -60,24 +60,18 @@ void NonlinSlew::processBlock(juce::dsp::AudioBlock<float> &block) {
         
                 float alpha = safePow(alphaParam.getNextValue(0), 0.3f);
                 float ema_a = safePow(emaParam.getNextValue(0), 3.0f) * 50.0f;
-                float slewRaw = slewBias.getNextValue(0);
-                float slew_bias = safePow(std::fabs(slewRaw), 3.0f) * (slewRaw < 0.0f ? -1.0f : 1.0f);
+                float slewSpeedVal = slewSpeed.getNextValue(0);
+                float slewScaled = safePow(std::fabs(slewSpeedVal), 3.0f) * (slewSpeedVal < 0.0f ? -1.0f : 1.0f);
                 float bend = directionality.getNextValue(0) * 4.0f;
         
-                float jumpDistL = (tanh(deltaL * ema_a + bend) - tanh(bend)) * slew_bias;
-                float jumpDistR = (tanh(deltaR * ema_a + bend) - tanh(bend)) * slew_bias;
+                float jumpDistL = (tanh(deltaL * slewScaled * 50.0f + bend) - tanh(bend)) * slewScaled;
+                float jumpDistR = (tanh(deltaR * slewScaled * 50.0f + bend) - tanh(bend)) * slewScaled;
         
                 lastSampleL = (1.0f - alpha) * inL + alpha * std::tanh(lastSampleL + signL * deltaL * jumpDistL);
                 lastSampleR = (1.0f - alpha) * inR + alpha * std::tanh(lastSampleR + signR * deltaR * jumpDistR);
         
                 if (!std::isfinite(lastSampleL)) lastSampleL = 0.0f;
                 if (!std::isfinite(lastSampleR)) lastSampleR = 0.0f;
-
-                ema_L = ema_a * lastSampleL + (1.0f - ema_a) * ema_L;
-                ema_R = ema_a * lastSampleR + (1.0f - ema_a) * ema_R;
-                
-                if (!std::isfinite(ema_L)) ema_L = 0.0f;
-                if (!std::isfinite(ema_R)) ema_R = 0.0f;
 
                 block.setSample(0, i, lastSampleL);
                 block.setSample(1, i, lastSampleR);
@@ -93,10 +87,11 @@ void NonlinSlew::processBlock(juce::dsp::AudioBlock<float> &block) {
         
                 float deltaL = inL - lastSampleL;
                 float deltaR = inR - lastSampleR;
-        
-                float alpha = safePow(alphaParam.getNextValue(0), 3.0f) * 50.0f;
-                float ema_a = safePow(emaParam.getNextValue(0), 3.0f);
-                float slew_bias = slewBias.getNextValue(0);
+                
+                float drive = safePow(alphaParam.getNextValue(0), 3.0f);
+                float alpha = drive * 50.0f;
+                float ema_a = drive;
+                float slew_bias = slewSpeed.getNextValue(0);
                 float bend = directionality.getNextValue(0);
 
                 float bL = (deltaL + ema_L * bend);

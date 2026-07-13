@@ -13,7 +13,7 @@ public:
     SlewRatePanel(AudioPluginAudioProcessor &p) : Panel(p, "SLEW"), 
         ema(p, "EMA", ParamIDs::emaParam),
         alpha(p, "ALPHA", ParamIDs::alphaParam),
-        bias(p, "BIAS", ParamIDs::slewBias),
+        bias(p, "TONE", ParamIDs::slewSpeed),
         directionality(p, "BEND", ParamIDs::directionality),
         type(p, "TYPE", ParamIDs::slewType)
     {
