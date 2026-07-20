@@ -208,7 +208,7 @@ public:
 
         // init iir filter
         iirFilter.reset();
-        *iirFilter.state = juce::dsp::IIR::ArrayCoefficients<double>::makeFirstOrderHighPass(spec.sampleRate, 8.0f);
+        *iirFilter.state = juce::dsp::IIR::ArrayCoefficients<double>::makeFirstOrderHighPass(spec.sampleRate, 16.0f);
         iirFilter.prepare(spec);
 
         setSampleRate(spec.sampleRate);

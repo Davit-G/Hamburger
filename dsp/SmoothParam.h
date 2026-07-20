@@ -66,6 +66,17 @@ public:
         return smoothedParamPerChannel[ch]->getNextValue();
     }
 
+    float getCurrent(int channel = 0) {
+        if (param == nullptr)
+            return 0.0f;
+
+        const auto ch = static_cast<size_t>(channel);
+        if (ch >= smoothedParamPerChannel.size())
+            return 0.0f;
+
+        return smoothedParamPerChannel[ch]->getCurrentValue();
+    }
+
     float getRaw(int channel = 0)
     {
         if (param == nullptr)
