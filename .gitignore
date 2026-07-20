@@ -7,6 +7,8 @@ cmake-build-debug
 .git
 JUCE
 
+todo.md
+
 *.bat
 
 build_mac
