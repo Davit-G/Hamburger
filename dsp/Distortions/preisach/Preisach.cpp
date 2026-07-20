@@ -97,9 +97,9 @@ void Preisach::processBlock(juce::dsp::AudioBlock<float> &block) {
     float currentCoercivity = bias.getCurrent(0) * 2.0f;
     
     float rem = remanence.getCurrent(0);
-    float currentRemanence = (rem * rem) * 2.0f + 0.000001f;
+    float currentRemanence = (rem * rem) * 30.0f + 0.000001f;
     
-    bool parameterChanged = drive.isChanged() || bias.isChanged() || remanence.isChanged();
+    // bool parameterChanged = drive.isChanged() || bias.isChanged() || remanence.isChanged();
 
     const int numChannels = block.getNumChannels();
     const int numSamples = block.getNumSamples();
@@ -116,23 +116,25 @@ void Preisach::processBlock(juce::dsp::AudioBlock<float> &block) {
         float& cachedArea = (ch == 0) ? cachedHistoricalAreaL : cachedHistoricalAreaR;
         
         for (int i = 0; i < numSamples; ++i) {
-        // once per block per channel, compute runnning sum in case parameters change
-        // might be expensive if block size is 1
-        // cachedArea = 0.0f;
-        // for (size_t k = 0; k < stackM.size(); ++k) {
-        //     if (k < stackm.size()) {
-        //         cachedArea += getAnalyticalArea(stackM[k], stackm[k], currentDrive, currentCoercivity, currentRemanence);
-        //     }
-        //     if (k + 1 < stackm.size()) {
-        //         cachedArea -= getAnalyticalArea(stackM[k], stackm[k + 1], currentDrive, currentCoercivity, currentRemanence);
-        //     }
-        // }
+            // once per block per channel, compute runnning sum in case parameters change
+            // might be expensive if block size is 1
+            // cachedArea = 0.0f;
+            // for (size_t k = 0; k < stackM.size(); ++k) {
+            //     if (k < stackm.size()) {
+            //         cachedArea += getAnalyticalArea(stackM[k], stackm[k], currentDrive, currentCoercivity, currentRemanence);
+            //     }
+            //     if (k + 1 < stackm.size()) {
+            //         cachedArea -= getAnalyticalArea(stackM[k], stackm[k + 1], currentDrive, currentCoercivity, currentRemanence);
+            //     }
+            // }
         
             float x = channelData[i];
             
             driveRaw = drive.getNextValue(ch);
             driveSquared = driveRaw * driveRaw;
-            gainMult = powf(1.0f - driveSquared, 3.0f) + 1.0f;
+
+            float invDrive = 1.0f - driveSquared;
+            gainMult = invDrive * invDrive * invDrive + 1.0f;
             currentDrive = driveSquared * 6.0f + 0.5f;
             currentCoercivity = bias.getNextValue(ch) * 2.0f;
             rem = remanence.getNextValue(ch);

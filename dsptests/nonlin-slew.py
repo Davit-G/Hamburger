@@ -14,7 +14,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-def nonlin_slew(input_signal, alpha=0.9):
+def nonlin_slew(input_signal, alpha=0.1):
     output_signal = np.zeros_like(input_signal)
     output_signal[0] = input_signal[0]
 
@@ -27,12 +27,9 @@ def nonlin_slew(input_signal, alpha=0.9):
 
         # use gaussian as distribution to determine how far to jump
         # jump_distance = np.tanh(alpha * delta)
-        # jump_distance = (1 if delta > 0 else -1) * alpha * delta**2
+        # jump_distance = alpha * delta
         # jump_distance = np.tanh(delta)*np.exp(18.0*-delta**2) * alpha
         # jump_distance = np.tanh(delta) * np.cos(delta * ema * 2) * alpha * 0.5
-
-        jump_distance = 
-
         # bruh = alpha * 0.005 + ema * 0.01
         # jump_distance = np.tanh(min(max(delta, -bruh), bruh) * bruh) / np.tanh(bruh)
 
