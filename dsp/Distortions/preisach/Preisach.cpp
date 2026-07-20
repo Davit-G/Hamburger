@@ -212,6 +212,4 @@ void Preisach::processBlock(juce::dsp::AudioBlock<float> &block) {
             lastSignal = x;
         }
     }
-
-    DBG(stack_M_L.size());
 }
