@@ -68,6 +68,7 @@ public:
         sizzle->prepare(spec);
         erosion->prepare(spec);
         redux->prepare(spec);
+        gate->prepare(spec);
     }
 
     void setSampleRate(float newSampleRate)

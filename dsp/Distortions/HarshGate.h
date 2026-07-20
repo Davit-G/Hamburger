@@ -50,6 +50,7 @@ public:
     
     void prepare(juce::dsp::ProcessSpec& spec) {
         amount.prepare(spec);
+        mix.prepare(spec);
     }
 private:
     SmoothParam amount;
