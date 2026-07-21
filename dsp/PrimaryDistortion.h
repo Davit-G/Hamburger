@@ -73,12 +73,12 @@ public:
             dcBlocker[i].prepare(spec);
         }
 
-        emptyBuffer = juce::AudioBuffer<float>(spec.numChannels, 2048);
-        emptyBlock = juce::dsp::AudioBlock<float>(emptyBuffer);
-        emptyBuffer.clear();
+        // emptyBuffer = juce::AudioBuffer<float>(spec.numChannels, 2048);
+        // emptyBlock = juce::dsp::AudioBlock<float>(emptyBuffer);
+        // emptyBuffer.clear();
 
-        fillEmptyWithZeros();
-        processBlock(emptyBlock);
+        // fillEmptyWithZeros();
+        // processBlock(emptyBlock);
     }
 
     void fillEmptyWithZeros() {

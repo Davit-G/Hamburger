@@ -133,6 +133,4 @@ void NonlinSlew::processBlock(juce::dsp::AudioBlock<float> &block) {
         }
 
     }
-
-    DBG(block.getSample(0, 0));
 }

@@ -13,7 +13,7 @@ public:
     {
         // init iir filter
         iirFilter.reset();
-        *iirFilter.state = juce::dsp::IIR::ArrayCoefficients<double>::makeHighPass(spec.sampleRate, 20.0f);
+        *iirFilter.state = juce::dsp::IIR::ArrayCoefficients<double>::makeHighPass(spec.sampleRate, 8.0f);
         iirFilter.prepare(spec);
 
         bufferDouble = std::make_unique<juce::AudioBuffer<double>>(spec.numChannels, spec.maximumBlockSize);
