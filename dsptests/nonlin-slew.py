@@ -14,7 +14,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-def nonlin_slew(input_signal, alpha=0.1):
+def nonlin_slew(input_signal, alpha=0.8):
     output_signal = np.zeros_like(input_signal)
     output_signal[0] = input_signal[0]
 
@@ -30,8 +30,8 @@ def nonlin_slew(input_signal, alpha=0.1):
         # jump_distance = alpha * delta
         # jump_distance = np.tanh(delta)*np.exp(18.0*-delta**2) * alpha
         # jump_distance = np.tanh(delta) * np.cos(delta * ema * 2) * alpha * 0.5
-        # bruh = alpha * 0.005 + ema * 0.01
-        # jump_distance = np.tanh(min(max(delta, -bruh), bruh) * bruh) / np.tanh(bruh)
+        bruh = alpha * 0.05
+        jump_distance = min(max(delta, -bruh), bruh) * bruh
 
         # actually use tanh as a more regular slew clipper would
 

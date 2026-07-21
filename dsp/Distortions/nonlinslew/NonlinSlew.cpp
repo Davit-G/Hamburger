@@ -54,7 +54,27 @@ void NonlinSlew::processBlock(juce::dsp::AudioBlock<float> &block) {
         float& ema = emaBuf[ch];
 
         switch (mode) {
-            case 0: {
+            case 0: { // really basic min max slew
+                for (int i = 0; i < block.getNumSamples(); i++) {
+                    const float in = data[i];
+
+                    float delta = in - lastSample;
+            
+                    float influence = safePow(1.0f - alphaParam.getNextValue(ch), 3.0f) + 0.0001f;
+                    float slewSpeedVal = slewSpeed.getNextValue(ch);
+                    float bend = directionality.getNextValue(ch);
+            
+                    float jumpDist = juce::jmax(juce::jmin(delta * slewSpeedVal, influence), -influence);
+            
+                    lastSample = lastSample + jumpDist;
+            
+                    if (!std::isfinite(lastSample)) lastSample = 0.0f;
+
+                    data[i] = lastSample;
+                }
+                break;
+            }
+            case 1: {
                 // tanh based jumps
                 for (int i = 0; i < block.getNumSamples(); i++) {
                     const float in = data[i];
@@ -64,7 +84,6 @@ void NonlinSlew::processBlock(juce::dsp::AudioBlock<float> &block) {
                     int sign = sgn(delta);
             
                     float alpha = safePow(alphaParam.getNextValue(ch), 0.3f);
-                    float ema_a = safePow(emaParam.getNextValue(ch), 3.0f) * 50.0f;
                     float slewSpeedVal = slewSpeed.getNextValue(ch);
                     float slewScaled = safePow(std::fabs(slewSpeedVal), 3.0f) * (slewSpeedVal < 0.0f ? -1.0f : 1.0f);
                     float bend = directionality.getNextValue(ch) * 4.0f;
@@ -80,7 +99,7 @@ void NonlinSlew::processBlock(juce::dsp::AudioBlock<float> &block) {
             
                 break;
             }
-            case 1: {
+            case 2: {
                 // gaussian / strange attractor?
                 for (int i = 0; i < block.getNumSamples(); i++) {
                     const float in = data[i];
@@ -114,4 +133,6 @@ void NonlinSlew::processBlock(juce::dsp::AudioBlock<float> &block) {
         }
 
     }
+
+    DBG(block.getSample(0, 0));
 }
