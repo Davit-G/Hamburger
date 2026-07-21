@@ -1,0 +1,61 @@
+#pragma once
+
+#include "juce_core/juce_core.h"
+#include "juce_audio_processors/juce_audio_processors.h"
+#include "juce_dsp/juce_dsp.h"
+
+class DCBlockingHighPass {
+public:
+    DCBlockingHighPass() {}
+    ~DCBlockingHighPass() {}
+
+    void prepare(juce::dsp::ProcessSpec &spec)
+    {
+        // init iir filter
+        iirFilter.reset();
+        *iirFilter.state = juce::dsp::IIR::ArrayCoefficients<double>::makeHighPass(spec.sampleRate, 20.0f);
+        iirFilter.prepare(spec);
+
+        bufferDouble = std::make_unique<juce::AudioBuffer<double>>(spec.numChannels, spec.maximumBlockSize);
+        blockDouble = juce::dsp::AudioBlock<double>(*bufferDouble);
+
+        bufferDouble->clear();
+        blockDouble.fill(0.0);
+    }
+    
+    void processBlock(juce::dsp::AudioBlock<float> &block)
+    {
+        const int numChannels = static_cast<int>(block.getNumChannels());
+        const int numSamples  = static_cast<int>(block.getNumSamples());
+        
+        for (int channel = 0; channel < numChannels; ++channel)
+        {
+            const float* src = block.getChannelPointer(channel);
+            double* dest     = blockDouble.getChannelPointer(channel);
+
+            for (int sample = 0; sample < numSamples; ++sample)
+            {
+                dest[sample] = static_cast<double>(src[sample]);
+            }
+        }
+        
+        auto doubleContext = juce::dsp::ProcessContextReplacing<double>(blockDouble);
+        iirFilter.process(doubleContext);
+        
+        for (int channel = 0; channel < numChannels; ++channel)
+        {
+            const double* src = blockDouble.getChannelPointer(channel);
+            float* dest       = block.getChannelPointer(channel);
+
+            for (int sample = 0; sample < numSamples; ++sample)
+            {
+                dest[sample] = static_cast<float>(src[sample]);
+            }
+        }
+    }
+
+private:
+    std::unique_ptr<juce::AudioBuffer<double>> bufferDouble;
+    juce::dsp::AudioBlock<double> blockDouble;
+    juce::dsp::ProcessorDuplicator<juce::dsp::IIR::Filter<double>, juce::dsp::IIR::Coefficients<double>> iirFilter;
+};

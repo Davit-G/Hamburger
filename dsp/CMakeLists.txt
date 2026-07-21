@@ -7,6 +7,7 @@ add_subdirectory(FrequencyShifting)
 
 target_sources("${BaseTargetName}"
     PRIVATE
+        DCBlockingHighPass.h
         EnvelopeFollower.cpp
         SVTPTFilter.cpp
         SVTPTFilter.h

@@ -108,7 +108,7 @@ public:
 
 private:
     juce::AudioParameterFloat* param = nullptr;
-    std::vector<std::unique_ptr<SmoothedValue>> smoothedParamPerChannel; // dont use multiply it leads to audio glitches
+    std::vector<std::unique_ptr<SmoothedValue>> smoothedParamPerChannel {}; // dont use multiply it leads to audio glitches
 
     float current = 0.0f;
     float old = 0.0f;

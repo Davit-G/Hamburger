@@ -10,6 +10,8 @@
 #include "Distortions/preisach/Preisach.h"
 #include "Distortions/nonlinslew/NonlinSlew.h"
 
+#include "DCBlockingHighPass.h"
+
 #include "Distortions/MatrixWaveshaper.h"
 #include "./Noise/Jeff.h"
 #include "Distortions/tube/Amp.h"
@@ -48,6 +50,41 @@ public:
 
     ~PrimaryDistortion() {}
 
+    void prepare(juce::dsp::ProcessSpec &spec)
+    {
+        softClipper->prepare(spec);
+        fold->prepare(spec);
+        patty->prepare(spec);
+        fuzz->prepare(spec);
+        tubeAmp->prepare(spec);
+        phaseDist->prepare(spec);
+        jeff->prepare(spec);
+        diodeWaveshape->prepare(spec);
+        rubidium->prepare(spec);
+        matrix->prepare(spec);
+        preisach->prepare(spec);
+        nonlinSlew->prepare(spec);
+
+        setSampleRate(spec.sampleRate);
+
+        previousDistType = -1;
+
+        for (int i = 0; i < 3; i++) {
+            dcBlocker[i].prepare(spec);
+        }
+
+        emptyBuffer = juce::AudioBuffer<float>(spec.numChannels, 2048);
+        emptyBlock = juce::dsp::AudioBlock<float>(emptyBuffer);
+        emptyBuffer.clear();
+
+        fillEmptyWithZeros();
+        processBlock(emptyBlock);
+    }
+
+    void fillEmptyWithZeros() {
+        emptyBlock.fill(0.0f);
+    }
+
     void processBlock(juce::dsp::AudioBlock<float> &block)
     {
         int distoTypeIndex = distoType->getIndex();
@@ -55,46 +92,16 @@ public:
         if (distortionEnabled->get() == false)
             return;
 
-        auto context = juce::dsp::ProcessContextReplacing<float>(block);
-
         switch (distoTypeIndex)
         {
         case 0:
         { // classic
-
             // TRACE_EVENT("dsp", "classic");
-            // patty->processBlock(block);
             fuzz->processBlock(block);
-
             fold->processBlock(block);
             diodeWaveshape->processBlock(block);
             softClipper->processBlock(block);
-
-            juce::AudioBuffer<double> bufferDouble(static_cast<int>(block.getNumChannels()), static_cast<int>(block.getNumSamples()));
-            juce::dsp::AudioBlock<double> blockDouble(bufferDouble);
-
-
-            for (int channel = 0; channel < block.getNumChannels(); channel++)
-            {
-                for (int sample = 0; sample < block.getNumSamples(); sample++)
-                {
-                    blockDouble.setSample(channel, sample, block.getSample(channel, sample));
-                }
-            }
-
-            auto doubleContext = juce::dsp::ProcessContextReplacing<double>(blockDouble);
-
-            iirFilter.process(doubleContext);
-            
-            for (int channel = 0; channel < block.getNumChannels(); channel++)
-            {
-                for (int sample = 0; sample < block.getNumSamples(); sample++)
-                {
-                    block.setSample(channel, sample, static_cast<float>(bufferDouble.getSample(channel, sample)));
-                }
-            }
-            
-            
+            dcBlocker[0].processBlock(block);
             break;
         }
         case 1:
@@ -126,92 +133,18 @@ public:
         {// tape hysteresis
             // TRACE_EVENT("dsp", "tape");
             preisach->processBlock(block);
-
-            juce::AudioBuffer<double> bufferDouble(static_cast<int>(block.getNumChannels()), static_cast<int>(block.getNumSamples()));
-            juce::dsp::AudioBlock<double> blockDouble(bufferDouble);
-
-
-            for (int channel = 0; channel < block.getNumChannels(); channel++)
-            {
-                for (int sample = 0; sample < block.getNumSamples(); sample++)
-                {
-                    blockDouble.setSample(channel, sample, block.getSample(channel, sample));
-                }
-            }
-
-            auto doubleContext = juce::dsp::ProcessContextReplacing<double>(blockDouble);
-
-            iirFilter.process(doubleContext);
-            
-            for (int channel = 0; channel < block.getNumChannels(); channel++)
-            {
-                for (int sample = 0; sample < block.getNumSamples(); sample++)
-                {
-                    block.setSample(channel, sample, static_cast<float>(bufferDouble.getSample(channel, sample)));
-                }
-            }
-
+            dcBlocker[1].processBlock(block);
             break;
         }
         case 6:
         {
             nonlinSlew->processBlock(block);
-
-            juce::AudioBuffer<double> bufferDouble(static_cast<int>(block.getNumChannels()), static_cast<int>(block.getNumSamples()));
-            juce::dsp::AudioBlock<double> blockDouble(bufferDouble);
-
-
-            for (int channel = 0; channel < block.getNumChannels(); channel++)
-            {
-                for (int sample = 0; sample < block.getNumSamples(); sample++)
-                {
-                    blockDouble.setSample(channel, sample, block.getSample(channel, sample));
-                }
-            }
-
-            auto doubleContext = juce::dsp::ProcessContextReplacing<double>(blockDouble);
-
-            iirFilter.process(doubleContext);
-            
-            for (int channel = 0; channel < block.getNumChannels(); channel++)
-            {
-                for (int sample = 0; sample < block.getNumSamples(); sample++)
-                {
-                    block.setSample(channel, sample, static_cast<float>(bufferDouble.getSample(channel, sample)));
-                }
-            }
+            dcBlocker[2].processBlock(block);
             break;
         }
         default:
             break;
         }
-
-
-
-
-    }
-
-    void prepare(juce::dsp::ProcessSpec &spec)
-    {
-        softClipper->prepare(spec);
-        fold->prepare(spec);
-        patty->prepare(spec);
-        fuzz->prepare(spec);
-        tubeAmp->prepare(spec);
-        phaseDist->prepare(spec);
-        jeff->prepare(spec);
-        diodeWaveshape->prepare(spec);
-        rubidium->prepare(spec);
-        matrix->prepare(spec);
-        preisach->prepare(spec);
-        nonlinSlew->prepare(spec);
-
-        // init iir filter
-        iirFilter.reset();
-        *iirFilter.state = juce::dsp::IIR::ArrayCoefficients<double>::makeFirstOrderHighPass(spec.sampleRate, 16.0f);
-        iirFilter.prepare(spec);
-
-        setSampleRate(spec.sampleRate);
     }
 
     void setSampleRate(float newSampleRate)
@@ -221,6 +154,9 @@ public:
 
 private:
     // juce::AudioProcessorValueTreeState &treeStateRef;
+
+    juce::AudioBuffer<float> emptyBuffer;
+    juce::dsp::AudioBlock<float> emptyBlock;
 
     juce::AudioParameterChoice *distoType = nullptr;
     juce::AudioParameterBool *distortionEnabled;
@@ -238,7 +174,9 @@ private:
     std::unique_ptr<Preisach> preisach = nullptr;
     std::unique_ptr<NonlinSlew> nonlinSlew = nullptr;
 
-    juce::dsp::ProcessorDuplicator<juce::dsp::IIR::Filter<double>, juce::dsp::IIR::Coefficients<double>> iirFilter;
+    DCBlockingHighPass dcBlocker[3];
+
+    int previousDistType = -1;
 
     float sampleRate;
 

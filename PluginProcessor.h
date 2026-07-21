@@ -91,7 +91,7 @@ private:
 
     PreDistortion preDistortionSelection;
     
-    std::vector<std::unique_ptr<PrimaryDistortion>> distortionTypeSelection;
+    std::vector<std::unique_ptr<PrimaryDistortion>> distortionTypeSelection {};
 
     NoiseDistortions noiseDistortionSelection;
     Dynamics dynamics;

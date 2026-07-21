@@ -13,10 +13,6 @@ public:
     slewSpeed(treeState, ParamIDs::slewSpeed),
     directionality(treeState, ParamIDs::directionality),
     type(nullptr),
-    lastSampleL(0.0f),
-    lastSampleR(0.0f),
-    ema_L(0.0f),
-    ema_R(0.0f),
     lastMode(-1)
     {
         type = dynamic_cast<juce::AudioParameterInt *>(treeState.getParameter(ParamIDs::slewType.getParamID()));
@@ -38,10 +34,8 @@ private:
     SmoothParam directionality;
     juce::AudioParameterInt* type;
 
-    float lastSampleL;
-    float lastSampleR;
+    std::vector<float> lastSampleBuf {};
+    std::vector<float> emaBuf {}; // exponential moving average
 
-    float ema_L;
-    float ema_R;
     int lastMode;
 };

@@ -19,10 +19,12 @@ public:
 private:
     float getAnalyticalArea(float alpha, float beta, float drive, float coercivity, float remanence) const;
 
-    std::vector<double> stack_M_L;
-    std::vector<double> stack_m_L;
-    std::vector<double> stack_M_R;
-    std::vector<double> stack_m_R;
+    static constexpr int maxHistory = 512;
+    
+    std::vector<double> stack_M_L = std::vector<double>(maxHistory);
+    std::vector<double> stack_m_L = std::vector<double>(maxHistory);
+    std::vector<double> stack_M_R = std::vector<double>(maxHistory);
+    std::vector<double> stack_m_R = std::vector<double>(maxHistory);
 
     bool isRisingL = true;
     bool isRisingR = true;
@@ -39,7 +41,6 @@ private:
     SmoothParam remanence;
 
     float possibleMaxValue = 5.0f;
-    int maxHistory = 512;
 
     double getInterpolatedArea(double alpha, double beta) const;
 };

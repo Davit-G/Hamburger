@@ -144,10 +144,10 @@ private:
     SmoothParam emphasisLowFreqSmooth;
     SmoothParam emphasisHighFreqSmooth;
 
-    std::vector<float> emphasisLowBuffer;
-    std::vector<float> emphasisHighBuffer;
-    std::vector<float> emphasisLowFreqBuffer;
-    std::vector<float> emphasisHighFreqBuffer;
+    std::vector<float> emphasisLowBuffer {};
+    std::vector<float> emphasisHighBuffer {};
+    std::vector<float> emphasisLowFreqBuffer {};
+    std::vector<float> emphasisHighFreqBuffer {};
 
     juce::AudioParameterBool* enableEmphasis = nullptr;
 
