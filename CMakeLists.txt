@@ -20,6 +20,16 @@ if(APPLE)
         execute_process(COMMAND uname -m OUTPUT_VARIABLE HOST_ARCH OUTPUT_STRIP_TRAILING_WHITESPACE)
         set (CMAKE_OSX_ARCHITECTURES "${n. }" CACHE STRING "" FORCE)
     endif()
+
+    # dSYM files for Xcode release builds
+    # using ninja will mean these dont apply
+    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -g")
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g")
+    set(CMAKE_XCODE_ATTRIBUTE_GCC_GENERATE_DEBUGGING_SYMBOLS[variant=Release] "YES")
+    set(CMAKE_XCODE_ATTRIBUTE_DEBUG_INFORMATION_FORMAT[variant=Release] "dwarf-with-dsym")
+    set(CMAKE_XCODE_ATTRIBUTE_DEPLOYMENT_POSTPROCESSING[variant=Release] "YES")
+    set(CMAKE_XCODE_ATTRIBUTE_CONFIGURATION_BUILD_DIR "$(inherited)")
+    set(CMAKE_XCODE_ATTRIBUTE_DWARF_DSYM_FILE_SHOULD_ACCOMPANY_PRODUCT "YES")
 endif()
 
 project(Hamburger VERSION "${ProjectVersion}")
@@ -98,12 +108,12 @@ add_subdirectory(service)
 
 target_compile_features("${BaseTargetName}" PUBLIC cxx_std_17)
 
-target_compile_options(Hamburger PRIVATE
-    $<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>,$<CXX_COMPILER_ID:GNU>>:
-        -O3 -ffast-math -flto>
-    $<$<CXX_COMPILER_ID:MSVC>:
-        /O2 /fp:fast /GL>
-)
+# target_compile_options(Hamburger PRIVATE
+#     $<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>,$<CXX_COMPILER_ID:GNU>>:
+#         -O3 -ffast-math -flto>
+#     $<$<CXX_COMPILER_ID:MSVC>:
+#         /O2 /fp:fast /GL>
+# )
 
 
 target_compile_definitions("${BaseTargetName}" PUBLIC

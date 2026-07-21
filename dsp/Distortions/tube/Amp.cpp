@@ -12,15 +12,16 @@ void Amp::prepare(juce::dsp::ProcessSpec &spec)
 
     inputHighPass.prepare(spec);
 
+    sampleRate = spec.sampleRate;
+    
     for (int i = 0; i < 4; i++)
     {
         triodes[i].prepare(spec);
     }
-
-    sampleRate = spec.sampleRate;
-
-
+    
+    
     calcCoefficients();
+
 }
 
 void Amp::calcCoefficientsPerSample() {
@@ -41,10 +42,10 @@ void Amp::calcCoefficientsPerSample() {
         triodes[i].waveshaperSaturation = 0.01f + powf(nextDrive * 0.02f, 0.8f) * 1.6f;
     }
 
-    triode1.millerHF_Hz = fmin(6000.0f + 14000.0f * skewedTone, sampleRate * 0.49f);
+    triode1.millerHF_Hz = juce::jmin(6000.0f + 14000.0f * skewedTone, sampleRate * 0.49f);
     triode1.inputGain = driv + 0.3f;
-    triode2.millerHF_Hz = fmin(7000.0f + 14000.0f * skewedTone, sampleRate * 0.49f);
-    triode3.millerHF_Hz = fmin(9000.0f + 14000.0f * skewedTone, sampleRate * 0.49f);
+    triode2.millerHF_Hz = juce::jmin(7000.0f + 14000.0f * skewedTone, sampleRate * 0.49f);
+    triode3.millerHF_Hz = juce::jmin(9000.0f + 14000.0f * skewedTone, sampleRate * 0.49f);
 
     triode4.outputGain = juce::Decibels::decibelsToGain(-nextDrive * 0.01f * 17.f - 1.5f);
 }
