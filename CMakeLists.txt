@@ -23,7 +23,7 @@ if(APPLE)
 
     # dSYM files for Xcode release builds
     # using ninja will mean these dont apply
-    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -g")
+    # set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -g")
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g")
     set(CMAKE_XCODE_ATTRIBUTE_GCC_GENERATE_DEBUGGING_SYMBOLS[variant=Release] "YES")
     set(CMAKE_XCODE_ATTRIBUTE_DEBUG_INFORMATION_FORMAT[variant=Release] "dwarf-with-dsym")
@@ -108,12 +108,12 @@ add_subdirectory(service)
 
 target_compile_features("${BaseTargetName}" PUBLIC cxx_std_17)
 
-# target_compile_options(Hamburger PRIVATE
-#     $<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>,$<CXX_COMPILER_ID:GNU>>:
-#         -O3 -ffast-math -flto>
-#     $<$<CXX_COMPILER_ID:MSVC>:
-#         /O2 /fp:fast /GL>
-# )
+target_compile_options(Hamburger PRIVATE
+    $<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>,$<CXX_COMPILER_ID:GNU>>:
+        -O3 -ffast-math -flto>
+    $<$<CXX_COMPILER_ID:MSVC>:
+        /O2 /fp:fast /GL>
+)
 
 
 target_compile_definitions("${BaseTargetName}" PUBLIC
