@@ -37,5 +37,8 @@ private:
     std::vector<float> lastSampleBuf {};
     std::vector<float> emaBuf {}; // exponential moving average
 
+    float sampleRateMultiplier = 1.0f; // sample rate mult from 44100
+    float sampleRateMultInv = 1.0f; // inverse of above
+
     int lastMode;
 };
