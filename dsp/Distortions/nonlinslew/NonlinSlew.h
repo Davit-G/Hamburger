@@ -8,8 +8,7 @@
 class NonlinSlew {
 public:
     NonlinSlew(juce::AudioProcessorValueTreeState& treeState) 
-    : emaParam(treeState, ParamIDs::emaParam), 
-    alphaParam(treeState, ParamIDs::alphaParam),
+    : alphaParam(treeState, ParamIDs::alphaParam),
     slewSpeed(treeState, ParamIDs::slewSpeed),
     directionality(treeState, ParamIDs::directionality),
     type(nullptr),
@@ -28,7 +27,6 @@ public:
 private:
     void resetState();
 
-    SmoothParam emaParam;
     SmoothParam alphaParam;
     SmoothParam slewSpeed;
     SmoothParam directionality;

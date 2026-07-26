@@ -25,7 +25,6 @@ void NonlinSlew::resetState() {
 }
 
 void NonlinSlew::prepare(juce::dsp::ProcessSpec& spec) {
-    emaParam.prepare(spec);
     alphaParam.prepare(spec);
     slewSpeed.prepare(spec);
     directionality.prepare(spec);
@@ -40,7 +39,6 @@ void NonlinSlew::prepare(juce::dsp::ProcessSpec& spec) {
 }
 
 void NonlinSlew::processBlock(juce::dsp::AudioBlock<float> &block) {
-    emaParam.update();
     alphaParam.update();
     slewSpeed.update();
     directionality.update();
@@ -64,16 +62,19 @@ void NonlinSlew::processBlock(juce::dsp::AudioBlock<float> &block) {
                     float delta = in - lastSample;
             
                     float alpha = safePow(alphaParam.getNextValue(ch), 3.0f);
-                    float slewSpeedVal = safePow(slewSpeed.getNextValue(ch), 3.0f);
-                    float bend = directionality.getNextValue(ch);
-            
-                    float jumpDist = juce::jmax(juce::jmin(delta, slewSpeedVal), -slewSpeedVal);
-            
-                    lastSample = (1.0f - alpha) * in + alpha * (lastSample + jumpDist * sampleRateMultInv);
-            
-                    if (!std::isfinite(lastSample)) lastSample = 0.0f;
 
-                    data[i] = lastSample;
+                    float rawSlewSpeed = slewSpeed.getNextValue(ch);
+                    float slewSpeedVal = rawSlewSpeed * rawSlewSpeed * rawSlewSpeed * rawSlewSpeed;
+                    float bend = directionality.getNextValue(ch);
+                    
+                    float jumpDist = juce::jmax(juce::jmin(delta, slewSpeedVal), -slewSpeedVal);
+                    
+                    lastSample = (1.0f - alpha) * in + alpha * (lastSample + jumpDist * sampleRateMultInv);
+                    
+                    if (!std::isfinite(lastSample)) lastSample = 0.0f;
+                    
+                    float gainCompensation = 2.0f - rawSlewSpeed;
+                    data[i] = lastSample * gainCompensation;
                 }
                 break;
             }
@@ -96,8 +97,9 @@ void NonlinSlew::processBlock(juce::dsp::AudioBlock<float> &block) {
                     lastSample = (1.0f - alpha) * in + alpha * std::tanh((lastSample + sign * delta * jumpDist) * sampleRateMultInv) * sampleRateMultiplier;
                     
                     if (!std::isfinite(lastSample)) lastSample = 0.0f;
-    
-                    data[i] = lastSample;
+                    
+                    float gainCompensation = 2.0f - slewSpeedVal;
+                    data[i] = lastSample * gainCompensation;
                 }
             
                 break;
@@ -127,7 +129,8 @@ void NonlinSlew::processBlock(juce::dsp::AudioBlock<float> &block) {
                     ema = ema_a * lastSample + (1.0f - ema_a) * ema;
                     if (!std::isfinite(ema)) ema = 0.0f;
     
-                    data[i] = lastSample;
+                    float gainCompensation = drive + 1.0f;
+                    data[i] = lastSample * gainCompensation;
                 }
                 
                 break;

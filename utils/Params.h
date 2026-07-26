@@ -163,8 +163,7 @@ namespace ParamIDs {
     static const juce::ParameterID allPassQ { "allPassQ", 1 };
     static const juce::ParameterID allPassAmount { "allPassAmount", 1 };
 
-
-    static const juce::ParameterID emaParam { "emaAlpha", 3 };
+    // slew
     static const juce::ParameterID alphaParam { "alphaParam", 3 };
     static const juce::ParameterID slewSpeed { "slewSpeed", 3 };
     static const juce::ParameterID directionality { "directionality", 3 };

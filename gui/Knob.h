@@ -10,7 +10,8 @@ enum class ParamUnits {
     ms,
     db,
     percent,
-    x
+    x,
+    category
 };
 
 inline juce::String createParamString(float value, ParamUnits unit) noexcept {
@@ -25,6 +26,8 @@ inline juce::String createParamString(float value, ParamUnits unit) noexcept {
             return juce::String(value, 2, false) + " %";
         case ParamUnits::x:
             return juce::String(value, 0, false) + "x";
+        case ParamUnits::category:
+            return juce::String(value, 0, false);
         default:
             return juce::String(value, 2, false);
     }
@@ -42,7 +45,7 @@ public:
         knob.setSliderStyle(juce::Slider::RotaryVerticalDrag);
         knob.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
         
-        if (knobUnit == ParamUnits::x) {
+        if (knobUnit == ParamUnits::x || knobUnit == ParamUnits::category) {
             knob.setRange(knobParamRange.start, knobParamRange.end, 1.0);
         } else {
             knob.setRange(knobParamRange.start, knobParamRange.end, 0.001);
@@ -130,11 +133,11 @@ public:
         knobBounds = bounds;
     }
 
+    std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> knobAttachment = nullptr;
+    juce::Slider knob;
 private:
     AudioPluginAudioProcessor &processorRef;
-    std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> knobAttachment = nullptr;
 
-    juce::Slider knob;
     juce::Label label;
 
     juce::Rectangle<int> knobBounds;
