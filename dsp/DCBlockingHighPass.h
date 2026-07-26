@@ -27,6 +27,10 @@ public:
     {
         const int numChannels = static_cast<int>(block.getNumChannels());
         const int numSamples  = static_cast<int>(block.getNumSamples());
+
+        // resize double buffer (yes i know it could allocate, but this fixes audio issues)
+        bufferDouble->setSize(numChannels, numSamples, false, false, true);
+        blockDouble = juce::dsp::AudioBlock<double>(*bufferDouble);
         
         for (int channel = 0; channel < numChannels; ++channel)
         {
