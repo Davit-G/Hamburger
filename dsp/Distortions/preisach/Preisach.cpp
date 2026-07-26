@@ -197,7 +197,7 @@ void Preisach::processBlock(juce::dsp::AudioBlock<float> &block) {
             float finalOutput = (rawOutput - center) / dynamicEMax;
 
             float invDrive = 1.0f - driveSquared;
-            float gainMult = invDrive * invDrive * invDrive + 1.0f;
+            float gainMult = invDrive * invDrive + 2.0f;
             finalOutput *= gainMult;
 
             channelData[i] = finalOutput;
