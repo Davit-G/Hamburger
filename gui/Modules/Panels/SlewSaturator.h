@@ -23,6 +23,8 @@ public:
         Palette::setKnobColoursOfComponent(&directionality, Palette::colours[4]);
 
         p.treeState.addParameterListener(ParamIDs::slewType.getParamID(), this);
+
+        makeBiasKnobTransparent();
     }
 
     void resized() override
