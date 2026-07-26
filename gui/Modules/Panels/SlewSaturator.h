@@ -47,9 +47,12 @@ public:
     void makeBiasKnobTransparent()
     {
         const bool isDisabled = static_cast<int>(type.knob.getValue()) != 0;
-        directionality.setAlpha(isDisabled ? 1.0f : 0.35f);
-        directionality.setEnabled(isDisabled);
-        directionality.repaint();
+
+        juce::MessageManager::callAsync([this, isDisabled]() mutable {
+            directionality.setAlpha(isDisabled ? 1.0f : 0.35f);
+            directionality.setEnabled(isDisabled);
+            directionality.repaint();
+        });
     }
 
     ParamKnob alpha;
