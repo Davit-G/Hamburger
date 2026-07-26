@@ -9,9 +9,9 @@ class ClassicSatPanel : public Panel
 public:
     ClassicSatPanel(AudioPluginAudioProcessor &p) : Panel(p, "GRILL", Palette::colours[0]), 
         satKnob(p, "SATURATION", "saturationAmount", ParamUnits::percent),
-        biasKnob(p, "BIAS", ParamIDs::grillBias),
+        biasKnob(p, "DC BIAS", ParamIDs::grillBias),
         fuzzKnob(p, "DIODE", ParamIDs::diode),
-        cookedKnob(p, "FOLD", ParamIDs::fold)
+        cookedKnob(p, "WAVEFOLD", ParamIDs::fold)
     {
         addAndMakeVisible(satKnob);
         addAndMakeVisible(biasKnob);
