@@ -33,11 +33,13 @@ public:
             auto existingCategoryParam = dynamic_cast<juce::AudioParameterChoice *>(processor.treeState.getParameter(categoryAttachmentId));
             if (existingCategoryParam != nullptr)
             {
-                categorySelector.setSelectedItemIndex(existingCategoryParam->getIndex());
+                categorySelector.setSelectedItemIndex(existingCategoryParam->getIndex(), juce::dontSendNotification);
+                DBG("not nullptr");
             }
             else
             {
                 categorySelector.setSelectedItemIndex(0);
+                DBG("nullptr");
             }
             
             categoryAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment>(processor.treeState, categoryAttachmentId, categorySelector);
@@ -198,19 +200,20 @@ private:
 
     void setCategoryText(juce::String moduleName)
     {
-        size_t index = categorySelector.getSelectedItemIndex();
-        if (index != -1)
+        int index = categorySelector.getSelectedItemIndex(); 
+        
+        if (index != -1 && index < modulePanels.size()) 
         {
             auto panelName = modulePanels[index]->getName();
             if (moduleName == "") {
-                categorySelector.setText(panelName);
+                categorySelector.setText(panelName, juce::dontSendNotification); 
             } else {
-                categorySelector.setText(panelName + " " + moduleName);
+                categorySelector.setText(panelName + " " + moduleName, juce::dontSendNotification);
             }
         }
         else
         {
-            categorySelector.setText(moduleName);
+            categorySelector.setText(moduleName, juce::dontSendNotification);
         }
     }
 
