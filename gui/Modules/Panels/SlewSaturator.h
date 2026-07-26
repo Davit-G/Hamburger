@@ -6,7 +6,7 @@
 class SlewRatePanel : public Panel, private juce::AudioProcessorValueTreeState::Listener
 {
 public:
-    SlewRatePanel(AudioPluginAudioProcessor &p) : Panel(p, "SLEW"), 
+    SlewRatePanel(AudioPluginAudioProcessor &p) : apvts(p), Panel(p, "SLEW"), 
         alpha(p, "ALPHA", ParamIDs::alphaParam),
         bias(p, "TONE", ParamIDs::slewSpeed),
         directionality(p, "BEND", ParamIDs::directionality),
@@ -25,6 +25,10 @@ public:
         p.treeState.addParameterListener(ParamIDs::slewType.getParamID(), this);
 
         makeBiasKnobTransparent();
+    }
+
+    ~SlewRatePanel() override {
+        apvts.treeState.removeParameterListener(ParamIDs::slewType.getParamID(), this);
     }
 
     void resized() override
@@ -54,6 +58,8 @@ public:
             directionality.repaint();
         });
     }
+
+    AudioPluginAudioProcessor &apvts;
 
     ParamKnob alpha;
     ParamKnob bias;
