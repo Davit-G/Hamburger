@@ -6,7 +6,7 @@ Set(FETCHCONTENT_QUIET FALSE)
 set(BUILD_CLAP TRUE)
 
 cmake_minimum_required(VERSION 3.15)
-set(ProjectVersion 0.6.1)
+set(ProjectVersion 0.7)
 set(PluginName "Hamburger")
 
 set(BaseTargetName Hamburger)
