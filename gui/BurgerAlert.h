@@ -95,6 +95,49 @@ public:
         cancelButton->setColour(juce::TextButton::textColourOffId, juce::Colours::white);
     }
 
+    void createUpdateAlert(const juce::String& releaseNotes) {
+        addButton("Update", 1, juce::KeyPress(juce::KeyPress::returnKey, 0, 0));
+        addButton("Cancel", 0, juce::KeyPress(juce::KeyPress::escapeKey, 0, 0));
+        addButton("Don't show again", 2);
+
+        auto updateButton = getButton(0);
+        auto cancelButton = getButton(1);
+        auto dontShowButton = getButton(2);
+
+        updateButton->setColour(juce::TextButton::buttonColourId, Palette::colours[0]);
+        updateButton->setColour(juce::TextButton::textColourOnId, juce::Colours::black);
+        updateButton->setColour(juce::TextButton::textColourOffId, juce::Colours::black);
+
+        cancelButton->setColour(juce::TextButton::buttonColourId, juce::Colour::fromRGB(22, 22, 22));
+        cancelButton->setColour(juce::TextButton::textColourOnId, juce::Colours::white);
+        cancelButton->setColour(juce::TextButton::textColourOffId, juce::Colours::white);
+
+        dontShowButton->setColour(juce::TextButton::buttonColourId, juce::Colour::fromRGB(22, 22, 22));
+        dontShowButton->setColour(juce::TextButton::textColourOnId, juce::Colours::white);
+        dontShowButton->setColour(juce::TextButton::textColourOffId, juce::Colours::white);
+
+        if (releaseNotes.isNotEmpty())
+        {
+            auto* scrollBox = new juce::TextEditor();
+            scrollBox->setMultiLine(true, true);
+            scrollBox->setReadOnly(true);
+            scrollBox->setScrollbarsShown(true);
+            scrollBox->setCaretVisible(false);
+            scrollBox->setPopupMenuEnabled(false);
+            scrollBox->setText(releaseNotes, false);
+            
+            scrollBox->setMouseClickGrabsKeyboardFocus(false);
+            scrollBox->setWantsKeyboardFocus(false);
+
+            scrollBox->setColour(juce::TextEditor::backgroundColourId, juce::Colour::fromRGB(15, 15, 15));
+            scrollBox->setColour(juce::TextEditor::textColourId, juce::Colours::white);
+            scrollBox->setColour(juce::TextEditor::outlineColourId, juce::Colour::fromRGB(33, 33, 33));
+            
+            scrollBox->setSize(400, 160); 
+            addCustomComponent(scrollBox);
+        }
+    }
+
 private:
 
     HamburgerLAF comboBoxLook;

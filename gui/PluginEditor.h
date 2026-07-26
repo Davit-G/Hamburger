@@ -14,6 +14,7 @@
 #include "UtilColumn.h"
 
 #include "PresetPanel.h"
+#include "UpdateChecker.h"
 
 #include "LookAndFeel/HamburgerLAF.h"
 
@@ -21,6 +22,7 @@ class EditorV2 : public juce::AudioProcessorEditor
 {
 public:
     EditorV2(AudioPluginAudioProcessor &p) : AudioProcessorEditor(&p),
+                                             audioProcessorRef(p),
                                              leftColumn(p),
                                              saturationColumn(p),
                                              utilColumn(p),
@@ -48,9 +50,54 @@ public:
         infoPanel.setVisible(false);
 
         setPaintingIsUnclipped(true);
-        
 
         setSize(800, 500 + additionalHeight);
+
+        updater = std::make_unique<UpdateChecker>(JucePlugin_VersionString); // change here to something random to test update mechanism
+
+        updater->shouldCheckForUpdates = [this]() 
+        {
+            auto* props = audioProcessorRef.getAppProperties().appProperties.getUserSettings();
+            if (props == nullptr) return true;
+
+            if (!props->getBoolValue("check_for_updates", true))
+                return false;
+
+            juce::int64 lastCancelTime = props->getDoubleValue("last_update_cancel_time", 0.0);
+            juce::int64 currentTime = juce::Time::getCurrentTime().toMilliseconds();
+            juce::int64 twentyFourHoursInMs = 24LL * 60LL * 60LL * 1000LL;
+
+            if (currentTime - lastCancelTime < twentyFourHoursInMs)
+            {
+                return false;
+            }
+
+            return true;
+        };
+
+        updater->onCancelUpdates = [this]() 
+        {
+            auto* props = audioProcessorRef.getAppProperties().appProperties.getUserSettings();
+            if (props != nullptr)
+            {
+                props->setValue("last_update_cancel_time", 
+                                (double)juce::Time::getCurrentTime().toMilliseconds());
+                props->saveIfNeeded();
+            }
+        };
+
+        updater->onDisableUpdates = [this]() 
+        {
+            auto* props = audioProcessorRef.getAppProperties().appProperties.getUserSettings();
+            if (props != nullptr)
+            {
+                props->setValue("check_for_updates", false);
+                props->saveIfNeeded();
+            }
+        };
+
+        updater->checkForUpdates();
+
     }
 
     ~EditorV2()
@@ -101,6 +148,8 @@ public:
     }
 
 private:
+    AudioPluginAudioProcessor& audioProcessorRef;
+
     LeftColumn leftColumn;
     SaturationColumn saturationColumn;
     UtilColumn utilColumn;
@@ -108,6 +157,7 @@ private:
     HamburgerLAF hamburgerLAF;
 
     PresetPanel presetPanel;
+    std::unique_ptr<UpdateChecker> updater;
 
     Info infoPanel;
 

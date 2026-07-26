@@ -73,6 +73,7 @@ public:
         addAndMakeVisible(changePresetFolderButton);
 
         auto& presetManager = p.getPresetManager();
+        auto& appProperties = p.getAppProperties();
 
         changePresetFolderButton.onClick = [&]() {
             // browse for files
@@ -92,7 +93,7 @@ public:
 
                     juce::File directory (chooser.getResult());
             
-                    auto userSettings = presetManager.appProperties.getUserSettings();
+                    auto userSettings = appProperties.appProperties.getUserSettings();
 
                     userSettings->setValue("presetFolder", directory.getFullPathName());
 
@@ -142,7 +143,6 @@ public:
 
     void mouseUp(const juce::MouseEvent &event) override
     {
-        DBG("Mouse clicked");
         getParentComponent()->postCommandMessage(1);
     }
 

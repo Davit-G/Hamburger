@@ -53,17 +53,9 @@ juce::File Preset::PresetManager::getPresetDirectory() const
 }
 
 
-Preset::PresetManager::PresetManager(juce::AudioProcessorValueTreeState &apvts) : valueTreeState(apvts)
+Preset::PresetManager::PresetManager(juce::AudioProcessorValueTreeState &apvts, AppProperties &appProperties) : appProperties(appProperties), valueTreeState(apvts)
 {
-	options.applicationName = JucePlugin_Name;
-	options.filenameSuffix = ".settings";
-	options.osxLibrarySubFolder = "Application Support/AviaryAudio";
-	options.folderName = juce::String(JucePlugin_Manufacturer) + "/" + juce::String(JucePlugin_Name);
-	options.storageFormat = juce::PropertiesFile::storeAsXML;
-
-	appProperties.setStorageParameters(options);
-
-	auto propertiesFile = appProperties.getUserSettings();
+	auto propertiesFile = appProperties.appProperties.getUserSettings();
 
 	DBG("Loading preset directory from config file at " + propertiesFile->getFile().getFullPathName());
 
@@ -121,7 +113,7 @@ juce::String Preset::PresetManager::getCurrentAuthor() const
 
 juce::String Preset::PresetManager::getLastAuthor()
 {
-	auto* settings = appProperties.getUserSettings();
+	auto* settings = appProperties.appProperties.getUserSettings();
 	if (settings != nullptr)
 		return settings->getValue("lastAuthor", "");
 	return {};
@@ -163,7 +155,7 @@ bool Preset::PresetManager::savePreset(const juce::String &presetName, const juc
 
 	if (author.isNotEmpty())
 	{
-		auto* settings = appProperties.getUserSettings();
+		auto* settings = appProperties.appProperties.getUserSettings();
 		if (settings != nullptr)
 		{
 			settings->setValue("lastAuthor", author);

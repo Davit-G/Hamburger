@@ -47,7 +47,7 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor() : AudioProcessor(BusesPro
     if (clipEnabled == nullptr)
         jassertfalse;
 
-    presetManager = std::make_unique<Preset::PresetManager>(treeState);
+    presetManager = std::make_unique<Preset::PresetManager>(treeState, appProperties);
 
     for (int i = 0; i < ParamIDs::maxStages; i++) {
         distortionTypeSelection.push_back(std::make_unique<PrimaryDistortion>(treeState));

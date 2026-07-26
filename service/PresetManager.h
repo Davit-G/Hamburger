@@ -4,6 +4,8 @@
 #include "juce_core/juce_core.h"
 #include "juce_audio_processors/juce_audio_processors.h"
 
+#include "./AppProperties.h"
+
 namespace Preset
 {
 
@@ -96,7 +98,7 @@ namespace Preset
 	class PresetManager : juce::ValueTree::Listener
 	{
 	public:
-		PresetManager(juce::AudioProcessorValueTreeState &);
+		PresetManager(juce::AudioProcessorValueTreeState &, AppProperties &);
 
 		bool savePreset(const juce::String &preset, const juce::String &author, const juce::String &description, std::function<void(std::string)> cb);
 		void deletePreset(const juce::File &preset, std::function<void(std::string)> cb);
@@ -119,10 +121,10 @@ namespace Preset
 		void recursiveSortedTraverse(const juce::File &directory, std::shared_ptr<juce::OwnedArray<Preset::PresetFile>> presets);
 
 		std::shared_ptr<juce::OwnedArray<Preset::PresetFile>> getPresetFileHierarchy();
-
-		juce::ApplicationProperties appProperties;
 	private:
 		void valueTreeRedirected(juce::ValueTree &treeWhichHasBeenChanged) override;
+
+		AppProperties& appProperties;
 
 		std::shared_ptr<juce::OwnedArray<Preset::PresetFile>> presetsCache = nullptr;
 

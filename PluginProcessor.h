@@ -18,6 +18,7 @@
 
 #include "dsp/Fifo.h"
 #include "service/PresetManager.h"
+#include "service/AppProperties.h"
 
 // profiling
 // #include <melatonin_perfetto/melatonin_perfetto.h>
@@ -76,6 +77,7 @@ public:
     AudioBufferQueue<float>& getAudioBufferQueueR() noexcept        { return audioBufferQueueR; }
 
     Preset::PresetManager& getPresetManager() { return *presetManager; }
+    AppProperties& getAppProperties() { return appProperties; }
 
 private:
     juce::AudioParameterFloat *inputGainKnob = nullptr;
@@ -112,6 +114,7 @@ private:
     AudioBufferQueue<float> audioBufferQueueR;
     ScopeDataCollector<float> scopeDataCollector { audioBufferQueueL, audioBufferQueueR };
 
+    AppProperties appProperties;
     std::unique_ptr<Preset::PresetManager> presetManager;
 
     #if PERFETTO
