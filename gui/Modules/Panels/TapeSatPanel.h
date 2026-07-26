@@ -15,9 +15,9 @@ public:
         addAndMakeVisible(bias);
         addAndMakeVisible(tapeWidth);
 
-        Palette::setKnobColoursOfComponent(&drive, Palette::colours[4]);
-        Palette::setKnobColoursOfComponent(&bias, Palette::colours[4]);
-        Palette::setKnobColoursOfComponent(&tapeWidth, Palette::colours[4]);
+        Palette::setKnobColoursOfComponent(&drive, Palette::colours[7]);
+        Palette::setKnobColoursOfComponent(&bias, Palette::colours[7]);
+        Palette::setKnobColoursOfComponent(&tapeWidth, Palette::colours[7]);
     }
 
     void resized() override

@@ -7,5 +7,6 @@ const std::vector<juce::Colour> Palette::colours = {
     juce::Colour::fromRGB(0, 229, 138),
     juce::Colour::fromRGB(255, 46, 151),
     juce::Colour::fromRGB(78, 247, 255),
-    juce::Colour::fromRGB(59, 120, 255)
+    juce::Colour::fromRGB(59, 120, 255),
+    juce::Colour::fromRGB(255, 172, 77)
 };
