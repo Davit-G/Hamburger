@@ -18,6 +18,7 @@ public:
     
 private:
     float getAnalyticalArea(float alpha, float beta, float drive, float coercivity, float remanence) const;
+    float getIrreversibleArea(float alpha, float beta) const;
 
     static constexpr int maxHistory = 512;
     
@@ -33,8 +34,6 @@ private:
 
     float cachedHistoricalAreaL = 0.0f;
     float cachedHistoricalAreaR = 0.0f;
-
-    float dynamicEMax = 0.0f;
 
     SmoothParam drive;
     SmoothParam bias;

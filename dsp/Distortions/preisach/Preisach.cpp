@@ -84,28 +84,21 @@ float Preisach::getAnalyticalArea(float alpha, float beta, float drive, float co
     return reversible + irreversible;
 }
 
+// this only computes the raw, unscaled irreversible memory shape
+// used for continuous parameter update
+float Preisach::getIrreversibleArea(float alpha, float beta) const {
+    const float rev = fastTanh(alpha) - fastTanh(beta);
+    return rev * rev; // We handle the 2.0f and Remanence at the output
+}
+
 void Preisach::processBlock(juce::dsp::AudioBlock<float> &block) {
     drive.update();
     remanence.update();
     bias.update();
-    
-    float driveRaw = drive.getCurrent(0);
-    float driveSquared = driveRaw * driveRaw;
-    float gainMult = powf(1.0f - driveSquared, 3.0f) + 1.0f;
-
-    float currentDrive = driveSquared * 6.0f + 0.5f;
-    float currentCoercivity = bias.getCurrent(0) * 2.0f;
-    
-    float rem = remanence.getCurrent(0);
-    float currentRemanence = (rem * rem) * 30.0f + 0.000001f;
-    
-    // bool parameterChanged = drive.isChanged() || bias.isChanged() || remanence.isChanged();
 
     const int numChannels = block.getNumChannels();
     const int numSamples = block.getNumSamples();
-    
-    // used for normalisation
-    
+
     for (int ch = 0; ch < numChannels; ++ch) {
         float* channelData = block.getChannelPointer(ch);
         
@@ -114,50 +107,32 @@ void Preisach::processBlock(juce::dsp::AudioBlock<float> &block) {
         bool& isRising = (ch == 0) ? isRisingL : isRisingR;
         double& lastSignal = (ch == 0) ? lastSignalL : lastSignalR;
         float& cachedArea = (ch == 0) ? cachedHistoricalAreaL : cachedHistoricalAreaR;
-        
+
         for (int i = 0; i < numSamples; ++i) {
-            // once per block per channel, compute runnning sum in case parameters change
-            // might be expensive if block size is 1
-            // cachedArea = 0.0f;
-            // for (size_t k = 0; k < stackM.size(); ++k) {
-            //     if (k < stackm.size()) {
-            //         cachedArea += getAnalyticalArea(stackM[k], stackm[k], currentDrive, currentCoercivity, currentRemanence);
-            //     }
-            //     if (k + 1 < stackm.size()) {
-            //         cachedArea -= getAnalyticalArea(stackM[k], stackm[k + 1], currentDrive, currentCoercivity, currentRemanence);
-            //     }
-            // }
-        
             float x = channelData[i];
             
-            driveRaw = drive.getNextValue(ch);
-            driveSquared = driveRaw * driveRaw;
-
-            float invDrive = 1.0f - driveSquared;
-            gainMult = invDrive * invDrive * invDrive + 1.0f;
-            currentDrive = driveSquared * 6.0f + 0.5f;
-            currentCoercivity = bias.getNextValue(ch) * 2.0f;
-            rem = remanence.getNextValue(ch);
-            currentRemanence = (rem * rem) * 2.0f + 0.000001f;
-
-            float center = getAnalyticalArea(0.0f, 1.0f, currentDrive, currentCoercivity, currentRemanence);
+            float driveRaw = drive.getNextValue(ch);
+            float driveSquared = driveRaw * driveRaw;
+            float currentDrive = driveSquared * 6.0f + 0.5f;
             
-            dynamicEMax = getAnalyticalArea(possibleMaxValue, -possibleMaxValue, currentDrive, currentCoercivity, currentRemanence);
-            if (dynamicEMax <= 0.0f) dynamicEMax = 1.0f;
+            float rem = remanence.getNextValue(ch);
+            float currentRemanence = (rem * rem) * 2.0f + 0.000001f;
 
-            if (!(x >= -100000.0f && x <= 100000.0f)) x = 0.0f;
-            if (std::abs(x) < 1e-15f) x = 0.0f;
+            float drivenX = x * currentDrive;
+
+            if (!(drivenX >= -100000.0f && drivenX <= 100000.0f)) drivenX = 0.0f;
+            if (std::abs(drivenX) < 1e-15f) drivenX = 0.0f;
             
-            const bool nowRising = (x >= lastSignal);
+            const bool nowRising = (drivenX >= lastSignal);
             if (nowRising != isRising) {
                 if (isRising) { 
                     float peak = lastSignal;
-                    cachedArea += getAnalyticalArea(peak, stackm.back(), currentDrive, currentCoercivity, currentRemanence);
+                    cachedArea += getIrreversibleArea(peak, stackm.back());
                     stackM.push_back(peak);
                 } else { 
                     float trough = lastSignal;
                     float peakForTrough = stackM.empty() ? 1.0f : stackM.back();
-                    cachedArea -= getAnalyticalArea(peakForTrough, trough, currentDrive, currentCoercivity, currentRemanence);
+                    cachedArea -= getIrreversibleArea(peakForTrough, trough);
                     stackm.push_back(trough);
                 }
                 isRising = nowRising;
@@ -165,53 +140,69 @@ void Preisach::processBlock(juce::dsp::AudioBlock<float> &block) {
 
             // wipeout
             if (isRising) {
-                while (!stackM.empty() && x >= stackM.back()) {
+                while (!stackM.empty() && drivenX >= stackM.back()) {
                     if (stackm.size() > 1) {
-                        cachedArea += getAnalyticalArea(stackM.back(), stackm.back(), currentDrive, currentCoercivity, currentRemanence);
+                        cachedArea += getIrreversibleArea(stackM.back(), stackm.back());
                         stackm.pop_back();
                     }
                     float troughForPeak = stackm.back(); 
-                    cachedArea -= getAnalyticalArea(stackM.back(), troughForPeak, currentDrive, currentCoercivity, currentRemanence);
+                    cachedArea -= getIrreversibleArea(stackM.back(), troughForPeak);
                     stackM.pop_back();
                 }
             } else {
-                while (stackm.size() > 1 && x <= stackm.back()) {
+                while (stackm.size() > 1 && drivenX <= stackm.back()) {
                     if (!stackM.empty()) {
                         float troughForPeak = stackm.back();
-                        cachedArea -= getAnalyticalArea(stackM.back(), troughForPeak, currentDrive, currentCoercivity, currentRemanence);
+                        cachedArea -= getIrreversibleArea(stackM.back(), troughForPeak);
                         stackM.pop_back();
                     }
                     float peakForTrough = stackM.empty() ? 1.0f : stackM.back();
-                    cachedArea += getAnalyticalArea(peakForTrough, stackm.back(), currentDrive, currentCoercivity, currentRemanence);
+                    cachedArea += getIrreversibleArea(peakForTrough, stackm.back());
                     stackm.pop_back();
                 }
             }
             
             if (stackM.empty()) cachedArea = 0.0f;
-            // cachedArea *= 0.9999f; // decay the cached area over time, this makes me feel a little less uneasy about this code
             
             // trim array if we're reaching limit
             if (stackM.size() > maxHistory && stackm.size() > 1) {
-                cachedArea += getAnalyticalArea(stackM.back(), stackm.back(), currentDrive, currentCoercivity, currentRemanence);
+                cachedArea += getIrreversibleArea(stackM.back(), stackm.back());
                 stackm.pop_back();
                 float troughForPeak = stackm.back();
-                cachedArea -= getAnalyticalArea(stackM.back(), troughForPeak, currentDrive, currentCoercivity, currentRemanence);
+                cachedArea -= getIrreversibleArea(stackM.back(), troughForPeak);
                 stackM.pop_back();
             }
             
-            float accumulatedArea = cachedArea;
+            float accumulatedIrrev = cachedArea;
             if (isRising) {
-                accumulatedArea += getAnalyticalArea(x, stackm.back(), currentDrive, currentCoercivity, currentRemanence);
+                accumulatedIrrev += getIrreversibleArea(drivenX, stackm.back());
             } else {
                 float peakForx = stackM.empty() ? 1.0f : stackM.back();
-                accumulatedArea -= getAnalyticalArea(peakForx, x, currentDrive, currentCoercivity, currentRemanence);
+                accumulatedIrrev -= getIrreversibleArea(peakForx, drivenX);
             }
 
-            float finalOutput = (accumulatedArea - center) / dynamicEMax;
+            float reversiblePart = fastTanh(drivenX) - fastTanh(-possibleMaxValue); 
+            float irreversiblePart = 2.0f * currentRemanence * accumulatedIrrev;
+
+            float rawOutput = reversiblePart + irreversiblePart;
+
+            // normalisation
+            float center = fastTanh(0.0f) - fastTanh(-possibleMaxValue) + 
+                           (2.0f * currentRemanence * getIrreversibleArea(0.0f, -possibleMaxValue));
+                           
+            float eMax = fastTanh(possibleMaxValue) - fastTanh(-possibleMaxValue) + 
+                         (2.0f * currentRemanence * getIrreversibleArea(possibleMaxValue, -possibleMaxValue));
+            float dynamicEMax = eMax <= 0.0f ? 1.0f : eMax;
+
+            float finalOutput = (rawOutput - center) / dynamicEMax;
+
+            float invDrive = 1.0f - driveSquared;
+            float gainMult = invDrive * invDrive * invDrive + 1.0f;
             finalOutput *= gainMult;
+
             channelData[i] = finalOutput;
             
-            lastSignal = x;
+            lastSignal = drivenX;
         }
     }
 }
