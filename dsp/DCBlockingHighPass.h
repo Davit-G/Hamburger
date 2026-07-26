@@ -16,11 +16,12 @@ public:
         *iirFilter.state = juce::dsp::IIR::ArrayCoefficients<double>::makeHighPass(spec.sampleRate, 8.0f);
         iirFilter.prepare(spec);
 
-        bufferDouble = std::make_unique<juce::AudioBuffer<double>>(spec.numChannels, spec.maximumBlockSize);
-        blockDouble = juce::dsp::AudioBlock<double>(*bufferDouble);
+        const int safeMaxBlockSize = juce::jmax(static_cast<int>(spec.maximumBlockSize), 8192);
 
+        bufferDouble = std::make_unique<juce::AudioBuffer<double>>(spec.numChannels, spec.maximumBlockSize);
+
+        bufferDouble->setSize(spec.numChannels, safeMaxBlockSize);
         bufferDouble->clear();
-        blockDouble.fill(0.0);
     }
     
     void processBlock(juce::dsp::AudioBlock<float> &block)
@@ -30,12 +31,13 @@ public:
 
         // resize double buffer (yes i know it could allocate, but this fixes audio issues)
         bufferDouble->setSize(numChannels, numSamples, false, false, true);
-        blockDouble = juce::dsp::AudioBlock<double>(*bufferDouble);
+        auto blockDouble = juce::dsp::AudioBlock<double>(*bufferDouble);
+        auto activeBlockDouble = blockDouble.getSubBlock(0, (size_t)numSamples);
         
         for (int channel = 0; channel < numChannels; ++channel)
         {
             const float* src = block.getChannelPointer(channel);
-            double* dest     = blockDouble.getChannelPointer(channel);
+            double* dest     = activeBlockDouble.getChannelPointer(channel);
 
             for (int sample = 0; sample < numSamples; ++sample)
             {
@@ -43,12 +45,12 @@ public:
             }
         }
         
-        auto doubleContext = juce::dsp::ProcessContextReplacing<double>(blockDouble);
+        auto doubleContext = juce::dsp::ProcessContextReplacing<double>(activeBlockDouble);
         iirFilter.process(doubleContext);
         
         for (int channel = 0; channel < numChannels; ++channel)
         {
-            const double* src = blockDouble.getChannelPointer(channel);
+            const double* src = activeBlockDouble.getChannelPointer(channel);
             float* dest       = block.getChannelPointer(channel);
 
             for (int sample = 0; sample < numSamples; ++sample)
@@ -60,6 +62,5 @@ public:
 
 private:
     std::unique_ptr<juce::AudioBuffer<double>> bufferDouble;
-    juce::dsp::AudioBlock<double> blockDouble;
     juce::dsp::ProcessorDuplicator<juce::dsp::IIR::Filter<double>, juce::dsp::IIR::Coefficients<double>> iirFilter;
 };
