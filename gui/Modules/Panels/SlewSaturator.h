@@ -17,10 +17,10 @@ public:
         addAndMakeVisible(directionality);
         addAndMakeVisible(type);
 
-        Palette::setKnobColoursOfComponent(&alpha, Palette::colours[4]);
-        Palette::setKnobColoursOfComponent(&bias, Palette::colours[4]);
-        Palette::setKnobColoursOfComponent(&type, Palette::colours[4]);
-        Palette::setKnobColoursOfComponent(&directionality, Palette::colours[4]);
+        Palette::setKnobColoursOfComponent(&alpha, Palette::colours[1]);
+        Palette::setKnobColoursOfComponent(&bias, Palette::colours[1]);
+        Palette::setKnobColoursOfComponent(&type, Palette::colours[1]);
+        Palette::setKnobColoursOfComponent(&directionality, Palette::colours[1]);
 
         p.treeState.addParameterListener(ParamIDs::slewType.getParamID(), this);
 
