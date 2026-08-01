@@ -23,8 +23,8 @@ void Preisach::prepare(juce::dsp::ProcessSpec& spec) {
     stack_M_R.reserve(maxHistory);
     stack_m_R.reserve(maxHistory);
 
-    stack_m_L.push_back(-1.0f);
-    stack_m_R.push_back(-1.0f);
+    stack_m_L.push_back(-maxVal);
+    stack_m_R.push_back(-maxVal);
 
     isRisingL = true;
     isRisingR = true;
@@ -46,7 +46,7 @@ int sgn(T val) {
 
 float fastTanh(float x) {
     // range is -5 to 5
-
+    
     int val = static_cast<int>(x * 0.1666);
     int sign = sgn(val);
 
@@ -134,7 +134,7 @@ void Preisach::processBlock(juce::dsp::AudioBlock<float> &block) {
                     stackM.push_back(peak);
                 } else { 
                     float trough = lastSignal;
-                    float peakForTrough = stackM.empty() ? 1.0f : stackM.back();
+                    float peakForTrough = stackM.empty() ? maxVal : stackM.back();
                     cachedArea -= getIrreversibleArea(peakForTrough, trough);
                     stackm.push_back(trough);
                 }
@@ -159,7 +159,7 @@ void Preisach::processBlock(juce::dsp::AudioBlock<float> &block) {
                         cachedArea -= getIrreversibleArea(stackM.back(), troughForPeak);
                         stackM.pop_back();
                     }
-                    float peakForTrough = stackM.empty() ? 1.0f : stackM.back();
+                    float peakForTrough = stackM.empty() ? maxVal : stackM.back();
                     cachedArea += getIrreversibleArea(peakForTrough, stackm.back());
                     stackm.pop_back();
                 }
@@ -180,21 +180,21 @@ void Preisach::processBlock(juce::dsp::AudioBlock<float> &block) {
             if (isRising) {
                 accumulatedIrrev += getIrreversibleArea(drivenX, stackm.back());
             } else {
-                float peakForx = stackM.empty() ? 1.0f : stackM.back();
+                float peakForx = stackM.empty() ? maxVal : stackM.back();
                 accumulatedIrrev -= getIrreversibleArea(peakForx, drivenX);
             }
 
-            float reversiblePart = fastTanh(drivenX) - fastTanh(-possibleMaxValue); 
+            float reversiblePart = fastTanh(drivenX) - fastTanh(-maxVal); 
             float irreversiblePart = 2.0f * currentRemanence * accumulatedIrrev;
 
             float rawOutput = reversiblePart + irreversiblePart;
 
             // normalisation
-            float center = fastTanh(0.0f) - fastTanh(-possibleMaxValue) + 
-                           (2.0f * currentRemanence * getIrreversibleArea(0.0f, -possibleMaxValue));
+            float center = fastTanh(0.0f) - fastTanh(-maxVal) + 
+                           (2.0f * currentRemanence * getIrreversibleArea(0.0f, -maxVal));
                            
-            float eMax = fastTanh(possibleMaxValue) - fastTanh(-possibleMaxValue) + 
-                         (2.0f * currentRemanence * getIrreversibleArea(possibleMaxValue, -possibleMaxValue));
+            float eMax = fastTanh(maxVal) - fastTanh(-maxVal) + 
+                         (2.0f * currentRemanence * getIrreversibleArea(maxVal, -maxVal));
             float dynamicEMax = eMax <= 0.0f ? 1.0f : eMax;
 
             float finalOutput = (rawOutput - center) / dynamicEMax;

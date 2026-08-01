@@ -39,7 +39,7 @@ private:
     SmoothParam bias;
     SmoothParam remanence;
 
-    float possibleMaxValue = 5.0f;
+    float maxVal = 100.0f;
 
     double getInterpolatedArea(double alpha, double beta) const;
 };

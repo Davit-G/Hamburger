@@ -73,12 +73,11 @@ public:
             dcBlocker[i].prepare(spec);
         }
 
-        // emptyBuffer = juce::AudioBuffer<float>(spec.numChannels, 2048);
-        // emptyBlock = juce::dsp::AudioBlock<float>(emptyBuffer);
-        // emptyBuffer.clear();
+        emptyBuffer = juce::AudioBuffer<float>(spec.numChannels, 8192);
+        emptyBlock = juce::dsp::AudioBlock<float>(emptyBuffer);
 
-        // fillEmptyWithZeros();
-        // processBlock(emptyBlock);
+        fillEmptyWithZeros();
+        processBlock(emptyBlock);
     }
 
     void fillEmptyWithZeros() {
@@ -91,6 +90,14 @@ public:
 
         if (distortionEnabled->get() == false)
             return;
+        
+        // declicking attempt
+        if (previousDistType != distoTypeIndex) {
+            previousDistType = distoTypeIndex;
+            
+            fillEmptyWithZeros();
+            processBlock(emptyBlock);
+        }
 
         switch (distoTypeIndex)
         {
