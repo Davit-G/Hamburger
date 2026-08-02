@@ -9,11 +9,11 @@ class PhaseDistPanel : public Panel
 {
 public:
     PhaseDistPanel(AudioPluginAudioProcessor &p) : Panel(p, "PHASE", Palette::colours[3]), 
-        satKnob(p, "SATURATION", ParamIDs::phaseAmount, ParamUnits::percent),
-        toneKnob(p, "TONE", ParamIDs::phaseDistTone, ParamUnits::hz),
-        normKnob(p, "STEREO", ParamIDs::phaseDistStereo),
-        rectKnob(p, "RECTIFY", ParamIDs::phaseRectify),
-        shiftKnob(p, "SHIFT", ParamIDs::phaseShift)
+        satKnob(p, "SATURATION", ParamIDs::phaseAmount, ParamUnits::percent, ScopeContextType::IN_OUT),
+        toneKnob(p, "TONE", ParamIDs::phaseDistTone, ParamUnits::hz, ScopeContextType::IN_OUT),
+        normKnob(p, "STEREO", ParamIDs::phaseDistStereo, ParamUnits::none, ScopeContextType::IN_OUT),
+        rectKnob(p, "RECTIFY", ParamIDs::phaseRectify, ParamUnits::none, ScopeContextType::IN_OUT),
+        shiftKnob(p, "SHIFT", ParamIDs::phaseShift, ParamUnits::none, ScopeContextType::IN_OUT)
     {
         addAndMakeVisible(satKnob);
         addAndMakeVisible(toneKnob);

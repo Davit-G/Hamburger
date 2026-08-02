@@ -7,9 +7,9 @@ class TapeSatPanel : public Panel
 {
 public:
     TapeSatPanel(AudioPluginAudioProcessor &p) : Panel(p, "TAPE"), 
-        drive(p, "DRIVE", ParamIDs::tapeDrive),
-        bias(p, "DC BIAS", ParamIDs::tapeBias),
-        tapeWidth(p, "AGE", ParamIDs::tapeWidth)
+        drive(p, "DRIVE", ParamIDs::tapeDrive, ParamUnits::none, ScopeContextType::IN_OUT),
+        bias(p, "DC BIAS", ParamIDs::tapeBias, ParamUnits::none, ScopeContextType::IN_OUT),
+        tapeWidth(p, "AGE", ParamIDs::tapeWidth, ParamUnits::none, ScopeContextType::IN_OUT)
     {
         addAndMakeVisible(drive);
         addAndMakeVisible(bias);
