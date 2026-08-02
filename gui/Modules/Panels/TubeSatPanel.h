@@ -11,10 +11,10 @@ class TubeSatPanel : public Panel
 {
 public:
     TubeSatPanel(AudioPluginAudioProcessor &p) : Panel(p, "TUBE"), 
-        tubeTone(p, "TUBE TONE", ParamIDs::tubeTone),
-        bias(p, "BIAS", ParamIDs::tubeBias),
-        jeff(p, "JEFF", ParamIDs::jeffAmount),
-        drive(p, "DRIVE", ParamIDs::tubeAmount, ParamUnits::percent)
+        tubeTone(p, "TUBE TONE", ParamIDs::tubeTone, ParamUnits::none, ScopeContextType::IN_OUT),
+        bias(p, "BIAS", ParamIDs::tubeBias, ParamUnits::none, ScopeContextType::IN_OUT),
+        jeff(p, "JEFF", ParamIDs::jeffAmount, ParamUnits::none, ScopeContextType::IN_OUT),
+        drive(p, "DRIVE", ParamIDs::tubeAmount, ParamUnits::percent, ScopeContextType::IN_OUT)
     {
         addAndMakeVisible(tubeTone);
         addAndMakeVisible(drive);

@@ -291,12 +291,12 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
 
     juce::ignoreUnused(midiMessages);
 
+    const int oversampleAmount = (hq != nullptr) ? hq->get() : 0;
     {
         // TRACE_EVENT("dsp", "oversampling config");
 
         dryWetMixer.setWetLatency(oversamplingStack.getLatencySamples());
 
-        const int oversampleAmount = (hq != nullptr) ? hq->get() : 0;
 
         oversamplingStack.setOversamplingFactor(oversampleAmount);
         if (oldOversamplingFactor != oversampleAmount)
@@ -347,6 +347,9 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
         preDistortionSelection.processBlock(oversampledBlock);
     }
 
+    // because these are upsampled, do we have to downsample them for the scope?
+    scopeDataCollector.capturePreDistortion(buffer.getReadPointer(0), (size_t)buffer.getNumSamples(), oversampleAmount);
+
     {
         const int stagesAmt = (stages != nullptr) ? stages->get() : 1;
 
@@ -367,6 +370,8 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
             juce::FloatVectorOperations::multiply(oversampledBlock.getChannelPointer(1), oversampledBlock.getChannelPointer(1), -1.0f, oversampledBlock.getNumSamples());
         }
     }
+
+    scopeDataCollector.capturePostDistortion(buffer.getReadPointer(0), (size_t)buffer.getNumSamples(), oversampleAmount);
 
     emphasisFilter.processAfter(oversampledBlock);
 

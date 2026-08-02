@@ -1,5 +1,8 @@
 #pragma once
 
+#include <memory>
+#include <juce_dsp/juce_dsp.h>
+
 enum ScopeContextType {
     LR_SCOPE, // by default
     IN_OUT, // input against output
@@ -139,15 +142,19 @@ class ScopeDataCollector
 {
 public:
     //==============================================================================
-    ScopeDataCollector(AudioBufferQueue<SampleType> &queueToUseL, AudioBufferQueue<SampleType> &queueToUseR)
-        : audioBufferQueueL(queueToUseL)
-        , audioBufferQueueR(queueToUseR)
-    {
-    }
+    ScopeDataCollector()
+    {}
 
     void prepare(juce::dsp::ProcessSpec& spec) {
         audioBufferQueueL.resize(spec.sampleRate / 60);
         audioBufferQueueR.resize(spec.sampleRate / 60);
+
+        audioBufferQueuePreDistortion.resize(spec.sampleRate / 60);
+        audioBufferQueuePostDistortion.resize(spec.sampleRate / 60);
+
+        const int maxScopeSamples = juce::jmax<int>((int) spec.maximumBlockSize, 1) * 16;
+        preDistScratchBuffer.setSize(1, maxScopeSamples, false, false);
+        postDistScratchBuffer.setSize(1, maxScopeSamples, false, false);
     }
 
     //==============================================================================
@@ -201,21 +208,75 @@ public:
         
     }
 
-    void capturePreDistortion(const SampleType *dataL, const SampleType *dataR, size_t numSamples) {
+    void capturePreDistortion(const SampleType *dataL, size_t numSamples, int oversamplingFactor) {
+        if (oversamplingFactor <= 1)
+        {
+            audioBufferQueuePreDistortion.push(dataL, numSamples);
+            return;
+        }
 
+        prepareOversampler(preDistOversampling, oversamplingFactor, numSamples);
+
+        if (preDistScratchBuffer.getNumSamples() < (int) numSamples)
+            preDistScratchBuffer.setSize(1, (int) numSamples, false, false);
+
+        preDistScratchBuffer.clear();
+        preDistScratchBuffer.copyFrom(0, 0, dataL, (int) numSamples);
+
+        juce::dsp::AudioBlock<SampleType> inputBlock(preDistScratchBuffer.getArrayOfWritePointers(), 1, (int) numSamples);
+        preDistOversampling->processSamplesDown(inputBlock);
+
+        audioBufferQueuePreDistortion.push(inputBlock.getChannelPointer(0), inputBlock.getNumSamples());
     }
 
-private:
-    //==============================================================================
-    AudioBufferQueue<SampleType> &audioBufferQueueL;
-    AudioBufferQueue<SampleType> &audioBufferQueueR;
-    // std::array<SampleType, AudioBufferQueue<SampleType>::bufferSize> bufferL;
-    // std::array<SampleType, AudioBufferQueue<SampleType>::bufferSize> bufferR;
+    void capturePostDistortion(const SampleType *dataL, size_t numSamples, int oversamplingFactor) {
+        if (oversamplingFactor <= 1)
+        {
+            audioBufferQueuePostDistortion.push(dataL, numSamples);
+            return;
+        }
 
-    // AudioBufferQueue<SampleType> &audioBufferQueuePreDistortion;
-    // AudioBufferQueue<SampleType> &audioBufferQueuePostDistortion;
-    // std::array<SampleType, AudioBufferQueue<SampleType>::bufferSize> bufferPreDistortion;
-    // std::array<SampleType, AudioBufferQueue<SampleType>::bufferSize> bufferPostDistortion;
+        prepareOversampler(postDistOversampling, oversamplingFactor, numSamples);
+
+        if (postDistScratchBuffer.getNumSamples() < (int) numSamples)
+            postDistScratchBuffer.setSize(1, (int) numSamples, false, false);
+
+        postDistScratchBuffer.clear();
+        postDistScratchBuffer.copyFrom(0, 0, dataL, (int) numSamples);
+
+        juce::dsp::AudioBlock<SampleType> inputBlock(postDistScratchBuffer.getArrayOfWritePointers(), 1, (int) numSamples);
+        postDistOversampling->processSamplesDown(inputBlock);
+
+        audioBufferQueuePostDistortion.push(inputBlock.getChannelPointer(0), inputBlock.getNumSamples());
+    }
+
+    //==============================================================================
+    AudioBufferQueue<SampleType> audioBufferQueueL;
+    AudioBufferQueue<SampleType> audioBufferQueueR;
+
+    AudioBufferQueue<SampleType> audioBufferQueuePreDistortion;
+    AudioBufferQueue<SampleType> audioBufferQueuePostDistortion;
+private:
+    void prepareOversampler(std::unique_ptr<juce::dsp::Oversampling<SampleType>>& oversampler,
+                            int oversamplingFactor,
+                            size_t numSamples)
+    {
+        if (oversampler == nullptr || oversampler->getOversamplingFactor() != oversamplingFactor)
+        {
+            oversampler = std::make_unique<juce::dsp::Oversampling<SampleType>>(
+                1,
+                oversamplingFactor,
+                juce::dsp::Oversampling<SampleType>::filterHalfBandPolyphaseIIR,
+                true);
+        }
+
+        oversampler->initProcessing((size_t) juce::jmax<int>((int) numSamples, 1));
+    }
+
+    std::unique_ptr<juce::dsp::Oversampling<SampleType>> preDistOversampling;
+    std::unique_ptr<juce::dsp::Oversampling<SampleType>> postDistOversampling;
+    juce::AudioBuffer<SampleType> preDistScratchBuffer;
+    juce::AudioBuffer<SampleType> postDistScratchBuffer;
 
     // size_t numCollected;
     // SampleType prevSample = SampleType(100);
@@ -237,14 +298,15 @@ public:
     using Queue = AudioBufferQueue<SampleType>;
 
     //==============================================================================
-    Scope(Queue &queueToUseL, Queue &queueToUseR, ScopeContext &newScopeContext)
-        : audioBufferQueueL(queueToUseL),
-          audioBufferQueueR(queueToUseR),
+    Scope(ScopeDataCollector<SampleType>& scopeDataCollector, ScopeContext &newScopeContext)
+        : dataCollector(scopeDataCollector),
           scopeContext(newScopeContext)
     {   
         int fps = 60;
         sampleDataL.resize(44100 / fps);
         sampleDataR.resize(44100 / fps);
+        sampleDataPreDistortion.resize(44100 / fps);
+        sampleDataPostDistortion.resize(44100 / fps);
         setFramesPerSecond(fps);
     }
 
@@ -287,6 +349,34 @@ public:
                 break;
             }
             case ScopeContextType::IN_OUT: {
+                if (sampleDataPreDistortion.size() > 1 && sampleDataPostDistortion.size() > 1)
+                {
+                    const auto centerX = w * SampleType(0.5);
+                    const auto centerY = h * SampleType(0.5);
+                    const auto halfW = h * 0.95;
+                    const auto halfH = h * SampleType(0.46);
+                    
+                    g.setColour(juce::Colours::grey);
+                    g.drawLine(centerX, SampleType(0), centerX, h);
+                    g.drawLine(SampleType(0), centerY, w, centerY);
+
+                    g.setColour(juce::Colours::lime);
+                    const auto count = juce::jmin(sampleDataPreDistortion.size(), sampleDataPostDistortion.size());
+                    for (size_t i = 1; i < count; ++i)
+                    {
+                        const auto x0 = sampleDataPreDistortion[i - 1];
+                        const auto y0 = sampleDataPostDistortion[i - 1];
+                        const auto x1 = sampleDataPreDistortion[i];
+                        const auto y1 = sampleDataPostDistortion[i];
+
+                        const auto px0 = centerX + x0 * halfW;
+                        const auto py0 = centerY - y0 * halfH;
+                        const auto px1 = centerX + x1 * halfW;
+                        const auto py1 = centerY - y1 * halfH;
+
+                        g.drawLine(px0, py0, px1, py1);
+                    }
+                }
 
                 break;
             }
@@ -300,10 +390,12 @@ public:
 
 private:
     ScopeContext& scopeContext;
-    Queue &audioBufferQueueL;
-    Queue &audioBufferQueueR;
+    ScopeDataCollector<SampleType>& dataCollector;
+
     std::vector<SampleType> sampleDataL;
     std::vector<SampleType> sampleDataR;
+    std::vector<SampleType> sampleDataPreDistortion;
+    std::vector<SampleType> sampleDataPostDistortion;
 
     std::array<SampleType, 2> originLineData = {SampleType(1), SampleType(1)};
 
@@ -317,9 +409,19 @@ private:
     //==============================================================================
     void timerCallback() override
     {
-        if (audioBufferQueueL.getReadableSpace() >= sampleDataL.size() && audioBufferQueueR.getReadableSpace() >= sampleDataR.size()) {
-            audioBufferQueueL.pop(sampleDataL.data(), sampleDataL.size());
-            audioBufferQueueR.pop(sampleDataR.data(), sampleDataR.size());
+        auto& queueL = dataCollector.audioBufferQueueL;
+        auto& queueR = dataCollector.audioBufferQueueR;
+        auto& preDist = dataCollector.audioBufferQueuePreDistortion;
+        auto& postDist = dataCollector.audioBufferQueuePostDistortion;
+
+        if (queueL.getReadableSpace() >= sampleDataL.size() && queueR.getReadableSpace() >= sampleDataR.size()) {
+            queueL.pop(sampleDataL.data(), sampleDataL.size());
+            queueR.pop(sampleDataR.data(), sampleDataR.size());
+        }
+
+        if (preDist.getReadableSpace() >= sampleDataPreDistortion.size() && postDist.getReadableSpace() >= sampleDataPostDistortion.size()) {
+            preDist.pop(sampleDataPreDistortion.data(), sampleDataPreDistortion.size());
+            postDist.pop(sampleDataPostDistortion.data(), sampleDataPostDistortion.size());
         }
 
         // juce::FloatVectorOperations::copy(spectrumData.data(), sampleDataL.data(), (int)sampleDataL.size());

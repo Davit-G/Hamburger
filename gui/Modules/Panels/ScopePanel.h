@@ -9,7 +9,7 @@ class ScopePanel : public Panel
 {
 public:
     ScopePanel(AudioPluginAudioProcessor &p) : Panel(p, "SETTINGS"),
-                                                  scope(p.getAudioBufferQueueL(), p.getAudioBufferQueueR(), p.getScopeContext())
+                                                  scope(p.getScopeDataCollector(), p.getScopeContext())
     {
         addAndMakeVisible (scope);
     }

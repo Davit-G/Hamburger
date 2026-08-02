@@ -10,11 +10,11 @@ class RubidiumSatPanel : public Panel
 {
 public:
     RubidiumSatPanel(AudioPluginAudioProcessor &p) : Panel(p, "RUBIDIUM", Palette::colours[2]), 
-        tubeTone(p, "TONE", ParamIDs::rubidiumTone, ParamUnits::hz),
-        mojo(p, "MOJO", ParamIDs::rubidiumMojo),
-        hysteresis(p, "ASYM", ParamIDs::rubidiumAsym),
-        drive(p, "DRIVE", ParamIDs::rubidiumAmount, ParamUnits::percent),
-        bias(p, "BIAS", ParamIDs::rubidiumBias)
+        tubeTone(p, "TONE", ParamIDs::rubidiumTone, ParamUnits::hz, ScopeContextType::IN_OUT),
+        mojo(p, "MOJO", ParamIDs::rubidiumMojo, ParamUnits::none, ScopeContextType::IN_OUT),
+        hysteresis(p, "ASYM", ParamIDs::rubidiumAsym, ParamUnits::none, ScopeContextType::IN_OUT),
+        drive(p, "DRIVE", ParamIDs::rubidiumAmount, ParamUnits::percent, ScopeContextType::IN_OUT),
+        bias(p, "BIAS", ParamIDs::rubidiumBias, ParamUnits::none, ScopeContextType::IN_OUT)
     {
         addAndMakeVisible(tubeTone);
         addAndMakeVisible(drive);
