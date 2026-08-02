@@ -75,7 +75,8 @@ public:
 
     AudioBufferQueue<float>& getAudioBufferQueueL() noexcept        { return audioBufferQueueL; }
     AudioBufferQueue<float>& getAudioBufferQueueR() noexcept        { return audioBufferQueueR; }
-
+    
+    ScopeContext& getScopeContext() { return scopeContext; };
     Preset::PresetManager& getPresetManager() { return *presetManager; }
     AppProperties& getAppProperties() { return appProperties; }
 
@@ -113,6 +114,8 @@ private:
     AudioBufferQueue<float> audioBufferQueueL;
     AudioBufferQueue<float> audioBufferQueueR;
     ScopeDataCollector<float> scopeDataCollector { audioBufferQueueL, audioBufferQueueR };
+
+    ScopeContext scopeContext; // keep on audio thread cause uhh idk its easier to access via reference from pluginprocessor
 
     AppProperties appProperties;
     std::unique_ptr<Preset::PresetManager> presetManager;

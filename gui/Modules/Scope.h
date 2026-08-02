@@ -1,5 +1,34 @@
 #pragma once
 
+enum ScopeContextType {
+    LR_SCOPE, // by default
+    IN_OUT, // input against output
+    // SPECTRUM, // once button press happens?
+    // SPECTRUM_EMPHASIS, // draw curves for emphasis eq
+    
+};
+
+// cause maybe we might need to sync across threads later?
+// also could store data used for scope to draw things like compression curves, eq curves etc
+class ScopeContext {
+public:
+    ScopeContext() {}
+    ~ScopeContext() {}
+
+    ScopeContextType getType() {
+        return type;
+    }
+
+    void setType(ScopeContextType newType) {
+        type = newType;
+    }
+
+private:
+    ScopeContextType type = ScopeContextType::LR_SCOPE;
+
+
+};
+
 //==============================================================================
 template <typename SampleType>
 class AudioBufferQueue
@@ -60,6 +89,10 @@ public:
     {
     }
 
+    void prepareToPlay(const float sampleRate, const float numChannels) {
+        
+    }
+
     //==============================================================================
     void process(const SampleType *dataL, const SampleType *dataR, size_t numSamples)
     {
@@ -99,10 +132,15 @@ public:
 
                     state = State::waitingForTrigger;
                     prevSample = SampleType(100);
+                    numCollected = 0;
                     break;
                 }
             }
         }
+    }
+
+    void capturePreDistortion(const SampleType *dataL, const SampleType *dataR, size_t numSamples) {
+
     }
 
 private:
@@ -111,10 +149,16 @@ private:
     AudioBufferQueue<SampleType> &audioBufferQueueR;
     std::array<SampleType, AudioBufferQueue<SampleType>::bufferSize> bufferL;
     std::array<SampleType, AudioBufferQueue<SampleType>::bufferSize> bufferR;
-    size_t numCollected;
+
+    // AudioBufferQueue<SampleType> &audioBufferQueuePreDistortion;
+    // AudioBufferQueue<SampleType> &audioBufferQueuePostDistortion;
+    // std::array<SampleType, AudioBufferQueue<SampleType>::bufferSize> bufferPreDistortion;
+    // std::array<SampleType, AudioBufferQueue<SampleType>::bufferSize> bufferPostDistortion;
+
+    size_t numCollected, numCollectedBufferPre, numCollectedBufferPost;
     SampleType prevSample = SampleType(100);
 
-    static constexpr auto triggerLevel = SampleType(0.005);
+    static constexpr auto triggerLevel = SampleType(0.001);
 
     enum class State
     {
@@ -131,9 +175,10 @@ public:
     using Queue = AudioBufferQueue<SampleType>;
 
     //==============================================================================
-    Scope(Queue &queueToUseL, Queue &queueToUseR)
+    Scope(Queue &queueToUseL, Queue &queueToUseR, ScopeContext &newScopeContext)
         : audioBufferQueueL(queueToUseL),
-          audioBufferQueueR(queueToUseR)
+          audioBufferQueueR(queueToUseR),
+          scopeContext(newScopeContext)
     {
         sampleDataL.fill(SampleType(0));
         sampleDataR.fill(SampleType(0));
@@ -162,17 +207,30 @@ public:
 
         auto scopeRect = juce::Rectangle<SampleType>{SampleType(0), SampleType(0), w, h};
 
-        g.setColour(juce::Colours::grey);
-        plot(originLineData.data(), 2, g, scopeRect, SampleType(0.4), h / 2);
-        plot(originLineData.data(), 2, g, scopeRect, SampleType(-0.4), h / 2);
+        auto currentType = scopeContext.getType();
+
+        switch (currentType) {
+            case ScopeContextType::LR_SCOPE: {
+                g.setColour(juce::Colours::grey);
+                plotStraightLine(originLineData.data(), 2, g, scopeRect, SampleType(0.4), h / 2);
+                plotStraightLine(originLineData.data(), 2, g, scopeRect, SampleType(-0.4), h / 2);
+        
+        
+                g.setColour(juce::Colours::yellow);
+                plotStraightLine(sampleDataL.data(), sampleDataL.size(), g, scopeRect, SampleType(0.4), h / 2);
+                g.setColour(juce::Colours::lime);
+                plotStraightLine(sampleDataR.data(), sampleDataR.size(), g, scopeRect, SampleType(0.4), h / 2);
+                
+                break;
+            }
+            case ScopeContextType::IN_OUT: {
+
+                break;
+            }
+        }
 
 
-        g.setColour(juce::Colours::yellow);
-        plot(sampleDataL.data(), sampleDataL.size(), g, scopeRect, SampleType(0.4), h / 2);
-        g.setColour(juce::Colours::lime);
-        plot(sampleDataR.data(), sampleDataR.size(), g, scopeRect, SampleType(0.4), h / 2);
-
-    
+        
     }
 
     //==============================================================================
@@ -181,6 +239,7 @@ public:
     bool viewSpectrum = false;
 
 private:
+    ScopeContext& scopeContext;
     Queue &audioBufferQueueL;
     Queue &audioBufferQueueR;
     std::array<SampleType, Queue::bufferSize> sampleDataL;
@@ -198,6 +257,8 @@ private:
     //==============================================================================
     void timerCallback() override
     {
+        
+
         audioBufferQueueL.pop(sampleDataL.data());
         audioBufferQueueR.pop(sampleDataR.data());
 
@@ -237,7 +298,7 @@ private:
     }
 
     //==============================================================================
-    static void plot(const SampleType *data,
+    static void plotStraightLine(const SampleType *data,
                      size_t numSamples,
                      juce::Graphics &g,
                      juce::Rectangle<SampleType> rect,

@@ -20,7 +20,8 @@
 class SaturationColumn : public juce::Component
 {
 public:
-    SaturationColumn(AudioPluginAudioProcessor &p) {
+    SaturationColumn(AudioPluginAudioProcessor &p) : scopeContext(p.getScopeContext()) {
+        setInterceptsMouseClicks(true, true);
 
         std::vector<std::unique_ptr<Panel>> panels;
         // ORDERING IS VERY IMPORTANT
@@ -76,7 +77,17 @@ public:
 
         noise = std::make_unique<Module>(p, "NOISE", "noiseDistortionEnabled", "noiseDistortionType", std::move(noisePanels));
         addAndMakeVisible(noise.get());
+
+
     }
+
+    // void mouseUp(const juce::MouseEvent &event) override {
+    //     scopeContext.setType(ScopeContextType::IN_OUT);
+    // }
+
+    // void mouseDown(const juce::MouseEvent &event) override {
+    //     scopeContext.setType(ScopeContextType::LR_SCOPE);
+    // }
 
     ~SaturationColumn() {
         saturation->setLookAndFeel(nullptr);
@@ -94,6 +105,8 @@ public:
     }
 
 private:
+    ScopeContext& scopeContext;
+
     std::unique_ptr<Panel> classic = nullptr;
     std::unique_ptr<Panel> tube = nullptr;
     std::unique_ptr<Panel> phase = nullptr;
