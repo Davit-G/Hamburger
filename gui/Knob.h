@@ -36,7 +36,7 @@ inline juce::String createParamString(float value, ParamUnits unit) noexcept {
 class ParamKnob : public juce::Component
 {
 public:
-    ParamKnob(AudioPluginAudioProcessor &p, juce::String knobName, juce::ParameterID attachmentID, ParamUnits knobUnit = ParamUnits::none): processorRef(p), kName(knobName), unit(knobUnit) {
+    ParamKnob(AudioPluginAudioProcessor &p, juce::String knobName, juce::ParameterID attachmentID, ParamUnits knobUnit = ParamUnits::none, ScopeContextType scopeContextType = ScopeContextType::LR_SCOPE): processorRef(p), kName(knobName), unit(knobUnit) {
         knobAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(processorRef.treeState, attachmentID.getParamID(), knob);
         jassert(knobAttachment);
 
@@ -58,10 +58,13 @@ public:
 
         setName(knobName);
 
+        preferredScopeContextType = scopeContextType;
+
         knob.onDragStart = [this] { 
             // display the parameter value as the text instead of the parameter name
             this->isDragging = true;
             this->label.setText(createParamString(this->knob.getValue(), this->unit), juce::dontSendNotification);
+            processorRef.getScopeContext().setType(preferredScopeContextType);
         };
 
         // when value is changing, set it to what the knob is, but only if we're dragging
@@ -77,6 +80,7 @@ public:
             // display the parameter name as the text again
             this->isDragging = false;
             this->label.setText(this->kName, juce::dontSendNotification);
+            processorRef.getScopeContext().setType(ScopeContextType::LR_SCOPE);
         };
 
         addAndMakeVisible(knob);
@@ -137,6 +141,7 @@ public:
     juce::Slider knob;
 private:
     AudioPluginAudioProcessor &processorRef;
+    ScopeContextType preferredScopeContextType = ScopeContextType::LR_SCOPE;
 
     juce::Label label;
 
