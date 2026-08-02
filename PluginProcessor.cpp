@@ -262,6 +262,8 @@ void AudioPluginAudioProcessor::prepareToPlay(double sampleRate, int samplesPerB
     dryWetMixer.reset();
     dryWetMixer.prepare(spec);
     dryWetMixer.setWetLatency(totalLatency);
+
+    scopeDataCollector.prepare(spec);
 }
 
 void AudioPluginAudioProcessor::releaseResources()

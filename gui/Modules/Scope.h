@@ -34,47 +34,103 @@ template <typename SampleType>
 class AudioBufferQueue
 {
 public:
-    //==============================================================================
-    static constexpr size_t order = 10;
-    static constexpr size_t bufferSize = 1U << order;
-    static constexpr size_t numBuffers = 5;
+    AudioBufferQueue() {
+        resize(1024);
+    }
 
-    //==============================================================================
-    void push(const SampleType *dataToPush, size_t numSamples)
-    {
-        jassert(numSamples <= bufferSize);
+    void resize(size_t size) {
+        lock.enterWrite();
+
+        const auto capacity = juce::jmax<int>((int) size, 1);
+        buffer.resize(capacity * 3); // give ourselves leeway if the ui thread is not consuming fast enough;
+        abstractFifo.setTotalSize((int) buffer.size());
+        abstractFifo.reset();
+
+        lock.exitWrite();
+    }
+
+    // obtains the currently consumed space (the amount that can be currently read from the buffer)
+    float getReadableSpace() {
+        lock.enterRead();
 
         int start1, size1, start2, size2;
-        abstractFifo.prepareToWrite(1, start1, size1, start2, size2);
+        abstractFifo.prepareToRead((int) buffer.size(), start1, size1, start2, size2);
 
-        jassert(size1 <= 1);
-        jassert(size2 == 0);
+        lock.exitRead();
 
-        if (size1 > 0)
-            juce::FloatVectorOperations::copy(buffers[(size_t)start1].data(), dataToPush, (int)juce::jmin(bufferSize, numSamples));
-
-        abstractFifo.finishedWrite(size1);
+        return (float) (size1 + size2);
     }
 
     //==============================================================================
-    void pop(SampleType *outputBuffer)
+    // happens on audio thread, we dont need write locks here.
+    // if we go over the size limit this could be dodgy?
+    void push(const SampleType *dataToPush, size_t numSamples)
     {
+        jassert(numSamples <= buffer.size());
+
+        lock.enterWrite();
+
         int start1, size1, start2, size2;
-        abstractFifo.prepareToRead(1, start1, size1, start2, size2);
+        abstractFifo.prepareToWrite((int) numSamples, start1, size1, start2, size2);
 
-        jassert(size1 <= 1);
-        jassert(size2 == 0);
+        const auto totalSpace = juce::jmin<int>((int) numSamples, size1 + size2);
+        int samplesWritten = 0;
 
-        if (size1 > 0)
-            juce::FloatVectorOperations::copy(outputBuffer, buffers[(size_t)start1].data(), (int)bufferSize);
+        if (size1 > 0 && samplesWritten < totalSpace)
+        {
+            const auto writeNow = juce::jmin<int>(totalSpace - samplesWritten, size1);
+            juce::FloatVectorOperations::copy(buffer.data() + start1, dataToPush + samplesWritten, writeNow);
+            samplesWritten += writeNow;
+        }
 
-        abstractFifo.finishedRead(size1);
+        if (size2 > 0 && samplesWritten < totalSpace)
+        {
+            const auto writeNow = juce::jmin<int>(totalSpace - samplesWritten, size2);
+            juce::FloatVectorOperations::copy(buffer.data() + start2, dataToPush + samplesWritten, writeNow);
+            samplesWritten += writeNow;
+        }
+
+        abstractFifo.finishedWrite(samplesWritten);
+
+        lock.exitWrite();
+    }
+
+    //==============================================================================
+    // happens on ui thread
+    void pop(SampleType *outputBuffer, size_t numSamples)
+    {
+        lock.enterWrite();
+
+        int start1, size1, start2, size2;
+        abstractFifo.prepareToRead((int) numSamples, start1, size1, start2, size2);
+        
+        const auto totalSpace = juce::jmin<int>((int) numSamples, size1 + size2);
+        int samplesRead = 0;
+
+        if (size1 > 0 && samplesRead < totalSpace)
+        {
+            const auto readNow = juce::jmin<int>(totalSpace - samplesRead, size1);
+            juce::FloatVectorOperations::copy(outputBuffer + samplesRead, buffer.data() + start1, readNow);
+            samplesRead += readNow;
+        }
+
+        if (size2 > 0 && samplesRead < totalSpace)
+        {
+            const auto readNow = juce::jmin<int>(totalSpace - samplesRead, size2);
+            juce::FloatVectorOperations::copy(outputBuffer + samplesRead, buffer.data() + start2, readNow);
+            samplesRead += readNow;
+        }
+
+        abstractFifo.finishedRead(samplesRead);
+
+        lock.exitWrite();
     }
 
 private:
     //==============================================================================
-    juce::AbstractFifo abstractFifo{numBuffers};
-    std::array<std::array<SampleType, bufferSize>, numBuffers> buffers;
+    juce::AbstractFifo abstractFifo {1024};
+    juce::ReadWriteLock lock; // using a lock to block the ui thread when a resize occurs
+    std::vector<SampleType> buffer;
 };
 
 //==============================================================================
@@ -89,54 +145,60 @@ public:
     {
     }
 
-    void prepareToPlay(const float sampleRate, const float numChannels) {
-        
+    void prepare(juce::dsp::ProcessSpec& spec) {
+        audioBufferQueueL.resize(spec.sampleRate / 60);
+        audioBufferQueueR.resize(spec.sampleRate / 60);
     }
 
     //==============================================================================
     void process(const SampleType *dataL, const SampleType *dataR, size_t numSamples)
     {
-        size_t index = 0;
+        // size_t index = 0;
 
-        if (state == State::waitingForTrigger)
-        {
-            while (index++ < numSamples)
-            {
-                auto currentSampleL = *dataL++;
-                auto currentSampleR = *dataR++;
+        audioBufferQueueL.push(dataL, numSamples);
+        audioBufferQueueR.push(dataR, numSamples);
 
-                auto currentSample = currentSampleL + currentSampleR;
+        // if (state == State::waitingForTrigger)
+        // {
+        //     while (index++ < numSamples)
+        //     {
+        //         auto currentSampleL = *dataL++;
+        //         auto currentSampleR = *dataR++;
 
-                if (currentSample >= triggerLevel && prevSample < triggerLevel)
-                {
-                    numCollected = 0;
-                    state = State::collecting;
-                    break;
-                }
+        //         auto currentSample = currentSampleL + currentSampleR;
 
-                prevSample = currentSample;
-            }
-        }
+        //         if (currentSample >= triggerLevel && prevSample < triggerLevel)
+        //         {
+        //             numCollected = 0;
+        //             state = State::collecting;
+        //             break;
+        //         }
 
-        if (state == State::collecting)
-        {
-            while (index++ < numSamples)
-            {
-                bufferL[numCollected] = *dataL++;
-                bufferR[numCollected++] = *dataR++;
+        //         prevSample = currentSample;
+        //     }
+        // }
 
-                if (numCollected == bufferL.size())
-                {
-                    audioBufferQueueL.push(bufferL.data(), bufferL.size());
-                    audioBufferQueueR.push(bufferR.data(), bufferR.size());
+        // if (state == State::collecting)
+        // {
 
-                    state = State::waitingForTrigger;
-                    prevSample = SampleType(100);
-                    numCollected = 0;
-                    break;
-                }
-            }
-        }
+            // while (index++ < numSamples)
+            // {
+            //     bufferL[numCollected] = *dataL++;
+            //     bufferR[numCollected++] = *dataR++;
+
+            //     if (numCollected == bufferL.size())
+            //     {
+            //         audioBufferQueueL.push(bufferL.data(), bufferL.size());
+            //         audioBufferQueueR.push(bufferR.data(), bufferR.size());
+
+            //         state = State::waitingForTrigger;
+            //         prevSample = SampleType(100);
+            //         numCollected = 0;
+            //         break;
+            //     }
+            // }
+
+        
     }
 
     void capturePreDistortion(const SampleType *dataL, const SampleType *dataR, size_t numSamples) {
@@ -147,24 +209,24 @@ private:
     //==============================================================================
     AudioBufferQueue<SampleType> &audioBufferQueueL;
     AudioBufferQueue<SampleType> &audioBufferQueueR;
-    std::array<SampleType, AudioBufferQueue<SampleType>::bufferSize> bufferL;
-    std::array<SampleType, AudioBufferQueue<SampleType>::bufferSize> bufferR;
+    // std::array<SampleType, AudioBufferQueue<SampleType>::bufferSize> bufferL;
+    // std::array<SampleType, AudioBufferQueue<SampleType>::bufferSize> bufferR;
 
     // AudioBufferQueue<SampleType> &audioBufferQueuePreDistortion;
     // AudioBufferQueue<SampleType> &audioBufferQueuePostDistortion;
     // std::array<SampleType, AudioBufferQueue<SampleType>::bufferSize> bufferPreDistortion;
     // std::array<SampleType, AudioBufferQueue<SampleType>::bufferSize> bufferPostDistortion;
 
-    size_t numCollected, numCollectedBufferPre, numCollectedBufferPost;
-    SampleType prevSample = SampleType(100);
+    // size_t numCollected;
+    // SampleType prevSample = SampleType(100);
 
-    static constexpr auto triggerLevel = SampleType(0.001);
+    // static constexpr auto triggerLevel = SampleType(0.001);
 
-    enum class State
-    {
-        waitingForTrigger,
-        collecting
-    } state{State::waitingForTrigger};
+    // enum class State
+    // {
+    //     waitingForTrigger,
+    //     collecting
+    // } state{State::waitingForTrigger};
 };
 
 template <typename SampleType>
@@ -179,10 +241,11 @@ public:
         : audioBufferQueueL(queueToUseL),
           audioBufferQueueR(queueToUseR),
           scopeContext(newScopeContext)
-    {
-        sampleDataL.fill(SampleType(0));
-        sampleDataR.fill(SampleType(0));
-        setFramesPerSecond(60);
+    {   
+        int fps = 60;
+        sampleDataL.resize(44100 / fps);
+        sampleDataR.resize(44100 / fps);
+        setFramesPerSecond(fps);
     }
 
     void mouseDown(const juce::MouseEvent &event) override
@@ -228,9 +291,6 @@ public:
                 break;
             }
         }
-
-
-        
     }
 
     //==============================================================================
@@ -242,25 +302,25 @@ private:
     ScopeContext& scopeContext;
     Queue &audioBufferQueueL;
     Queue &audioBufferQueueR;
-    std::array<SampleType, Queue::bufferSize> sampleDataL;
-    std::array<SampleType, Queue::bufferSize> sampleDataR;
+    std::vector<SampleType> sampleDataL;
+    std::vector<SampleType> sampleDataR;
 
     std::array<SampleType, 2> originLineData = {SampleType(1), SampleType(1)};
 
-    juce::dsp::FFT fft{Queue::order};
-    using WindowFun = juce::dsp::WindowingFunction<SampleType>;
-    WindowFun windowFun{(size_t)fft.getSize(), WindowFun::hann};
+    // juce::dsp::FFT fft{1024};
+    // using WindowFun = juce::dsp::WindowingFunction<SampleType>;
+    // WindowFun windowFun{(size_t)fft.getSize(), WindowFun::hann};
 
-    std::array<SampleType, 2 * Queue::bufferSize> spectrumData;
-    std::array<SampleType, 2 * Queue::bufferSize> scopeData;
+    // std::array<SampleType, 2 * Queue::bufferSize> spectrumData;
+    // std::array<SampleType, 2 * Queue::bufferSize> scopeData;
 
     //==============================================================================
     void timerCallback() override
     {
-        
-
-        audioBufferQueueL.pop(sampleDataL.data());
-        audioBufferQueueR.pop(sampleDataR.data());
+        if (audioBufferQueueL.getReadableSpace() >= sampleDataL.size() && audioBufferQueueR.getReadableSpace() >= sampleDataR.size()) {
+            audioBufferQueueL.pop(sampleDataL.data(), sampleDataL.size());
+            audioBufferQueueR.pop(sampleDataR.data(), sampleDataR.size());
+        }
 
         // juce::FloatVectorOperations::copy(spectrumData.data(), sampleDataL.data(), (int)sampleDataL.size());
 
