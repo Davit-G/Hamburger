@@ -13,12 +13,14 @@ set(BaseTargetName Hamburger)
 set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 
+# set(CMAKE_UNITY_BUILD ON)
+
 if(APPLE)
     set (CMAKE_OSX_DEPLOYMENT_TARGET "11.0" CACHE STRING "Minimum OS X deployment version" FORCE)
     if(NOT DEFINED CMAKE_OSX_ARCHITECTURES OR CMAKE_OSX_ARCHITECTURES STREQUAL "")
         # Default to native architecture for local builds
         execute_process(COMMAND uname -m OUTPUT_VARIABLE HOST_ARCH OUTPUT_STRIP_TRAILING_WHITESPACE)
-        set (CMAKE_OSX_ARCHITECTURES "${n. }" CACHE STRING "" FORCE)
+        set(CMAKE_OSX_ARCHITECTURES "${HOST_ARCH}" CACHE STRING "" FORCE)
     endif()
 
     # dSYM files for Xcode release builds
@@ -109,7 +111,7 @@ add_subdirectory(service)
 target_compile_features("${BaseTargetName}" PUBLIC cxx_std_17)
 
 target_compile_options(Hamburger PRIVATE
-    $<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>,$<CXX_COMPILER_ID:GNU>>:
+    $<$<AND:$<CONFIG:Release>,$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>,$<CXX_COMPILER_ID:GNU>>>:
         -O3 -ffast-math -flto>
     $<$<CXX_COMPILER_ID:MSVC>:
         /O2 /fp:fast /GL>

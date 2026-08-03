@@ -1,13 +1,23 @@
 #pragma once
 
+#include <algorithm>
+#include <cmath>
 #include <memory>
 #include <juce_dsp/juce_dsp.h>
+
+namespace scope_constants
+{
+    static constexpr int defaultQueueSize = 4096;
+    static constexpr int fftSize = 4096;
+    static constexpr int fftInputSize = fftSize * 2;
+    static constexpr int fftBins = fftSize / 2 + 1;
+}
 
 enum ScopeContextType {
     LR_SCOPE, // by default
     IN_OUT, // input against output
     // SPECTRUM, // once button press happens?
-    // SPECTRUM_EMPHASIS, // draw curves for emphasis eq
+    SPECTRUM_EMPHASIS, // draw curves for emphasis eq
     
 };
 
@@ -38,7 +48,7 @@ class AudioBufferQueue
 {
 public:
     AudioBufferQueue() {
-        resize(1024);
+        resize(scope_constants::defaultQueueSize);
     }
 
     void resize(size_t size) {
@@ -53,7 +63,7 @@ public:
     }
 
     // obtains the currently consumed space (the amount that can be currently read from the buffer)
-    float getReadableSpace() {
+    int getReadableSpace() {
         lock.enterRead();
 
         int start1, size1, start2, size2;
@@ -61,7 +71,7 @@ public:
 
         lock.exitRead();
 
-        return (float) (size1 + size2);
+        return size1 + size2;
     }
 
     //==============================================================================
@@ -73,10 +83,18 @@ public:
 
         lock.enterWrite();
 
-        int start1, size1, start2, size2;
-        abstractFifo.prepareToWrite((int) numSamples, start1, size1, start2, size2);
+        const auto requiredSamples = juce::jmin<int>((int) numSamples, (int) buffer.size());
 
-        const auto totalSpace = juce::jmin<int>((int) numSamples, size1 + size2);
+        int start1, size1, start2, size2;
+        abstractFifo.prepareToWrite(requiredSamples, start1, size1, start2, size2);
+
+        if (size1 + size2 < requiredSamples)
+        {
+            abstractFifo.reset();
+            abstractFifo.prepareToWrite(requiredSamples, start1, size1, start2, size2);
+        }
+
+        const auto totalSpace = juce::jmin<int>(requiredSamples, size1 + size2);
         int samplesWritten = 0;
 
         if (size1 > 0 && samplesWritten < totalSpace)
@@ -131,7 +149,7 @@ public:
 
 private:
     //==============================================================================
-    juce::AbstractFifo abstractFifo {1024};
+    juce::AbstractFifo abstractFifo {scope_constants::defaultQueueSize};
     juce::ReadWriteLock lock; // using a lock to block the ui thread when a resize occurs
     std::vector<SampleType> buffer;
 };
@@ -308,6 +326,8 @@ public:
         sampleDataPreDistortion.resize(44100 / fps);
         sampleDataPostDistortion.resize(44100 / fps);
         setFramesPerSecond(fps);
+
+        bufferedFFTInput.resize(scope_constants::fftSize);
     }
 
     void mouseDown(const juce::MouseEvent &event) override
@@ -360,7 +380,7 @@ public:
                     g.drawLine(centerX, SampleType(0), centerX, h);
                     g.drawLine(SampleType(0), centerY, w, centerY);
 
-                    g.setColour(juce::Colours::lime);
+                    g.setColour(juce::Colours::yellow);
                     const auto count = juce::jmin(sampleDataPreDistortion.size(), sampleDataPostDistortion.size());
                     for (size_t i = 1; i < count; ++i)
                     {
@@ -376,6 +396,48 @@ public:
 
                         g.drawLine(px0, py0, px1, py1);
                     }
+                }
+
+                break;
+            }
+            case ScopeContextType::SPECTRUM_EMPHASIS: {
+                if (spectrumTransformed.size() > 1)
+                {
+                    g.setColour(juce::Colours::yellow);
+                    const auto centerY = h;
+                    const auto maxHeight = h;
+                    const auto binCount = static_cast<double>(spectrumTransformed.size());
+                    const auto logMax = std::log10(binCount);
+                    constexpr auto tiltDbPerOctave = SampleType(4.5);
+                    constexpr auto mindB = SampleType(-70);
+                    constexpr auto maxdB = SampleType(18);
+
+                    juce::Path spectrumPath;
+                    for (size_t i = 0; i < spectrumTransformed.size(); ++i)
+                    {
+                        const auto x = (binCount > 1.0)
+                            ? static_cast<SampleType>((std::log10(static_cast<double>(i + 1)) / logMax) * static_cast<double>(w))
+                            : SampleType(0);
+
+                        const auto dbValue = juce::jmap(spectrumTransformed[i], SampleType(0), SampleType(1), mindB, maxdB);
+                        const auto octaveIndex = std::max(SampleType(0), std::log2(static_cast<SampleType>(binCount) / static_cast<SampleType>(i + 1)));
+                        const auto tiltDb = -tiltDbPerOctave * octaveIndex;
+                        const auto adjustedDb = dbValue + tiltDb;
+                        const auto magnitude = juce::jlimit(SampleType(0), SampleType(1), juce::jmap(
+                            juce::jlimit(mindB, maxdB, adjustedDb),
+                            mindB,
+                            maxdB,
+                            SampleType(0),
+                            SampleType(1)));
+                        const auto y = centerY - magnitude * maxHeight;
+
+                        if (i == 0)
+                            spectrumPath.startNewSubPath(x, y);
+                        else
+                            spectrumPath.lineTo(x, y);
+                    }
+
+                    g.strokePath(spectrumPath, juce::PathStrokeType(1.5f));
                 }
 
                 break;
@@ -397,14 +459,16 @@ private:
     std::vector<SampleType> sampleDataPreDistortion;
     std::vector<SampleType> sampleDataPostDistortion;
 
+    AudioBufferQueue<SampleType> bufferedFFTInput;
+
     std::array<SampleType, 2> originLineData = {SampleType(1), SampleType(1)};
 
-    // juce::dsp::FFT fft{1024};
-    // using WindowFun = juce::dsp::WindowingFunction<SampleType>;
-    // WindowFun windowFun{(size_t)fft.getSize(), WindowFun::hann};
+    juce::dsp::FFT fft{static_cast<int>(std::log2(scope_constants::fftSize))};
+    using WindowFun = juce::dsp::WindowingFunction<SampleType>;
+    WindowFun windowFun{scope_constants::fftSize, WindowFun::hann};
 
-    // std::array<SampleType, 2 * Queue::bufferSize> spectrumData;
-    // std::array<SampleType, 2 * Queue::bufferSize> scopeData;
+    std::array<SampleType, scope_constants::fftInputSize> spectrumData{};
+    std::array<SampleType, scope_constants::fftBins> spectrumTransformed{};
 
     //==============================================================================
     void timerCallback() override
@@ -417,6 +481,41 @@ private:
         if (queueL.getReadableSpace() >= sampleDataL.size() && queueR.getReadableSpace() >= sampleDataR.size()) {
             queueL.pop(sampleDataL.data(), sampleDataL.size());
             queueR.pop(sampleDataR.data(), sampleDataR.size());
+            
+            bufferedFFTInput.push(sampleDataL.data(), sampleDataL.size());
+
+            if (scopeContext.getType() == ScopeContextType::SPECTRUM_EMPHASIS) {
+                const auto fftSize = fft.getSize();
+
+                if (bufferedFFTInput.getReadableSpace() >= fftSize)
+                {
+                    std::fill(spectrumData.begin(), spectrumData.end(), SampleType(0));
+                    std::fill(spectrumTransformed.begin(), spectrumTransformed.end(), SampleType(0));
+
+                    bufferedFFTInput.pop(spectrumData.data(), fftSize);
+
+                    windowFun.multiplyWithWindowingTable(spectrumData.data(), fftSize);
+                    fft.performFrequencyOnlyForwardTransform(spectrumData.data(), true);
+
+                    static constexpr auto mindB = SampleType(-70);
+                    static constexpr auto maxdB = SampleType(50);
+                    const auto binsToRender = juce::jmin<int>((int) spectrumTransformed.size(), fftSize / 2 + 1);
+
+                    for (int i = 0; i < binsToRender; ++i)
+                    {
+                        const auto magnitude = juce::jlimit(SampleType(1.0e-6), SampleType(1.0e6), spectrumData[i]);
+                        const auto db = juce::Decibels::gainToDecibels(magnitude, -70.0f);
+                        const auto normalized = juce::jmap(
+                            db,
+                            mindB,
+                            maxdB,
+                            SampleType(0),
+                            SampleType(1));
+
+                        spectrumTransformed[i] = normalized;
+                    }
+                }
+            }
         }
 
         if (preDist.getReadableSpace() >= sampleDataPreDistortion.size() && postDist.getReadableSpace() >= sampleDataPostDistortion.size()) {
@@ -424,37 +523,7 @@ private:
             postDist.pop(sampleDataPostDistortion.data(), sampleDataPostDistortion.size());
         }
 
-        // juce::FloatVectorOperations::copy(spectrumData.data(), sampleDataL.data(), (int)sampleDataL.size());
 
-        // auto fftSize = (size_t)fft.getSize();
-
-        // jassert(spectrumData.size() == 2 * fftSize);
-        // windowFun.multiplyWithWindowingTable(spectrumData.data(), fftSize);
-        // fft.performFrequencyOnlyForwardTransform(spectrumData.data());
-
-        // static constexpr auto mindB = SampleType(-156);
-        // static constexpr auto maxdB = SampleType(6);
-
-        // for (int i = 0; i < spectrumData.size(); ++i) {
-        //     auto skewedProportionX = 1.0f - std::exp (std::log (1.0f - (float) i / (float) spectrumData.size()) * 0.05f);
-            
-        //     auto newTing = skewedProportionX * spectrumData.size() * 0.5f;
-
-        //     const float prev = floor(newTing);
-        //     const float next = ceil(newTing);
-        //     const float interp = newTing - prev;
-        //     const float val = spectrumData[prev] * (1 - interp) + spectrumData[next] * interp;
-
-        //     auto ting = juce::jlimit(mindB, maxdB, juce::Decibels::gainToDecibels(val) - juce::Decibels::gainToDecibels((SampleType)fftSize));
-        //     scopeData[i] = juce::jmap(
-        //         ting, 
-        //         mindB, 
-        //         maxdB, 
-        //         SampleType(0), 
-        //         SampleType(1)
-        //         );
-            
-        // }
 
         repaint(getLocalBounds());
     }
