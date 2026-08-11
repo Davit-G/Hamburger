@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cmath>
 #include "../../../utils/Params.h"
+#include "../../WaveShapers.h"
 
 Preisach::Preisach(juce::AudioProcessorValueTreeState& treeState) :
     drive(treeState, ParamIDs::tapeDrive),
@@ -37,11 +38,6 @@ void Preisach::prepare(juce::dsp::ProcessSpec& spec) {
     drive.prepare(spec);
     remanence.prepare(spec);
     bias.prepare(spec);
-}
-
-template <typename T>
-int sgn(T val) {
-    return (T(0) < val) - (val < T(0));
 }
 
 float fastTanh(float x) {

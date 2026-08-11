@@ -3,14 +3,20 @@
 #include <algorithm>
 #include <cmath>
 #include <memory>
+#include <juce_audio_processors/juce_audio_processors.h>
 #include <juce_dsp/juce_dsp.h>
+
+#include "../../utils/Params.h"
 
 namespace scope_constants
 {
-    static constexpr int defaultQueueSize = 4096;
-    static constexpr int fftSize = 4096;
+    static constexpr int defaultQueueSize = 2048;
+    static constexpr int fftSize = 2048;
     static constexpr int fftInputSize = fftSize * 2;
     static constexpr int fftBins = fftSize / 2 + 1;
+    static constexpr int defaultFrameRate = 60;
+    static constexpr int defaultHopSize = 44100 / defaultFrameRate;
+    static constexpr float spectrumSmoothing = 0.6f;
 }
 
 enum ScopeContextType {
@@ -18,7 +24,10 @@ enum ScopeContextType {
     IN_OUT, // input against output
     // SPECTRUM, // once button press happens?
     SPECTRUM_EMPHASIS, // draw curves for emphasis eq
-    
+    CLIPPER, // clipping curve + waveform
+    COMP, // compression knee + level + ratio
+    MB_COMP,
+    MS_COMP,
 };
 
 // cause maybe we might need to sync across threads later?
@@ -38,6 +47,7 @@ public:
 
 private:
     ScopeContextType type = ScopeContextType::LR_SCOPE;
+
 
 
 };
@@ -77,7 +87,8 @@ public:
     //==============================================================================
     // happens on audio thread, we dont need write locks here.
     // if we go over the size limit this could be dodgy?
-    void push(const SampleType *dataToPush, size_t numSamples)
+    // returns the number of samples written
+    float push(const SampleType *dataToPush, size_t numSamples)
     {
         jassert(numSamples <= buffer.size());
 
@@ -114,11 +125,13 @@ public:
         abstractFifo.finishedWrite(samplesWritten);
 
         lock.exitWrite();
+
+        return samplesWritten;
     }
 
     //==============================================================================
     // happens on ui thread
-    void pop(SampleType *outputBuffer, size_t numSamples)
+    float pop(SampleType *outputBuffer, size_t numSamples)
     {
         lock.enterWrite();
 
@@ -145,6 +158,12 @@ public:
         abstractFifo.finishedRead(samplesRead);
 
         lock.exitWrite();
+        return samplesRead;
+    }
+
+    // reset fifo structure to start from the start without reallocating
+    void reset() {
+        abstractFifo.reset();
     }
 
 private:
@@ -164,11 +183,11 @@ public:
     {}
 
     void prepare(juce::dsp::ProcessSpec& spec) {
-        audioBufferQueueL.resize(spec.sampleRate / 60);
-        audioBufferQueueR.resize(spec.sampleRate / 60);
+        audioBufferQueueL.resize(spec.sampleRate / 30);
+        audioBufferQueueR.resize(spec.sampleRate / 30);
 
-        audioBufferQueuePreDistortion.resize(spec.sampleRate / 60);
-        audioBufferQueuePostDistortion.resize(spec.sampleRate / 60);
+        audioBufferQueuePreDistortion.resize(spec.sampleRate / 30);
+        audioBufferQueuePostDistortion.resize(spec.sampleRate / 30);
 
         const int maxScopeSamples = juce::jmax<int>((int) spec.maximumBlockSize, 1) * 16;
         preDistScratchBuffer.setSize(1, maxScopeSamples, false, false);
@@ -244,7 +263,7 @@ public:
         juce::dsp::AudioBlock<SampleType> inputBlock(preDistScratchBuffer.getArrayOfWritePointers(), 1, (int) numSamples);
         preDistOversampling->processSamplesDown(inputBlock);
 
-        audioBufferQueuePreDistortion.push(inputBlock.getChannelPointer(0), inputBlock.getNumSamples());
+        samplesReadPre = audioBufferQueuePreDistortion.push(inputBlock.getChannelPointer(0), inputBlock.getNumSamples());
     }
 
     void capturePostDistortion(const SampleType *dataL, size_t numSamples, int oversamplingFactor) {
@@ -265,7 +284,13 @@ public:
         juce::dsp::AudioBlock<SampleType> inputBlock(postDistScratchBuffer.getArrayOfWritePointers(), 1, (int) numSamples);
         postDistOversampling->processSamplesDown(inputBlock);
 
-        audioBufferQueuePostDistortion.push(inputBlock.getChannelPointer(0), inputBlock.getNumSamples());
+        samplesReadPost = audioBufferQueuePostDistortion.push(inputBlock.getChannelPointer(0), inputBlock.getNumSamples());
+
+        if (samplesReadPre != samplesReadPost) {
+            // mismatch, we have to re-align both queues without reallocating
+            audioBufferQueuePreDistortion.reset();
+            audioBufferQueuePostDistortion.reset();
+        }
     }
 
     //==============================================================================
@@ -296,6 +321,8 @@ private:
     juce::AudioBuffer<SampleType> preDistScratchBuffer;
     juce::AudioBuffer<SampleType> postDistScratchBuffer;
 
+    float samplesReadPre, samplesReadPost;
+
     // size_t numCollected;
     // SampleType prevSample = SampleType(100);
 
@@ -316,18 +343,25 @@ public:
     using Queue = AudioBufferQueue<SampleType>;
 
     //==============================================================================
-    Scope(ScopeDataCollector<SampleType>& scopeDataCollector, ScopeContext &newScopeContext)
-        : dataCollector(scopeDataCollector),
+    Scope(juce::AudioProcessorValueTreeState& valueTree, ScopeDataCollector<SampleType>& scopeDataCollector, ScopeContext &newScopeContext)
+        : apvts(valueTree), 
+        dataCollector(scopeDataCollector),
           scopeContext(newScopeContext)
     {   
-        int fps = 60;
-        sampleDataL.resize(44100 / fps);
-        sampleDataR.resize(44100 / fps);
-        sampleDataPreDistortion.resize(44100 / fps);
-        sampleDataPostDistortion.resize(44100 / fps);
+        int fps = scope_constants::defaultFrameRate;
+        sampleDataL.resize(scope_constants::defaultHopSize);
+        sampleDataR.resize(scope_constants::defaultHopSize);
+        sampleDataPreDistortion.resize(scope_constants::defaultHopSize);
+        sampleDataPostDistortion.resize(scope_constants::defaultHopSize);
         setFramesPerSecond(fps);
 
         bufferedFFTInput.resize(scope_constants::fftSize);
+        fftHistory.resize(scope_constants::fftSize, SampleType(0));
+
+        lowFreqParam = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter(ParamIDs::emphasisLowFreq.getParamID()));
+        highFreqParam = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter(ParamIDs::emphasisHighFreq.getParamID()));
+        lowGainParam = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter(ParamIDs::emphasisLowGain.getParamID()));
+        highGainParam = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter(ParamIDs::emphasisHighGain.getParamID()));
     }
 
     void mouseDown(const juce::MouseEvent &event) override
@@ -437,12 +471,86 @@ public:
                             spectrumPath.lineTo(x, y);
                     }
 
-                    g.strokePath(spectrumPath, juce::PathStrokeType(1.5f));
+                    g.strokePath(spectrumPath, juce::PathStrokeType(2.f));
+
+                    
+                    drawResponseCurve(g, w, centerY, maxHeight, juce::Colours::grey);
+
+                    // drawResponseCurve(juce::Colours::grey, true);
+                    // drawResponseCurve(juce::Colours::white, false); // drawing white over the top of this
                 }
 
                 break;
             }
+            case ScopeContextType::CLIPPER: {
+                
+
+                break;
+            }
         }
+    }
+
+    float getBandResponse(double freq, double centerFreq, double gainDb)
+    {
+        if (!std::isfinite(freq) || freq <= 0.0 || !std::isfinite(centerFreq) || centerFreq <= 0.0 || !std::isfinite(gainDb))
+            return 0.5;
+
+        const auto bandwidth = 0.35;
+        const auto amplitude = juce::jlimit(-1.0, 1.0, gainDb / 18.0);
+        const auto logFreq = std::log10(std::max(freq, 1.0));
+        const auto logCenter = std::log10(std::max(centerFreq, 1.0));
+        const auto distance = (logFreq - logCenter) / bandwidth;
+        const auto bell = std::exp(-0.5 * distance * distance);
+        return juce::jlimit(0.0, 1.0, 0.5 + bell * amplitude * 0.5);
+    }
+
+    void drawResponseCurve(juce::Graphics &g, const float w, const float centerY, const float maxHeight, const juce::Colour &colour)
+    {
+        const auto lowFreq = lowFreqParam->get();
+        const auto highFreq = highFreqParam->get();
+        const auto lowGainDb = lowGainParam->get();
+        const auto highGainDb = highGainParam->get();
+                        
+        juce::Path eqPath, eqInversePath;
+        const auto minFreq = 20.0;
+        const auto maxFreq = 20000.0;
+        const auto leftAnchorFreq = 20.0;
+        const auto bellXScale = std::log10(maxFreq / minFreq);
+        const auto spectrumLeftEdgeFreq = 20.0;
+
+        for (int i = 0; i <= 220; ++i)
+        {
+            const auto logT = static_cast<double>(i) / 220.0;
+            const auto logFreq = std::log10(leftAnchorFreq) + logT * bellXScale;
+            const auto freq = std::pow(10.0, logFreq);
+            const auto lowResponse = getBandResponse(freq, lowFreq, lowGainDb);
+            const auto highResponse = getBandResponse(freq, highFreq, highGainDb);
+            const auto responseToDraw = juce::jlimit(0.0, 1.0, 0.5 + (lowResponse - 0.5) + (highResponse - 0.5));
+
+            const auto x = juce::jmap(logFreq, std::log10(spectrumLeftEdgeFreq), std::log10(maxFreq), 0.0, static_cast<double>(w));
+            const auto clampedX = juce::jlimit(0.0, static_cast<double>(w), x);
+            const auto y = centerY - responseToDraw * maxHeight;
+            const auto inverseY = centerY + responseToDraw * maxHeight;
+
+            if (!std::isfinite(x) || !std::isfinite(y))
+                continue;
+
+            if (i == 0) {
+                eqPath.startNewSubPath(static_cast<float>(clampedX), static_cast<float>(y));
+                eqInversePath.startNewSubPath(static_cast<float>(clampedX), static_cast<float>(inverseY));
+            }
+            else {
+                eqPath.lineTo(static_cast<float>(clampedX), static_cast<float>(y));
+                eqInversePath.startNewSubPath(static_cast<float>(clampedX), static_cast<float>(inverseY));
+            }
+        }
+
+        if (eqPath.isEmpty())
+            return;
+
+        g.setColour(colour);
+        g.strokePath(eqPath, juce::PathStrokeType(2.0f));
+        g.strokePath(eqInversePath, juce::PathStrokeType(2.0f));
     }
 
     //==============================================================================
@@ -451,6 +559,13 @@ public:
     bool viewSpectrum = false;
 
 private:
+    juce::AudioParameterFloat* lowFreqParam;
+    juce::AudioParameterFloat* highFreqParam;
+    juce::AudioParameterFloat* lowGainParam;
+    juce::AudioParameterFloat* highGainParam;
+
+    juce::AudioProcessorValueTreeState& apvts;
+
     ScopeContext& scopeContext;
     ScopeDataCollector<SampleType>& dataCollector;
 
@@ -460,6 +575,9 @@ private:
     std::vector<SampleType> sampleDataPostDistortion;
 
     AudioBufferQueue<SampleType> bufferedFFTInput;
+    std::vector<SampleType> fftHistory;
+    std::array<SampleType, scope_constants::fftBins> averagedSpectrum{};
+    int fftHistoryWritePosition = 0;
 
     std::array<SampleType, 2> originLineData = {SampleType(1), SampleType(1)};
 
@@ -481,18 +599,28 @@ private:
         if (queueL.getReadableSpace() >= sampleDataL.size() && queueR.getReadableSpace() >= sampleDataR.size()) {
             queueL.pop(sampleDataL.data(), sampleDataL.size());
             queueR.pop(sampleDataR.data(), sampleDataR.size());
-            
-            bufferedFFTInput.push(sampleDataL.data(), sampleDataL.size());
 
             if (scopeContext.getType() == ScopeContextType::SPECTRUM_EMPHASIS) {
                 const auto fftSize = fft.getSize();
 
-                if (bufferedFFTInput.getReadableSpace() >= fftSize)
+                for (size_t i = 0; i < sampleDataL.size(); ++i)
+                {
+                    const auto writeIndex = (fftHistoryWritePosition + i) % fftHistory.size();
+                    fftHistory[writeIndex] = sampleDataL[i];
+                }
+
+                fftHistoryWritePosition = (fftHistoryWritePosition + sampleDataL.size()) % fftHistory.size();
+
+                if (fftHistory.size() >= fftSize)
                 {
                     std::fill(spectrumData.begin(), spectrumData.end(), SampleType(0));
                     std::fill(spectrumTransformed.begin(), spectrumTransformed.end(), SampleType(0));
 
-                    bufferedFFTInput.pop(spectrumData.data(), fftSize);
+                    for (int i = 0; i < fftSize; ++i)
+                    {
+                        const auto historyIndex = (fftHistoryWritePosition + i + fftHistory.size() - fftSize) % fftHistory.size();
+                        spectrumData[i] = fftHistory[historyIndex];
+                    }
 
                     windowFun.multiplyWithWindowingTable(spectrumData.data(), fftSize);
                     fft.performFrequencyOnlyForwardTransform(spectrumData.data(), true);
@@ -512,7 +640,9 @@ private:
                             SampleType(0),
                             SampleType(1));
 
-                        spectrumTransformed[i] = normalized;
+                        const auto smoothed = averagedSpectrum[i] * scope_constants::spectrumSmoothing + normalized * (SampleType(1) - scope_constants::spectrumSmoothing);
+                        averagedSpectrum[i] = smoothed;
+                        spectrumTransformed[i] = smoothed;
                     }
                 }
             }

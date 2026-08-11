@@ -1,14 +1,10 @@
 #include "NonlinSlew.h"
+#include "../../Waveshapers.h"
 
 #include <algorithm>
 #include <cmath>
 
 namespace {
-
-template <typename T>
-int sgn(T val) {
-    return (T(0) < val) - (val < T(0));
-}
 
 float safePow(float value, float exponent) {
     const float magnitude = std::max(std::fabs(value), 1.0e-6f);
