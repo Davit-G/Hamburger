@@ -225,9 +225,6 @@ void AudioPluginAudioProcessor::changeProgramName(int index, const juce::String 
 //==============================================================================
 void AudioPluginAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
 {
-    // can get called with a degenerate rate/block size while the host is tearing the
-    // plugin down (e.g. via the mid-stream reconfigure in processBlock below) - nothing
-    // downstream can compute valid filter coefficients from a 0 sample rate, so bail early
     if (sampleRate <= 0.0 || samplesPerBlock <= 0)
         return;
 

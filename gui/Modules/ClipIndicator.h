@@ -16,6 +16,10 @@ public:
 
     void paint(juce::Graphics& g) override
     {
+        // the clipper is bypassed, so there's nothing meaningful to report
+        if (*p.treeState.getRawParameterValue(ParamIDs::postClipEnabled.getParamID()) < 0.5f)
+            return;
+
         const auto level = collector.clipLevel.load(std::memory_order_relaxed);
 
         auto dotColour = juce::Colours::darkgrey;
