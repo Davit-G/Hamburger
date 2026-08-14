@@ -6,4 +6,5 @@ target_sources("${BaseTargetName}"
         ScopeDataCollector.h
         AudioBufferQueue.cpp
         AudioBufferQueue.h
+        ClipIndicator.h
         )

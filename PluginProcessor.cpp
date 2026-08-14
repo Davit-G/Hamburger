@@ -11,7 +11,7 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor() : AudioProcessor(BusesPro
                                                                             .withOutput("Output", juce::AudioChannelSet::stereo(), true)),
                                                          treeState(*this, nullptr, "PARAMETER", createParameterLayout()),
                                                          dynamics(treeState),
-                                                         postClip(treeState),
+                                                         postClip(treeState, scopeDataCollector),
                                                          dryWetMixer(30),
                                                          noiseDistortionSelection(treeState),
                                                          preDistortionSelection(treeState),
@@ -347,8 +347,7 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
         preDistortionSelection.processBlock(oversampledBlock);
     }
 
-    // because these are upsampled, do we have to downsample them for the scope?
-    scopeDataCollector.capturePreDistortion(buffer.getReadPointer(0), (size_t)buffer.getNumSamples(), oversampleAmount);
+    scopeDataCollector.capturePreDistortion(oversampledBlock.getChannelPointer(0), oversampledBlock.getNumSamples(), oversampleAmount);
 
     {
         const int stagesAmt = (stages != nullptr) ? stages->get() : 1;
@@ -371,14 +370,14 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
         }
     }
 
-    scopeDataCollector.capturePostDistortion(buffer.getReadPointer(0), (size_t)buffer.getNumSamples(), oversampleAmount);
+    scopeDataCollector.capturePostDistortion(oversampledBlock.getChannelPointer(0), oversampledBlock.getNumSamples(), oversampleAmount);
 
     emphasisFilter.processAfter(oversampledBlock);
 
     {
         // TRACE_EVENT("dsp", "other");
         if (clipEnabled == nullptr || clipEnabled->get())
-        {
+        {   
             postClip.processBlock(oversampledBlock);
         }
 

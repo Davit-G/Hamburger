@@ -11,7 +11,8 @@ enum class ParamUnits {
     db,
     percent,
     x,
-    category
+    category,
+    oversample
 };
 
 inline juce::String createParamString(float value, ParamUnits unit) noexcept {
@@ -28,6 +29,8 @@ inline juce::String createParamString(float value, ParamUnits unit) noexcept {
             return juce::String(value, 0, false) + "x";
         case ParamUnits::category:
             return juce::String(value, 0, false);
+        case ParamUnits::oversample:
+            return juce::String(powf(2.0f, round(value)), 0, false) + "x";
         default:
             return juce::String(value, 2, false);
     }

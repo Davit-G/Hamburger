@@ -35,15 +35,37 @@ public:
 
     AudioBufferQueue<SampleType> audioBufferQueuePreDistortion;
     AudioBufferQueue<SampleType> audioBufferQueuePostDistortion;
+
+    void accumulateClipping(float sampleL, float sampleR) {
+        float sample = fabs(fmax(sampleL, sampleR));
+
+        constexpr float coeff = 0.0001f; // clip level decay
+        float current = clipLevel.load(std::memory_order_relaxed);
+
+        if (sample > current) {
+            // jump
+            clipLevel.store(sample, std::memory_order_relaxed);
+        } else {
+            // decay
+            clipLevel.store(current * (1.0f - coeff), std::memory_order_relaxed);
+        }
+    }
+
+    std::atomic<float> clipLevel;
+
 private:
     std::atomic<double> currentSampleRate { 44100.0 };
 
-    void prepareOversampler(std::unique_ptr<juce::dsp::Oversampling<SampleType>>& oversampler,
-                            int oversamplingFactor,
-                            size_t numSamples);
+    // dataL here is already the oversampled signal, so bringing it back down to base rate
+    // for the scope just means keeping every (2^oversamplingFactor)th sample - the main
+    // oversampling chain has already anti-aliased it before we ever see it
+    static void decimate(juce::AudioBuffer<SampleType>& scratch, const SampleType* dataL, size_t numSamples, int oversamplingFactor);
 
-    std::unique_ptr<juce::dsp::Oversampling<SampleType>> preDistOversampling;
-    std::unique_ptr<juce::dsp::Oversampling<SampleType>> postDistOversampling;
+    // if either queue had to silently overflow-reset, the two are no longer reading the
+    // same point in time relative to each other - force both back in lockstep rather than
+    // let them drift apart permanently
+    void resyncPrePostQueues();
+
     juce::AudioBuffer<SampleType> preDistScratchBuffer;
     juce::AudioBuffer<SampleType> postDistScratchBuffer;
 

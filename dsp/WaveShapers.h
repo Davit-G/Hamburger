@@ -66,6 +66,20 @@ inline float softClipperFunc(float x, float threshold, float knee)
 	return output * sign; // return it to the original sign afterwards
 }
 
+inline bool isSoftClipperKnee(float x, float threshold, float knee)
+{
+	float sign = sgn(x); // rectify it so we stay in the positive domain
+	x = sign * x;
+
+	float twoXMinusThreshold = 2 * (x - threshold);
+
+	if (twoXMinusThreshold < -knee || twoXMinusThreshold > knee) {
+		return false;
+	} else {
+		return true;
+	};
+}
+
 inline float tanhApprox1(float x)
 {
 	// this bends up at the ends (diverges away from 0)

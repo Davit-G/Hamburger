@@ -2,8 +2,6 @@
 
 #include "../Panel.h"
 
-
-
 class PostClipPanel : public Panel
 {
 public:
@@ -20,6 +18,7 @@ public:
     void resized() override
     {
         auto bounds = getLocalBounds();
+
         auto width = bounds.getWidth() / 2;
         gain.setBounds(bounds.removeFromLeft(width));
         knee.setBounds(bounds.removeFromLeft(width));

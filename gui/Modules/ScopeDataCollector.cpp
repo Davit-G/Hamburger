@@ -70,72 +70,63 @@ void ScopeDataCollector<SampleType>::process(const SampleType *dataL, const Samp
 }
 
 template <typename SampleType>
+void ScopeDataCollector<SampleType>::decimate(juce::AudioBuffer<SampleType>& scratch, const SampleType* dataL, size_t numSamples, int oversamplingFactor)
+{
+    const size_t step = (size_t) 1 << oversamplingFactor; // 2 ^ oversamplingFactor
+    const size_t decimatedCount = numSamples / step;
+
+    if (scratch.getNumSamples() < (int) decimatedCount)
+        scratch.setSize(1, (int) decimatedCount, false, false);
+
+    auto* out = scratch.getWritePointer(0);
+
+    for (size_t i = 0; i < decimatedCount; ++i)
+        out[i] = dataL[i * step];
+}
+
+template <typename SampleType>
 void ScopeDataCollector<SampleType>::capturePreDistortion(const SampleType *dataL, size_t numSamples, int oversamplingFactor)
 {
-    if (oversamplingFactor <= 1)
+    if (oversamplingFactor <= 0)
     {
-        audioBufferQueuePreDistortion.push(dataL, numSamples);
-        return;
+        samplesReadPre = audioBufferQueuePreDistortion.push(dataL, numSamples);
+    }
+    else
+    {
+        decimate(preDistScratchBuffer, dataL, numSamples, oversamplingFactor);
+
+        const auto decimatedCount = numSamples >> oversamplingFactor;
+        samplesReadPre = audioBufferQueuePreDistortion.push(preDistScratchBuffer.getReadPointer(0), decimatedCount);
     }
 
-    prepareOversampler(preDistOversampling, oversamplingFactor, numSamples);
-
-    if (preDistScratchBuffer.getNumSamples() < (int) numSamples)
-        preDistScratchBuffer.setSize(1, (int) numSamples, false, false);
-
-    preDistScratchBuffer.clear();
-    preDistScratchBuffer.copyFrom(0, 0, dataL, (int) numSamples);
-
-    juce::dsp::AudioBlock<SampleType> inputBlock(preDistScratchBuffer.getArrayOfWritePointers(), 1, (int) numSamples);
-    preDistOversampling->processSamplesDown(inputBlock);
-
-    samplesReadPre = audioBufferQueuePreDistortion.push(inputBlock.getChannelPointer(0), inputBlock.getNumSamples());
+    if (audioBufferQueuePreDistortion.consumeOverflowFlag())
+        resyncPrePostQueues();
 }
 
 template <typename SampleType>
 void ScopeDataCollector<SampleType>::capturePostDistortion(const SampleType *dataL, size_t numSamples, int oversamplingFactor)
 {
-    if (oversamplingFactor <= 1)
+    if (oversamplingFactor <= 0)
     {
-        audioBufferQueuePostDistortion.push(dataL, numSamples);
-        return;
+        samplesReadPost = audioBufferQueuePostDistortion.push(dataL, numSamples);
+    }
+    else
+    {
+        decimate(postDistScratchBuffer, dataL, numSamples, oversamplingFactor);
+
+        const auto decimatedCount = numSamples >> oversamplingFactor;
+        samplesReadPost = audioBufferQueuePostDistortion.push(postDistScratchBuffer.getReadPointer(0), decimatedCount);
     }
 
-    prepareOversampler(postDistOversampling, oversamplingFactor, numSamples);
-
-    if (postDistScratchBuffer.getNumSamples() < (int) numSamples)
-        postDistScratchBuffer.setSize(1, (int) numSamples, false, false);
-
-    postDistScratchBuffer.clear();
-    postDistScratchBuffer.copyFrom(0, 0, dataL, (int) numSamples);
-
-    juce::dsp::AudioBlock<SampleType> inputBlock(postDistScratchBuffer.getArrayOfWritePointers(), 1, (int) numSamples);
-    postDistOversampling->processSamplesDown(inputBlock);
-
-    samplesReadPost = audioBufferQueuePostDistortion.push(inputBlock.getChannelPointer(0), inputBlock.getNumSamples());
-
-    if (samplesReadPre != samplesReadPost) {
-        // mismatch, we have to re-align both queues without reallocating
-        audioBufferQueuePreDistortion.reset();
-        audioBufferQueuePostDistortion.reset();
-    }
+    if (audioBufferQueuePostDistortion.consumeOverflowFlag() || samplesReadPre != samplesReadPost)
+        resyncPrePostQueues();
 }
 
 template <typename SampleType>
-void ScopeDataCollector<SampleType>::prepareOversampler(std::unique_ptr<juce::dsp::Oversampling<SampleType>>& oversampler,
-                                                        int oversamplingFactor,
-                                                        size_t numSamples)
+void ScopeDataCollector<SampleType>::resyncPrePostQueues()
 {
-    if (oversampler == nullptr || oversampler->getOversamplingFactor() != oversamplingFactor)
-    {
-        oversampler = std::make_unique<juce::dsp::Oversampling<SampleType>>(
-            1,
-            oversamplingFactor,
-            juce::dsp::Oversampling<SampleType>::filterHalfBandPolyphaseIIR,
-            true);
-    }
-
-    oversampler->initProcessing((size_t) juce::jmax<int>((int) numSamples, 1));
+    audioBufferQueuePreDistortion.reset();
+    audioBufferQueuePostDistortion.reset();
 }
 
 //==============================================================================
