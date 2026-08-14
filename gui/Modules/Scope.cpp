@@ -2,7 +2,7 @@
 
 #include "../../dsp/WaveShapers.h"
 
-//==============================================================================
+
 ScopeContextType ScopeContext::getType()
 {
     return type;
@@ -13,7 +13,7 @@ void ScopeContext::setType(ScopeContextType newType)
     type = newType;
 }
 
-//==============================================================================
+
 template <typename SampleType>
 Scope<SampleType>::Scope(juce::AudioProcessorValueTreeState& valueTree, ScopeDataCollector<SampleType>& scopeDataCollector, ScopeContext &newScopeContext)
     : apvts(valueTree),
@@ -64,7 +64,7 @@ void Scope<SampleType>::mouseDown(const juce::MouseEvent &event)
     this->viewSpectrum = !this->viewSpectrum;
 }
 
-//==============================================================================
+
 template <typename SampleType>
 void Scope<SampleType>::setFramesPerSecond(int framesPerSecond)
 {
@@ -72,7 +72,7 @@ void Scope<SampleType>::setFramesPerSecond(int framesPerSecond)
     startTimerHz(framesPerSecond);
 }
 
-//==============================================================================
+
 template <typename SampleType>
 void Scope<SampleType>::paint(juce::Graphics &g)
 {
@@ -107,7 +107,7 @@ void Scope<SampleType>::paint(juce::Graphics &g)
     }
 }
 
-//==============================================================================
+
 template <typename SampleType>
 void Scope<SampleType>::drawLRScope(juce::Graphics &g, juce::Rectangle<SampleType> scopeRect)
 {
@@ -124,7 +124,7 @@ void Scope<SampleType>::drawLRScope(juce::Graphics &g, juce::Rectangle<SampleTyp
     plotStraightLine(sampleDataR.data(), sampleDataR.size(), g, scopeRect, SampleType(0.4), h / 2);
 }
 
-//==============================================================================
+
 template <typename SampleType>
 void Scope<SampleType>::drawInOut(juce::Graphics &g, juce::Rectangle<SampleType> scopeRect)
 {
@@ -191,7 +191,7 @@ void Scope<SampleType>::renderInOutFrame(bool stampNewTrace)
                                                 (SampleType) getWidth(), (SampleType) getHeight()});
 }
 
-//==============================================================================
+
 template <typename SampleType>
 void Scope<SampleType>::drawSpectrumEmphasis(juce::Graphics &g, juce::Rectangle<SampleType> scopeRect)
 {
@@ -255,7 +255,7 @@ void Scope<SampleType>::drawSpectrumEmphasis(juce::Graphics &g, juce::Rectangle<
     }
 }
 
-//==============================================================================
+
 template <typename SampleType>
 void Scope<SampleType>::drawClipper(juce::Graphics &g, juce::Rectangle<SampleType> scopeRect)
 {
@@ -424,7 +424,7 @@ void Scope<SampleType>::drawResponseCurve(juce::Graphics &g, const SampleType w,
     g.strokePath(eqPath, juce::PathStrokeType(2.0f));
 }
 
-//==============================================================================
+
 template <typename SampleType>
 void Scope<SampleType>::timerCallback()
 {
@@ -501,7 +501,7 @@ void Scope<SampleType>::timerCallback()
     repaint(getLocalBounds());
 }
 
-//==============================================================================
+
 template <typename SampleType>
 void Scope<SampleType>::plotStraightLine(const SampleType *data,
                  size_t numSamples,
@@ -524,5 +524,5 @@ void Scope<SampleType>::plotStraightLine(const SampleType *data,
                     center - gain * data[i]});
 }
 
-//==============================================================================
+
 template class Scope<float>;
