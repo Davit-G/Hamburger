@@ -66,6 +66,7 @@ private:
     juce::AudioParameterFloat* highFreqParam;
     juce::AudioParameterFloat* lowGainParam;
     juce::AudioParameterFloat* highGainParam;
+    juce::AudioParameterFloat* postClipKneeParam;
 
     juce::AudioProcessorValueTreeState& apvts;
 

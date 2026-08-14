@@ -1,5 +1,7 @@
 #include "Scope.h"
 
+#include "../../dsp/WaveShapers.h"
+
 //==============================================================================
 ScopeContextType ScopeContext::getType()
 {
@@ -32,6 +34,7 @@ Scope<SampleType>::Scope(juce::AudioProcessorValueTreeState& valueTree, ScopeDat
     highFreqParam = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter(ParamIDs::emphasisHighFreq.getParamID()));
     lowGainParam = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter(ParamIDs::emphasisLowGain.getParamID()));
     highGainParam = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter(ParamIDs::emphasisHighGain.getParamID()));
+    postClipKneeParam = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter(ParamIDs::postClipKnee.getParamID()));
 }
 
 template <typename SampleType>
@@ -256,7 +259,89 @@ void Scope<SampleType>::drawSpectrumEmphasis(juce::Graphics &g, juce::Rectangle<
 template <typename SampleType>
 void Scope<SampleType>::drawClipper(juce::Graphics &g, juce::Rectangle<SampleType> scopeRect)
 {
-    juce::ignoreUnused(g, scopeRect);
+    const auto w = (float) scopeRect.getWidth();
+    const auto h = (float) scopeRect.getHeight();
+
+    const auto knee = postClipKneeParam != nullptr ? postClipKneeParam->get() * 0.5f : 0.0f;
+
+    constexpr auto threshold = 1.0f;
+    constexpr auto maxIn = 2.5f;
+    constexpr auto maxOut = 1.25f;
+
+    // mapping between pixel space and cartesian plane type coords
+    auto toX = [w](float in) { return juce::jmap(in, 0.0f, maxIn, 0.0f, w); };
+    auto toY = [h](float out) { return juce::jmap(out, 0.0f, maxOut, h - 1.0f, 1.0f); };
+
+    // shaded knee region
+    if (knee > 0.0f)
+    {
+        const auto kneeStart = toX(threshold - knee * 0.5f);
+        const auto kneeEnd = toX(threshold + knee * 0.5f);
+
+        g.setColour(juce::Colour::fromRGB(22, 22, 22));
+        g.fillRect(juce::Rectangle<float>(kneeStart, 0.0f, kneeEnd - kneeStart, h));
+    }
+
+    // line at 1.0
+    g.setColour(juce::Colours::darkgrey);
+    g.drawLine(0.0f, toY(0.0f), w, toY(0.0f));
+
+    // f(x) = x
+    g.setColour(juce::Colour::fromRGB(64, 64, 64));
+    g.drawLine(toX(0.0f), toY(0.0f), toX(maxOut), toY(maxOut));
+
+    // where the flat top lands
+    g.drawLine(0.0f, toY(threshold), w, toY(threshold));
+
+    constexpr int numPoints = 64;
+
+    juce::Path curve;
+    for (int i = 0; i <= numPoints; ++i)
+    {
+        const auto in = juce::jmap((float) i, 0.0f, (float) numPoints, 0.0f, maxIn);
+        const auto x = toX(in);
+        const auto y = toY(softClipperFunc(in, threshold, knee));
+
+        if (i == 0)
+            curve.startNewSubPath(x, y);
+        else
+            curve.lineTo(x, y);
+    }
+
+    g.setColour(juce::Colours::darkgrey);
+    g.strokePath(curve, juce::PathStrokeType(2.0f));
+    
+    const auto level = juce::jlimit(0.0f, maxIn, dataCollector.clipLevel.load(std::memory_order_relaxed));
+
+    if (level <= 0.0f)
+        return;
+
+    juce::Path active;
+    for (int i = 0; i <= numPoints; ++i)
+    {
+        const auto in = juce::jmap((float) i, 0.0f, (float) numPoints, 0.0f, level);
+        const auto x = toX(in);
+        const auto y = toY(softClipperFunc(in, threshold, knee));
+
+        if (i == 0)
+            active.startNewSubPath(x, y);
+        else
+            active.lineTo(x, y);
+    }
+
+    auto levelColour = juce::Colours::yellow;
+    if (level > threshold + knee * 0.5f)
+        levelColour = juce::Colours::red;
+    else if (isSoftClipperKnee(level, threshold, knee))
+        levelColour = juce::Colours::orange;
+
+    g.setColour(levelColour);
+    g.strokePath(active, juce::PathStrokeType(2.5f));
+
+    constexpr auto dotRadius = 3.0f;
+    const auto outAtLevel = softClipperFunc(level, threshold, knee);
+
+    g.fillEllipse(toX(level) - dotRadius, toY(outAtLevel) - dotRadius, dotRadius * 2.0f, dotRadius * 2.0f);
 }
 
 // single source of truth for the x axis, everything drawn over the spectrum has to go through this
