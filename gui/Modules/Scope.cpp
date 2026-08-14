@@ -3,6 +3,7 @@
 #include "../../dsp/WaveShapers.h"
 
 
+
 ScopeContextType ScopeContext::getType()
 {
     return type;
@@ -88,23 +89,37 @@ void Scope<SampleType>::paint(juce::Graphics &g)
     switch (currentType) {
         case ScopeContextType::LR_SCOPE:
             drawLRScope(g, scopeRect);
-            break;
+        break;
         case ScopeContextType::IN_OUT:
-            // the trace itself is accumulated in the timer callback, all that happens
-            // here is blitting the framebuffer and putting the axes on top of it
             if (inOutFB.isValid())
                 g.drawImage(inOutFB, area.toFloat());
+        
+            g.setColour(juce::Colour::fromRGBA(255, 255, 255, 10));
+            g.setFont(hamburgerLAF.getPopupMenuFont());
+            g.setFont(30);
 
-            drawInOutAxes(g, scopeRect);
-
+            // .removeFromBottom(area.getHeight() / 3)
+            g.drawText("DISTORTION", area.expanded(50), juce::Justification::centred, false);
+        
+            // drawInOutAxes(g, scopeRect);
             break;
         case ScopeContextType::SPECTRUM_EMPHASIS:
+            g.setColour(juce::Colour::fromRGBA(255, 255, 255, 10));
+            g.setFont(hamburgerLAF.getPopupMenuFont());
+            g.setFont(30);
+            g.drawText("EMPHASIS", area.expanded(50), juce::Justification::centred, false);
+
             drawSpectrumEmphasis(g, scopeRect);
             break;
         case ScopeContextType::CLIPPER:
+            g.setColour(juce::Colour::fromRGBA(255, 255, 255, 10));
+            g.setFont(hamburgerLAF.getPopupMenuFont());
+            g.setFont(30);
+            g.drawText("CLIPPER", area.expanded(50), juce::Justification::centred, false);
             drawClipper(g, scopeRect);
             break;
     }
+
 }
 
 

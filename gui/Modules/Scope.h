@@ -11,6 +11,7 @@
 #include "ScopeDataCollector.h"
 #include "ScopeConstants.h"
 
+#include "../LookAndFeel/HamburgerLAF.h"
 #include "../../utils/Params.h"
 
 enum ScopeContextType {
@@ -20,8 +21,10 @@ enum ScopeContextType {
     SPECTRUM_EMPHASIS, // draw curves for emphasis eq
     CLIPPER, // clipping curve + waveform
     COMP, // compression knee + level + ratio
-    MB_COMP,
-    MS_COMP,
+    MB_COMP, // three bands with boxes for ratio, threshold etc
+    MS_COMP, // two bands similar to mb
+    TYPE_A, 
+    NOISE, // get a sine wave and apply the noise distortions onto them so we can see what they look like
 };
 
 // cause maybe we might need to sync across threads later?
@@ -106,6 +109,8 @@ private:
     void drawClipper(juce::Graphics &g, juce::Rectangle<SampleType> scopeRect);
 
     void timerCallback() override;
+
+    HamburgerLAF hamburgerLAF;
 
     static void plotStraightLine(const SampleType *data,
                      size_t numSamples,
