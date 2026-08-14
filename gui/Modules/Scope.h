@@ -1,23 +1,16 @@
 #pragma once
 
 #include <algorithm>
+#include <atomic>
 #include <cmath>
 #include <memory>
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <juce_dsp/juce_dsp.h>
 
-#include "../../utils/Params.h"
+#include "ScopeDataCollector.h"
+#include "ScopeConstants.h"
 
-namespace scope_constants
-{
-    static constexpr int defaultQueueSize = 2048;
-    static constexpr int fftSize = 2048;
-    static constexpr int fftInputSize = fftSize * 2;
-    static constexpr int fftBins = fftSize / 2 + 1;
-    static constexpr int defaultFrameRate = 60;
-    static constexpr int defaultHopSize = 44100 / defaultFrameRate;
-    static constexpr float spectrumSmoothing = 0.6f;
-}
+#include "../../utils/Params.h"
 
 enum ScopeContextType {
     LR_SCOPE, // by default
@@ -50,289 +43,6 @@ private:
 
 
 
-};
-
-//==============================================================================
-template <typename SampleType>
-class AudioBufferQueue
-{
-public:
-    AudioBufferQueue() {
-        resize(scope_constants::defaultQueueSize);
-    }
-
-    void resize(size_t size) {
-        lock.enterWrite();
-
-        const auto capacity = juce::jmax<int>((int) size, 1);
-        buffer.resize(capacity * 3); // give ourselves leeway if the ui thread is not consuming fast enough;
-        abstractFifo.setTotalSize((int) buffer.size());
-        abstractFifo.reset();
-
-        lock.exitWrite();
-    }
-
-    // obtains the currently consumed space (the amount that can be currently read from the buffer)
-    int getReadableSpace() {
-        lock.enterRead();
-
-        int start1, size1, start2, size2;
-        abstractFifo.prepareToRead((int) buffer.size(), start1, size1, start2, size2);
-
-        lock.exitRead();
-
-        return size1 + size2;
-    }
-
-    //==============================================================================
-    // happens on audio thread, we dont need write locks here.
-    // if we go over the size limit this could be dodgy?
-    // returns the number of samples written
-    float push(const SampleType *dataToPush, size_t numSamples)
-    {
-        jassert(numSamples <= buffer.size());
-
-        lock.enterWrite();
-
-        const auto requiredSamples = juce::jmin<int>((int) numSamples, (int) buffer.size());
-
-        int start1, size1, start2, size2;
-        abstractFifo.prepareToWrite(requiredSamples, start1, size1, start2, size2);
-
-        if (size1 + size2 < requiredSamples)
-        {
-            abstractFifo.reset();
-            abstractFifo.prepareToWrite(requiredSamples, start1, size1, start2, size2);
-        }
-
-        const auto totalSpace = juce::jmin<int>(requiredSamples, size1 + size2);
-        int samplesWritten = 0;
-
-        if (size1 > 0 && samplesWritten < totalSpace)
-        {
-            const auto writeNow = juce::jmin<int>(totalSpace - samplesWritten, size1);
-            juce::FloatVectorOperations::copy(buffer.data() + start1, dataToPush + samplesWritten, writeNow);
-            samplesWritten += writeNow;
-        }
-
-        if (size2 > 0 && samplesWritten < totalSpace)
-        {
-            const auto writeNow = juce::jmin<int>(totalSpace - samplesWritten, size2);
-            juce::FloatVectorOperations::copy(buffer.data() + start2, dataToPush + samplesWritten, writeNow);
-            samplesWritten += writeNow;
-        }
-
-        abstractFifo.finishedWrite(samplesWritten);
-
-        lock.exitWrite();
-
-        return samplesWritten;
-    }
-
-    //==============================================================================
-    // happens on ui thread
-    float pop(SampleType *outputBuffer, size_t numSamples)
-    {
-        lock.enterWrite();
-
-        int start1, size1, start2, size2;
-        abstractFifo.prepareToRead((int) numSamples, start1, size1, start2, size2);
-        
-        const auto totalSpace = juce::jmin<int>((int) numSamples, size1 + size2);
-        int samplesRead = 0;
-
-        if (size1 > 0 && samplesRead < totalSpace)
-        {
-            const auto readNow = juce::jmin<int>(totalSpace - samplesRead, size1);
-            juce::FloatVectorOperations::copy(outputBuffer + samplesRead, buffer.data() + start1, readNow);
-            samplesRead += readNow;
-        }
-
-        if (size2 > 0 && samplesRead < totalSpace)
-        {
-            const auto readNow = juce::jmin<int>(totalSpace - samplesRead, size2);
-            juce::FloatVectorOperations::copy(outputBuffer + samplesRead, buffer.data() + start2, readNow);
-            samplesRead += readNow;
-        }
-
-        abstractFifo.finishedRead(samplesRead);
-
-        lock.exitWrite();
-        return samplesRead;
-    }
-
-    // reset fifo structure to start from the start without reallocating
-    void reset() {
-        abstractFifo.reset();
-    }
-
-private:
-    //==============================================================================
-    juce::AbstractFifo abstractFifo {scope_constants::defaultQueueSize};
-    juce::ReadWriteLock lock; // using a lock to block the ui thread when a resize occurs
-    std::vector<SampleType> buffer;
-};
-
-//==============================================================================
-template <typename SampleType>
-class ScopeDataCollector
-{
-public:
-    //==============================================================================
-    ScopeDataCollector()
-    {}
-
-    void prepare(juce::dsp::ProcessSpec& spec) {
-        audioBufferQueueL.resize(spec.sampleRate / 30);
-        audioBufferQueueR.resize(spec.sampleRate / 30);
-
-        audioBufferQueuePreDistortion.resize(spec.sampleRate / 30);
-        audioBufferQueuePostDistortion.resize(spec.sampleRate / 30);
-
-        const int maxScopeSamples = juce::jmax<int>((int) spec.maximumBlockSize, 1) * 16;
-        preDistScratchBuffer.setSize(1, maxScopeSamples, false, false);
-        postDistScratchBuffer.setSize(1, maxScopeSamples, false, false);
-    }
-
-    //==============================================================================
-    void process(const SampleType *dataL, const SampleType *dataR, size_t numSamples)
-    {
-        // size_t index = 0;
-
-        audioBufferQueueL.push(dataL, numSamples);
-        audioBufferQueueR.push(dataR, numSamples);
-
-        // if (state == State::waitingForTrigger)
-        // {
-        //     while (index++ < numSamples)
-        //     {
-        //         auto currentSampleL = *dataL++;
-        //         auto currentSampleR = *dataR++;
-
-        //         auto currentSample = currentSampleL + currentSampleR;
-
-        //         if (currentSample >= triggerLevel && prevSample < triggerLevel)
-        //         {
-        //             numCollected = 0;
-        //             state = State::collecting;
-        //             break;
-        //         }
-
-        //         prevSample = currentSample;
-        //     }
-        // }
-
-        // if (state == State::collecting)
-        // {
-
-            // while (index++ < numSamples)
-            // {
-            //     bufferL[numCollected] = *dataL++;
-            //     bufferR[numCollected++] = *dataR++;
-
-            //     if (numCollected == bufferL.size())
-            //     {
-            //         audioBufferQueueL.push(bufferL.data(), bufferL.size());
-            //         audioBufferQueueR.push(bufferR.data(), bufferR.size());
-
-            //         state = State::waitingForTrigger;
-            //         prevSample = SampleType(100);
-            //         numCollected = 0;
-            //         break;
-            //     }
-            // }
-
-        
-    }
-
-    void capturePreDistortion(const SampleType *dataL, size_t numSamples, int oversamplingFactor) {
-        if (oversamplingFactor <= 1)
-        {
-            audioBufferQueuePreDistortion.push(dataL, numSamples);
-            return;
-        }
-
-        prepareOversampler(preDistOversampling, oversamplingFactor, numSamples);
-
-        if (preDistScratchBuffer.getNumSamples() < (int) numSamples)
-            preDistScratchBuffer.setSize(1, (int) numSamples, false, false);
-
-        preDistScratchBuffer.clear();
-        preDistScratchBuffer.copyFrom(0, 0, dataL, (int) numSamples);
-
-        juce::dsp::AudioBlock<SampleType> inputBlock(preDistScratchBuffer.getArrayOfWritePointers(), 1, (int) numSamples);
-        preDistOversampling->processSamplesDown(inputBlock);
-
-        samplesReadPre = audioBufferQueuePreDistortion.push(inputBlock.getChannelPointer(0), inputBlock.getNumSamples());
-    }
-
-    void capturePostDistortion(const SampleType *dataL, size_t numSamples, int oversamplingFactor) {
-        if (oversamplingFactor <= 1)
-        {
-            audioBufferQueuePostDistortion.push(dataL, numSamples);
-            return;
-        }
-
-        prepareOversampler(postDistOversampling, oversamplingFactor, numSamples);
-
-        if (postDistScratchBuffer.getNumSamples() < (int) numSamples)
-            postDistScratchBuffer.setSize(1, (int) numSamples, false, false);
-
-        postDistScratchBuffer.clear();
-        postDistScratchBuffer.copyFrom(0, 0, dataL, (int) numSamples);
-
-        juce::dsp::AudioBlock<SampleType> inputBlock(postDistScratchBuffer.getArrayOfWritePointers(), 1, (int) numSamples);
-        postDistOversampling->processSamplesDown(inputBlock);
-
-        samplesReadPost = audioBufferQueuePostDistortion.push(inputBlock.getChannelPointer(0), inputBlock.getNumSamples());
-
-        if (samplesReadPre != samplesReadPost) {
-            // mismatch, we have to re-align both queues without reallocating
-            audioBufferQueuePreDistortion.reset();
-            audioBufferQueuePostDistortion.reset();
-        }
-    }
-
-    //==============================================================================
-    AudioBufferQueue<SampleType> audioBufferQueueL;
-    AudioBufferQueue<SampleType> audioBufferQueueR;
-
-    AudioBufferQueue<SampleType> audioBufferQueuePreDistortion;
-    AudioBufferQueue<SampleType> audioBufferQueuePostDistortion;
-private:
-    void prepareOversampler(std::unique_ptr<juce::dsp::Oversampling<SampleType>>& oversampler,
-                            int oversamplingFactor,
-                            size_t numSamples)
-    {
-        if (oversampler == nullptr || oversampler->getOversamplingFactor() != oversamplingFactor)
-        {
-            oversampler = std::make_unique<juce::dsp::Oversampling<SampleType>>(
-                1,
-                oversamplingFactor,
-                juce::dsp::Oversampling<SampleType>::filterHalfBandPolyphaseIIR,
-                true);
-        }
-
-        oversampler->initProcessing((size_t) juce::jmax<int>((int) numSamples, 1));
-    }
-
-    std::unique_ptr<juce::dsp::Oversampling<SampleType>> preDistOversampling;
-    std::unique_ptr<juce::dsp::Oversampling<SampleType>> postDistOversampling;
-    juce::AudioBuffer<SampleType> preDistScratchBuffer;
-    juce::AudioBuffer<SampleType> postDistScratchBuffer;
-
-    float samplesReadPre, samplesReadPost;
-
-    // size_t numCollected;
-    // SampleType prevSample = SampleType(100);
-
-    // static constexpr auto triggerLevel = SampleType(0.001);
-
-    // enum class State
-    // {
-    //     waitingForTrigger,
-    //     collecting
-    // } state{State::waitingForTrigger};
 };
 
 template <typename SampleType>
@@ -441,20 +151,26 @@ public:
                     const auto centerY = h;
                     const auto maxHeight = h;
                     const auto binCount = static_cast<double>(spectrumTransformed.size());
-                    const auto logMax = std::log10(binCount);
+                    const auto binToHz = dataCollector.getSampleRate() / static_cast<double>(scope_constants::fftSize);
+                    const auto nyquist = binToHz * (binCount - 1.0);
                     constexpr auto tiltDbPerOctave = SampleType(4.5);
                     constexpr auto mindB = SampleType(-70);
                     constexpr auto maxdB = SampleType(18);
 
                     juce::Path spectrumPath;
+                    bool startedSpectrumPath = false;
+
                     for (size_t i = 0; i < spectrumTransformed.size(); ++i)
                     {
-                        const auto x = (binCount > 1.0)
-                            ? static_cast<SampleType>((std::log10(static_cast<double>(i + 1)) / logMax) * static_cast<double>(w))
-                            : SampleType(0);
+                        const auto freq = static_cast<double>(i) * binToHz;
+
+                        if (freq < scope_constants::minDrawFreq)
+                            continue;
+
+                        const auto x = freqToX(freq, w);
 
                         const auto dbValue = juce::jmap(spectrumTransformed[i], SampleType(0), SampleType(1), mindB, maxdB);
-                        const auto octaveIndex = std::max(SampleType(0), std::log2(static_cast<SampleType>(binCount) / static_cast<SampleType>(i + 1)));
+                        const auto octaveIndex = std::max(SampleType(0), std::log2(static_cast<SampleType>(nyquist / freq)));
                         const auto tiltDb = -tiltDbPerOctave * octaveIndex;
                         const auto adjustedDb = dbValue + tiltDb;
                         const auto magnitude = juce::jlimit(SampleType(0), SampleType(1), juce::jmap(
@@ -465,19 +181,24 @@ public:
                             SampleType(1)));
                         const auto y = centerY - magnitude * maxHeight;
 
-                        if (i == 0)
+                        if (!startedSpectrumPath)
+                        {
                             spectrumPath.startNewSubPath(x, y);
+                            startedSpectrumPath = true;
+                        }
                         else
+                        {
                             spectrumPath.lineTo(x, y);
+                        }
+
+                        // this bin already reached the right hand edge, anything past it is off screen
+                        if (freq >= scope_constants::maxDrawFreq)
+                            break;
                     }
 
-                    g.strokePath(spectrumPath, juce::PathStrokeType(2.f));
-
-                    
-                    drawResponseCurve(g, w, centerY, maxHeight, juce::Colours::grey);
-
-                    // drawResponseCurve(juce::Colours::grey, true);
-                    // drawResponseCurve(juce::Colours::white, false); // drawing white over the top of this
+                    if (startedSpectrumPath)
+                        g.strokePath(spectrumPath, juce::PathStrokeType(2.f));
+                    drawResponseCurve(g, w, centerY, maxHeight);
                 }
 
                 break;
@@ -488,6 +209,18 @@ public:
                 break;
             }
         }
+    }
+
+    // single source of truth for the x axis, everything drawn over the spectrum has to go through this
+    SampleType freqToX(double freq, SampleType w) const
+    {
+        const auto clamped = juce::jlimit(scope_constants::minDrawFreq, scope_constants::maxDrawFreq, freq);
+
+        return static_cast<SampleType>(juce::jmap(std::log10(clamped),
+                                                  std::log10(scope_constants::minDrawFreq),
+                                                  std::log10(scope_constants::maxDrawFreq),
+                                                  0.0,
+                                                  static_cast<double>(w)));
     }
 
     float getBandResponse(double freq, double centerFreq, double gainDb)
@@ -504,7 +237,7 @@ public:
         return juce::jlimit(0.0, 1.0, 0.5 + bell * amplitude * 0.5);
     }
 
-    void drawResponseCurve(juce::Graphics &g, const float w, const float centerY, const float maxHeight, const juce::Colour &colour)
+    void drawResponseCurve(juce::Graphics &g, const SampleType w, const SampleType centerY, const SampleType maxHeight)
     {
         const auto lowFreq = lowFreqParam->get();
         const auto highFreq = highFreqParam->get();
@@ -512,44 +245,45 @@ public:
         const auto highGainDb = highGainParam->get();
                         
         juce::Path eqPath, eqInversePath;
-        const auto minFreq = 20.0;
-        const auto maxFreq = 20000.0;
-        const auto leftAnchorFreq = 20.0;
-        const auto bellXScale = std::log10(maxFreq / minFreq);
-        const auto spectrumLeftEdgeFreq = 20.0;
+        bool startedPaths = false;
+        constexpr int numPoints = 220;
+        const auto logMin = std::log10(scope_constants::minDrawFreq);
+        const auto logMax = std::log10(scope_constants::maxDrawFreq);
 
-        for (int i = 0; i <= 220; ++i)
+        for (int i = 0; i <= numPoints; ++i)
         {
-            const auto logT = static_cast<double>(i) / 220.0;
-            const auto logFreq = std::log10(leftAnchorFreq) + logT * bellXScale;
+            const auto logT = static_cast<double>(i) / static_cast<double>(numPoints);
+            const auto logFreq = logMin + logT * (logMax - logMin);
             const auto freq = std::pow(10.0, logFreq);
             const auto lowResponse = getBandResponse(freq, lowFreq, lowGainDb);
             const auto highResponse = getBandResponse(freq, highFreq, highGainDb);
             const auto responseToDraw = juce::jlimit(0.0, 1.0, 0.5 + (lowResponse - 0.5) + (highResponse - 0.5));
 
-            const auto x = juce::jmap(logFreq, std::log10(spectrumLeftEdgeFreq), std::log10(maxFreq), 0.0, static_cast<double>(w));
-            const auto clampedX = juce::jlimit(0.0, static_cast<double>(w), x);
+            const auto x = freqToX(freq, w);
             const auto y = centerY - responseToDraw * maxHeight;
-            const auto inverseY = centerY + responseToDraw * maxHeight;
+            const auto inverseY = centerY - (1.0 - responseToDraw) * maxHeight;
 
             if (!std::isfinite(x) || !std::isfinite(y))
                 continue;
 
-            if (i == 0) {
-                eqPath.startNewSubPath(static_cast<float>(clampedX), static_cast<float>(y));
-                eqInversePath.startNewSubPath(static_cast<float>(clampedX), static_cast<float>(inverseY));
+            if (!startedPaths) {
+                eqPath.startNewSubPath(static_cast<float>(x), static_cast<float>(y));
+                eqInversePath.startNewSubPath(static_cast<float>(x), static_cast<float>(inverseY));
+                startedPaths = true;
             }
             else {
-                eqPath.lineTo(static_cast<float>(clampedX), static_cast<float>(y));
-                eqInversePath.startNewSubPath(static_cast<float>(clampedX), static_cast<float>(inverseY));
+                eqPath.lineTo(static_cast<float>(x), static_cast<float>(y));
+                eqInversePath.lineTo(static_cast<float>(x), static_cast<float>(inverseY));
             }
         }
 
-        if (eqPath.isEmpty())
+        if (!startedPaths)
             return;
 
-        g.setColour(colour);
+        g.setColour(juce::Colours::white);
         g.strokePath(eqPath, juce::PathStrokeType(2.0f));
+            
+        g.setColour(juce::Colours::grey);
         g.strokePath(eqInversePath, juce::PathStrokeType(2.0f));
     }
 

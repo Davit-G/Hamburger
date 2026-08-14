@@ -20,6 +20,8 @@
 #include "service/PresetManager.h"
 #include "service/AppProperties.h"
 
+#include "gui/Modules/ScopeDataCollector.h"
+
 // profiling
 // #include <melatonin_perfetto/melatonin_perfetto.h>
 
