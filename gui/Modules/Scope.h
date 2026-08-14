@@ -93,8 +93,8 @@ private:
 
     juce::Image inOutFB;
     juce::Colour inOutBackground {juce::Colours::black};
-    
-    float inOutFade = 0.1f; // how much background is mixed in per frame, higher = shorter trails
+
+    float inOutFade = 0.13f; // how much background is mixed in per frame, higher = shorter trails
     float inOutRenderScale = 1.0f;
 
     void drawLRScope(juce::Graphics &g, juce::Rectangle<SampleType> scopeRect);

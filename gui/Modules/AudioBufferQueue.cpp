@@ -39,7 +39,7 @@ float AudioBufferQueue<SampleType>::push(const SampleType *dataToPush, size_t nu
 {
     jassert(numSamples <= buffer.size());
 
-    lock.enterWrite();
+    lock.enterRead();
 
     const auto requiredSamples = juce::jmin<int>((int) numSamples, (int) buffer.size());
 
@@ -71,7 +71,7 @@ float AudioBufferQueue<SampleType>::push(const SampleType *dataToPush, size_t nu
 
     abstractFifo.finishedWrite(samplesWritten);
 
-    lock.exitWrite();
+    lock.exitRead();
 
     return samplesWritten;
 }
@@ -80,7 +80,7 @@ float AudioBufferQueue<SampleType>::push(const SampleType *dataToPush, size_t nu
 template <typename SampleType>
 float AudioBufferQueue<SampleType>::pop(SampleType *outputBuffer, size_t numSamples)
 {
-    lock.enterWrite();
+    lock.enterRead();
 
     int start1, size1, start2, size2;
     abstractFifo.prepareToRead((int) numSamples, start1, size1, start2, size2);
@@ -104,7 +104,7 @@ float AudioBufferQueue<SampleType>::pop(SampleType *outputBuffer, size_t numSamp
 
     abstractFifo.finishedRead(samplesRead);
 
-    lock.exitWrite();
+    lock.exitRead();
     return samplesRead;
 }
 
