@@ -61,11 +61,6 @@ private:
     // oversampling chain has already anti-aliased it before we ever see it
     static void decimate(juce::AudioBuffer<SampleType>& scratch, const SampleType* dataL, size_t numSamples, int oversamplingFactor);
 
-    // if either queue had to silently overflow-reset, the two are no longer reading the
-    // same point in time relative to each other - force both back in lockstep rather than
-    // let them drift apart permanently
-    void resyncPrePostQueues();
-
     juce::AudioBuffer<SampleType> preDistScratchBuffer;
     juce::AudioBuffer<SampleType> postDistScratchBuffer;
 

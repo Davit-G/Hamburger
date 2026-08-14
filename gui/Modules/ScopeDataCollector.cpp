@@ -23,8 +23,15 @@ void ScopeDataCollector<SampleType>::process(const SampleType *dataL, const Samp
 {
     // size_t index = 0;
 
-    audioBufferQueueL.push(dataL, numSamples);
-    audioBufferQueueR.push(dataR, numSamples);
+    const auto samplesWrittenL = audioBufferQueueL.push(dataL, numSamples);
+    const auto samplesWrittenR = audioBufferQueueR.push(dataR, numSamples);
+
+    // same pairing rule as pre/post - if the ui thread drained between the two pushes only
+    // one side gets the short write, and l/r would stay offset from then on
+    if (samplesWrittenL != samplesWrittenR) {
+        audioBufferQueueL.reset();
+        audioBufferQueueR.reset();
+    }
 
     // if (state == State::waitingForTrigger)
     // {
@@ -99,8 +106,9 @@ void ScopeDataCollector<SampleType>::capturePreDistortion(const SampleType *data
         samplesReadPre = audioBufferQueuePreDistortion.push(preDistScratchBuffer.getReadPointer(0), decimatedCount);
     }
 
-    if (audioBufferQueuePreDistortion.consumeOverflowFlag())
-        resyncPrePostQueues();
+    // deliberately no resync here - pre and post are two halves of one block, and resetting
+    // between them would leave post exactly one block ahead of pre forever. the paired check
+    // lives at the end of capturePostDistortion, once both sides have been written
 }
 
 template <typename SampleType>
@@ -118,15 +126,12 @@ void ScopeDataCollector<SampleType>::capturePostDistortion(const SampleType *dat
         samplesReadPost = audioBufferQueuePostDistortion.push(postDistScratchBuffer.getReadPointer(0), decimatedCount);
     }
 
-    if (audioBufferQueuePostDistortion.consumeOverflowFlag() || samplesReadPre != samplesReadPost)
-        resyncPrePostQueues();
-}
-
-template <typename SampleType>
-void ScopeDataCollector<SampleType>::resyncPrePostQueues()
-{
-    audioBufferQueuePreDistortion.reset();
-    audioBufferQueuePostDistortion.reset();
+    // a short write on only one side (the ui thread drained between the two pushes) is the
+    // one thing that can offset them - re-align both without reallocating
+    if (samplesReadPre != samplesReadPost) {
+        audioBufferQueuePreDistortion.reset();
+        audioBufferQueuePostDistortion.reset();
+    }
 }
 
 //==============================================================================

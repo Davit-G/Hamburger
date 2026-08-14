@@ -16,7 +16,6 @@ void AudioBufferQueue<SampleType>::resize(size_t size)
     buffer.resize(capacity * 3); // give ourselves leeway if the ui thread is not consuming fast enough;
     abstractFifo.setTotalSize((int) buffer.size());
     abstractFifo.reset();
-    overflowed = false;
 
     lock.exitWrite();
 }
@@ -47,13 +46,12 @@ float AudioBufferQueue<SampleType>::push(const SampleType *dataToPush, size_t nu
     int start1, size1, start2, size2;
     abstractFifo.prepareToWrite(requiredSamples, start1, size1, start2, size2);
 
-    if (size1 + size2 < requiredSamples)
-    {
-        abstractFifo.reset();
-        abstractFifo.prepareToWrite(requiredSamples, start1, size1, start2, size2);
-        overflowed = true;
-    }
-
+    // if the ui thread fell behind there isn't room for the whole block. we deliberately
+    // don't reset the fifo here: AbstractFifo is only safe lock-free for one reader and one
+    // writer going through the prepare/finished pairs, so resetting from the audio thread
+    // races with a pop() in flight. it would also desync this queue from every sibling queue
+    // that didn't happen to overflow on the same block. write what fits and report the short
+    // count instead - callers compare counts across paired queues to detect the mismatch
     const auto totalSpace = juce::jmin<int>(requiredSamples, size1 + size2);
     int samplesWritten = 0;
 
@@ -114,14 +112,6 @@ template <typename SampleType>
 void AudioBufferQueue<SampleType>::reset()
 {
     abstractFifo.reset();
-}
-
-template <typename SampleType>
-bool AudioBufferQueue<SampleType>::consumeOverflowFlag() noexcept
-{
-    const bool result = overflowed;
-    overflowed = false;
-    return result;
 }
 
 //==============================================================================
