@@ -1,6 +1,9 @@
 target_sources("${BaseTargetName}"
     PRIVATE
+        Scope.cpp
         Scope.h
+        ScopeDataCollector.cpp
         ScopeDataCollector.h
+        AudioBufferQueue.cpp
         AudioBufferQueue.h
         )
