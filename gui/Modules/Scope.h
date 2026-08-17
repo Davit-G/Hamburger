@@ -14,6 +14,8 @@
 #include "../LookAndFeel/HamburgerLAF.h"
 #include "../../utils/Params.h"
 
+#include "../../dsp/NoiseDistortions.h"
+
 enum ScopeContextType {
     LR_SCOPE, // by default
     IN_OUT, // input against output
@@ -97,6 +99,12 @@ private:
 
     juce::Image inOutFB;
     juce::Colour inOutBackground {juce::Colours::black};
+
+
+    // for analysing what the result of noise distortion is, we store a copy of the DSP so we can operate on it!
+    NoiseDistortions noiseDist;
+    juce::AudioBuffer<float> noiseDistBuf;
+
 
     float inOutFade = 0.13f; // how much background is mixed in per frame, higher = shorter trails
     float inOutRenderScale = 1.0f;

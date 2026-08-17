@@ -19,7 +19,8 @@ template <typename SampleType>
 Scope<SampleType>::Scope(juce::AudioProcessorValueTreeState& valueTree, ScopeDataCollector<SampleType>& scopeDataCollector, ScopeContext &newScopeContext)
     : apvts(valueTree),
     dataCollector(scopeDataCollector),
-      scopeContext(newScopeContext)
+      scopeContext(newScopeContext),
+      noiseDist(valueTree)
 {
     int fps = scope_constants::defaultFrameRate;
     sampleDataL.resize(scope_constants::defaultHopSize);
@@ -36,6 +37,14 @@ Scope<SampleType>::Scope(juce::AudioProcessorValueTreeState& valueTree, ScopeDat
     lowGainParam = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter(ParamIDs::emphasisLowGain.getParamID()));
     highGainParam = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter(ParamIDs::emphasisHighGain.getParamID()));
     postClipKneeParam = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter(ParamIDs::postClipKnee.getParamID()));
+
+    juce::dsp::ProcessSpec spec; // this is not realtime so whatever
+    spec.maximumBlockSize = 128;
+    spec.numChannels = 2;
+    spec.sampleRate = 44100;
+
+    noiseDist.prepare(spec);
+    noiseDistBuf.setSize(2, 512, false, true, false);
 }
 
 template <typename SampleType>
@@ -45,7 +54,6 @@ void Scope<SampleType>::resized() {
         return;
     }
 
-    // match the display's pixel density, otherwise the trails get upscaled and go soft on hidpi
     const auto* display = juce::Desktop::getInstance().getDisplays().getDisplayForRect(getScreenBounds());
     inOutRenderScale = juce::jlimit(1.0f, 2.0f, display != nullptr ? (float) display->scale : 1.0f);
 
@@ -104,22 +112,28 @@ void Scope<SampleType>::paint(juce::Graphics &g)
             // drawInOutAxes(g, scopeRect);
             break;
         case ScopeContextType::SPECTRUM_EMPHASIS:
-            g.setColour(juce::Colour::fromRGBA(255, 255, 255, 10));
-            g.setFont(hamburgerLAF.getPopupMenuFont());
-            g.setFont(30);
             g.drawText("EMPHASIS", area.expanded(50), juce::Justification::centred, false);
 
             drawSpectrumEmphasis(g, scopeRect);
             break;
         case ScopeContextType::CLIPPER:
-            g.setColour(juce::Colour::fromRGBA(255, 255, 255, 10));
-            g.setFont(hamburgerLAF.getPopupMenuFont());
-            g.setFont(30);
             g.drawText("CLIPPER", area.expanded(50), juce::Justification::centred, false);
             drawClipper(g, scopeRect);
             break;
-    }
+        case ScopeContextType::NOISE:
+            // we draw based on actual result from our signal
 
+            for (int i = 0; i < noiseDistBuf.getNumSamples(); i++) {
+                noiseDistBuf.setSample(0, i, 0.7 * sin(6.28f * (i - 32) * 100.f / 44100.f));
+            }
+            auto block = juce::dsp::AudioBlock<float>(noiseDistBuf);
+            noiseDist.processBlock(block);
+
+            // draw wave
+            g.setColour(juce::Colours::yellow);
+            plotStraightLine(noiseDistBuf.getReadPointer(0) + 32, noiseDistBuf.getNumSamples() - 32, g, scopeRect, SampleType(0.5), h / 2);
+            break;
+    }
 }
 
 

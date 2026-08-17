@@ -10,9 +10,9 @@ class ReductionPanel : public Panel
 {
 public:
     ReductionPanel(AudioPluginAudioProcessor &p) : Panel(p, "BIT", Palette::colours[1]),
-                                                   downSample(p, "RATE", ParamIDs::downsampleFreq, ParamUnits::hz),
-                                                   bitReduction(p, "BITS", ParamIDs::bitReduction),
-                                                   downsampleMix(p, "MIX", ParamIDs::downsampleMix)
+                                                   downSample(p, "RATE", ParamIDs::downsampleFreq, ParamUnits::hz, ScopeContextType::NOISE),
+                                                   bitReduction(p, "BITS", ParamIDs::bitReduction, ParamUnits::none, ScopeContextType::NOISE),
+                                                   downsampleMix(p, "MIX", ParamIDs::downsampleMix, ParamUnits::none, ScopeContextType::NOISE)
     {
         addAndMakeVisible(downSample);
         addAndMakeVisible(bitReduction);
