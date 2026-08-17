@@ -124,7 +124,7 @@ void Scope<SampleType>::paint(juce::Graphics &g)
             // we draw based on actual result from our signal
 
             for (int i = 0; i < noiseDistBuf.getNumSamples(); i++) {
-                noiseDistBuf.setSample(0, i, 0.7 * sin(6.28f * (i - 32) * 100.f / 44100.f));
+                noiseDistBuf.setSample(0, i, 0.7f * sin(6.28f * (i - 32.0f) * 100.f / 44100.f));
             }
             auto block = juce::dsp::AudioBlock<float>(noiseDistBuf);
             noiseDist.processBlock(block);
@@ -133,6 +133,8 @@ void Scope<SampleType>::paint(juce::Graphics &g)
             g.setColour(juce::Colours::yellow);
             plotStraightLine(noiseDistBuf.getReadPointer(0) + 32, noiseDistBuf.getNumSamples() - 32, g, scopeRect, SampleType(0.5), h / 2);
             break;
+        // case ScopeContextType::COMP:
+            
     }
 }
 
@@ -342,22 +344,6 @@ void Scope<SampleType>::drawClipper(juce::Graphics &g, juce::Rectangle<SampleTyp
     
     const auto level = juce::jlimit(0.0f, maxIn, dataCollector.clipLevel.load(std::memory_order_relaxed));
 
-    if (level <= 0.0f)
-        return;
-
-    juce::Path active;
-    for (int i = 0; i <= numPoints; ++i)
-    {
-        const auto in = juce::jmap((float) i, 0.0f, (float) numPoints, 0.0f, level);
-        const auto x = toX(in);
-        const auto y = toY(softClipperFunc(in, threshold, knee));
-
-        if (i == 0)
-            active.startNewSubPath(x, y);
-        else
-            active.lineTo(x, y);
-    }
-
     auto levelColour = juce::Colours::yellow;
     if (level > threshold + knee * 0.5f)
         levelColour = juce::Colours::red;
@@ -365,7 +351,24 @@ void Scope<SampleType>::drawClipper(juce::Graphics &g, juce::Rectangle<SampleTyp
         levelColour = juce::Colours::orange;
 
     g.setColour(levelColour);
-    g.strokePath(active, juce::PathStrokeType(2.5f));
+    
+    if (level > 0.0f)
+    {
+        juce::Path active;
+        for (int i = 0; i <= numPoints; ++i)
+        {
+            const auto in = juce::jmap((float) i, 0.0f, (float) numPoints, 0.0f, level);
+            const auto x = toX(in);
+            const auto y = toY(softClipperFunc(in, threshold, knee));
+
+            if (i == 0)
+                active.startNewSubPath(x, y);
+            else
+                active.lineTo(x, y);
+        }
+
+        g.strokePath(active, juce::PathStrokeType(2.5f));
+    }
 
     constexpr auto dotRadius = 3.0f;
     const auto outAtLevel = softClipperFunc(level, threshold, knee);

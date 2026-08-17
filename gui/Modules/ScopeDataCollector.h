@@ -37,12 +37,15 @@ public:
     AudioBufferQueue<SampleType> audioBufferQueuePostDistortion;
 
     void accumulateClipping(float sampleL, float sampleR) {
-        float sample = fabs(fmax(sampleL, sampleR));
+        float sample = fmax(fabs(sampleL), fabs(sampleR));
 
         constexpr float coeff = 0.0001f; // clip level decay
         float current = clipLevel.load(std::memory_order_relaxed);
 
-        if (sample > current) {
+        if (!std::isfinite(current))
+            current = 0.0f;
+
+        if (std::isfinite(sample) && sample > current) {
             // jump
             clipLevel.store(sample, std::memory_order_relaxed);
         } else {
@@ -51,7 +54,7 @@ public:
         }
     }
 
-    std::atomic<float> clipLevel;
+    std::atomic<float> clipLevel { 0.0f };
 
 private:
     std::atomic<double> currentSampleRate { 44100.0 };
