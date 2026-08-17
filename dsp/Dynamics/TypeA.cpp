@@ -60,10 +60,11 @@ void TypeAProcessor::processBlock(juce::dsp::AudioBlock<float>& buffer)
         extraHighBuffer.copyFrom(ch, 0, buffer.getChannelPointer(static_cast<size_t>(ch)), numSamples);
     }
 
-    // Create audio blocks for each band
-    juce::dsp::AudioBlock<float> lowBlock(lowBuffer);
-    juce::dsp::AudioBlock<float> highBlock(highBuffer);
-    juce::dsp::AudioBlock<float> extraHighBlock(extraHighBuffer);
+    const auto blockLength = buffer.getNumSamples();
+
+    auto lowBlock = juce::dsp::AudioBlock<float>(lowBuffer).getSubBlock(0, blockLength);
+    auto highBlock = juce::dsp::AudioBlock<float>(highBuffer).getSubBlock(0, blockLength);
+    auto extraHighBlock = juce::dsp::AudioBlock<float>(extraHighBuffer).getSubBlock(0, blockLength);
 
     // Apply crossover filters
     // Low band: LP at 80 Hz
@@ -88,7 +89,7 @@ void TypeAProcessor::processBlock(juce::dsp::AudioBlock<float>& buffer)
         juce::FloatVectorOperations::subtract(mid, high, numSamples);
     }
 
-    juce::dsp::AudioBlock<float> midBlock(midBuffer);
+    auto midBlock = juce::dsp::AudioBlock<float>(midBuffer).getSubBlock(0, blockLength);
 
     // Apply compression to each band
     lowCompressor.process(juce::dsp::ProcessContextReplacing<float>(lowBlock));
