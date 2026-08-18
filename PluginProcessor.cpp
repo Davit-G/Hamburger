@@ -10,7 +10,7 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor() : AudioProcessor(BusesPro
                                                                             .withInput("Input", juce::AudioChannelSet::stereo(), true)
                                                                             .withOutput("Output", juce::AudioChannelSet::stereo(), true)),
                                                          treeState(*this, nullptr, "PARAMETER", createParameterLayout()),
-                                                         dynamics(treeState),
+                                                         dynamics(treeState, scopeDataCollector),
                                                          postClip(treeState, scopeDataCollector),
                                                          dryWetMixer(30),
                                                          noiseDistortionSelection(treeState),

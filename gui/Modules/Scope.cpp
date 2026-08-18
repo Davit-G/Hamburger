@@ -1,8 +1,29 @@
 #include "Scope.h"
 
 #include "../../dsp/WaveShapers.h"
+#include "../../dsp/Dynamics/Compressor.h"
 
+// brightness of background watermark on scope
+static constexpr juce::uint8 contextLabelAlpha = 20;
+static constexpr float readoutFontHeight = 11.0f; // font height for info / stats on scope
 
+static juce::String formatFrequency(float freq)
+{
+    if (freq >= 1000.0f)
+        return juce::String(freq / 1000.0f, 1) + " kHz";
+
+    return juce::String(juce::roundToInt(freq)) + " Hz";
+}
+
+static juce::String formatDecibels(float db)
+{
+    return juce::String(db > 0.0f ? "+" : "") + juce::String(db, 1) + " dB";
+}
+
+static juce::String formatPercent(float normalised)
+{
+    return juce::String(juce::roundToInt(normalised * 100.0f)) + "%";
+}
 
 ScopeContextType ScopeContext::getType()
 {
@@ -92,36 +113,49 @@ void Scope<SampleType>::paint(juce::Graphics &g)
     auto scopeRect = juce::Rectangle<SampleType>{SampleType(0), SampleType(0), w, h};
 
     auto currentType = scopeContext.getType();
-
     
     switch (currentType) {
         case ScopeContextType::LR_SCOPE:
-            drawLRScope(g, scopeRect);
+            drawLRScope(g, scopeRect.withTrimmedTop(headerHeight(scopeRect)));
+            drawParamHeader(g, scopeRect, { formatDecibels(paramValue(ParamIDs::inputGain)),
+                                            formatPercent(paramValue(ParamIDs::mix) * 0.01f),
+                                            formatDecibels(paramValue(ParamIDs::outputGain)) });
         break;
         case ScopeContextType::IN_OUT:
             if (inOutFB.isValid())
                 g.drawImage(inOutFB, area.toFloat());
-        
-            g.setColour(juce::Colour::fromRGBA(255, 255, 255, 10));
-            g.setFont(hamburgerLAF.getPopupMenuFont());
-            g.setFont(30);
 
-            // .removeFromBottom(area.getHeight() / 3)
-            g.drawText("DISTORTION", area.expanded(50), juce::Justification::centred, false);
+            drawTiledContextLabel(g, area, "DISTORTION");
+            drawParamHeader(g, scopeRect, getDistortionHeaderLabels());
+            drawDistortionAmount(g, scopeRect);
         
             // drawInOutAxes(g, scopeRect);
             break;
         case ScopeContextType::SPECTRUM_EMPHASIS:
-            g.drawText("EMPHASIS", area.expanded(50), juce::Justification::centred, false);
-
+            drawTiledContextLabel(g, area, "EMPHASIS");
             drawSpectrumEmphasis(g, scopeRect);
             break;
         case ScopeContextType::CLIPPER:
-            g.drawText("CLIPPER", area.expanded(50), juce::Justification::centred, false);
+            drawTiledContextLabel(g, area, "CLIPPER");
             drawClipper(g, scopeRect);
+            drawParamHeader(g, scopeRect, { formatDecibels(paramValue(ParamIDs::postClipGain)),
+                                            juce::String(paramValue(ParamIDs::postClipKnee), 1) + " dB" });
             break;
-        case ScopeContextType::NOISE:
-            // we draw based on actual result from our signal
+        // no watermark on these three - the cells are opaque and cover everything under the header
+        case ScopeContextType::MB_COMP:
+            drawMBComp(g, scopeRect);
+            drawParamHeader(g, scopeRect, getCompHeaderLabels(ParamIDs::MBCompThreshold, true));
+            break;
+        case ScopeContextType::MS_COMP:
+            drawMSComp(g, scopeRect);
+            drawParamHeader(g, scopeRect, getCompHeaderLabels(ParamIDs::MSCompThreshold, true));
+            break;
+        case ScopeContextType::STEREO_COMP:
+            drawStereoComp(g, scopeRect);
+            drawParamHeader(g, scopeRect, getCompHeaderLabels(ParamIDs::stereoCompThreshold, false));
+            break;
+        case ScopeContextType::NOISE: {
+            drawTiledContextLabel(g, area, "NOISE");
 
             for (int i = 0; i < noiseDistBuf.getNumSamples(); i++) {
                 noiseDistBuf.setSample(0, i, 0.7f * sin(6.28f * (i - 32.0f) * 100.f / 44100.f));
@@ -129,9 +163,20 @@ void Scope<SampleType>::paint(juce::Graphics &g)
             auto block = juce::dsp::AudioBlock<float>(noiseDistBuf);
             noiseDist.processBlock(block);
 
+            const auto noiseRect = scopeRect.withTrimmedTop(headerHeight(scopeRect));
+
+            // draw line halfway
+            g.setColour(juce::Colours::darkgrey);
+            g.drawLine(SampleType(0), noiseRect.getCentreY(), w, noiseRect.getCentreY());
+
             // draw wave
             g.setColour(juce::Colours::yellow);
-            plotStraightLine(noiseDistBuf.getReadPointer(0) + 32, noiseDistBuf.getNumSamples() - 32, g, scopeRect, SampleType(0.5), h / 2);
+            plotStraightLine(noiseDistBuf.getReadPointer(0) + 32, noiseDistBuf.getNumSamples() - 32, g, noiseRect, SampleType(0.5), noiseRect.getHeight() / 2);
+
+            drawParamHeader(g, scopeRect, getNoiseHeaderLabels());
+            break;
+        }
+        default:
             break;
     }
 }
@@ -159,13 +204,13 @@ void Scope<SampleType>::drawInOut(juce::Graphics &g, juce::Rectangle<SampleType>
 {
     if (sampleDataPreDistortion.size() > 1 && sampleDataPostDistortion.size() > 1)
     {
-        const auto w = scopeRect.getWidth();
-        const auto h = scopeRect.getHeight();
+        // centred under the header, so the top of the curve cannot run up behind it
+        const auto plot = scopeRect.withTrimmedTop(headerHeight(scopeRect));
 
-        const auto centerX = w * SampleType(0.5);
-        const auto centerY = h * SampleType(0.5);
-        const auto halfW = h * 0.95;
-        const auto halfH = h * SampleType(0.46);
+        const auto centerX = plot.getCentreX();
+        const auto centerY = plot.getCentreY();
+        const auto halfW = plot.getHeight() * SampleType(0.95);
+        const auto halfH = plot.getHeight() * SampleType(0.46);
 
         g.setColour(juce::Colours::yellow);
         const auto count = juce::jmin(sampleDataPreDistortion.size(), sampleDataPostDistortion.size());
@@ -231,7 +276,7 @@ void Scope<SampleType>::drawSpectrumEmphasis(juce::Graphics &g, juce::Rectangle<
 
         g.setColour(juce::Colours::yellow);
         const auto centerY = h;
-        const auto maxHeight = h;
+        const auto maxHeight = h - headerHeight(scopeRect);
         const auto binCount = static_cast<double>(spectrumTransformed.size());
         const auto binToHz = dataCollector.getSampleRate() / static_cast<double>(scope_constants::fftSize);
         const auto nyquist = binToHz * (binCount - 1.0);
@@ -282,6 +327,8 @@ void Scope<SampleType>::drawSpectrumEmphasis(juce::Graphics &g, juce::Rectangle<
             g.strokePath(spectrumPath, juce::PathStrokeType(2.f));
         drawResponseCurve(g, w, centerY, maxHeight);
     }
+
+    drawParamHeader(g, scopeRect, { formatFrequency(lowFreqParam->get()), formatFrequency(highFreqParam->get()) });
 }
 
 
@@ -297,9 +344,11 @@ void Scope<SampleType>::drawClipper(juce::Graphics &g, juce::Rectangle<SampleTyp
     constexpr auto maxIn = 2.5f;
     constexpr auto maxOut = 1.25f;
 
-    // mapping between pixel space and cartesian plane type coords
+    // mapping between pixel space and cartesian plane type coords, with the header strip kept clear
+    const auto plot = scopeRect.withTrimmedTop(headerHeight(scopeRect));
+
     auto toX = [w](float in) { return juce::jmap(in, 0.0f, maxIn, 0.0f, w); };
-    auto toY = [h](float out) { return juce::jmap(out, 0.0f, maxOut, h - 1.0f, 1.0f); };
+    auto toY = [&plot](float out) { return juce::jmap(out, 0.0f, maxOut, (float) plot.getBottom() - 1.0f, (float) plot.getY() + 1.0f); };
 
     // shaded knee region
     if (knee > 0.0f)
@@ -307,7 +356,9 @@ void Scope<SampleType>::drawClipper(juce::Graphics &g, juce::Rectangle<SampleTyp
         const auto kneeStart = toX(threshold - knee * 0.5f);
         const auto kneeEnd = toX(threshold + knee * 0.5f);
 
-        g.setColour(juce::Colour::fromRGB(22, 22, 22));
+        // translucent rather than a solid fill, so the watermark underneath still reads through it -
+        // alpha 22 over black lands on the same 22,22,22 the solid version used to paint
+        g.setColour(juce::Colour::fromRGBA(255, 255, 255, 22));
         g.fillRect(juce::Rectangle<float>(kneeStart, 0.0f, kneeEnd - kneeStart, h));
     }
 
@@ -337,6 +388,17 @@ void Scope<SampleType>::drawClipper(juce::Graphics &g, juce::Rectangle<SampleTyp
             curve.lineTo(x, y);
     }
 
+    // translucent, so the knee strip and the watermark still read through the fill
+    auto closeToBaseline = [&](juce::Path path, float rightX) {
+        path.lineTo(rightX, toY(0.0f));
+        path.lineTo(toX(0.0f), toY(0.0f));
+        path.closeSubPath();
+        return path;
+    };
+
+    g.setColour(juce::Colours::white.withAlpha(0.05f));
+    g.fillPath(closeToBaseline(curve, toX(maxIn)));
+
     g.setColour(juce::Colours::darkgrey);
     g.strokePath(curve, juce::PathStrokeType(2.0f));
     
@@ -365,6 +427,10 @@ void Scope<SampleType>::drawClipper(juce::Graphics &g, juce::Rectangle<SampleTyp
                 active.lineTo(x, y);
         }
 
+        g.setColour(levelColour.withAlpha(0.18f));
+        g.fillPath(closeToBaseline(active, toX(level)));
+
+        g.setColour(levelColour);
         g.strokePath(active, juce::PathStrokeType(2.5f));
     }
 
@@ -372,6 +438,410 @@ void Scope<SampleType>::drawClipper(juce::Graphics &g, juce::Rectangle<SampleTyp
     const auto outAtLevel = softClipperFunc(level, threshold, knee);
 
     g.fillEllipse(toX(level) - dotRadius, toY(outAtLevel) - dotRadius, dotRadius * 2.0f, dotRadius * 2.0f);
+}
+
+// watermark naming the current context, tiled over the whole view with odd rows staggered and
+// every row started off screen so the pattern runs past the edges
+template <typename SampleType>
+void Scope<SampleType>::drawTiledContextLabel(juce::Graphics &g, juce::Rectangle<int> area, const juce::String &text)
+{
+    const auto w = (float) area.getWidth();
+    const auto h = (float) area.getHeight();
+
+    if (w <= 0.0f || h <= 0.0f)
+        return;
+
+    const auto font = hamburgerLAF.getPopupMenuFont().withHeight(juce::jlimit(12.0f, 34.0f, h * 0.22f));
+
+    g.setFont(font);
+    g.setColour(juce::Colour::fromRGBA(255, 255, 255, contextLabelAlpha));
+
+    const auto rowHeight = font.getHeight();
+    const auto tileWidth = juce::GlyphArrangement::getStringWidth(font, text);
+
+    if (tileWidth <= 0.0f || rowHeight <= 0.0f)
+        return;
+
+    // one long pre-repeated string per row, so the font lays out the joins - drawing each repeat
+    // separately would round every start x and leave a seam
+    juce::String row;
+
+    for (int repeat = (int) std::ceil((w + tileWidth * 2.0f) / tileWidth); repeat > 0; --repeat)
+        row << text;
+
+    int rowIndex = 0;
+
+    for (auto y = -rowHeight * 0.3f; y < h; y += rowHeight, ++rowIndex)
+    {
+        // both the bleed and the stagger pull left, or a staggered row opens a gap at the left edge
+        const auto startX = -tileWidth * 0.35f - (rowIndex % 2 == 1 ? tileWidth * 0.5f : 0.0f);
+
+        g.drawSingleLineText(row, juce::roundToInt(startX), juce::roundToInt(y + font.getAscent()));
+    }
+}
+
+
+// one cell per band: its threshold, the ratio ladder above it, and where its detector sits
+template <typename SampleType>
+void Scope<SampleType>::drawCompBands(juce::Graphics &g, juce::Rectangle<SampleType> scopeRect,
+                                      const CompBand *bands, int numBands, float ratio)
+{
+    if (bands == nullptr || numBands <= 0)
+        return;
+
+    const auto w = (float) scopeRect.getWidth();
+    const auto h = (float) scopeRect.getHeight();
+
+    constexpr auto mindB = -60.0f;
+    constexpr auto maxdB = 6.0f;
+
+    // the cells fill everything under the header, flush against the walls and against each other
+    const auto cellArea = juce::Rectangle<float>(0.0f, (float) headerHeight(scopeRect),
+                                                 w, h - (float) headerHeight(scopeRect));
+
+    if (cellArea.getWidth() <= 0.0f || cellArea.getHeight() <= 0.0f)
+        return;
+
+    const auto cellWidth = cellArea.getWidth() / (float) numBands;
+
+    auto toY = [&](float db) {
+        return juce::jmap(juce::jlimit(mindB, maxdB, db), mindB, maxdB, cellArea.getBottom(), cellArea.getY());
+    };
+
+    g.setFont(hamburgerLAF.getPopupMenuFont());
+    g.setFont(readoutFontHeight);
+
+    for (int band = 0; band < numBands; ++band)
+    {
+        const auto thresholdDb = bands[band].thresholdDb;
+        const auto cell = juce::Rectangle<float>(cellArea.getX() + (float) band * cellWidth, cellArea.getY(),
+                                                 cellWidth, cellArea.getHeight());
+        const auto thresholdY = toY(thresholdDb);
+
+        // solid black so nothing behind the cell bleeds through its contents
+        g.setColour(juce::Colours::black);
+        g.fillRect(cell);
+
+        // everything above the line is where this band's compressor starts pulling it back down
+        g.setColour(juce::Colour::fromRGB(22, 22, 22));
+        g.fillRect(cell.withBottom(thresholdY));
+
+        // the knee is 0.1dB wide, about an eighth of a pixel here, so the band is floored at 3px to
+        // be visible at all - it marks where the knee is, not how wide it is
+        constexpr auto minKneeHeight = 3.0f;
+
+        const auto kneeTop = toY(thresholdDb + Compressor::standardKneeDb * 0.5f);
+        const auto kneeBottom = toY(thresholdDb - Compressor::standardKneeDb * 0.5f);
+
+        g.setColour(juce::Colour::fromRGB(38, 38, 38));
+        g.fillRect(juce::Rectangle<float>(cell.getX(), kneeTop, cell.getWidth(), kneeBottom - kneeTop)
+                       .withSizeKeepingCentre(cell.getWidth(), juce::jmax(minKneeHeight, kneeBottom - kneeTop)));
+
+        // a fixed ladder of inputs above the threshold, each drawn where the ratio lands it:
+        // out = thr + (in - thr) / ratio, so the rungs slide onto the line as ratio climbs
+        constexpr std::array<float, 4> overshoots { 6.0f, 12.0f, 18.0f, 24.0f };
+
+        for (size_t rung = 0; rung < overshoots.size(); ++rung)
+        {
+            const auto outDb = thresholdDb + overshoots[rung] / ratio;
+
+            // rungs that the ratio has not pulled into view yet just stay off the top
+            if (outDb > maxdB)
+                continue;
+
+            const auto rungY = toY(outDb);
+
+            g.setColour(juce::Colours::grey.withAlpha(0.5f - 0.09f * (float) rung));
+            g.drawLine(cell.getX() + 1.0f, rungY, cell.getRight() - 1.0f, rungY, 1.0f);
+        }
+
+        const auto levelDb = juce::Decibels::gainToDecibels(bands[band].level, mindB);
+
+        if (levelDb > mindB)
+        {
+            g.setColour(levelDb > thresholdDb ? juce::Colours::orange : juce::Colours::yellow);
+            g.fillRect(cell.withTop(toY(levelDb)).reduced(cell.getWidth() * 0.28f, 0.0f));
+        }
+
+        g.setColour(juce::Colours::grey);
+        g.drawLine(cell.getX(), thresholdY, cell.getRight(), thresholdY, 1.5f);
+
+        // top of the shaded region rather than hard against the line, where the rungs bunch up.
+        // drops below the line only when the region is too short to hold it
+        constexpr auto readoutHeight = 12.0f;
+        const auto readoutAbove = thresholdY - cell.getY() >= readoutHeight + 2.0f;
+        const auto readout = juce::Rectangle<float>(cell.getX(),
+                                                    readoutAbove ? cell.getY() + 1.0f : thresholdY + 1.0f,
+                                                    cell.getWidth(), readoutHeight);
+
+        g.setColour(juce::Colours::darkgrey);
+        g.drawText(juce::String(juce::roundToInt(thresholdDb)) + " dB", readout, juce::Justification::centred, false);
+
+        g.drawText(bands[band].name,
+                   juce::Rectangle<float>(cell.getX(), cell.getBottom() - 13.0f, cell.getWidth(), 12.0f),
+                   juce::Justification::centred, false);
+    }
+
+    // one hairline per shared edge, after the fills so neither side paints over it
+    g.setColour(juce::Colour::fromRGB(64, 64, 64));
+
+    for (int edge = 1; edge < numBands; ++edge)
+    {
+        const auto x = cellArea.getX() + (float) edge * cellWidth;
+        g.drawLine(x, cellArea.getY(), x, cellArea.getBottom(), 1.0f);
+    }
+}
+
+// the thresholds MBComp::processBlock hands out: low thr - tilt, mid thr, high thr + tilt
+template <typename SampleType>
+void Scope<SampleType>::drawMBComp(juce::Graphics &g, juce::Rectangle<SampleType> scopeRect)
+{
+    const auto thr = paramValue(ParamIDs::MBCompThreshold);
+    const auto tilt = paramValue(ParamIDs::compBandTilt);
+
+    const std::array<CompBand, 3> bands {
+        CompBand { thr - tilt, bandLevel(dataCollector.band1), "LOW" },
+        CompBand { thr,        bandLevel(dataCollector.band2), "MID" },
+        CompBand { thr + tilt, bandLevel(dataCollector.band3), "HIGH" }
+    };
+
+    drawCompBands(g, scopeRect, bands.data(), (int) bands.size(), compRatio());
+}
+
+// MSComp tilts the same way the multiband does, mid down and side up
+template <typename SampleType>
+void Scope<SampleType>::drawMSComp(juce::Graphics &g, juce::Rectangle<SampleType> scopeRect)
+{
+    const auto thr = paramValue(ParamIDs::MSCompThreshold);
+    const auto tilt = paramValue(ParamIDs::compBandTilt);
+
+    const std::array<CompBand, 2> bands {
+        CompBand { thr - tilt, bandLevel(dataCollector.band1), "MID" },
+        CompBand { thr + tilt, bandLevel(dataCollector.band2), "SIDE" }
+    };
+
+    drawCompBands(g, scopeRect, bands.data(), (int) bands.size(), compRatio());
+}
+
+// one compressor drives both channels, so the cells share a threshold and only the detectors differ
+template <typename SampleType>
+void Scope<SampleType>::drawStereoComp(juce::Graphics &g, juce::Rectangle<SampleType> scopeRect)
+{
+    const auto thr = paramValue(ParamIDs::stereoCompThreshold);
+
+    const std::array<CompBand, 2> bands {
+        CompBand { thr, bandLevel(dataCollector.band1), "LEFT" },
+        CompBand { thr, bandLevel(dataCollector.band2), "RIGHT" }
+    };
+
+    drawCompBands(g, scopeRect, bands.data(), (int) bands.size(), compRatio());
+}
+
+template <typename SampleType>
+SampleType Scope<SampleType>::headerHeight(juce::Rectangle<SampleType> scopeRect) const
+{
+    return (SampleType) juce::jmin(16.0f, (float) scopeRect.getHeight() * 0.2f);
+}
+
+// readouts across the top of a view, ends hugging the corners. three already fill the strip so they
+// get one solid bar, fewer than that get a tab each and leave the gaps open
+template <typename SampleType>
+void Scope<SampleType>::drawParamHeader(juce::Graphics &g, juce::Rectangle<SampleType> scopeRect, const juce::StringArray &labels)
+{
+    if (labels.isEmpty())
+        return;
+
+    const auto bar = juce::Rectangle<float>(0.0f, 0.0f, (float) scopeRect.getWidth(), (float) headerHeight(scopeRect));
+
+    g.setFont(hamburgerLAF.getPopupMenuFont());
+    g.setFont(readoutFontHeight);
+
+    const auto solidBar = labels.size() > 2;
+
+    if (solidBar)
+    {
+        g.setColour(juce::Colours::black);
+        g.fillRect(bar);
+    }
+
+    const auto cells = bar.reduced(4.0f, 0.0f);
+    const auto cellWidth = cells.getWidth() / (float) labels.size();
+
+    for (int i = 0; i < labels.size(); ++i)
+    {
+        const auto isFirst = i == 0;
+        const auto isLast = i == labels.size() - 1;
+        const auto justification = isFirst ? juce::Justification::centredLeft
+                                           : (isLast ? juce::Justification::centredRight
+                                                     : juce::Justification::centred);
+
+        const auto cell = cells.withX(cells.getX() + (float) i * cellWidth).withWidth(cellWidth);
+
+        if (solidBar)
+        {
+            g.setColour(juce::Colours::grey);
+            g.drawText(labels[i], cell, justification, false);
+        }
+        else
+        {
+            drawTabbedLabel(g, cell, labels[i], justification, true);
+        }
+    }
+}
+
+template <typename SampleType>
+void Scope<SampleType>::drawTabbedLabel(juce::Graphics &g, juce::Rectangle<float> cell, const juce::String &text,
+                                        juce::Justification justification, bool hangingFromTop)
+{
+    if (text.isEmpty())
+        return;
+
+    constexpr auto corner = 5.0f;
+
+    auto tab = cell.withWidth(juce::jmin(cell.getWidth(),
+                                         juce::GlyphArrangement::getStringWidth(g.getCurrentFont(), text) + corner * 2.0f));
+
+    const auto horizontal = justification.getOnlyHorizontalFlags();
+
+    if (horizontal == juce::Justification::right)
+        tab.setX(cell.getRight() - tab.getWidth());
+    else if (horizontal == juce::Justification::horizontallyCentred)
+        tab.setCentre(cell.getCentreX(), tab.getCentreY());
+
+    // grown past the outer edge so only the inner corners round off
+    const auto grown = hangingFromTop ? tab.withTop(tab.getY() - corner)
+                                      : tab.withBottom(tab.getBottom() + corner);
+
+    g.setColour(juce::Colours::black);
+    g.fillRoundedRectangle(grown.expanded(corner * 0.5f, 0.0f), corner);
+
+    g.setColour(juce::Colours::grey);
+    g.drawText(text, cell, justification, false);
+}
+
+// bottom right corner rather than the header, since that corner of the transfer plot stays empty
+template <typename SampleType>
+void Scope<SampleType>::drawDistortionAmount(juce::Graphics &g, juce::Rectangle<SampleType> scopeRect)
+{
+    const auto label = getDistortionAmountLabel();
+
+    if (label.isEmpty())
+        return;
+
+    g.setFont(hamburgerLAF.getPopupMenuFont());
+    g.setFont(readoutFontHeight);
+
+    const auto rowHeight = (float) headerHeight(scopeRect);
+    const auto row = juce::Rectangle<float>(0.0f, (float) scopeRect.getHeight() - rowHeight,
+                                            (float) scopeRect.getWidth(), rowHeight).reduced(4.0f, 0.0f);
+
+    drawTabbedLabel(g, row, label, juce::Justification::centredRight, false);
+}
+
+// the scope only paints on the gui thread, so looking these up per frame instead of caching a
+// pointer for every distortion in the plugin is cheap enough
+template <typename SampleType>
+float Scope<SampleType>::paramValue(const juce::ParameterID &id) const
+{
+    if (auto *param = dynamic_cast<juce::AudioParameterFloat *>(apvts.getParameter(id.getParamID())))
+        return param->get();
+
+    return 0.0f;
+}
+
+template <typename SampleType>
+float Scope<SampleType>::compRatio() const
+{
+    return juce::jmax(1.0f, paramValue(ParamIDs::compRatio));
+}
+
+template <typename SampleType>
+float Scope<SampleType>::bandLevel(LevelMeter &meter) const
+{
+    return meter.getNext((float) scope_constants::defaultFrameRate);
+}
+
+// only the threshold differs between the three compressor views, and the stereo one has no tilt
+template <typename SampleType>
+juce::StringArray Scope<SampleType>::getCompHeaderLabels(const juce::ParameterID &thresholdID, bool withTilt) const
+{
+    juce::StringArray labels { formatDecibels(paramValue(thresholdID)),
+                               juce::String(compRatio(), 1) + ":1" };
+
+    if (withTilt)
+        labels.add(formatDecibels(paramValue(ParamIDs::compBandTilt)));
+
+    return labels;
+}
+
+template <typename SampleType>
+juce::AudioParameterChoice* Scope<SampleType>::choiceParam(const juce::ParameterID &id) const
+{
+    return dynamic_cast<juce::AudioParameterChoice *>(apvts.getParameter(id.getParamID()));
+}
+
+template <typename SampleType>
+juce::StringArray Scope<SampleType>::getDistortionHeaderLabels() const
+{
+    auto *type = choiceParam(ParamIDs::primaryDistortionType);
+
+    if (type == nullptr)
+        return {};
+
+    return { type->getCurrentChoiceName() };
+}
+
+// every type keeps its own amount parameter on its own range, and matrix has no single one
+template <typename SampleType>
+juce::String Scope<SampleType>::getDistortionAmountLabel() const
+{
+    auto *type = choiceParam(ParamIDs::primaryDistortionType);
+
+    if (type == nullptr)
+        return {};
+
+    switch (type->getIndex())
+    {
+        case 0: return formatPercent(paramValue(ParamIDs::saturationAmount) * 0.01f); // GRILL
+        case 1: return formatPercent(paramValue(ParamIDs::tubeAmount) * 0.01f);       // TUBE
+        case 2: return formatPercent(paramValue(ParamIDs::phaseAmount) * 0.01f);      // PHASE
+        case 3: return formatPercent(paramValue(ParamIDs::rubidiumAmount) * 0.01f);   // RUBIDIUM
+        case 5: return formatPercent(paramValue(ParamIDs::tapeDrive));                // TAPE
+        case 6: return formatPercent(paramValue(ParamIDs::alphaParam));               // SLEW
+        default: return {};                                                            // MATRIX
+    }
+}
+
+// only the sizzles and erosion have the full frequency / amount / q set
+template <typename SampleType>
+juce::StringArray Scope<SampleType>::getNoiseHeaderLabels() const
+{
+    auto *type = choiceParam(ParamIDs::noiseDistortionType);
+
+    if (type == nullptr)
+        return {};
+
+    switch (type->getIndex())
+    {
+        case 1: // EROSION
+            return { formatFrequency(paramValue(ParamIDs::erosionFrequency)),
+                     formatPercent(paramValue(ParamIDs::erosionAmount) * 0.01f),
+                     "Q " + juce::String(paramValue(ParamIDs::erosionQ), 2) };
+
+        case 2: // BIT, no q - the bit depth is the interesting middle value instead
+            return { formatFrequency(paramValue(ParamIDs::downsampleFreq)),
+                     juce::String(juce::roundToInt(paramValue(ParamIDs::bitReduction))) + " bit",
+                     formatPercent(paramValue(ParamIDs::downsampleMix)) };
+
+        case 3: // JEFF, the gate only has amount and mix
+            return { formatPercent(paramValue(ParamIDs::gateAmt)),
+                     "MIX " + formatPercent(paramValue(ParamIDs::gateMix)) };
+
+        default: // SIZZLE and SIZZLE_OG
+            return { formatFrequency(paramValue(ParamIDs::sizzleFrequency)),
+                     formatPercent(paramValue(ParamIDs::sizzleAmount) * 0.01f),
+                     "Q " + juce::String(paramValue(ParamIDs::sizzleQ), 2) };
+    }
 }
 
 // single source of truth for the x axis, everything drawn over the spectrum has to go through this
@@ -452,6 +922,20 @@ void Scope<SampleType>::drawResponseCurve(juce::Graphics &g, const SampleType w,
 
     g.setColour(juce::Colours::white);
     g.strokePath(eqPath, juce::PathStrokeType(2.0f));
+
+    // placed with the same summed response the curve is built from, so they sit on it rather than
+    // on their own band's bell
+    constexpr auto dotRadius = 3.0f;
+
+    for (const auto freq : { lowFreq, highFreq })
+    {
+        const auto response = juce::jlimit(0.0, 1.0, 0.5 + (getBandResponse(freq, lowFreq, lowGainDb) - 0.5)
+                                                        + (getBandResponse(freq, highFreq, highGainDb) - 0.5));
+        const auto x = static_cast<float>(freqToX(freq, w));
+        const auto y = static_cast<float>(centerY - static_cast<SampleType>(response) * maxHeight);
+
+        g.fillEllipse(x - dotRadius, y - dotRadius, dotRadius * 2.0f, dotRadius * 2.0f);
+    }
 }
 
 

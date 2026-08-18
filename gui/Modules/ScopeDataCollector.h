@@ -41,6 +41,11 @@ public:
     LevelMeter levelMeter {0.1f} ;  // used for actual visualisation on scope screen
     LevelMeter clipIndicator; // used for post clipping dot
 
+    LevelMeter band1 {0.1f}; // could be low band, channel L, or mids channel
+    LevelMeter band2 {0.1f}; // could be mid band, channel R, or sides channel
+    LevelMeter band3 {0.1f}; // could be high band
+    LevelMeter band4 {0.1f}; // could be extra high band for type A
+
 private:
     std::atomic<double> currentSampleRate { 44100.0 };
 

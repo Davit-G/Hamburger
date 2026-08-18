@@ -1,6 +1,7 @@
 #pragma once
 
 #include <atomic>
+#include <cmath>
 
 // used between audio and gui thread
 // uses decay to reliably have a changing value at 60hz while also keeping up with the exact audio signal
@@ -26,12 +27,17 @@ public:
         return value.load(std::memory_order_relaxed);
     }
 
+    // similar to below but uses db
+    void accumulateDb(float db) {
+        accumulate(std::pow(10.0f, db * 0.05f));
+    }
+
     // designed to be used in audio hot loop and given a positive abs value
     void accumulate(float smp) {
         float sample = abs(smp);
         float current = value.load(std::memory_order_relaxed);
 
-        if (!std::isfinite(current))
+        if (!std::isfinite(current) && current > maxLevel)
             current = 0.0f;
 
         if (std::isfinite(sample) && sample > current) {
@@ -43,4 +49,5 @@ public:
 private:
     std::atomic<float> value;
     float decayRate = 0.001f;
+    float maxLevel = 10.0f;
 };

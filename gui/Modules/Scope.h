@@ -22,10 +22,10 @@ enum ScopeContextType {
     // SPECTRUM, // once button press happens?
     SPECTRUM_EMPHASIS, // draw curves for emphasis eq
     CLIPPER, // clipping curve + waveform
-    COMP, // compression knee + level + ratio
     MB_COMP, // three bands with boxes for ratio, threshold etc
-    MS_COMP, // two bands similar to mb
-    TYPE_A, 
+    MS_COMP, // two bands similar to mb, mid and side
+    STEREO_COMP, // two bands similar to mb, left and right
+    // TYPE_A, 
     NOISE, // get a sine wave and apply the noise distortions onto them so we can see what they look like
 };
 
@@ -107,7 +107,7 @@ private:
 
 
     float inOutFade = 0.13f; // how much background is mixed in per frame, higher = shorter trails
-    float inOutRenderScale = 1.0f;
+    float inOutRenderScale = 0.98f;
 
     void drawLRScope(juce::Graphics &g, juce::Rectangle<SampleType> scopeRect);
     void drawInOut(juce::Graphics &g, juce::Rectangle<SampleType> scopeRect);
@@ -115,6 +115,40 @@ private:
     void renderInOutFrame(bool stampNewTrace);
     void drawSpectrumEmphasis(juce::Graphics &g, juce::Rectangle<SampleType> scopeRect);
     void drawClipper(juce::Graphics &g, juce::Rectangle<SampleType> scopeRect);
+    // one cell per band of whichever compressor is on screen
+    struct CompBand
+    {
+        float thresholdDb;
+        float level;      // linear, straight off the band meter
+        const char* name;
+    };
+
+    void drawCompBands(juce::Graphics &g, juce::Rectangle<SampleType> scopeRect,
+                       const CompBand *bands, int numBands, float ratio);
+    void drawMBComp(juce::Graphics &g, juce::Rectangle<SampleType> scopeRect);
+    void drawMSComp(juce::Graphics &g, juce::Rectangle<SampleType> scopeRect);
+    void drawStereoComp(juce::Graphics &g, juce::Rectangle<SampleType> scopeRect);
+    void drawTiledContextLabel(juce::Graphics &g, juce::Rectangle<int> area, const juce::String &text);
+    void drawParamHeader(juce::Graphics &g, juce::Rectangle<SampleType> scopeRect, const juce::StringArray &labels);
+
+    // strip every view keeps clear at the top for its readouts
+    SampleType headerHeight(juce::Rectangle<SampleType> scopeRect) const;
+
+    float paramValue(const juce::ParameterID &id) const;
+    juce::AudioParameterChoice* choiceParam(const juce::ParameterID &id) const;
+    // black tab sized to its text, grown past the top or bottom edge so only the inner corners round
+    void drawTabbedLabel(juce::Graphics &g, juce::Rectangle<float> cell, const juce::String &text,
+                         juce::Justification justification, bool hangingFromTop);
+    void drawDistortionAmount(juce::Graphics &g, juce::Rectangle<SampleType> scopeRect);
+
+    juce::StringArray getDistortionHeaderLabels() const;
+    juce::String getDistortionAmountLabel() const;
+    juce::StringArray getNoiseHeaderLabels() const;
+    juce::StringArray getCompHeaderLabels(const juce::ParameterID &thresholdID, bool withTilt) const;
+
+    // shared by all three compressors, clamped so it can never invert the ratio ladder
+    float compRatio() const;
+    float bandLevel(LevelMeter &meter) const;
 
     void timerCallback() override;
 

@@ -56,6 +56,8 @@ float Compressor::processOneSampleGainStereo(float sampleL, float sampleR)
     // // TRACE_EVENT_END("dsp");
     float gain = 0.0f;
 
+    lastEnvelopeDb = envelopeVal;
+
     // // TRACE_EVENT_BEGIN("dsp", "compute different gain types");
     switch (type)
     {
@@ -78,6 +80,8 @@ float Compressor::processOneSampleGainMono(float sample)
     float makeupGain = juce::Decibels::decibelsToGain(makeup_dB);
     float envelopeVal = envelope.processSample(sample);
     float gain = 0.0f;
+
+    lastEnvelopeDb = envelopeVal;
 
     switch (type)
     {

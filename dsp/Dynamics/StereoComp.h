@@ -1,21 +1,23 @@
 #pragma once
 
 #include "../EnvelopeFollower.h"
+#include "../../gui/Modules/ScopeDataCollector.h"
 
  
 
 class StereoComp
 {
 public:
-    StereoComp(juce::AudioProcessorValueTreeState &state) : 
-    // compressorL(CompressionType::COMPRESSOR),
-    //                                                     compressorR(CompressionType::COMPRESSOR),
+    StereoComp(juce::AudioProcessorValueTreeState &state, ScopeDataCollector<float> &dataCollector) : 
+                                                        detectorL(CompressionType::COMPRESSOR),
+                                                        detectorR(CompressionType::COMPRESSOR),
                                                         compressorBoth(CompressionType::COMPRESSOR),
                                                         threshold(state, ParamIDs::stereoCompThreshold),
                                                         ratio(state, ParamIDs::compRatio),
                                                         sLink(state, ParamIDs::compStereoLink), // should be stereo link
                                                         speed(state, ParamIDs::compSpeed),
-                                                        makeup(state, ParamIDs::compOut) {}
+                                                        makeup(state, ParamIDs::compOut),
+                                                        scopeDataCollector(dataCollector) {}
     ~StereoComp() {}
 
     void processBlock(juce::dsp::AudioBlock<float> &block)
@@ -33,9 +35,9 @@ public:
         float thr = threshold.getRaw(0);
 
         // float atk, float rel, float mkp, float ratioLow, float ratioUp, float thresholdLow, float thresholdUp, float kneeW, float mkpDB)
-        // compressorL.updateUpDown(spd, spd * 0.8f, mkp, rat, rat, thr, thr + 2.0f, 0.1f, 0.f);
-        // compressorR.updateUpDown(spd, spd * 0.8f, mkp, rat, rat, thr, thr + 2.0f, 0.1f, 0.f);
-        compressorBoth.updateUpDown(spd, spd * 0.8f, mkp, rat, rat, thr, thr + 2.0f, 0.1f, 0.f);
+        // the detectors need the same setup as the audio path so their meters agree with it
+        for (auto *comp : { &compressorBoth, &detectorL, &detectorR })
+            comp->updateUpDown(spd, spd * 0.8f, mkp, rat, rat, thr, thr + 2.0f, Compressor::standardKneeDb, 0.f);
 
         float autoGain = juce::Decibels::decibelsToGain(-thr * powf((rat - 1.0f) * 0.09f, 0.4f) * 0.45); // kinda borked
 
@@ -45,6 +47,9 @@ public:
             float rightSample = block.getSample(1, sample);
 
             float bothGain = compressorBoth.processOneSampleGainStereo(leftSample, rightSample);
+
+            scopeDataCollector.band1.accumulateDb(detectorL.detectMono(leftSample));
+            scopeDataCollector.band2.accumulateDb(detectorR.detectMono(rightSample));
 
             // left right stereo link. tlt is between 0 and 1
             float stereoLinkGain = bothGain * autoGain;
@@ -56,8 +61,8 @@ public:
 
     void prepare(juce::dsp::ProcessSpec &spec)
     {
-        // compressorL.prepare(spec);
-        // compressorR.prepare(spec);
+        detectorL.prepare(spec);
+        detectorR.prepare(spec);
         compressorBoth.prepare(spec);
     }
 
@@ -70,7 +75,10 @@ private:
     SmoothParam speed;
     SmoothParam makeup;
 
-    // Compressor compressorL;
-    // Compressor compressorR;
+    // metering only, the audio never goes through these
+    Compressor detectorL;
+    Compressor detectorR;
     Compressor compressorBoth;
+
+    ScopeDataCollector<float> &scopeDataCollector;
 };

@@ -7,11 +7,11 @@ class StereoCompPanel : public Panel
 {
 public:
     StereoCompPanel(AudioPluginAudioProcessor &p) : Panel(p, ""),
-                                                   threshold(p, "THRES", ParamIDs::stereoCompThreshold, ParamUnits::db),
-                                                   ratio(p, "RATIO", ParamIDs::compRatio),
+                                                   threshold(p, "THRES", ParamIDs::stereoCompThreshold, ParamUnits::db, ScopeContextType::STEREO_COMP),
+                                                   ratio(p, "RATIO", ParamIDs::compRatio, ParamUnits::compressionRatio, ScopeContextType::STEREO_COMP),
                                                 //    tilt(p, "S-LNK", "compStereoLink", ParamUnits::percent),
-                                                   attack(p, "SPEED", ParamIDs::compSpeed, ParamUnits::ms),
-                                                   makeup(p, "GAIN", ParamIDs::compOut, ParamUnits::db)
+                                                   attack(p, "SPEED", ParamIDs::compSpeed, ParamUnits::ms, ScopeContextType::STEREO_COMP),
+                                                   makeup(p, "GAIN", ParamIDs::compOut, ParamUnits::db, ScopeContextType::STEREO_COMP)
     {
         addAndMakeVisible(threshold);
         addAndMakeVisible(ratio);

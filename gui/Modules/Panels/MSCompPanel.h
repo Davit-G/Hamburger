@@ -7,11 +7,11 @@ class MSCompPanel : public Panel
 {
 public:
     MSCompPanel(AudioPluginAudioProcessor &p) : Panel(p, "MS", Palette::colours[3]),
-                                                   threshold(p, "THRES", ParamIDs::MSCompThreshold, ParamUnits::db),
-                                                   ratio(p, "RATIO", ParamIDs::compRatio),
-                                                   tilt(p, "TILT", ParamIDs::compBandTilt, ParamUnits::db),
-                                                   attack(p, "SPEED", ParamIDs::compSpeed, ParamUnits::ms),
-                                                   makeup(p, "GAIN", ParamIDs::compOut, ParamUnits::db)
+                                                   threshold(p, "THRES", ParamIDs::MSCompThreshold, ParamUnits::db, ScopeContextType::MS_COMP),
+                                                   ratio(p, "RATIO", ParamIDs::compRatio, ParamUnits::compressionRatio, ScopeContextType::MS_COMP),
+                                                   tilt(p, "TILT", ParamIDs::compBandTilt, ParamUnits::db, ScopeContextType::MS_COMP),
+                                                   attack(p, "SPEED", ParamIDs::compSpeed, ParamUnits::ms, ScopeContextType::MS_COMP),
+                                                   makeup(p, "GAIN", ParamIDs::compOut, ParamUnits::db, ScopeContextType::MS_COMP)
     {
         addAndMakeVisible(threshold);
         addAndMakeVisible(ratio);
