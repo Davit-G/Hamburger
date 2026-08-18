@@ -2,9 +2,10 @@
 
 #include "../../dsp/WaveShapers.h"
 #include "../../dsp/Dynamics/Compressor.h"
+#include "../../dsp/Dynamics/TypeA.h"
 
 
-static constexpr size_t triggerDecimation = 8; // we do detection on a decimated audio stream so its way cheaper, some would call this RMS
+static constexpr size_t triggerDecimation = 8; // we do detection on a decimated audio stream so its way cheaper
 static constexpr size_t triggerMatchLength = 32; // how much of the waveform is matched against the previous frame
 static constexpr juce::uint8 contextLabelAlpha = 20; // brightness of background watermark on scope
 static constexpr float readoutFontHeight = 11.0f; // font height for info / stats on scope
@@ -172,6 +173,13 @@ void Scope<SampleType>::paint(juce::Graphics &g)
         case ScopeContextType::STEREO_COMP:
             drawStereoComp(g, scopeRect);
             drawParamHeader(g, scopeRect, getCompHeaderLabels(ParamIDs::stereoCompThreshold, false));
+            break;
+        case ScopeContextType::TYPE_A:
+            drawTypeAComp(g, scopeRect);
+            // the ratio is fixed in the dsp, and tilt only moves the makeup gains
+            drawParamHeader(g, scopeRect, { formatDecibels(paramValue(ParamIDs::TypeAThreshold)),
+                                            juce::String(TypeAProcessor::baseRatio, 1) + ":1",
+                                            formatDecibels(paramValue(ParamIDs::TypeATilt)) });
             break;
         case ScopeContextType::NOISE: {
             drawTiledContextLabel(g, area, "NOISE");
@@ -676,8 +684,7 @@ void Scope<SampleType>::drawTiledContextLabel(juce::Graphics &g, juce::Rectangle
     }
 }
 
-
-// one cell per band: its threshold, the ratio ladder above it, and where its detector sits
+// one cell per band
 template <typename SampleType>
 void Scope<SampleType>::drawCompBands(juce::Graphics &g, juce::Rectangle<SampleType> scopeRect,
                                       const CompBand *bands, int numBands, float ratio)
@@ -691,14 +698,21 @@ void Scope<SampleType>::drawCompBands(juce::Graphics &g, juce::Rectangle<SampleT
     constexpr auto mindB = -60.0f;
     constexpr auto maxdB = 6.0f;
 
-    // the cells fill everything under the header, flush against the walls and against each other
+    // the cells fill everything under the header
     const auto cellArea = juce::Rectangle<float>(0.0f, (float) headerHeight(scopeRect),
                                                  w, h - (float) headerHeight(scopeRect));
 
     if (cellArea.getWidth() <= 0.0f || cellArea.getHeight() <= 0.0f)
         return;
 
-    const auto cellWidth = cellArea.getWidth() / (float) numBands;
+    // a stacked band shares the cell of the band before it
+    int cellCount = 0;
+
+    for (int band = 0; band < numBands; ++band)
+        if (!bands[band].stacked || band == 0)
+            ++cellCount;
+
+    const auto cellWidth = cellArea.getWidth() / (float) cellCount;
 
     auto toY = [&](float db) {
         return juce::jmap(juce::jlimit(mindB, maxdB, db), mindB, maxdB, cellArea.getBottom(), cellArea.getY());
@@ -707,34 +721,52 @@ void Scope<SampleType>::drawCompBands(juce::Graphics &g, juce::Rectangle<SampleT
     g.setFont(hamburgerLAF.getPopupMenuFont());
     g.setFont(readoutFontHeight);
 
+    auto cell = juce::Rectangle<float>(cellArea.getX(), cellArea.getY(), cellWidth, cellArea.getHeight());
+    int cellIndex = -1;
+
     for (int band = 0; band < numBands; ++band)
     {
         const auto thresholdDb = bands[band].thresholdDb;
-        const auto cell = juce::Rectangle<float>(cellArea.getX() + (float) band * cellWidth, cellArea.getY(),
-                                                 cellWidth, cellArea.getHeight());
         const auto thresholdY = toY(thresholdDb);
+        const auto stacked = bands[band].stacked && band > 0;
+        const auto hasStacked = band + 1 < numBands && bands[band + 1].stacked;
 
-        // solid black so nothing behind the cell bleeds through its contents
-        g.setColour(juce::Colours::black);
-        g.fillRect(cell);
+        if (!stacked)
+        {
+            ++cellIndex;
+            cell = juce::Rectangle<float>(cellArea.getX() + (float) cellIndex * cellWidth, cellArea.getY(),
+                                          cellWidth, cellArea.getHeight());
+            
+            g.setColour(juce::Colours::black);
+            g.fillRect(cell);
 
-        // everything above the line is where this band's compressor starts pulling it back down
-        g.setColour(juce::Colour::fromRGB(22, 22, 22));
-        g.fillRect(cell.withBottom(thresholdY));
+            g.setColour(juce::Colour::fromRGB(22, 22, 22));
+            g.fillRect(cell.withBottom(thresholdY));
+        }
 
-        // the knee is 0.1dB wide, about an eighth of a pixel here, so the band is floored at 3px to
-        // be visible at all - it marks where the knee is, not how wide it is
+        const auto half = cell.getWidth() * 0.5f;
+        const auto region = stacked ? cell.withTrimmedLeft(half)
+                                    : (hasStacked ? cell.withWidth(half) : cell);
+
+        if (stacked)
+        {
+            g.setColour(juce::Colour::fromRGB(30, 30, 30));
+            g.fillRect(region.withBottom(thresholdY));
+
+            g.setColour(juce::Colour::fromRGB(48, 48, 48));
+            g.drawLine(region.getX(), region.getY(), region.getX(), region.getBottom(), 1.0f);
+        }
+
         constexpr auto minKneeHeight = 3.0f;
 
         const auto kneeTop = toY(thresholdDb + Compressor::standardKneeDb * 0.5f);
         const auto kneeBottom = toY(thresholdDb - Compressor::standardKneeDb * 0.5f);
 
         g.setColour(juce::Colour::fromRGB(38, 38, 38));
-        g.fillRect(juce::Rectangle<float>(cell.getX(), kneeTop, cell.getWidth(), kneeBottom - kneeTop)
-                       .withSizeKeepingCentre(cell.getWidth(), juce::jmax(minKneeHeight, kneeBottom - kneeTop)));
+        g.fillRect(juce::Rectangle<float>(region.getX(), kneeTop, region.getWidth(), kneeBottom - kneeTop)
+                       .withSizeKeepingCentre(region.getWidth(), juce::jmax(minKneeHeight, kneeBottom - kneeTop)));
 
-        // a fixed ladder of inputs above the threshold, each drawn where the ratio lands it:
-        // out = thr + (in - thr) / ratio, so the rungs slide onto the line as ratio climbs
+        // a fixed array of lines above the threshold representing the knee. these are in DB before ratio is applied
         constexpr std::array<float, 4> overshoots { 6.0f, 12.0f, 18.0f, 24.0f };
 
         for (size_t rung = 0; rung < overshoots.size(); ++rung)
@@ -748,7 +780,7 @@ void Scope<SampleType>::drawCompBands(juce::Graphics &g, juce::Rectangle<SampleT
             const auto rungY = toY(outDb);
 
             g.setColour(juce::Colours::grey.withAlpha(0.5f - 0.09f * (float) rung));
-            g.drawLine(cell.getX() + 1.0f, rungY, cell.getRight() - 1.0f, rungY, 1.0f);
+            g.drawLine(region.getX() + 1.0f, rungY, region.getRight() - 1.0f, rungY, 1.0f);
         }
 
         const auto levelDb = juce::Decibels::gainToDecibels(bands[band].level, mindB);
@@ -756,39 +788,48 @@ void Scope<SampleType>::drawCompBands(juce::Graphics &g, juce::Rectangle<SampleT
         if (levelDb > mindB)
         {
             g.setColour(levelDb > thresholdDb ? juce::Colours::orange : juce::Colours::yellow);
-            g.fillRect(cell.withTop(toY(levelDb)).reduced(cell.getWidth() * 0.28f, 0.0f));
+            g.fillRect(region.withTop(toY(levelDb)).reduced(region.getWidth() * 0.28f, 0.0f));
         }
 
         g.setColour(juce::Colours::grey);
-        g.drawLine(cell.getX(), thresholdY, cell.getRight(), thresholdY, 1.5f);
+        g.drawLine(region.getX(), thresholdY, region.getRight(), thresholdY, 1.5f);
 
-        // top of the shaded region rather than hard against the line, where the rungs bunch up.
-        // drops below the line only when the region is too short to hold it
         constexpr auto readoutHeight = 12.0f;
         const auto readoutAbove = thresholdY - cell.getY() >= readoutHeight + 2.0f;
-        const auto readout = juce::Rectangle<float>(cell.getX(),
+        const auto readout = juce::Rectangle<float>(region.getX(),
                                                     readoutAbove ? cell.getY() + 1.0f : thresholdY + 1.0f,
-                                                    cell.getWidth(), readoutHeight);
+                                                    region.getWidth(), readoutHeight);
 
         g.setColour(juce::Colours::darkgrey);
-        g.drawText(juce::String(juce::roundToInt(thresholdDb)) + " dB", readout, juce::Justification::centred, false);
+
+        if (!stacked || ! juce::approximatelyEqual(thresholdDb, bands[band - 1].thresholdDb))
+            g.drawText(juce::String(juce::roundToInt(thresholdDb)) + " dB", readout, juce::Justification::centred, false);
 
         g.drawText(bands[band].name,
-                   juce::Rectangle<float>(cell.getX(), cell.getBottom() - 13.0f, cell.getWidth(), 12.0f),
+                   juce::Rectangle<float>(region.getX(), cell.getBottom() - 13.0f, region.getWidth(), 12.0f),
                    juce::Justification::centred, false);
+
+        if (! juce::approximatelyEqual(bands[band].gainOffsetDb, 0.0f))
+        {
+            const auto offset = bands[band].gainOffsetDb;
+
+            g.setColour(juce::Colour::fromRGB(90, 90, 90));
+            g.drawText(juce::String(offset > 0.0f ? "+" : "") + juce::String(offset, 1),
+                       juce::Rectangle<float>(region.getX(), cell.getBottom() - 25.0f, region.getWidth(), 12.0f),
+                       juce::Justification::centred, false);
+            g.setColour(juce::Colours::darkgrey);
+        }
     }
 
-    // one hairline per shared edge, after the fills so neither side paints over it
     g.setColour(juce::Colour::fromRGB(64, 64, 64));
 
-    for (int edge = 1; edge < numBands; ++edge)
+    for (int edge = 1; edge < cellCount; ++edge)
     {
         const auto x = cellArea.getX() + (float) edge * cellWidth;
         g.drawLine(x, cellArea.getY(), x, cellArea.getBottom(), 1.0f);
     }
 }
 
-// the thresholds MBComp::processBlock hands out: low thr - tilt, mid thr, high thr + tilt
 template <typename SampleType>
 void Scope<SampleType>::drawMBComp(juce::Graphics &g, juce::Rectangle<SampleType> scopeRect)
 {
@@ -804,7 +845,6 @@ void Scope<SampleType>::drawMBComp(juce::Graphics &g, juce::Rectangle<SampleType
     drawCompBands(g, scopeRect, bands.data(), (int) bands.size(), compRatio());
 }
 
-// MSComp tilts the same way the multiband does, mid down and side up
 template <typename SampleType>
 void Scope<SampleType>::drawMSComp(juce::Graphics &g, juce::Rectangle<SampleType> scopeRect)
 {
@@ -819,7 +859,23 @@ void Scope<SampleType>::drawMSComp(juce::Graphics &g, juce::Rectangle<SampleType
     drawCompBands(g, scopeRect, bands.data(), (int) bands.size(), compRatio());
 }
 
-// one compressor drives both channels, so the cells share a threshold and only the detectors differ
+template <typename SampleType>
+void Scope<SampleType>::drawTypeAComp(juce::Graphics &g, juce::Rectangle<SampleType> scopeRect)
+{
+    const auto thr = paramValue(ParamIDs::TypeAThreshold);
+    const auto tilt = paramValue(ParamIDs::TypeATilt);
+
+    const std::array<CompBand, 4> bands {
+        CompBand { thr, bandLevel(dataCollector.band1), "LOW",  false, -tilt },
+        CompBand { thr, bandLevel(dataCollector.band2), "MID",  false, 0.0f },
+        CompBand { thr, bandLevel(dataCollector.band3), "HIGH", false, tilt * 0.5f },
+        CompBand { thr, bandLevel(dataCollector.band4), "X-HI", true,  tilt * 0.5f }
+    };
+
+    drawCompBands(g, scopeRect, bands.data(), (int) bands.size(), TypeAProcessor::baseRatio);
+}
+
+
 template <typename SampleType>
 void Scope<SampleType>::drawStereoComp(juce::Graphics &g, juce::Rectangle<SampleType> scopeRect)
 {

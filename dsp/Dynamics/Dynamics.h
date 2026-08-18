@@ -19,7 +19,7 @@ public:
         mbComp(state, dataCollector),
         msComp(state, dataCollector),
         stereoComp(state, dataCollector),
-        typeA(state)
+        typeA(state, dataCollector)
     {
         distoType = dynamic_cast<juce::AudioParameterChoice *>(state.getParameter(ParamIDs::compressionType.getParamID())); jassert(distoType);
         enabled = dynamic_cast<juce::AudioParameterBool *>(state.getParameter(ParamIDs::compressionOn.getParamID())); jassert(enabled);

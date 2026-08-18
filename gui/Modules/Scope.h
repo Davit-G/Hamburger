@@ -25,7 +25,7 @@ enum ScopeContextType {
     MB_COMP, // three bands with boxes for ratio, threshold etc
     MS_COMP, // two bands similar to mb, mid and side
     STEREO_COMP, // two bands similar to mb, left and right
-    // TYPE_A, 
+    TYPE_A, // four bands, the top one stacked on the one below it
     NOISE, // get a sine wave and apply the noise distortions onto them so we can see what they look like
 };
 
@@ -132,6 +132,8 @@ private:
         float thresholdDb;
         float level;      // linear, straight off the band meter
         const char* name;
+        bool stacked = false; // shares the previous band's cell instead of taking one of its own
+        float gainOffsetDb = 0.0f; // what this band's makeup is trimmed by relative to the others
     };
 
     void drawCompBands(juce::Graphics &g, juce::Rectangle<SampleType> scopeRect,
@@ -139,6 +141,7 @@ private:
     void drawMBComp(juce::Graphics &g, juce::Rectangle<SampleType> scopeRect);
     void drawMSComp(juce::Graphics &g, juce::Rectangle<SampleType> scopeRect);
     void drawStereoComp(juce::Graphics &g, juce::Rectangle<SampleType> scopeRect);
+    void drawTypeAComp(juce::Graphics &g, juce::Rectangle<SampleType> scopeRect);
     void drawTiledContextLabel(juce::Graphics &g, juce::Rectangle<int> area, const juce::String &text);
     void drawParamHeader(juce::Graphics &g, juce::Rectangle<SampleType> scopeRect, const juce::StringArray &labels);
 

@@ -5,6 +5,7 @@
 
 #include "../SmoothParam.h"
 #include "../../../utils/Params.h"
+#include "../../gui/Modules/ScopeDataCollector.h"
 
 /* 
  * Dolby A-type noise reduction processor.
@@ -20,12 +21,16 @@
 class TypeAProcessor
 {
 public:
-    TypeAProcessor(juce::AudioProcessorValueTreeState &treeState) : 
+    TypeAProcessor(juce::AudioProcessorValueTreeState &treeState, ScopeDataCollector<float> &dataCollector) : 
         speedParam(treeState, ParamIDs::compSpeed),
         thresholdParam(treeState, ParamIDs::TypeAThreshold),
         outParam(treeState, ParamIDs::TypeAOut),
-        tiltParam(treeState, ParamIDs::TypeATilt)
+        tiltParam(treeState, ParamIDs::TypeATilt),
+        scopeDataCollector(dataCollector)
     {}
+
+    // every band is set up with this, the TypeARatio parameter is not read anywhere
+    static constexpr float baseRatio = 2.0f;
 
     void prepareToPlay(double sampleRate, int samplesPerBlock, int numChannels);
     void processBlock(juce::dsp::AudioBlock<float>& buffer);
@@ -38,6 +43,8 @@ private:
     SmoothParam thresholdParam;
     SmoothParam outParam;
     SmoothParam tiltParam;
+
+    ScopeDataCollector<float> &scopeDataCollector;
 
     double currentSampleRate = 44100.0;
     int numChannels = 2;
@@ -73,7 +80,6 @@ private:
     static constexpr float midHighCrossover = 3000.0f;
     static constexpr float extraHighCrossover = 9000.0f;
     // static constexpr float threshold = -40.0f;
-    static constexpr float baseRatio = 2.0f;
     static constexpr float attack = 20.0f;   // ms
     static constexpr float release = 100.0f; // ms
 

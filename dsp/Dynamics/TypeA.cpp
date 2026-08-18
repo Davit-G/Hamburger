@@ -91,6 +91,14 @@ void TypeAProcessor::processBlock(juce::dsp::AudioBlock<float>& buffer)
 
     auto midBlock = juce::dsp::AudioBlock<float>(midBuffer).getSubBlock(0, blockLength);
 
+    // meter each band before its compressor, since that is the level the threshold is applied to.
+    // these are juce compressors, so there is no detector value to read out of them - a block peak
+    // is the closest thing available
+    scopeDataCollector.band1.accumulate(lowBuffer.getMagnitude(0, numSamples));
+    scopeDataCollector.band2.accumulate(midBuffer.getMagnitude(0, numSamples));
+    scopeDataCollector.band3.accumulate(highBuffer.getMagnitude(0, numSamples));
+    scopeDataCollector.band4.accumulate(extraHighBuffer.getMagnitude(0, numSamples));
+
     // Apply compression to each band
     lowCompressor.process(juce::dsp::ProcessContextReplacing<float>(lowBlock));
     midCompressor.process(juce::dsp::ProcessContextReplacing<float>(midBlock));
