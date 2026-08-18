@@ -78,8 +78,14 @@ private:
     ScopeContext& scopeContext;
     ScopeDataCollector<SampleType>& dataCollector;
 
+    // two hops each: the newest hop plus the one before it, so the trigger has somewhere to search
     std::vector<SampleType> sampleDataL;
     std::vector<SampleType> sampleDataR;
+    std::vector<SampleType> triggerSignal;    // low passed copy of L, only ever used to find the trigger
+    std::vector<SampleType> triggerDecimated; // the same copy at a fraction of the rate, to search
+    std::vector<SampleType> triggerReference; // the shape locked onto last frame, to match against
+    bool hasTriggerReference = false;
+    size_t triggerOffset = 0;
     std::vector<SampleType> sampleDataPreDistortion;
     std::vector<SampleType> sampleDataPostDistortion;
 
@@ -109,6 +115,11 @@ private:
     float inOutFade = 0.13f; // how much background is mixed in per frame, higher = shorter trails
     float inOutRenderScale = 0.98f;
 
+    size_t hopSize = (size_t) scope_constants::defaultHopSize;
+    double preparedSampleRate = 0.0;
+
+    void updateHopSize();
+    void updateTriggerOffset();
     void drawLRScope(juce::Graphics &g, juce::Rectangle<SampleType> scopeRect);
     void drawInOut(juce::Graphics &g, juce::Rectangle<SampleType> scopeRect);
     void drawInOutAxes(juce::Graphics &g, juce::Rectangle<SampleType> scopeRect);

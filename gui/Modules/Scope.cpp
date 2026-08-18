@@ -3,9 +3,25 @@
 #include "../../dsp/WaveShapers.h"
 #include "../../dsp/Dynamics/Compressor.h"
 
-// brightness of background watermark on scope
-static constexpr juce::uint8 contextLabelAlpha = 20;
+
+static constexpr size_t triggerDecimation = 8; // we do detection on a decimated audio stream so its way cheaper, some would call this RMS
+static constexpr size_t triggerMatchLength = 32; // how much of the waveform is matched against the previous frame
+static constexpr juce::uint8 contextLabelAlpha = 20; // brightness of background watermark on scope
 static constexpr float readoutFontHeight = 11.0f; // font height for info / stats on scope
+
+// midpoint and half range of a block, so trigger levels sit relative to the signal rather than to zero
+template <typename SampleType>
+struct SignalRange
+{
+    SampleType mid;
+    SampleType amplitude;
+};
+
+template <typename SampleType>
+static SignalRange<SampleType> midAndAmplitude(SampleType lo, SampleType hi)
+{
+    return { (hi + lo) * SampleType(0.5), (hi - lo) * SampleType(0.5) };
+}
 
 static juce::String formatFrequency(float freq)
 {
@@ -44,8 +60,11 @@ Scope<SampleType>::Scope(juce::AudioProcessorValueTreeState& valueTree, ScopeDat
       noiseDist(valueTree)
 {
     int fps = scope_constants::defaultFrameRate;
-    sampleDataL.resize(scope_constants::defaultHopSize);
-    sampleDataR.resize(scope_constants::defaultHopSize);
+    sampleDataL.resize(scope_constants::defaultHopSize * 3, SampleType(0));
+    sampleDataR.resize(scope_constants::defaultHopSize * 3, SampleType(0));
+    triggerSignal.resize(sampleDataL.size(), SampleType(0));
+    triggerDecimated.resize(sampleDataL.size() / triggerDecimation, SampleType(0));
+    triggerReference.resize(triggerMatchLength, SampleType(0));
     sampleDataPreDistortion.resize(scope_constants::defaultHopSize);
     sampleDataPostDistortion.resize(scope_constants::defaultHopSize);
     setFramesPerSecond(fps);
@@ -181,21 +200,198 @@ void Scope<SampleType>::paint(juce::Graphics &g)
     }
 }
 
+template <typename SampleType>
+void Scope<SampleType>::updateHopSize()
+{
+    const auto sampleRate = dataCollector.getSampleRate();
+    
+    if (sampleRate <= 0.0 || juce::approximatelyEqual(sampleRate, preparedSampleRate))
+    return;
+    
+    preparedSampleRate = sampleRate;
+    hopSize = (size_t) juce::jmax(64, juce::roundToInt(sampleRate / (double) scope_constants::defaultFrameRate));
+    
+    sampleDataL.assign(hopSize * 3, SampleType(0));
+    sampleDataR.assign(hopSize * 3, SampleType(0));
+    triggerSignal.assign(sampleDataL.size(), SampleType(0));
+    triggerDecimated.assign(sampleDataL.size() / triggerDecimation, SampleType(0));
+    sampleDataPreDistortion.assign(hopSize, SampleType(0));
+    sampleDataPostDistortion.assign(hopSize, SampleType(0));
+    
+    triggerOffset = 0;
+    hasTriggerReference = false;
+}
+
+// picks where the drawn window starts, so audio cycles land in the same place on the scope
+// uses an implementtion of schmitt triggering
+// - it fires on the way up, arms below the midpoint
+// - levels are derived from min max values of all the samples in our window rather than from a fixed value
+// - it looks at a low passed copy which reduces noise / jitter when scanning
+// - once it detects a rising edge, it picks the trigger offset that has the least sum of squared difference in our samples to our previous capture
+template <typename SampleType>
+void Scope<SampleType>::updateTriggerOffset()
+{
+    auto searchEnd = sampleDataL.size() - hopSize;
+
+    constexpr auto cutoffHz = 800.0;
+    
+    auto sampleRate = juce::jmax(8000.0, dataCollector.getSampleRate());
+    auto coeff = (SampleType) (1.0 - std::exp(-2.0 * juce::MathConstants<double>::pi * cutoffHz / sampleRate));
+
+    auto smoothed = sampleDataL[0];
+    auto rawLo = sampleDataL[0];
+    auto rawHi = sampleDataL[0];
+
+    auto lowLo = sampleDataL[0];
+    auto lowHi = sampleDataL[0];
+    auto blockSum = SampleType(0);
+    size_t decimatedIndex = 0;
+
+    // filter and decimate audio
+    for (size_t i = 0; i < sampleDataL.size(); ++i)
+    {
+        const auto sample = sampleDataL[i];
+
+        smoothed += coeff * (sample - smoothed);
+        triggerSignal[i] = smoothed;
+        blockSum += smoothed;
+
+        rawLo = std::min(rawLo, sample);
+        rawHi = std::max(rawHi, sample);
+
+        if ((i + 1) % triggerDecimation != 0 || decimatedIndex >= triggerDecimated.size())
+            continue;
+
+        const auto blockMean = blockSum / (SampleType) triggerDecimation;
+
+        triggerDecimated[decimatedIndex++] = blockMean;
+        blockSum = SampleType(0);
+
+        lowLo = std::min(lowLo, blockMean);
+        lowHi = std::max(lowHi, blockMean);
+    }
+
+    const auto raw = midAndAmplitude(rawLo, rawHi);
+    const auto lowPassed = midAndAmplitude(lowLo, lowHi);
+
+    // ignore detection (and preserve current trigger offset)
+    if (juce::jmax(raw.amplitude, lowPassed.amplitude) < SampleType(0.0005))
+        return;
+
+    // all the content sits above the cutoff, so the filtered copy has nothing left to lock onto
+    if (lowPassed.amplitude < raw.amplitude * SampleType(0.25))
+    {
+        // somehow the lowpassed audio is so quiet / we don't have a lot of lowpassed info. it barely makes a dent compared to the raw waveform.
+        // take the first clean rising edge
+        auto armLevel = raw.mid - raw.amplitude * SampleType(0.2);
+        auto fireLevel = raw.mid + raw.amplitude * SampleType(0.2);
+        
+        // arming in this case means that 
+        bool armed = false;
+
+        for (size_t i = 1; i < searchEnd; ++i)
+        {
+            if (sampleDataL[i] <= armLevel)
+                armed = true;
+            else if (armed && sampleDataL[i - 1] < fireLevel && sampleDataL[i] >= fireLevel)
+            {
+                triggerOffset = i;
+                return;
+            }
+        }
+
+        return;
+    }
+
+    auto armLevel = lowPassed.mid - lowPassed.amplitude * SampleType(0.2);
+    auto fireLevel = lowPassed.mid + lowPassed.amplitude * SampleType(0.2);
+    
+    auto searchEndDecimated = searchEnd / triggerDecimation;
+
+    size_t best = 0;
+    SampleType bestError = 0;
+    bool found = false;
+    bool armed = false;
+
+    for (size_t i = 1; i < searchEndDecimated; ++i)
+    {
+        if (triggerDecimated[i] <= armLevel)
+        {
+            armed = true;
+            continue;
+        }
+
+        // ignore trigger
+        if (!armed || triggerDecimated[i - 1] >= fireLevel || triggerDecimated[i] < fireLevel)
+            continue;
+
+        armed = false; // one candidate per cycle, the next needs to dip and come back up
+
+        // if we havent made a detection before let's just pick this one since we need a reference
+        if (!hasTriggerReference)
+        {
+            best = i;
+            found = true;
+            break;
+        }
+
+        SampleType error = 0;
+
+        // sum of squared differences
+        for (size_t k = 0; k < triggerMatchLength; ++k)
+        {
+            const auto difference = triggerDecimated[i + k] - triggerReference[k];
+            error += difference * difference;
+        }
+
+        if (!found || error < bestError)
+        {
+            bestError = error;
+            best = i;
+            found = true;
+        }
+    }
+
+    if (!found)
+        return;
+
+    auto lockedShape = triggerDecimated.begin() + (std::ptrdiff_t) best;
+    std::copy(lockedShape, lockedShape + (std::ptrdiff_t) triggerMatchLength, triggerReference.begin());
+    hasTriggerReference = true;
+
+    // we have to check the exact spot in our real data to continue from
+    // because we only did detection on our decimated dataset
+    auto coarse = best * triggerDecimation;
+    auto from = coarse > triggerDecimation ? coarse - triggerDecimation : size_t(1);
+    auto to = std::min(coarse + triggerDecimation, searchEnd);
+
+    triggerOffset = coarse;
+
+    for (size_t i = from; i < to; ++i)
+    {
+        if (triggerSignal[i - 1] < fireLevel && triggerSignal[i] >= fireLevel)
+        {
+            triggerOffset = i;
+            break;
+        }
+    }
+}
 
 template <typename SampleType>
 void Scope<SampleType>::drawLRScope(juce::Graphics &g, juce::Rectangle<SampleType> scopeRect)
 {
     const auto h = scopeRect.getHeight();
+    const auto hop = hopSize;
 
     g.setColour(juce::Colours::grey);
     plotStraightLine(originLineData.data(), 2, g, scopeRect, SampleType(0.4), h / 2);
     plotStraightLine(originLineData.data(), 2, g, scopeRect, SampleType(-0.4), h / 2);
 
-
+    // trigger offset is position where trigger was detected
     g.setColour(juce::Colours::yellow);
-    plotStraightLine(sampleDataL.data(), sampleDataL.size(), g, scopeRect, SampleType(0.4), h / 2);
+    plotStraightLine(sampleDataL.data() + triggerOffset, hop, g, scopeRect, SampleType(0.4), h / 2);
     g.setColour(juce::Colours::lime);
-    plotStraightLine(sampleDataR.data(), sampleDataR.size(), g, scopeRect, SampleType(0.4), h / 2);
+    plotStraightLine(sampleDataR.data() + triggerOffset, hop, g, scopeRect, SampleType(0.4), h / 2);
 }
 
 
@@ -402,7 +598,7 @@ void Scope<SampleType>::drawClipper(juce::Graphics &g, juce::Rectangle<SampleTyp
     g.setColour(juce::Colours::darkgrey);
     g.strokePath(curve, juce::PathStrokeType(2.0f));
     
-    const auto level = juce::jlimit(0.0f, maxIn, dataCollector.levelMeter.getNext(scope_constants::defaultFrameRate));
+    const auto level = juce::jlimit(0.0f, maxIn, dataCollector.levelMeter.getNext());
 
     auto levelColour = juce::Colours::yellow;
     if (level > threshold + knee * 0.5f)
@@ -758,7 +954,7 @@ float Scope<SampleType>::compRatio() const
 template <typename SampleType>
 float Scope<SampleType>::bandLevel(LevelMeter &meter) const
 {
-    return meter.getNext((float) scope_constants::defaultFrameRate);
+    return meter.getNext();
 }
 
 // only the threshold differs between the three compressor views, and the stereo one has no tilt
@@ -947,20 +1143,50 @@ void Scope<SampleType>::timerCallback()
     auto& preDist = dataCollector.audioBufferQueuePreDistortion;
     auto& postDist = dataCollector.audioBufferQueuePostDistortion;
 
-    if (queueL.getReadableSpace() >= sampleDataL.size() && queueR.getReadableSpace() >= sampleDataR.size()) {
-        queueL.pop(sampleDataL.data(), sampleDataL.size());
-        queueR.pop(sampleDataR.data(), sampleDataR.size());
+    updateHopSize();
 
-        if (scopeContext.getType() == ScopeContextType::SPECTRUM_EMPHASIS) {
-            const auto fftSize = fft.getSize();
+    const auto hop = hopSize;
+    const auto newestHop = sampleDataL.size() - hop;
+    const auto spectrumView = scopeContext.getType() == ScopeContextType::SPECTRUM_EMPHASIS;
 
-            for (size_t i = 0; i < sampleDataL.size(); ++i)
+    // drain whatever has piled up rather than exactly one hop. the timer does not fire on an exact
+    // 60hz, so even a matched hop drifts, and once the queue is full push() starts dropping the
+    // tail of every block, which splices the waveform. the queue holds a tenth of a second, so this
+    // cap is always enough to empty it
+    constexpr int maxHopsPerTick = 8;
+    int hopsPopped = 0;
+
+    while (hopsPopped < maxHopsPerTick
+           && queueL.getReadableSpace() >= (int) hop
+           && queueR.getReadableSpace() >= (int) hop) {
+        // the older hops slide down to make room for the new one
+        std::copy(sampleDataL.begin() + hop, sampleDataL.end(), sampleDataL.begin());
+        std::copy(sampleDataR.begin() + hop, sampleDataR.end(), sampleDataR.begin());
+
+        queueL.pop(sampleDataL.data() + newestHop, hop);
+        queueR.pop(sampleDataR.data() + newestHop, hop);
+
+        ++hopsPopped;
+
+        // every hop has to reach the spectrum history, even the ones only drained to catch up
+        if (spectrumView) {
+            for (size_t i = 0; i < hop; ++i)
             {
                 const auto writeIndex = (fftHistoryWritePosition + i) % fftHistory.size();
-                fftHistory[writeIndex] = sampleDataL[i];
+                fftHistory[writeIndex] = sampleDataL[newestHop + i];
             }
 
-            fftHistoryWritePosition = (fftHistoryWritePosition + sampleDataL.size()) % fftHistory.size();
+            fftHistoryWritePosition = (fftHistoryWritePosition + hop) % fftHistory.size();
+        }
+    }
+
+    if (hopsPopped > 0) {
+        // only the lr scope draws from the trigger
+        if (scopeContext.getType() == ScopeContextType::LR_SCOPE)
+            updateTriggerOffset();
+
+        if (spectrumView) {
+            const auto fftSize = fft.getSize();
 
             if (fftHistory.size() >= fftSize)
             {
@@ -1000,11 +1226,16 @@ void Scope<SampleType>::timerCallback()
     }
 
     bool poppedInOut = false;
+    int inOutPopped = 0;
 
-    if (preDist.getReadableSpace() >= sampleDataPreDistortion.size() && postDist.getReadableSpace() >= sampleDataPostDistortion.size()) {
+    // same drain, so the distortion trail cannot splice either
+    while (inOutPopped < maxHopsPerTick
+           && preDist.getReadableSpace() >= (int) sampleDataPreDistortion.size()
+           && postDist.getReadableSpace() >= (int) sampleDataPostDistortion.size()) {
         preDist.pop(sampleDataPreDistortion.data(), sampleDataPreDistortion.size());
         postDist.pop(sampleDataPostDistortion.data(), sampleDataPostDistortion.size());
 
+        ++inOutPopped;
         poppedInOut = true;
     }
 

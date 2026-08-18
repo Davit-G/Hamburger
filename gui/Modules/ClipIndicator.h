@@ -20,7 +20,7 @@ public:
         if (*p.treeState.getRawParameterValue(ParamIDs::postClipEnabled.getParamID()) < 0.5f)
             return;
 
-        const auto level = collector.clipIndicator.getNext(20);
+        const auto level = collector.clipIndicator.getNext();
 
         auto dotColour = juce::Colours::darkgrey;
         if (level >= hardClipLevel)
