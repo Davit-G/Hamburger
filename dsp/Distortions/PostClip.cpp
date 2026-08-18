@@ -41,6 +41,7 @@ void PostClip::processBlock(juce::dsp::AudioBlock<float> &block)
         float r = block.getSample(1, sample) * gainAmount;
         block.setSample(1, sample, softClipperFunc(r, 1.0f, kneeAmt));
         
-        scopeData.accumulateClipping(l, r);
+        scopeData.levelMeter.accumulate(fmax(fabs(l), fabs(r)));
+        scopeData.clipIndicator.accumulate(fmax(fabs(l), fabs(r)));
     }
 }

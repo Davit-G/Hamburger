@@ -133,8 +133,6 @@ void Scope<SampleType>::paint(juce::Graphics &g)
             g.setColour(juce::Colours::yellow);
             plotStraightLine(noiseDistBuf.getReadPointer(0) + 32, noiseDistBuf.getNumSamples() - 32, g, scopeRect, SampleType(0.5), h / 2);
             break;
-        // case ScopeContextType::COMP:
-            
     }
 }
 
@@ -342,7 +340,7 @@ void Scope<SampleType>::drawClipper(juce::Graphics &g, juce::Rectangle<SampleTyp
     g.setColour(juce::Colours::darkgrey);
     g.strokePath(curve, juce::PathStrokeType(2.0f));
     
-    const auto level = juce::jlimit(0.0f, maxIn, dataCollector.clipLevel.load(std::memory_order_relaxed));
+    const auto level = juce::jlimit(0.0f, maxIn, dataCollector.levelMeter.getNext(scope_constants::defaultFrameRate));
 
     auto levelColour = juce::Colours::yellow;
     if (level > threshold + knee * 0.5f)

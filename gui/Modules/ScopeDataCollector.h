@@ -7,6 +7,7 @@
 
 #include <juce_dsp/juce_dsp.h>
 
+#include "../../utils/LevelMeter.h"
 #include "AudioBufferQueue.h"
 
 //==============================================================================
@@ -36,25 +37,9 @@ public:
     AudioBufferQueue<SampleType> audioBufferQueuePreDistortion;
     AudioBufferQueue<SampleType> audioBufferQueuePostDistortion;
 
-    void accumulateClipping(float sampleL, float sampleR) {
-        float sample = fmax(fabs(sampleL), fabs(sampleR));
-
-        constexpr float coeff = 0.0001f; // clip level decay
-        float current = clipLevel.load(std::memory_order_relaxed);
-
-        if (!std::isfinite(current))
-            current = 0.0f;
-
-        if (std::isfinite(sample) && sample > current) {
-            // jump
-            clipLevel.store(sample, std::memory_order_relaxed);
-        } else {
-            // decay
-            clipLevel.store(current * (1.0f - coeff), std::memory_order_relaxed);
-        }
-    }
-
-    std::atomic<float> clipLevel { 0.0f };
+    // two clones cause the frame rate is not the same between them and this updates on gui only (idk whyyy)
+    LevelMeter levelMeter {0.1f} ;  // used for actual visualisation on scope screen
+    LevelMeter clipIndicator; // used for post clipping dot
 
 private:
     std::atomic<double> currentSampleRate { 44100.0 };
