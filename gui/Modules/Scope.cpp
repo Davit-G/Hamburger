@@ -42,16 +42,6 @@ static juce::String formatPercent(float normalised)
     return juce::String(juce::roundToInt(normalised * 100.0f)) + "%";
 }
 
-ScopeContextType ScopeContext::getType()
-{
-    return type;
-}
-
-void ScopeContext::setType(ScopeContextType newType)
-{
-    type = newType;
-}
-
 
 template <typename SampleType>
 Scope<SampleType>::Scope(juce::AudioProcessorValueTreeState& valueTree, ScopeDataCollector<SampleType>& scopeDataCollector, ScopeContext &newScopeContext)
@@ -478,7 +468,7 @@ void Scope<SampleType>::drawSpectrumEmphasis(juce::Graphics &g, juce::Rectangle<
         const auto w = scopeRect.getWidth();
         const auto h = scopeRect.getHeight();
 
-        g.setColour(juce::Colours::yellow);
+        g.setColour(juce::Colour::fromRGB(255 * 0.6, 255 * 0.6, 0));
         const auto centerY = h;
         const auto maxHeight = h - headerHeight(scopeRect);
         const auto binCount = static_cast<double>(spectrumTransformed.size());
@@ -1200,6 +1190,8 @@ void Scope<SampleType>::timerCallback()
     auto& postDist = dataCollector.audioBufferQueuePostDistortion;
 
     updateHopSize();
+
+    scopeContext.updateFrame();
 
     const auto hop = hopSize;
     const auto newestHop = sampleDataL.size() - hop;

@@ -33,15 +33,52 @@ enum ScopeContextType {
 // also could store data used for scope to draw things like compression curves, eq curves etc
 class ScopeContext {
 public:
-    ScopeContext() {}
+    ScopeContext() {
+        lastTime = juce::Time::getMillisecondCounterHiRes();
+    }
     ~ScopeContext() {}
 
-    ScopeContextType getType();
+    ScopeContextType getType() { return type; }
 
-    void setType(ScopeContextType newType);
+    // startDecaying dictates if the scope context should start the timer for the visual to change
+    // also will immediately stop decaying if the type has been set
+    void setType(ScopeContextType newType) {
+        type = newType;
+        decaying = false;
+    }
+
+    void startDecaying() {
+        decaying = true;
+        timeTillReset = waitTime;
+    }
+
+    // call in frame rendering, it will keep track of it's own time
+    void updateFrame() {
+        if (decaying) {
+            if (timeTillReset > 0.0f) {
+                auto now = juce::Time::getMillisecondCounterHiRes();
+                auto elapsed = lastTime > 0.0 ? juce::jlimit(0.0, 1.0, (now - lastTime) * 0.001) : 0.0;
+        
+                timeTillReset -= elapsed;
+                lastTime = now;
+            } else {
+                decaying = false;
+                timeTillReset = 0.0f;
+        
+                type = defaultType;
+            }
+        }
+    }
 
 private:
-    ScopeContextType type = ScopeContextType::LR_SCOPE;
+    double lastTime = 0.0; // last measured time from millisecond counter
+    bool decaying = false;
+
+    double timeTillReset = 0.0; // when the user presses a knob it stays decayed for some amt of time
+    static constexpr double waitTime = 2.0; // two seconds until the default view is returned
+
+    ScopeContextType type = ScopeContextType::LR_SCOPE; // the current type
+    static constexpr ScopeContextType defaultType = ScopeContextType::LR_SCOPE; // the default to set after time has elapsed
 };
 
 template <typename SampleType>

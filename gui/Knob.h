@@ -91,7 +91,7 @@ public:
             // display the parameter name as the text again
             this->isDragging = false;
             this->label.setText(this->kName, juce::dontSendNotification);
-            processorRef.getScopeContext().setType(ScopeContextType::LR_SCOPE);
+            processorRef.getScopeContext().startDecaying();
         };
 
         addAndMakeVisible(knob);
