@@ -70,6 +70,15 @@ jobs:
       with:
         node-version: 18
 
+    - name: read plugin version
+      id: version
+      shell: bash
+      run: |
+        VERSION=$(sed -n 's/^[[:space:]]*set(ProjectVersion[[:space:]]*\([0-9][0-9.]*\)).*/\1/p' CMakeLists.txt)
+        if [ -z "$VERSION" ]; then echo "could not parse ProjectVersion from CMakeLists.txt" >&2; exit 1; fi
+        echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+        echo "plugin version: $VERSION"
+
     # thanks to https://forum.juce.com/t/juce-8-linux-issue-with-harfbuzz/61970/3 juce 8 linux builds should work nicely
     - name: (linux) switch to gcc-11
       if: startsWith(matrix.os, 'ubuntu')
@@ -247,6 +256,6 @@ jobs:
     
     - uses: actions/upload-artifact@v4
       with:
-        name: ${{env.PLUG}} ${{ matrix.name }}
+        name: ${{env.PLUG}} v${{env.VERSION}} ${{ matrix.name }}
         path: "./gh_artifacts"
         

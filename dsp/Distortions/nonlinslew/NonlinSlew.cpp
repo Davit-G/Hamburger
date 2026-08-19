@@ -1,5 +1,5 @@
 #include "NonlinSlew.h"
-#include "../../Waveshapers.h"
+#include "../../WaveShapers.h"
 
 #include <algorithm>
 #include <cmath>
