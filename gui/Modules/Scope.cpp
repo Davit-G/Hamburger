@@ -534,15 +534,15 @@ void Scope<SampleType>::drawClipper(juce::Graphics &g, juce::Rectangle<SampleTyp
 
     const auto knee = postClipKneeParam != nullptr ? postClipKneeParam->get() * 0.5f : 0.0f;
 
-    constexpr auto threshold = 1.0f;
-    constexpr auto maxIn = 2.5f;
-    constexpr auto maxOut = 1.25f;
+    constexpr float threshold = 1.0f;
+    constexpr float maxIn = 2.5f;
+    constexpr float maxOut = 1.25f;
 
     // mapping between pixel space and cartesian plane type coords, with the header strip kept clear
     const auto plot = scopeRect.withTrimmedTop(headerHeight(scopeRect));
 
-    auto toX = [w](float in) { return juce::jmap(in, 0.0f, maxIn, 0.0f, w); };
-    auto toY = [&plot](float out) { return juce::jmap(out, 0.0f, maxOut, (float) plot.getBottom() - 1.0f, (float) plot.getY() + 1.0f); };
+    auto toX = [w, maxIn](float in) { return juce::jmap(in, 0.0f, maxIn, 0.0f, w); };
+    auto toY = [&plot, maxOut](float out) { return juce::jmap(out, 0.0f, maxOut, (float) plot.getBottom() - 1.0f, (float) plot.getY() + 1.0f); };
 
     // shaded knee region
     if (knee > 0.0f)
@@ -572,9 +572,9 @@ void Scope<SampleType>::drawClipper(juce::Graphics &g, juce::Rectangle<SampleTyp
     juce::Path curve;
     for (int i = 0; i <= numPoints; ++i)
     {
-        const auto in = juce::jmap((float) i, 0.0f, (float) numPoints, 0.0f, maxIn);
-        const auto x = toX(in);
-        const auto y = toY(softClipperFunc(in, threshold, knee));
+        const float in = juce::jmap((float) i, 0.0f, (float) numPoints, 0.0f, maxIn);
+        const float x = toX(in);
+        const float y = toY(softClipperFunc(in, threshold, knee));
 
         if (i == 0)
             curve.startNewSubPath(x, y);
