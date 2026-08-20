@@ -1,20 +1,21 @@
 #pragma once
 
 #include "../EnvelopeFollower.h"
-
+#include "../../gui/Modules/ScopeDataCollector.h"
  
 
 class MBComp
 {
 public:
-    MBComp(juce::AudioProcessorValueTreeState &state) : compressor1(CompressionType::COMPRESSOR),
+    MBComp(juce::AudioProcessorValueTreeState &state, ScopeDataCollector<float> &dataCollector) : compressor1(CompressionType::COMPRESSOR),
                                                         compressor2(CompressionType::COMPRESSOR),
                                                         compressor3(CompressionType::COMPRESSOR),
                                                         threshold(state, ParamIDs::MBCompThreshold),
                                                         ratio(state, ParamIDs::compRatio),
                                                         tilt(state, ParamIDs::compBandTilt),
                                                         speed(state, ParamIDs::compSpeed),
-                                                        makeup(state, ParamIDs::compOut) {}
+                                                        makeup(state, ParamIDs::compOut),
+                                                        scopeDataCollector(dataCollector) {}
     ~MBComp() {}
 
     void processBlock(juce::dsp::AudioBlock<float> &block)
@@ -33,9 +34,9 @@ public:
         float thr = threshold.getRaw(0);
 
         // float atk, float rel, float mkp, float ratioLow, float ratioUp, float thresholdLow, float thresholdUp, float kneeW, float mkpDB)
-        compressor1.updateUpDown(spd, spd * 0.8f, mkp, rat, rat, thr - tlt, thr + 2.0f - tlt, 0.1f, 0.f);
-        compressor2.updateUpDown(spd, spd * 0.8f, mkp, rat, rat, thr, thr + 2.0f, 0.1f, 0.f);
-        compressor3.updateUpDown(spd, spd * 0.8f, mkp, rat, rat, thr + tlt, thr + 2.0f - tlt, 0.1f, 0.f);
+        compressor1.updateUpDown(spd, spd * 0.8f, mkp, rat, rat, thr - tlt, thr + 2.0f - tlt, Compressor::standardKneeDb, 0.f);
+        compressor2.updateUpDown(spd, spd * 0.8f, mkp, rat, rat, thr, thr + 2.0f, Compressor::standardKneeDb, 0.f);
+        compressor3.updateUpDown(spd, spd * 0.8f, mkp, rat, rat, thr + tlt, thr + 2.0f - tlt, Compressor::standardKneeDb, 0.f);
 
         float autoGain = juce::Decibels::decibelsToGain(-thr * powf((rat - 1.0f) * 0.09f, 0.4f) * 0.45);
 
@@ -53,6 +54,10 @@ public:
             float lowGain = compressor1.processOneSampleGainStereo(lowResultL, lowResultR);
             float midGain = compressor2.processOneSampleGainStereo(midResultL, midResultR);
             float highGain = compressor3.processOneSampleGainStereo(highResultL, highResultR);
+
+            scopeDataCollector.band1.accumulateDb(compressor1.lastEnvelopeDb);
+            scopeDataCollector.band2.accumulateDb(compressor2.lastEnvelopeDb);
+            scopeDataCollector.band3.accumulateDb(compressor3.lastEnvelopeDb);
 
             block.setSample(0, sample, (lowResultL * lowGain + midResultL * midGain + highResultL * highGain) * autoGain);
             block.setSample(1, sample, (lowResultR * lowGain + midResultR * midGain + highResultR * highGain) * autoGain);
@@ -92,6 +97,8 @@ private:
     float notLowR = 0.0f;
     float midResultR = 0.0f;
     float highResultR = 0.0f;
+
+    ScopeDataCollector<float> &scopeDataCollector;
 
     juce::dsp::LinkwitzRileyFilter<float> lowCrossOver;
     juce::dsp::LinkwitzRileyFilter<float> highCrossOver;

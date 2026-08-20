@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../EnvelopeFollower.h"
+#include "../../gui/Modules/ScopeDataCollector.h"
 
  
 
@@ -8,13 +9,14 @@
 class MSComp
 {
 public:
-    MSComp(juce::AudioProcessorValueTreeState &state) : compressorMid(CompressionType::COMPRESSOR),
+    MSComp(juce::AudioProcessorValueTreeState &state, ScopeDataCollector<float> &dataCollector) : compressorMid(CompressionType::COMPRESSOR),
                                                         compressorSide(CompressionType::COMPRESSOR),
                                                         threshold(state, ParamIDs::MSCompThreshold),
                                                         ratio(state, ParamIDs::compRatio),
                                                         tilt(state, ParamIDs::compBandTilt),
                                                         speed(state, ParamIDs::compSpeed),
-                                                        makeup(state, ParamIDs::compOut) {}
+                                                        makeup(state, ParamIDs::compOut),
+                                                        scopeDataCollector(dataCollector) {}
     ~MSComp() {}
 
     void processBlock(juce::dsp::AudioBlock<float> &block)
@@ -33,8 +35,8 @@ public:
         float thr = threshold.getRaw(0);
 
         // float atk, float rel, float mkp, float ratioLow, float ratioUp, float thresholdLow, float thresholdUp, float kneeW, float mkpDB)
-        compressorMid.updateUpDown(spd, spd * 0.8f, mkp, rat, rat, thr - tlt, thr + 2.0f - tlt, 0.1f, 0.f);
-        compressorSide.updateUpDown(spd, spd * 0.8f, mkp, rat, rat, thr + tlt, thr + 2.0f + tlt, 0.1f, 0.f);
+        compressorMid.updateUpDown(spd, spd * 0.8f, mkp, rat, rat, thr - tlt, thr + 2.0f - tlt, Compressor::standardKneeDb, 0.f);
+        compressorSide.updateUpDown(spd, spd * 0.8f, mkp, rat, rat, thr + tlt, thr + 2.0f + tlt, Compressor::standardKneeDb, 0.f);
 
         float autoGain = juce::Decibels::decibelsToGain(-thr * powf((rat - 1.0f) * 0.09f, 0.4f) * 0.45); // kinda borked
 
@@ -48,6 +50,9 @@ public:
 
             float midGain = compressorMid.processOneSampleGainMono(midSample);
             float sideGain = compressorSide.processOneSampleGainMono(sideSample);
+
+            scopeDataCollector.band1.accumulateDb(compressorMid.lastEnvelopeDb);
+            scopeDataCollector.band2.accumulateDb(compressorSide.lastEnvelopeDb);
 
             float midOut = midSample * midGain;
             float sideOut = sideSample * sideGain;
@@ -77,4 +82,6 @@ private:
 
     Compressor compressorMid;
     Compressor compressorSide;
+
+    ScopeDataCollector<float> &scopeDataCollector;
 };

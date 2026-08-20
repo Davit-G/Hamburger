@@ -11,7 +11,9 @@ enum class ParamUnits {
     db,
     percent,
     x,
-    category
+    category,
+    compressionRatio,
+    oversample
 };
 
 inline juce::String createParamString(float value, ParamUnits unit) noexcept {
@@ -28,15 +30,19 @@ inline juce::String createParamString(float value, ParamUnits unit) noexcept {
             return juce::String(value, 0, false) + "x";
         case ParamUnits::category:
             return juce::String(value, 0, false);
+        case ParamUnits::oversample:
+            return juce::String(powf(2.0f, round(value)), 0, false) + "x";
+        case ParamUnits::compressionRatio:
+            return juce::String(value, 1, false) + ":1";
         default:
             return juce::String(value, 2, false);
     }
 }
 
-class ParamKnob : public juce::Component
+class ParamKnob : public juce::Component, private juce::Timer
 {
 public:
-    ParamKnob(AudioPluginAudioProcessor &p, juce::String knobName, juce::ParameterID attachmentID, ParamUnits knobUnit = ParamUnits::none): processorRef(p), kName(knobName), unit(knobUnit) {
+    ParamKnob(AudioPluginAudioProcessor &p, juce::String knobName, juce::ParameterID attachmentID, ParamUnits knobUnit = ParamUnits::none, ScopeContextType scopeContextType = ScopeContextType::LR_SCOPE): processorRef(p), kName(knobName), unit(knobUnit) {
         knobAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(processorRef.treeState, attachmentID.getParamID(), knob);
         jassert(knobAttachment);
 
@@ -58,16 +64,24 @@ public:
 
         setName(knobName);
 
+        preferredScopeContextType = scopeContextType;
+
         knob.onDragStart = [this] { 
             // display the parameter value as the text instead of the parameter name
             this->isDragging = true;
             this->label.setText(createParamString(this->knob.getValue(), this->unit), juce::dontSendNotification);
+            processorRef.getScopeContext().setType(preferredScopeContextType);
+
+            this->dragAmount = 1.0f;
+            startTimerHz(60);
+            repaint();
         };
 
         // when value is changing, set it to what the knob is, but only if we're dragging
         knob.onValueChange = [this] {
             if (this->isDragging) {
-                this->label.setText(createParamString(this->knob.getValue(), this->unit), juce::dontSendNotification);
+                auto value = this->knob.getValue();
+                this->label.setText(createParamString(value, this->unit), juce::dontSendNotification);
             } else {
                 this->label.setText(this->kName, juce::dontSendNotification);
             }
@@ -77,6 +91,7 @@ public:
             // display the parameter name as the text again
             this->isDragging = false;
             this->label.setText(this->kName, juce::dontSendNotification);
+            processorRef.getScopeContext().startDecaying();
         };
 
         addAndMakeVisible(knob);
@@ -92,7 +107,10 @@ public:
         addAndMakeVisible(label);
 
         label.setText(kName, juce::dontSendNotification);
+
+        startTimerHz(60);
     }
+	
 
     void paint(juce::Graphics &g) override
     {
@@ -115,10 +133,26 @@ public:
 
         // g.drawEllipse(Rectangle<float>(size, size).reduced(7.0f).withCentre(bounds.getCentre()), 1.0f);
         g.drawEllipse(juce::Rectangle<float>(size, size).reduced(12.0f).withCentre(bounds.getCentre()), 2.0f);
-        g.drawEllipse(juce::Rectangle<float>(size, size).reduced(20.0f).withCentre(bounds.getCentre()), 4.0f);
+        g.drawEllipse(juce::Rectangle<float>(size, size).reduced(20.0f).withCentre(bounds.getCentre()), 4.0f + dragAmount * 4.0f);
+    }
+
+    void timerCallback() override
+    {
+        if (isDragging) // hold at full brightness until the user lets go
+            return;
+
+        dragAmount *= dragDecayRate;
+
+        if (dragAmount < dragDecayThreshold) {
+            dragAmount = 0.0f;
+            stopTimer();
+        }
+
+        repaint();
     }
 
     ~ParamKnob() override {
+        stopTimer();
         knobAttachment = nullptr;
     }
 
@@ -137,6 +171,7 @@ public:
     juce::Slider knob;
 private:
     AudioPluginAudioProcessor &processorRef;
+    ScopeContextType preferredScopeContextType = ScopeContextType::LR_SCOPE;
 
     juce::Label label;
 
@@ -146,6 +181,10 @@ private:
     ParamUnits unit;
 
     bool isDragging = false;
+
+    float dragAmount = 0.0f;
+    static constexpr float dragDecayRate = 0.88f; 
+    static constexpr float dragDecayThreshold = 0.01f;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ParamKnob)
 };

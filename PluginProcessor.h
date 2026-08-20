@@ -20,6 +20,8 @@
 #include "service/PresetManager.h"
 #include "service/AppProperties.h"
 
+#include "gui/Modules/ScopeDataCollector.h"
+
 // profiling
 // #include <melatonin_perfetto/melatonin_perfetto.h>
 
@@ -73,9 +75,9 @@ public:
 
     juce::StringArray oversamplingFactorChoices = {"1x", "2x", "4x", "8x", "16x"};
 
-    AudioBufferQueue<float>& getAudioBufferQueueL() noexcept        { return audioBufferQueueL; }
-    AudioBufferQueue<float>& getAudioBufferQueueR() noexcept        { return audioBufferQueueR; }
+    ScopeDataCollector<float>& getScopeDataCollector() {return scopeDataCollector; };
 
+    ScopeContext& getScopeContext() { return scopeContext; };
     Preset::PresetManager& getPresetManager() { return *presetManager; }
     AppProperties& getAppProperties() { return appProperties; }
 
@@ -110,9 +112,9 @@ private:
 
     int oldOversamplingFactor = 0;
 
-    AudioBufferQueue<float> audioBufferQueueL;
-    AudioBufferQueue<float> audioBufferQueueR;
-    ScopeDataCollector<float> scopeDataCollector { audioBufferQueueL, audioBufferQueueR };
+    ScopeDataCollector<float> scopeDataCollector;
+
+    ScopeContext scopeContext; // keep on audio thread cause uhh idk its easier to access via reference from pluginprocessor
 
     AppProperties appProperties;
     std::unique_ptr<Preset::PresetManager> presetManager;

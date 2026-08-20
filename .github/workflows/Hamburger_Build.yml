@@ -70,16 +70,16 @@ jobs:
       with:
         node-version: 18
 
-    # thanks to https://forum.juce.com/t/juce-8-linux-issue-with-harfbuzz/61970/3 juce 8 linux builds should work nicely
-    - name: (linux) switch to gcc-11
-      if: startsWith(matrix.os, 'ubuntu')
+    - name: read plugin version
+      id: version
+      shell: bash
       run: |
-        sudo apt install build-essential
-        sudo add-apt-repository ppa:ubuntu-toolchain-r/test
-        sudo apt install g++-11 gcc-11
-        sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-11 100 --slave /usr/bin/g++ g++ /usr/bin/g++-11 --slave /usr/bin/gcov gcov /usr/bin/gcov-11
-        sudo update-alternatives --set gcc /usr/bin/gcc-11
-    
+        VERSION=$(sed -n 's/^[[:space:]]*set(ProjectVersion[[:space:]]*\([0-9][0-9.]*\)).*/\1/p' CMakeLists.txt)
+        if [ -z "$VERSION" ]; then echo "could not parse ProjectVersion from CMakeLists.txt" >&2; exit 1; fi
+        echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+        echo "plugin version: $VERSION"
+
+    # thanks to https://forum.juce.com/t/juce-8-linux-issue-with-harfbuzz/61970/3 juce 8 linux builds should work nicely
     - name: (linux) install juce dependencies
       if: startsWith(matrix.os, 'ubuntu')
       id: juce_dependencies
@@ -247,6 +247,6 @@ jobs:
     
     - uses: actions/upload-artifact@v4
       with:
-        name: ${{env.PLUG}} ${{ matrix.name }}
+        name: ${{env.PLUG}} v${{env.VERSION}} ${{ matrix.name }}
         path: "./gh_artifacts"
         

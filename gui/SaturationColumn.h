@@ -17,10 +17,13 @@
 
 #include "LookAndFeel/Palette.h"
 
+#include "Modules/ClipIndicator.h"
+
 class SaturationColumn : public juce::Component
 {
 public:
-    SaturationColumn(AudioPluginAudioProcessor &p) {
+    SaturationColumn(AudioPluginAudioProcessor &p) : scopeContext(p.getScopeContext()), clipDot(p.getScopeDataCollector(), p) {
+        setInterceptsMouseClicks(true, true);
 
         std::vector<std::unique_ptr<Panel>> panels;
         // ORDERING IS VERY IMPORTANT
@@ -76,7 +79,17 @@ public:
 
         noise = std::make_unique<Module>(p, "NOISE", "noiseDistortionEnabled", "noiseDistortionType", std::move(noisePanels));
         addAndMakeVisible(noise.get());
+
+        addAndMakeVisible(clipDot);
     }
+
+    // void mouseUp(const juce::MouseEvent &event) override {
+    //     scopeContext.setType(ScopeContextType::IN_OUT);
+    // }
+
+    // void mouseDown(const juce::MouseEvent &event) override {
+    //     scopeContext.setType(ScopeContextType::LR_SCOPE);
+    // }
 
     ~SaturationColumn() {
         saturation->setLookAndFeel(nullptr);
@@ -89,11 +102,17 @@ public:
         auto height = bounds.getHeight();
 
         saturation->setBounds(bounds.removeFromTop(height * 3/4));
-        postClip->setBounds(bounds.removeFromRight(bounds.getWidth() / 2));
+        
+        auto postClipBounds = bounds.removeFromRight(bounds.getWidth() / 2);
+        postClip->setBounds(postClipBounds);
+        clipDot.setBounds(postClipBounds.removeFromTop(dotSize).removeFromRight(dotSize).reduced(4).translated(-19, 19));
+        
         noise->setBounds(bounds);
     }
 
 private:
+    ScopeContext& scopeContext;
+
     std::unique_ptr<Panel> classic = nullptr;
     std::unique_ptr<Panel> tube = nullptr;
     std::unique_ptr<Panel> phase = nullptr;
@@ -108,6 +127,9 @@ private:
     std::unique_ptr<Module> noise = nullptr;
     std::unique_ptr<Module> saturation = nullptr;
     std::unique_ptr<Module> postClip = nullptr;
+
+    static constexpr int dotSize = 16;
+    ClipIndicator clipDot;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SaturationColumn)
 };

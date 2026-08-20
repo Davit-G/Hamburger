@@ -1,15 +1,13 @@
 #pragma once
 
 #include "../Panel.h"
-
-
 #include "../Scope.h"
 
 class ScopePanel : public Panel
 {
 public:
     ScopePanel(AudioPluginAudioProcessor &p) : Panel(p, "SETTINGS"),
-                                                  scope(p.getAudioBufferQueueL(), p.getAudioBufferQueueR())
+                                                  scope(p.treeState, p.getScopeDataCollector(), p.getScopeContext())
     {
         addAndMakeVisible (scope);
     }

@@ -11,7 +11,8 @@ public:
     Module(AudioPluginAudioProcessor &processor, const std::string &moduleName, const std::string buttonAttachmentId, const std::string categoryAttachmentId, std::vector<std::unique_ptr<Panel>> panels, bool noHeader = false)
         : modulePanels(std::move(panels)),
           powerOffImage(juce::ImageCache::getFromMemory(BinaryData::poweroff_png, BinaryData::poweroff_pngSize)), // yes it's using imageCache but stop constructing new instances! unify somehow
-          powerOnImage(juce::ImageCache::getFromMemory(BinaryData::poweron_png, BinaryData::poweron_pngSize))
+          powerOnImage(juce::ImageCache::getFromMemory(BinaryData::poweron_png, BinaryData::poweron_pngSize)),
+          scopeContext(processor.getScopeContext())
     {
         this->noHeader = noHeader;
 
@@ -76,7 +77,18 @@ public:
 
         setCategoryText(moduleName);
         
+        for (auto &panel : modulePanels) {
+            panel->addMouseListener(this, true);
+        }
     }
+
+    // void mouseUp(const juce::MouseEvent &event) override {
+    //     scopeContext.setType(ScopeContextType::LR_SCOPE);
+    // }
+
+    // void mouseDown(const juce::MouseEvent &event) override {
+    //     scopeContext.setType(ScopeContextType::IN_OUT);
+    // }
 
     void hideElements()
     {
@@ -104,7 +116,11 @@ public:
         }
     }
 
-    ~Module() override = default;
+    ~Module() {
+        for (auto &panel : modulePanels) {
+            panel->removeMouseListener(this);
+        }
+    };
 
     void paint(juce::Graphics &g) override
     {
@@ -153,7 +169,7 @@ public:
 
         if (modulePanels.size() == 1)
         {
-            header.items.add(juce::FlexItem(titleLabel).withMinWidth(juce::GlyphArrangement::getStringWidth(titleFont, titleLabel.getText()) * 1.1f));
+            header.items.add(juce::FlexItem(titleLabel).withMinWidth(juce::GlyphArrangement::getStringWidth(titleFont, titleLabel.getText()) * 1.4f));
         }
         else
         {
@@ -247,6 +263,8 @@ private:
             modulePanels[index]->setVisible(true);
         }
     }
+
+    ScopeContext& scopeContext;
 
     std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment> categoryAttachment = nullptr;
     std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> attachment = nullptr;

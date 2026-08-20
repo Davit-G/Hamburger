@@ -6,9 +6,9 @@ class ErosionPanel : public Panel
 {
 public:
     ErosionPanel(AudioPluginAudioProcessor &p) : Panel(p, "EROSION", Palette::colours[1]),
-                                                 erosionAmt(p, "AMOUNT", ParamIDs::erosionAmount),
-                                                 erosionFreq(p, "FREQ", ParamIDs::erosionFrequency, ParamUnits::hz),
-                                                 erosionQ(p, "Q", ParamIDs::erosionQ)
+                                                 erosionAmt(p, "AMOUNT", ParamIDs::erosionAmount, ParamUnits::none, ScopeContextType::NOISE),
+                                                 erosionFreq(p, "FREQ", ParamIDs::erosionFrequency, ParamUnits::hz, ScopeContextType::NOISE),
+                                                 erosionQ(p, "Q", ParamIDs::erosionQ, ParamUnits::none, ScopeContextType::NOISE)
     {
 
         addAndMakeVisible(erosionAmt);

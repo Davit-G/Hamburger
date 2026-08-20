@@ -17,11 +17,20 @@ enum CompressionType {
 class Compressor
 {
 public:
+    static constexpr float standardKneeDb = 0.1f;
+
     Compressor(CompressionType ctype) : type(ctype), envelope(true) {}
     
     ~Compressor(){}
 
     void updateUpDown(float attack, float release, float makeup, float ratioLower, float ratioUpper, float thresholdLower, float thresholdUpper, float kneeWidth, float makeup_dB);
+
+    // detector only, for meters that want the value without the gain curve or the audio
+    float detectMono(float sample) { 
+        lastEnvelopeDb = envelope.processSample(sample); 
+        return lastEnvelopeDb; 
+    }
+    
     void updateParameters(float attack, float release, float makeup, float ratio, float threshold, float kneeWidth, float makeup_dB);
 
     void processBlock(juce::dsp::AudioBlock<float>& dryBuffer);
@@ -39,6 +48,10 @@ public:
     float thresholdUpper = 0.f;
     float kneeWidth = 0.f;
     float makeup_dB = 0.f;
+
+    // what the threshold is compared against, in dB. metering the gained output instead would never
+    // line up with the threshold: the ratio pins it near the line and makeup shifts it off again
+    float lastEnvelopeDb = -96.0f;
 
 private:
     CompressionType type;

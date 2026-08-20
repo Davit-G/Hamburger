@@ -15,11 +15,11 @@
 class Dynamics
 {
 public:
-    Dynamics(juce::AudioProcessorValueTreeState &state) :
-        mbComp(state),
-        msComp(state),
-        stereoComp(state),
-        typeA(state)
+    Dynamics(juce::AudioProcessorValueTreeState &state, ScopeDataCollector<float> &dataCollector) :
+        mbComp(state, dataCollector),
+        msComp(state, dataCollector),
+        stereoComp(state, dataCollector),
+        typeA(state, dataCollector)
     {
         distoType = dynamic_cast<juce::AudioParameterChoice *>(state.getParameter(ParamIDs::compressionType.getParamID())); jassert(distoType);
         enabled = dynamic_cast<juce::AudioParameterBool *>(state.getParameter(ParamIDs::compressionOn.getParamID())); jassert(enabled);

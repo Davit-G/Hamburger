@@ -1,126 +1,84 @@
 #pragma once
 
-//==============================================================================
-template <typename SampleType>
-class AudioBufferQueue
-{
-public:
-    //==============================================================================
-    static constexpr size_t order = 10;
-    static constexpr size_t bufferSize = 1U << order;
-    static constexpr size_t numBuffers = 5;
+#include <algorithm>
+#include <atomic>
+#include <cmath>
+#include <memory>
+#include <juce_audio_processors/juce_audio_processors.h>
+#include <juce_dsp/juce_dsp.h>
 
-    //==============================================================================
-    void push(const SampleType *dataToPush, size_t numSamples)
-    {
-        jassert(numSamples <= bufferSize);
+#include "AudioBufferQueue.h"
+#include "ScopeDataCollector.h"
+#include "ScopeConstants.h"
 
-        int start1, size1, start2, size2;
-        abstractFifo.prepareToWrite(1, start1, size1, start2, size2);
+#include "../LookAndFeel/HamburgerLAF.h"
+#include "../../utils/Params.h"
 
-        jassert(size1 <= 1);
-        jassert(size2 == 0);
+#include "../../dsp/NoiseDistortions.h"
 
-        if (size1 > 0)
-            juce::FloatVectorOperations::copy(buffers[(size_t)start1].data(), dataToPush, (int)juce::jmin(bufferSize, numSamples));
-
-        abstractFifo.finishedWrite(size1);
-    }
-
-    //==============================================================================
-    void pop(SampleType *outputBuffer)
-    {
-        int start1, size1, start2, size2;
-        abstractFifo.prepareToRead(1, start1, size1, start2, size2);
-
-        jassert(size1 <= 1);
-        jassert(size2 == 0);
-
-        if (size1 > 0)
-            juce::FloatVectorOperations::copy(outputBuffer, buffers[(size_t)start1].data(), (int)bufferSize);
-
-        abstractFifo.finishedRead(size1);
-    }
-
-private:
-    //==============================================================================
-    juce::AbstractFifo abstractFifo{numBuffers};
-    std::array<std::array<SampleType, bufferSize>, numBuffers> buffers;
+enum ScopeContextType {
+    LR_SCOPE, // by default
+    IN_OUT, // input against output
+    // SPECTRUM, // once button press happens?
+    SPECTRUM_EMPHASIS, // draw curves for emphasis eq
+    CLIPPER, // clipping curve + waveform
+    MB_COMP, // three bands with boxes for ratio, threshold etc
+    MS_COMP, // two bands similar to mb, mid and side
+    STEREO_COMP, // two bands similar to mb, left and right
+    TYPE_A, // four bands, the top one stacked on the one below it
+    NOISE, // get a sine wave and apply the noise distortions onto them so we can see what they look like
 };
 
-//==============================================================================
-template <typename SampleType>
-class ScopeDataCollector
-{
+// cause maybe we might need to sync across threads later?
+// also could store data used for scope to draw things like compression curves, eq curves etc
+class ScopeContext {
 public:
-    //==============================================================================
-    ScopeDataCollector(AudioBufferQueue<SampleType> &queueToUseL, AudioBufferQueue<SampleType> &queueToUseR)
-        : audioBufferQueueL(queueToUseL)
-        , audioBufferQueueR(queueToUseR)
-    {
+    ScopeContext() {
+        lastTime = juce::Time::getMillisecondCounterHiRes();
+    }
+    ~ScopeContext() {}
+
+    ScopeContextType getType() { return type; }
+
+    // startDecaying dictates if the scope context should start the timer for the visual to change
+    // also will immediately stop decaying if the type has been set
+    void setType(ScopeContextType newType) {
+        type = newType;
+        decaying = false;
     }
 
-    //==============================================================================
-    void process(const SampleType *dataL, const SampleType *dataR, size_t numSamples)
-    {
-        size_t index = 0;
+    void startDecaying() {
+        decaying = true;
+        timeTillReset = waitTime;
+    }
 
-        if (state == State::waitingForTrigger)
-        {
-            while (index++ < numSamples)
-            {
-                auto currentSampleL = *dataL++;
-                auto currentSampleR = *dataR++;
-
-                auto currentSample = currentSampleL + currentSampleR;
-
-                if (currentSample >= triggerLevel && prevSample < triggerLevel)
-                {
-                    numCollected = 0;
-                    state = State::collecting;
-                    break;
-                }
-
-                prevSample = currentSample;
-            }
-        }
-
-        if (state == State::collecting)
-        {
-            while (index++ < numSamples)
-            {
-                bufferL[numCollected] = *dataL++;
-                bufferR[numCollected++] = *dataR++;
-
-                if (numCollected == bufferL.size())
-                {
-                    audioBufferQueueL.push(bufferL.data(), bufferL.size());
-                    audioBufferQueueR.push(bufferR.data(), bufferR.size());
-
-                    state = State::waitingForTrigger;
-                    prevSample = SampleType(100);
-                    break;
-                }
+    // call in frame rendering, it will keep track of it's own time
+    void updateFrame() {
+        if (decaying) {
+            if (timeTillReset > 0.0f) {
+                auto now = juce::Time::getMillisecondCounterHiRes();
+                auto elapsed = lastTime > 0.0 ? juce::jlimit(0.0, 1.0, (now - lastTime) * 0.001) : 0.0;
+        
+                timeTillReset -= elapsed;
+                lastTime = now;
+            } else {
+                decaying = false;
+                timeTillReset = 0.0f;
+        
+                type = defaultType;
             }
         }
     }
 
 private:
-    //==============================================================================
-    AudioBufferQueue<SampleType> &audioBufferQueueL;
-    AudioBufferQueue<SampleType> &audioBufferQueueR;
-    std::array<SampleType, AudioBufferQueue<SampleType>::bufferSize> bufferL;
-    std::array<SampleType, AudioBufferQueue<SampleType>::bufferSize> bufferR;
-    size_t numCollected;
-    SampleType prevSample = SampleType(100);
+    double lastTime = 0.0; // last measured time from millisecond counter
+    bool decaying = false;
 
-    static constexpr auto triggerLevel = SampleType(0.005);
+    double timeTillReset = 0.0; // when the user presses a knob it stays decayed for some amt of time
+    static constexpr double waitTime = 2.0; // two seconds until the default view is returned
 
-    enum class State
-    {
-        waitingForTrigger,
-        collecting
-    } state{State::waitingForTrigger};
+    ScopeContextType type = ScopeContextType::LR_SCOPE; // the current type
+    static constexpr ScopeContextType defaultType = ScopeContextType::LR_SCOPE; // the default to set after time has elapsed
 };
 
 template <typename SampleType>
@@ -129,132 +87,128 @@ class Scope : public juce::Component,
 {
 public:
     using Queue = AudioBufferQueue<SampleType>;
+    Scope(juce::AudioProcessorValueTreeState& valueTree, ScopeDataCollector<SampleType>& scopeDataCollector, ScopeContext &newScopeContext);
 
-    //==============================================================================
-    Scope(Queue &queueToUseL, Queue &queueToUseR)
-        : audioBufferQueueL(queueToUseL),
-          audioBufferQueueR(queueToUseR)
-    {
-        sampleDataL.fill(SampleType(0));
-        sampleDataR.fill(SampleType(0));
-        setFramesPerSecond(60);
-    }
+    void mouseDown(const juce::MouseEvent &event) override;
+    void setFramesPerSecond(int framesPerSecond);
+    void paint(juce::Graphics &g) override;
 
-    void mouseDown(const juce::MouseEvent &event) override
-    {
-        juce::ignoreUnused(event);
-        this->viewSpectrum = !this->viewSpectrum;
-    }
+    // single source of truth for the x axis, everything drawn over the spectrum has to go through this
+    SampleType freqToX(double freq, SampleType w) const;
 
-    //==============================================================================
-    void setFramesPerSecond(int framesPerSecond)
-    {
-        jassert(framesPerSecond > 0 && framesPerSecond < 1000);
-        startTimerHz(framesPerSecond);
-    }
-
-    //==============================================================================
-    void paint(juce::Graphics &g) override
-    {
-        auto area = getLocalBounds();
-        auto h = (SampleType)area.getHeight();
-        auto w = (SampleType)area.getWidth();
-
-        auto scopeRect = juce::Rectangle<SampleType>{SampleType(0), SampleType(0), w, h};
-
-        g.setColour(juce::Colours::grey);
-        plot(originLineData.data(), 2, g, scopeRect, SampleType(0.4), h / 2);
-        plot(originLineData.data(), 2, g, scopeRect, SampleType(-0.4), h / 2);
-
-
-        g.setColour(juce::Colours::yellow);
-        plot(sampleDataL.data(), sampleDataL.size(), g, scopeRect, SampleType(0.4), h / 2);
-        g.setColour(juce::Colours::lime);
-        plot(sampleDataR.data(), sampleDataR.size(), g, scopeRect, SampleType(0.4), h / 2);
-
+    float getBandResponse(double freq, double centerFreq, double gainDb);
+    void drawResponseCurve(juce::Graphics &g, const SampleType w, const SampleType centerY, const SampleType maxHeight);
     
-    }
-
-    //==============================================================================
-    void resized() override {}
+    void resized() override;
 
     bool viewSpectrum = false;
 
 private:
-    Queue &audioBufferQueueL;
-    Queue &audioBufferQueueR;
-    std::array<SampleType, Queue::bufferSize> sampleDataL;
-    std::array<SampleType, Queue::bufferSize> sampleDataR;
+    juce::AudioParameterFloat* lowFreqParam;
+    juce::AudioParameterFloat* highFreqParam;
+    juce::AudioParameterFloat* lowGainParam;
+    juce::AudioParameterFloat* highGainParam;
+    juce::AudioParameterFloat* postClipKneeParam;
+
+    juce::AudioProcessorValueTreeState& apvts;
+
+    ScopeContext& scopeContext;
+    ScopeDataCollector<SampleType>& dataCollector;
+
+    // two hops each: the newest hop plus the one before it, so the trigger has somewhere to search
+    std::vector<SampleType> sampleDataL;
+    std::vector<SampleType> sampleDataR;
+    std::vector<SampleType> triggerSignal;    // low passed copy of L, only ever used to find the trigger
+    std::vector<SampleType> triggerDecimated; // the same copy at a fraction of the rate, to search
+    std::vector<SampleType> triggerReference; // the shape locked onto last frame, to match against
+    bool hasTriggerReference = false;
+    size_t triggerOffset = 0;
+    std::vector<SampleType> sampleDataPreDistortion;
+    std::vector<SampleType> sampleDataPostDistortion;
+
+    AudioBufferQueue<SampleType> bufferedFFTInput;
+    std::vector<SampleType> fftHistory;
+    std::array<SampleType, scope_constants::fftBins> averagedSpectrum{};
+    int fftHistoryWritePosition = 0;
 
     std::array<SampleType, 2> originLineData = {SampleType(1), SampleType(1)};
 
-    juce::dsp::FFT fft{Queue::order};
+    juce::dsp::FFT fft{static_cast<int>(std::log2(scope_constants::fftSize))};
     using WindowFun = juce::dsp::WindowingFunction<SampleType>;
-    WindowFun windowFun{(size_t)fft.getSize(), WindowFun::hann};
+    WindowFun windowFun{scope_constants::fftSize, WindowFun::hann};
 
-    std::array<SampleType, 2 * Queue::bufferSize> spectrumData;
-    std::array<SampleType, 2 * Queue::bufferSize> scopeData;
+    std::array<SampleType, scope_constants::fftInputSize> spectrumData{};
+    std::array<SampleType, scope_constants::fftBins> spectrumTransformed{};
 
-    //==============================================================================
-    void timerCallback() override
+    juce::Image inOutFB;
+    juce::Colour inOutBackground {juce::Colours::black};
+
+
+    // for analysing what the result of noise distortion is, we store a copy of the DSP so we can operate on it!
+    NoiseDistortions noiseDist;
+    juce::AudioBuffer<float> noiseDistBuf;
+
+
+    float inOutFade = 0.13f; // how much background is mixed in per frame, higher = shorter trails
+    float inOutRenderScale = 0.98f;
+
+    size_t hopSize = (size_t) scope_constants::defaultHopSize;
+    double preparedSampleRate = 0.0;
+
+    void updateHopSize();
+    void updateTriggerOffset();
+    void drawLRScope(juce::Graphics &g, juce::Rectangle<SampleType> scopeRect);
+    void drawInOut(juce::Graphics &g, juce::Rectangle<SampleType> scopeRect);
+    void drawInOutAxes(juce::Graphics &g, juce::Rectangle<SampleType> scopeRect);
+    void renderInOutFrame(bool stampNewTrace);
+    void drawSpectrumEmphasis(juce::Graphics &g, juce::Rectangle<SampleType> scopeRect);
+    void drawClipper(juce::Graphics &g, juce::Rectangle<SampleType> scopeRect);
+    // one cell per band of whichever compressor is on screen
+    struct CompBand
     {
-        audioBufferQueueL.pop(sampleDataL.data());
-        audioBufferQueueR.pop(sampleDataR.data());
+        float thresholdDb;
+        float level;      // linear, straight off the band meter
+        const char* name;
+        bool stacked = false; // shares the previous band's cell instead of taking one of its own
+        float gainOffsetDb = 0.0f; // what this band's makeup is trimmed by relative to the others
+    };
 
-        // juce::FloatVectorOperations::copy(spectrumData.data(), sampleDataL.data(), (int)sampleDataL.size());
+    void drawCompBands(juce::Graphics &g, juce::Rectangle<SampleType> scopeRect,
+                       const CompBand *bands, int numBands, float ratio);
+    void drawMBComp(juce::Graphics &g, juce::Rectangle<SampleType> scopeRect);
+    void drawMSComp(juce::Graphics &g, juce::Rectangle<SampleType> scopeRect);
+    void drawStereoComp(juce::Graphics &g, juce::Rectangle<SampleType> scopeRect);
+    void drawTypeAComp(juce::Graphics &g, juce::Rectangle<SampleType> scopeRect);
+    void drawTiledContextLabel(juce::Graphics &g, juce::Rectangle<int> area, const juce::String &text);
+    void drawParamHeader(juce::Graphics &g, juce::Rectangle<SampleType> scopeRect, const juce::StringArray &labels);
 
-        // auto fftSize = (size_t)fft.getSize();
+    // strip every view keeps clear at the top for its readouts
+    SampleType headerHeight(juce::Rectangle<SampleType> scopeRect) const;
 
-        // jassert(spectrumData.size() == 2 * fftSize);
-        // windowFun.multiplyWithWindowingTable(spectrumData.data(), fftSize);
-        // fft.performFrequencyOnlyForwardTransform(spectrumData.data());
+    float paramValue(const juce::ParameterID &id) const;
+    juce::AudioParameterChoice* choiceParam(const juce::ParameterID &id) const;
+    // black tab sized to its text, grown past the top or bottom edge so only the inner corners round
+    void drawTabbedLabel(juce::Graphics &g, juce::Rectangle<float> cell, const juce::String &text,
+                         juce::Justification justification, bool hangingFromTop);
+    void drawDistortionAmount(juce::Graphics &g, juce::Rectangle<SampleType> scopeRect);
 
-        // static constexpr auto mindB = SampleType(-156);
-        // static constexpr auto maxdB = SampleType(6);
+    juce::StringArray getDistortionHeaderLabels() const;
+    juce::String getDistortionAmountLabel() const;
+    juce::StringArray getNoiseHeaderLabels() const;
+    juce::StringArray getCompHeaderLabels(const juce::ParameterID &thresholdID, bool withTilt) const;
 
-        // for (int i = 0; i < spectrumData.size(); ++i) {
-        //     auto skewedProportionX = 1.0f - std::exp (std::log (1.0f - (float) i / (float) spectrumData.size()) * 0.05f);
-            
-        //     auto newTing = skewedProportionX * spectrumData.size() * 0.5f;
+    // shared by all three compressors, clamped so it can never invert the ratio ladder
+    float compRatio() const;
+    float bandLevel(LevelMeter &meter) const;
 
-        //     const float prev = floor(newTing);
-        //     const float next = ceil(newTing);
-        //     const float interp = newTing - prev;
-        //     const float val = spectrumData[prev] * (1 - interp) + spectrumData[next] * interp;
+    void timerCallback() override;
 
-        //     auto ting = juce::jlimit(mindB, maxdB, juce::Decibels::gainToDecibels(val) - juce::Decibels::gainToDecibels((SampleType)fftSize));
-        //     scopeData[i] = juce::jmap(
-        //         ting, 
-        //         mindB, 
-        //         maxdB, 
-        //         SampleType(0), 
-        //         SampleType(1)
-        //         );
-            
-        // }
+    HamburgerLAF hamburgerLAF;
 
-        repaint(getLocalBounds());
-    }
-
-    //==============================================================================
-    static void plot(const SampleType *data,
+    static void plotStraightLine(const SampleType *data,
                      size_t numSamples,
                      juce::Graphics &g,
                      juce::Rectangle<SampleType> rect,
                      SampleType scaler = SampleType(1),
-                     SampleType offset = SampleType(0))
-    {
-        auto w = rect.getWidth();
-        auto h = rect.getHeight();
-        auto right = rect.getRight();
-
-        auto center = rect.getBottom() - offset;
-        auto gain = h * scaler;
-
-        for (size_t i = 1; i < numSamples; ++i)
-            g.drawLine({juce::jmap(SampleType(i - 1), SampleType(0), SampleType(numSamples - 1), SampleType(right - w), SampleType(right)),
-                        center - gain * data[i - 1],
-                        juce::jmap(SampleType(i), SampleType(0), SampleType(numSamples - 1), SampleType(right - w), SampleType(right)),
-                        center - gain * data[i]});
-    }
+                     SampleType offset = SampleType(0));
 };

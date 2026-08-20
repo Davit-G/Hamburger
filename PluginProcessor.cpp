@@ -10,8 +10,8 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor() : AudioProcessor(BusesPro
                                                                             .withInput("Input", juce::AudioChannelSet::stereo(), true)
                                                                             .withOutput("Output", juce::AudioChannelSet::stereo(), true)),
                                                          treeState(*this, nullptr, "PARAMETER", createParameterLayout()),
-                                                         dynamics(treeState),
-                                                         postClip(treeState),
+                                                         dynamics(treeState, scopeDataCollector),
+                                                         postClip(treeState, scopeDataCollector),
                                                          dryWetMixer(30),
                                                          noiseDistortionSelection(treeState),
                                                          preDistortionSelection(treeState),
@@ -225,6 +225,9 @@ void AudioPluginAudioProcessor::changeProgramName(int index, const juce::String 
 //==============================================================================
 void AudioPluginAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
 {
+    if (sampleRate <= 0.0 || samplesPerBlock <= 0)
+        return;
+
     juce::dsp::ProcessSpec spec;
     spec.sampleRate = sampleRate;
     spec.maximumBlockSize = samplesPerBlock;
@@ -262,6 +265,8 @@ void AudioPluginAudioProcessor::prepareToPlay(double sampleRate, int samplesPerB
     dryWetMixer.reset();
     dryWetMixer.prepare(spec);
     dryWetMixer.setWetLatency(totalLatency);
+
+    scopeDataCollector.prepare(spec);
 }
 
 void AudioPluginAudioProcessor::releaseResources()
@@ -289,12 +294,12 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
 
     juce::ignoreUnused(midiMessages);
 
+    const int oversampleAmount = (hq != nullptr) ? hq->get() : 0;
     {
         // TRACE_EVENT("dsp", "oversampling config");
 
         dryWetMixer.setWetLatency(oversamplingStack.getLatencySamples());
 
-        const int oversampleAmount = (hq != nullptr) ? hq->get() : 0;
 
         oversamplingStack.setOversamplingFactor(oversampleAmount);
         if (oldOversamplingFactor != oversampleAmount)
@@ -345,6 +350,8 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
         preDistortionSelection.processBlock(oversampledBlock);
     }
 
+    scopeDataCollector.capturePreDistortion(oversampledBlock.getChannelPointer(0), oversampledBlock.getNumSamples(), oversampleAmount);
+
     {
         const int stagesAmt = (stages != nullptr) ? stages->get() : 1;
 
@@ -366,12 +373,14 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
         }
     }
 
+    scopeDataCollector.capturePostDistortion(oversampledBlock.getChannelPointer(0), oversampledBlock.getNumSamples(), oversampleAmount);
+
     emphasisFilter.processAfter(oversampledBlock);
 
     {
         // TRACE_EVENT("dsp", "other");
         if (clipEnabled == nullptr || clipEnabled->get())
-        {
+        {   
             postClip.processBlock(oversampledBlock);
         }
 

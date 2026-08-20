@@ -2,8 +2,9 @@
 #include "../WaveShapers.h"
 
 
-PostClip::PostClip(juce::AudioProcessorValueTreeState &treeState) : gainKnob(treeState, ParamIDs::postClipGain),
-                                                                    kneeKnob(treeState, ParamIDs::postClipKnee)
+PostClip::PostClip(juce::AudioProcessorValueTreeState &treeState, ScopeDataCollector<float>& scopeDataCollector) : gainKnob(treeState, ParamIDs::postClipGain),
+                                                                    kneeKnob(treeState, ParamIDs::postClipKnee),
+                                                                    scopeData(scopeDataCollector)
 {
     clipEnabled = dynamic_cast<juce::AudioParameterBool *>(treeState.getParameter(ParamIDs::postClipEnabled.getParamID()));
     jassert(clipEnabled);
@@ -23,7 +24,6 @@ void PostClip::prepare(juce::dsp::ProcessSpec &spec)
 void PostClip::processBlock(juce::dsp::AudioBlock<float> &block)
 {
     // TRACE_EVENT("dsp", "PostClip::processBlock");
-
     if (clipEnabled != nullptr && !clipEnabled->get())
         return;
 
@@ -34,11 +34,14 @@ void PostClip::processBlock(juce::dsp::AudioBlock<float> &block)
     {
         float gainAmount = juce::Decibels::decibelsToGain(gainKnob.getNextValue(0));
         float kneeAmt = kneeKnob.getNextValue(0) * 0.5f;
-
-        float xn = block.getSample(0, sample) * gainAmount;
-        block.setSample(0, sample, softClipperFunc(xn, 1.0f, kneeAmt));
-
-        xn = block.getSample(1, sample) * gainAmount;
-        block.setSample(1, sample, softClipperFunc(xn, 1.0f, kneeAmt));
+        
+        float l = block.getSample(0, sample) * gainAmount;
+        block.setSample(0, sample, softClipperFunc(l, 1.0f, kneeAmt));
+        
+        float r = block.getSample(1, sample) * gainAmount;
+        block.setSample(1, sample, softClipperFunc(r, 1.0f, kneeAmt));
+        
+        scopeData.levelMeter.accumulate(fmax(fabs(l), fabs(r)));
+        scopeData.clipIndicator.accumulate(fmax(fabs(l), fabs(r)));
     }
 }

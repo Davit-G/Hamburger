@@ -7,9 +7,9 @@ class SizzlePanel : public Panel
 {
 public:
     SizzlePanel(AudioPluginAudioProcessor &p) : Panel(p, "SIZZLE"),
-    sizzleKnob(p, "SIZZLE", ParamIDs::sizzleAmount),
-    sizzleFreq(p, "FREQ", ParamIDs::sizzleFrequency),
-    sizzleQ(p, "Q", ParamIDs::sizzleQ) {
+    sizzleKnob(p, "SIZZLE", ParamIDs::sizzleAmount, ParamUnits::none, ScopeContextType::NOISE),
+    sizzleFreq(p, "FREQ", ParamIDs::sizzleFrequency, ParamUnits::none, ScopeContextType::NOISE),
+    sizzleQ(p, "Q", ParamIDs::sizzleQ, ParamUnits::none, ScopeContextType::NOISE) {
         addAndMakeVisible(sizzleKnob);
         addAndMakeVisible(sizzleFreq);
         addAndMakeVisible(sizzleQ);
@@ -39,7 +39,7 @@ class SizzleOGPanel : public Panel
 {
 public:
     SizzleOGPanel(AudioPluginAudioProcessor &p) : Panel(p, "FIZZ"),
-    sizzleKnob(p, "FIZZLE", ParamIDs::fizzAmount)
+    sizzleKnob(p, "FIZZLE", ParamIDs::fizzAmount, ParamUnits::none, ScopeContextType::NOISE)
     {
         addAndMakeVisible(sizzleKnob);
     }

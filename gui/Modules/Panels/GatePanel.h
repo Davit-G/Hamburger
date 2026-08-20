@@ -7,8 +7,8 @@ class GatePanel : public Panel
 {
 public:
     GatePanel(AudioPluginAudioProcessor &p) : Panel(p, "GATE", Palette::colours[1]),
-    gate(p, "GATE", ParamIDs::gateAmt),
-    gateMix(p, "MIX", ParamIDs::gateMix)
+    gate(p, "GATE", ParamIDs::gateAmt, ParamUnits::none, ScopeContextType::NOISE),
+    gateMix(p, "MIX", ParamIDs::gateMix, ParamUnits::none, ScopeContextType::NOISE)
     {
         addAndMakeVisible(gate);
         addAndMakeVisible(gateMix);

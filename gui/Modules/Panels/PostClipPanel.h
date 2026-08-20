@@ -2,14 +2,12 @@
 
 #include "../Panel.h"
 
-
-
 class PostClipPanel : public Panel
 {
 public:
     PostClipPanel(AudioPluginAudioProcessor &p) : Panel(p, "CLIPPER", Palette::colours[4]),
-    gain(p, "GAIN", ParamIDs::postClipGain, ParamUnits::db),
-    knee(p, "KNEE", ParamIDs::postClipKnee, ParamUnits::db) {
+    gain(p, "GAIN", ParamIDs::postClipGain, ParamUnits::db, ScopeContextType::CLIPPER),
+    knee(p, "KNEE", ParamIDs::postClipKnee, ParamUnits::db, ScopeContextType::CLIPPER) {
         addAndMakeVisible(gain);
         addAndMakeVisible(knee);
 
@@ -20,6 +18,7 @@ public:
     void resized() override
     {
         auto bounds = getLocalBounds();
+
         auto width = bounds.getWidth() / 2;
         gain.setBounds(bounds.removeFromLeft(width));
         knee.setBounds(bounds.removeFromLeft(width));
