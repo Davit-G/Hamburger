@@ -5,4 +5,5 @@ target_sources("${BaseTargetName}"
     PRIVATE
         UpdateChecker.cpp
         UpdateChecker.h
+        RectSlider.h
         )

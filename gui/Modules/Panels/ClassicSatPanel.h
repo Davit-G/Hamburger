@@ -3,6 +3,7 @@
  
 #include "../Panel.h"
 #include "../../Knob.h"
+#include "../../RectSlider.h"
 
 class ClassicSatPanel : public Panel
 {
@@ -22,22 +23,29 @@ public:
         Palette::setKnobColoursOfComponent(&biasKnob, Palette::colours[0]);
         Palette::setKnobColoursOfComponent(&fuzzKnob, Palette::colours[0]);
         Palette::setKnobColoursOfComponent(&cookedKnob, Palette::colours[0]);
+
+        cookedKnob.setJustification(RectSliderType::CenterJustifified);
+        biasKnob.setJustification(RectSliderType::RightJustifified);
+        fuzzKnob.setJustification(RectSliderType::LeftJustifified);
     }
 
     void resized() override
     {
         auto bounds = getLocalBounds();
-        satKnob.setBounds(bounds.removeFromTop(bounds.getHeight() / 1.5f).reduced(10));
 
+        satKnob.setBounds(bounds.removeFromTop(bounds.getHeight() / 1.4f).reduced(5.0f));
+
+        bounds.reduce(20, 0);
         auto width = bounds.getWidth() / 3;
-        biasKnob.setBounds(bounds.removeFromLeft(width));
-        cookedKnob.setBounds(bounds.removeFromLeft(width));
-        fuzzKnob.setBounds(bounds);
+
+        biasKnob.setBounds(bounds.removeFromLeft(width).withTrimmedBottom(2 * bounds.getHeight() / 3));
+        cookedKnob.setBounds(bounds.removeFromLeft(width).withTrimmedTop(bounds.getHeight() / 3).withTrimmedBottom(bounds.getHeight() / 3));
+        fuzzKnob.setBounds(bounds.withTrimmedBottom(2 * bounds.getHeight() / 3));
     }
 
 private:
     ParamKnob satKnob;
-    ParamKnob cookedKnob;
-    ParamKnob biasKnob;
-    ParamKnob fuzzKnob;
+    RectSlider cookedKnob;
+    RectSlider biasKnob;
+    RectSlider fuzzKnob;
 };
