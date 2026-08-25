@@ -37,6 +37,11 @@ public:
         saturationColumn.setLookAndFeel(&hamburgerLAF);
         utilColumn.setLookAndFeel(&hamburgerLAF);
 
+        // setResizable(true, true);
+        // setResizeLimits(500, 300, 1200, 700);
+
+        
+
         addAndMakeVisible(leftColumn);
         addAndMakeVisible(saturationColumn);
         addAndMakeVisible(utilColumn);

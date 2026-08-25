@@ -9,11 +9,13 @@ public:
     TapeSatPanel(AudioPluginAudioProcessor &p) : Panel(p, "TAPE"), 
         drive(p, "DRIVE", ParamIDs::tapeDrive, ParamUnits::none, ScopeContextType::IN_OUT),
         bias(p, "DC BIAS", ParamIDs::tapeBias, ParamUnits::none, ScopeContextType::IN_OUT),
-        tapeWidth(p, "AGE", ParamIDs::tapeWidth, ParamUnits::none, ScopeContextType::IN_OUT)
+        tapeWidth(p, "AGE", ParamIDs::tapeWidth, ParamUnits::none, ScopeContextType::IN_OUT),
+        reel(BinaryData::FilmReel_svg, BinaryData::FilmReel_svgSize)
     {
         addAndMakeVisible(drive);
         addAndMakeVisible(bias);
         addAndMakeVisible(tapeWidth);
+        addAndMakeVisible(reel);
 
         Palette::setKnobColoursOfComponent(&drive, Palette::colours[7]);
         Palette::setKnobColoursOfComponent(&bias, Palette::colours[7]);
@@ -22,15 +24,12 @@ public:
 
     void resized() override
     {
-        auto bounds = getLocalBounds();
-        drive.setBounds(bounds.removeFromTop(static_cast<int>(bounds.getHeight() * 0.6666f)).reduced(10));
-
-        auto width = bounds.getWidth() / 2;
-        tapeWidth.setBounds(bounds.removeFromLeft(width));
-        bias.setBounds(bounds);
+        threeKnobLayout(drive, reel, bias, tapeWidth);
     }
 
     ParamKnob drive;
-    ParamKnob tapeWidth;
-    ParamKnob bias;
+    RectSlider tapeWidth;
+    RectSlider bias;
+
+    CentredSVGIcon reel;
 };

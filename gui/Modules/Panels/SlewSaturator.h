@@ -10,12 +10,14 @@ public:
         alpha(p, "ALPHA", ParamIDs::alphaParam, ParamUnits::none, ScopeContextType::IN_OUT),
         bias(p, "TONE", ParamIDs::slewSpeed, ParamUnits::none, ScopeContextType::IN_OUT),
         directionality(p, "BEND", ParamIDs::directionality, ParamUnits::none, ScopeContextType::IN_OUT),
-        type(p, "TYPE", ParamIDs::slewType, ParamUnits::category, ScopeContextType::IN_OUT)
+        type(p, "TYPE", ParamIDs::slewType, ParamUnits::category, ScopeContextType::IN_OUT),
+        slewIcon(BinaryData::Slew_svg, BinaryData::Slew_svgSize, 3)
     {
         addAndMakeVisible(bias);
         addAndMakeVisible(alpha);
         addAndMakeVisible(directionality);
         addAndMakeVisible(type);
+        addAndMakeVisible(slewIcon);
 
         Palette::setKnobColoursOfComponent(&alpha, Palette::colours[1]);
         Palette::setKnobColoursOfComponent(&bias, Palette::colours[1]);
@@ -33,13 +35,7 @@ public:
 
     void resized() override
     {
-        auto bounds = getLocalBounds();
-        alpha.setBounds(bounds.removeFromTop(static_cast<int>(bounds.getHeight() * 0.6666f)).reduced(10));
-
-        auto width = bounds.getWidth() / 3;
-        bias.setBounds(bounds.removeFromLeft(width));
-        directionality.setBounds(bounds.removeFromLeft(width));
-        type.setBounds(bounds);
+        fourKnobLayout(alpha, slewIcon, bias, type, directionality);
     }
 
     void parameterChanged(const juce::String& parameterID, float newValue) override
@@ -50,7 +46,7 @@ public:
 
     void makeBiasKnobTransparent()
     {
-        const bool isDisabled = static_cast<int>(type.knob.getValue()) != 0;
+        const bool isDisabled = static_cast<int>(type.getValue()) != 0;
 
         juce::MessageManager::callAsync([this, isDisabled]() mutable {
             directionality.setAlpha(isDisabled ? 1.0f : 0.35f);
@@ -62,7 +58,9 @@ public:
     AudioPluginAudioProcessor &apvts;
 
     ParamKnob alpha;
-    ParamKnob bias;
-    ParamKnob directionality;
-    ParamKnob type;
+    RectSlider bias;
+    RectSlider directionality;
+    RectSlider type;
+
+    CentredSVGIcon slewIcon;
 };
