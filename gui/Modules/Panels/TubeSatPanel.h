@@ -14,12 +14,14 @@ public:
         tubeTone(p, "TUBE TONE", ParamIDs::tubeTone, ParamUnits::none, ScopeContextType::IN_OUT),
         bias(p, "BIAS", ParamIDs::tubeBias, ParamUnits::none, ScopeContextType::IN_OUT),
         jeff(p, "JEFF", ParamIDs::jeffAmount, ParamUnits::none, ScopeContextType::IN_OUT),
-        drive(p, "DRIVE", ParamIDs::tubeAmount, ParamUnits::percent, ScopeContextType::IN_OUT)
+        drive(p, "DRIVE", ParamIDs::tubeAmount, ParamUnits::percent, ScopeContextType::IN_OUT),
+        tube(BinaryData::Tube_svg, BinaryData::Tube_svgSize)
     {
         addAndMakeVisible(tubeTone);
         addAndMakeVisible(drive);
         addAndMakeVisible(bias);
         addAndMakeVisible(jeff);
+        addAndMakeVisible(tube);
 
         Palette::setKnobColoursOfComponent(&tubeTone, Palette::colours[4]);
         Palette::setKnobColoursOfComponent(&drive, Palette::colours[4]);
@@ -29,17 +31,13 @@ public:
 
     void resized() override
     {
-        auto bounds = getLocalBounds();
-        drive.setBounds(bounds.removeFromTop(static_cast<int>(bounds.getHeight() * 0.6666f)).reduced(10));
-
-        auto width = bounds.getWidth() / 3;
-        tubeTone.setBounds(bounds.removeFromLeft(width));
-        jeff.setBounds(bounds.removeFromLeft(width));
-        bias.setBounds(bounds);
+        fourKnobLayout(drive, tube, bias, jeff, tubeTone);
     }
 
-    ParamKnob tubeTone;
+    RectSlider tubeTone;
     ParamKnob drive;
-    ParamKnob jeff;
-    ParamKnob bias;
+    RectSlider jeff;
+    RectSlider bias;
+
+    CentredSVGIcon tube;
 };

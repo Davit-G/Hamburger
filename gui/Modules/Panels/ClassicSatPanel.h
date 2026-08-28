@@ -3,6 +3,9 @@
  
 #include "../Panel.h"
 #include "../../Knob.h"
+#include "../../RectSlider.h"
+
+#include "../../SaturationIcons/CentredSVGIcon.h"
 
 class ClassicSatPanel : public Panel
 {
@@ -11,12 +14,14 @@ public:
         satKnob(p, "SATURATION", "saturationAmount", ParamUnits::percent, ScopeContextType::IN_OUT),
         biasKnob(p, "DC BIAS", ParamIDs::grillBias, ParamUnits::none, ScopeContextType::IN_OUT),
         fuzzKnob(p, "DIODE", ParamIDs::diode, ParamUnits::none, ScopeContextType::IN_OUT),
-        cookedKnob(p, "WAVEFOLD", ParamIDs::fold, ParamUnits::none, ScopeContextType::IN_OUT)
+        cookedKnob(p, "WAVEFOLD", ParamIDs::fold, ParamUnits::none, ScopeContextType::IN_OUT),
+        tube(BinaryData::Grill_svg, BinaryData::Grill_svgSize, -3)
     {
         addAndMakeVisible(satKnob);
         addAndMakeVisible(biasKnob);
         addAndMakeVisible(fuzzKnob);
         addAndMakeVisible(cookedKnob);
+        addAndMakeVisible(tube);
 
         Palette::setKnobColoursOfComponent(&satKnob, Palette::colours[0]);
         Palette::setKnobColoursOfComponent(&biasKnob, Palette::colours[0]);
@@ -26,18 +31,14 @@ public:
 
     void resized() override
     {
-        auto bounds = getLocalBounds();
-        satKnob.setBounds(bounds.removeFromTop(bounds.getHeight() / 1.5f).reduced(10));
-
-        auto width = bounds.getWidth() / 3;
-        biasKnob.setBounds(bounds.removeFromLeft(width));
-        cookedKnob.setBounds(bounds.removeFromLeft(width));
-        fuzzKnob.setBounds(bounds);
+        fourKnobLayout(satKnob, tube, biasKnob, cookedKnob, fuzzKnob);
     }
 
 private:
     ParamKnob satKnob;
-    ParamKnob cookedKnob;
-    ParamKnob biasKnob;
-    ParamKnob fuzzKnob;
+    RectSlider cookedKnob;
+    RectSlider biasKnob;
+    RectSlider fuzzKnob;
+
+    CentredSVGIcon tube;
 };

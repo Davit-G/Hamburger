@@ -13,13 +13,15 @@ public:
         toneKnob(p, "TONE", ParamIDs::phaseDistTone, ParamUnits::hz, ScopeContextType::IN_OUT),
         normKnob(p, "STEREO", ParamIDs::phaseDistStereo, ParamUnits::none, ScopeContextType::IN_OUT),
         rectKnob(p, "RECTIFY", ParamIDs::phaseRectify, ParamUnits::none, ScopeContextType::IN_OUT),
-        shiftKnob(p, "SHIFT", ParamIDs::phaseShift, ParamUnits::none, ScopeContextType::IN_OUT)
+        shiftKnob(p, "SHIFT", ParamIDs::phaseShift, ParamUnits::none, ScopeContextType::IN_OUT),
+        wave(BinaryData::Waves_svg, BinaryData::Waves_svgSize)
     {
         addAndMakeVisible(satKnob);
         addAndMakeVisible(toneKnob);
         addAndMakeVisible(normKnob);
         addAndMakeVisible(shiftKnob);
         addAndMakeVisible(rectKnob);
+        addAndMakeVisible(wave);
 
         Palette::setKnobColoursOfComponent(&satKnob, Palette::colours[3]);
         Palette::setKnobColoursOfComponent(&toneKnob, Palette::colours[3]);
@@ -30,20 +32,15 @@ public:
 
     void resized() override
     {
-        auto bounds = getLocalBounds();
-        satKnob.setBounds(bounds.removeFromTop(bounds.getHeight() / 1.5f).reduced(10));
-
-        auto width = bounds.getWidth() / 4;
-        toneKnob.setBounds(bounds.removeFromLeft(width));
-        rectKnob.setBounds(bounds.removeFromLeft(width));
-        shiftKnob.setBounds(bounds.removeFromLeft(width));
-        normKnob.setBounds(bounds);
+        fourKnobLayout(satKnob, wave, rectKnob, normKnob, toneKnob);
     }
 
 private:
     ParamKnob satKnob;
-    ParamKnob toneKnob;
-    ParamKnob normKnob;
-    ParamKnob rectKnob;
-    ParamKnob shiftKnob;
+    RectSlider toneKnob;
+    RectSlider normKnob;
+    RectSlider rectKnob;
+    RectSlider shiftKnob;
+
+    CentredSVGIcon wave;
 };

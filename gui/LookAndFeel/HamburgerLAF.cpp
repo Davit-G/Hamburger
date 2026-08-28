@@ -76,11 +76,11 @@ void HamburgerLAF::drawComboBox(juce::Graphics &g, int width, int height, bool,
     auto cornerSize = box.findParentComponentOfClass<juce::ChoicePropertyComponent>() != nullptr ? 0.0f : 3.0f;
     juce::Rectangle<int> boxBounds(0, 0, width, height);
 
-    // g.setColour(box.findColour(ComboBox::backgroundColourId));
-    // g.fillRoundedRectangle(boxBounds.toFloat(), cornerSize);
+    g.setColour(box.findColour(juce::ComboBox::backgroundColourId));
+    g.fillRoundedRectangle(boxBounds.toFloat(), cornerSize);
 
-    // g.setColour(box.findColour(ComboBox::outlineColourId));
-    // g.drawRoundedRectangle(boxBounds.toFloat().reduced(0.5f, 0.5f), cornerSize, 1.0f);
+    g.setColour(box.findColour(juce::ComboBox::outlineColourId));
+    g.drawRoundedRectangle(boxBounds.toFloat().reduced(0.5f, 0.5f), cornerSize, 1.0f);
 
     juce::Rectangle<int> arrowZone(5, 0, 20, height);
     juce::Path path;
@@ -135,11 +135,13 @@ juce::Font HamburgerLAF::getAlertWindowTitleFont()
 
 void HamburgerLAF::positionComboBoxText(juce::ComboBox &box, juce::Label &label)
 {
-    label.setBounds(30, 1,
-                    box.getWidth() - 30,
-                    box.getHeight() - 2);
+    label.setBounds(30, 0,
+                    box.getWidth(),
+                    box.getHeight());
 
     label.setFont(getComboBoxFont());
+
+    label.setMinimumHorizontalScale (1.0f);
 }
 
 void HamburgerLAF::drawPopupMenuItem(juce::Graphics &g, const juce::Rectangle<int> &area,
