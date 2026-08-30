@@ -30,11 +30,18 @@ public:
 
         preferredScopeContextType = scopeContextType;
 
-        knob.onDragStart = [this] { 
+        knob.onDragStart = [this] {
             // display the parameter value as the text instead of the parameter name
             this->isDragging = true;
             this->label.setText(createParamString(this->knob.getValue(), this->unit), juce::dontSendNotification);
-            processorRef.getScopeContext().setType(preferredScopeContextType);
+            auto& scopeContext = processorRef.getScopeContext();
+            // we dont get convenient access to `event`
+            const bool isMiddleClick = juce::ModifierKeys::getCurrentModifiers().isMiddleButtonDown();
+            // middle click should override set the current scope if its locked.
+            if (isMiddleClick)
+                scopeContext.setType(preferredScopeContextType, true);
+            else 
+                scopeContext.setType(preferredScopeContextType);
 
             this->dragAmount = 1.0f;
             startTimerHz(60);

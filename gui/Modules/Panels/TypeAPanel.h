@@ -7,10 +7,10 @@ class TypeAPanel : public Panel
 {
 public:
     TypeAPanel(AudioPluginAudioProcessor &p) : Panel(p, "TYPE A"),
-                                               threshold(p, "THRES", ParamIDs::TypeAThreshold, ParamUnits::db, ScopeContextType::TYPE_A),
-                                               speed(p, "SPEED", ParamIDs::compSpeed, ParamUnits::ms, ScopeContextType::TYPE_A),
-                                               out(p, "OUT", ParamIDs::TypeAOut, ParamUnits::db, ScopeContextType::TYPE_A),
-                                               tilt(p, "TILT", ParamIDs::TypeATilt, ParamUnits::db, ScopeContextType::TYPE_A)
+                                               threshold(p, "THRES", ParamIDs::TypeAThreshold, ParamUnits::db, ScopeContextType::COMPRESSION),
+                                               speed(p, "SPEED", ParamIDs::compSpeed, ParamUnits::ms, ScopeContextType::COMPRESSION),
+                                               out(p, "OUT", ParamIDs::TypeAOut, ParamUnits::db, ScopeContextType::COMPRESSION),
+                                               tilt(p, "TILT", ParamIDs::TypeATilt, ParamUnits::db, ScopeContextType::COMPRESSION)
     {
         addAndMakeVisible(threshold);
         addAndMakeVisible(speed);

@@ -69,6 +69,8 @@ Scope<SampleType>::Scope(juce::AudioProcessorValueTreeState& valueTree, ScopeDat
     highGainParam = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter(ParamIDs::emphasisHighGain.getParamID()));
     postClipKneeParam = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter(ParamIDs::postClipKnee.getParamID()));
 
+    compressionType = dynamic_cast<juce::AudioParameterChoice*>(apvts.getParameter(ParamIDs::compressionType.getParamID()));
+
     juce::dsp::ProcessSpec spec; // this is not realtime so whatever
     spec.maximumBlockSize = 128;
     spec.numChannels = 2;
@@ -123,6 +125,8 @@ void Scope<SampleType>::paint(juce::Graphics &g)
     auto scopeRect = juce::Rectangle<SampleType>{SampleType(0), SampleType(0), w, h};
 
     auto currentType = scopeContext.getType();
+
+    auto compressionTypeValue = compressionType->getIndex();
     
     switch (currentType) {
         case ScopeContextType::LR_SCOPE:
@@ -152,25 +156,33 @@ void Scope<SampleType>::paint(juce::Graphics &g)
                                             juce::String(paramValue(ParamIDs::postClipKnee), 1) + " dB" });
             break;
         // no watermark on these three - the cells are opaque and cover everything under the header
-        case ScopeContextType::MB_COMP:
-            drawMBComp(g, scopeRect);
-            drawParamHeader(g, scopeRect, getCompHeaderLabels(ParamIDs::MBCompThreshold, true));
+        case ScopeContextType::COMPRESSION: {
+            switch (compressionTypeValue) {
+                case 0:
+                    drawStereoComp(g, scopeRect);
+                    drawParamHeader(g, scopeRect, getCompHeaderLabels(ParamIDs::stereoCompThreshold, false));
+                    break;
+                case 1:
+                    drawMBComp(g, scopeRect);
+                    drawParamHeader(g, scopeRect, getCompHeaderLabels(ParamIDs::MBCompThreshold, true));
+                    break;
+                case 2:
+                    drawMSComp(g, scopeRect);
+                    drawParamHeader(g, scopeRect, getCompHeaderLabels(ParamIDs::MSCompThreshold, true));
+                    break;
+                case 3:
+                    drawTypeAComp(g, scopeRect);
+                    // the ratio is fixed in the dsp, and tilt only moves the makeup gains
+                    drawParamHeader(g, scopeRect, { formatDecibels(paramValue(ParamIDs::TypeAThreshold)),
+                                                    juce::String(TypeAProcessor::baseRatio, 1) + ":1",
+                                                    formatDecibels(paramValue(ParamIDs::TypeATilt)) });
+                    break;
+                default:
+                    break;
+            }
             break;
-        case ScopeContextType::MS_COMP:
-            drawMSComp(g, scopeRect);
-            drawParamHeader(g, scopeRect, getCompHeaderLabels(ParamIDs::MSCompThreshold, true));
-            break;
-        case ScopeContextType::STEREO_COMP:
-            drawStereoComp(g, scopeRect);
-            drawParamHeader(g, scopeRect, getCompHeaderLabels(ParamIDs::stereoCompThreshold, false));
-            break;
-        case ScopeContextType::TYPE_A:
-            drawTypeAComp(g, scopeRect);
-            // the ratio is fixed in the dsp, and tilt only moves the makeup gains
-            drawParamHeader(g, scopeRect, { formatDecibels(paramValue(ParamIDs::TypeAThreshold)),
-                                            juce::String(TypeAProcessor::baseRatio, 1) + ":1",
-                                            formatDecibels(paramValue(ParamIDs::TypeATilt)) });
-            break;
+        }
+                
         case ScopeContextType::NOISE: {
             drawTiledContextLabel(g, area, "NOISE");
 
@@ -382,14 +394,14 @@ void Scope<SampleType>::drawLRScope(juce::Graphics &g, juce::Rectangle<SampleTyp
     const auto hop = hopSize;
 
     g.setColour(juce::Colours::grey);
-    plotStraightLine(originLineData.data(), 2, g, scopeRect, SampleType(0.4), h / 2);
-    plotStraightLine(originLineData.data(), 2, g, scopeRect, SampleType(-0.4), h / 2);
+    plotStraightLine(originLineData.data(), 2, g, scopeRect, SampleType(0.5), h / 2);
+    plotStraightLine(originLineData.data(), 2, g, scopeRect, SampleType(-0.5), h / 2);
 
     // trigger offset is position where trigger was detected
     g.setColour(juce::Colours::yellow);
-    plotStraightLine(sampleDataL.data() + triggerOffset, hop, g, scopeRect, SampleType(0.4), h / 2);
+    plotStraightLine(sampleDataL.data() + triggerOffset, hop, g, scopeRect, SampleType(0.5), h / 2);
     g.setColour(juce::Colours::lime);
-    plotStraightLine(sampleDataR.data() + triggerOffset, hop, g, scopeRect, SampleType(0.4), h / 2);
+    plotStraightLine(sampleDataR.data() + triggerOffset, hop, g, scopeRect, SampleType(0.5), h / 2);
 }
 
 
