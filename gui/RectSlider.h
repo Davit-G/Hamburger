@@ -18,7 +18,7 @@ public:
     : GenericKnob(p, knobName, attachmentParam, knobUnit, scopeContextType) {
         // can't use linear bar or linear horizontal
         // cause some weird stuff happens and it immediately snaps to max. might be cause default text box flattens the pixel range?
-        setSliderStyle(juce::Slider::SliderStyle::RotaryVerticalDrag); 
+        setSliderStyle(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag); 
     }
 
     void setJustification(const RectSliderType type) {
@@ -64,25 +64,7 @@ public:
 
         g.setColour (knobColour);
 
-        switch (sliderType)
-        {
-        case RectSliderType::LeftJustifified:
-            g.fillRect(sliderBounds.removeFromLeft(valueToProportionOfLength(getValue()) * sliderBounds.getWidth()));
-            break;
-        
-        case RectSliderType::CenterJustifified:
-            centerBounds.reduce(static_cast<int>((1.0f - valueToProportionOfLength(getValue()) ) * 0.5f * sliderBounds.getWidth()), 0);
-
-            g.fillRect(centerBounds);
-            break;
-            
-        case RectSliderType::RightJustifified:
-            g.fillRect(sliderBounds.removeFromRight(valueToProportionOfLength(getValue()) * sliderBounds.getWidth()));
-            break;
-        
-        default:
-            break;
-        }
+        g.fillRect(sliderBounds.removeFromLeft(valueToProportionOfLength(getValue()) * sliderBounds.getWidth()));
     }
 
     void resized() override {
