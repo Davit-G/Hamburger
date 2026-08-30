@@ -18,29 +18,21 @@
 
 #include "LookAndFeel/HamburgerLAF.h"
 
-class EditorV2 : public juce::AudioProcessorEditor
+class EditorV2 : public juce::Component, public juce::ChangeListener
 {
 public:
-    EditorV2(AudioPluginAudioProcessor &p) : AudioProcessorEditor(&p),
-                                             audioProcessorRef(p),
+    EditorV2(AudioPluginAudioProcessor &p) : audioProcessorRef(p),
                                              leftColumn(p),
                                              saturationColumn(p),
                                              utilColumn(p),
                                              infoPanel(p)
                                              ,presetPanel(p.getPresetManager())
-    {
-        int additionalHeight = 0;
-
+    {   
         setLookAndFeel(&hamburgerLAF);
         infoPanel.setLookAndFeel(&hamburgerLAF);
         leftColumn.setLookAndFeel(&hamburgerLAF);
         saturationColumn.setLookAndFeel(&hamburgerLAF);
         utilColumn.setLookAndFeel(&hamburgerLAF);
-
-        // setResizable(true, true);
-        // setResizeLimits(500, 300, 1200, 700);
-
-        
 
         addAndMakeVisible(leftColumn);
         addAndMakeVisible(saturationColumn);
@@ -48,7 +40,9 @@ public:
         addAndMakeVisible(infoPanel);
         addAndMakeVisible(presetPanel);
 
-        additionalHeight += 45;
+        if (audioProcessorRef.getAppProperties().getTooltipType() == AppProperties::TooltipType::window) {
+            createTooltipWindow();
+        }
 
         setOpaque(true);
 
@@ -56,7 +50,7 @@ public:
 
         setPaintingIsUnclipped(true);
 
-        setSize(800, 500 + additionalHeight);
+        p.getAppProperties().addChangeListener(this);
 
         updater = std::make_unique<UpdateChecker>(JucePlugin_VersionString); // change here to something random to test update mechanism
 
@@ -105,6 +99,12 @@ public:
 
     }
 
+    void createTooltipWindow() {
+        tooltipWindow = std::make_unique<juce::TooltipWindow>(this, 600);
+        tooltipWindow->setLookAndFeel(&hamburgerLAF);
+        addAndMakeVisible(tooltipWindow.get());
+    }
+
     ~EditorV2()
     {
         setLookAndFeel(nullptr);
@@ -112,6 +112,23 @@ public:
         leftColumn.setLookAndFeel(nullptr);
         saturationColumn.setLookAndFeel(nullptr);
         utilColumn.setLookAndFeel(nullptr);
+        if (tooltipWindow != nullptr) {
+            tooltipWindow->setLookAndFeel(nullptr);
+        }
+
+        audioProcessorRef.getAppProperties().removeChangeListener(this);
+    }
+
+    void changeListenerCallback (juce::ChangeBroadcaster* source) override {
+        if (source == &audioProcessorRef.getAppProperties()) {
+            bool displayTooltips = audioProcessorRef.getAppProperties().getTooltipType() == AppProperties::TooltipType::window;
+
+            if (displayTooltips && tooltipWindow == nullptr) {
+                createTooltipWindow();
+            } else {
+                tooltipWindow = nullptr;
+            }
+        }
     }
 
     void paint(juce::Graphics &g) override
@@ -123,6 +140,10 @@ public:
     {
         auto bounds = getLocalBounds();
         auto totalWidth = bounds.getWidth() / 4;
+
+        if (tooltipWindow != nullptr) {
+            tooltipWindow->setBounds(bounds);
+        }
 
         infoPanel.setBounds(bounds);
 
@@ -160,6 +181,8 @@ private:
     UtilColumn utilColumn;
 
     HamburgerLAF hamburgerLAF;
+
+    std::unique_ptr<juce::TooltipWindow> tooltipWindow;
 
     PresetPanel presetPanel;
     std::unique_ptr<UpdateChecker> updater;

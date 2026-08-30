@@ -22,7 +22,7 @@ class TypeAProcessor
 {
 public:
     TypeAProcessor(juce::AudioProcessorValueTreeState &treeState, ScopeDataCollector<float> &dataCollector) : 
-        speedParam(treeState, ParamIDs::compSpeed),
+        speedParam(treeState, ParamIDs::TypeACompSpeed),
         thresholdParam(treeState, ParamIDs::TypeAThreshold),
         outParam(treeState, ParamIDs::TypeAOut),
         tiltParam(treeState, ParamIDs::TypeATilt),

@@ -14,7 +14,7 @@ public:
                                                         threshold(state, ParamIDs::MSCompThreshold),
                                                         ratio(state, ParamIDs::compRatio),
                                                         tilt(state, ParamIDs::compBandTilt),
-                                                        speed(state, ParamIDs::compSpeed),
+                                                        speed(state, ParamIDs::MSCompSpeed),
                                                         makeup(state, ParamIDs::compOut),
                                                         scopeDataCollector(dataCollector) {}
     ~MSComp() {}

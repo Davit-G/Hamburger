@@ -209,8 +209,10 @@ private:
     // strip every view keeps clear at the top for its readouts
     SampleType headerHeight(juce::Rectangle<SampleType> scopeRect) const;
 
-    float paramValue(const juce::ParameterID &id) const;
-    juce::AudioParameterChoice* choiceParam(const juce::ParameterID &id) const;
+    float paramValue(const ParamIDs::ParameterInfo &paramInfo) const;
+
+
+    juce::AudioParameterChoice* choiceParam(const ParamIDs::ParameterInfo &id) const;
     // black tab sized to its text, grown past the top or bottom edge so only the inner corners round
     void drawTabbedLabel(juce::Graphics &g, juce::Rectangle<float> cell, const juce::String &text,
                          juce::Justification justification, bool hangingFromTop);
@@ -219,15 +221,13 @@ private:
     juce::StringArray getDistortionHeaderLabels() const;
     juce::String getDistortionAmountLabel() const;
     juce::StringArray getNoiseHeaderLabels() const;
-    juce::StringArray getCompHeaderLabels(const juce::ParameterID &thresholdID, bool withTilt) const;
+    juce::StringArray getCompHeaderLabels(const ParamIDs::ParameterInfo &thresholdParam, bool withTilt) const;
 
     // shared by all three compressors, clamped so it can never invert the ratio ladder
     float compRatio() const;
     float bandLevel(LevelMeter &meter) const;
 
     void timerCallback() override;
-
-    HamburgerLAF hamburgerLAF;
 
     static void plotStraightLine(const SampleType *data,
                      size_t numSamples,

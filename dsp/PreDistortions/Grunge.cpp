@@ -1,7 +1,7 @@
 #include "Grunge.h"
 
-Grunge::Grunge(juce::AudioProcessorValueTreeState &treeState) : amount(treeState, "grungeAmt"),
-                                                                tone(treeState, "grungeTone")
+Grunge::Grunge(juce::AudioProcessorValueTreeState &treeState) : amount(treeState, ParamIDs::grungeAmt),
+                                                                tone(treeState, ParamIDs::grungeTone)
 {
 }
 
