@@ -29,8 +29,8 @@ public:
         auto bounds = getLocalBounds();
         scope.setBounds(bounds);
 
-        constexpr int buttonSize = 16;
-        constexpr int margin = 8;
+        constexpr int buttonSize = 12;
+        constexpr int margin = 4;
 
         lockedButton->setBounds(
             bounds.getX() + margin,

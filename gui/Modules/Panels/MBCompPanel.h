@@ -8,11 +8,11 @@ class MBCompPanel : public Panel
 {
 public:
     MBCompPanel(AudioPluginAudioProcessor &p) : Panel(p, "MB", Palette::colours[3]),
-                                                   threshold(p, "THRES", ParamIDs::MBCompThreshold, ParamUnits::db, ScopeContextType::MB_COMP),
-                                                   ratio(p, "RATIO", ParamIDs::compRatio, ParamUnits::compressionRatio, ScopeContextType::MB_COMP),
-                                                   tilt(p, "TILT", ParamIDs::compBandTilt, ParamUnits::db, ScopeContextType::MB_COMP),
-                                                   attack(p, "SPEED", ParamIDs::compSpeed, ParamUnits::ms, ScopeContextType::MB_COMP),
-                                                   makeup(p, "GAIN", ParamIDs::compOut, ParamUnits::db, ScopeContextType::MB_COMP)
+                                                   threshold(p, "THRES", ParamIDs::MBCompThreshold, ParamUnits::db, ScopeContextType::COMPRESSION),
+                                                   ratio(p, "RATIO", ParamIDs::compRatio, ParamUnits::compressionRatio, ScopeContextType::COMPRESSION),
+                                                   tilt(p, "TILT", ParamIDs::compBandTilt, ParamUnits::db, ScopeContextType::COMPRESSION),
+                                                   attack(p, "SPEED", ParamIDs::compSpeed, ParamUnits::ms, ScopeContextType::COMPRESSION),
+                                                   makeup(p, "GAIN", ParamIDs::compOut, ParamUnits::db, ScopeContextType::COMPRESSION)
     {
         addAndMakeVisible(threshold);
         addAndMakeVisible(ratio);

@@ -22,10 +22,7 @@ enum ScopeContextType {
     // SPECTRUM, // once button press happens?
     SPECTRUM_EMPHASIS, // draw curves for emphasis eq
     CLIPPER, // clipping curve + waveform
-    MB_COMP, // three bands with boxes for ratio, threshold etc
-    MS_COMP, // two bands similar to mb, mid and side
-    STEREO_COMP, // two bands similar to mb, left and right
-    TYPE_A, // four bands, the top one stacked on the one below it
+    COMPRESSION, // encapsulates all of the compressors. only display the active compressor at any given time
     NOISE, // get a sine wave and apply the noise distortions onto them so we can see what they look like
 };
 
@@ -135,6 +132,7 @@ private:
     juce::AudioParameterFloat* lowGainParam;
     juce::AudioParameterFloat* highGainParam;
     juce::AudioParameterFloat* postClipKneeParam;
+    juce::AudioParameterChoice* compressionType;
 
     juce::AudioProcessorValueTreeState& apvts;
 
