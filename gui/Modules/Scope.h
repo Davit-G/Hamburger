@@ -40,39 +40,65 @@ public:
 
     ScopeContextType getType() { return type; }
 
+    // locks the currently displayed scope and blocks decay
+    void setLocked(bool shouldLock)
+    {
+        locked = shouldLock;
+
+        if (locked)
+        {
+            decaying = false;
+            timeTillReset = 0.0;
+        }
+        else
+        {
+            startDecaying();
+        }
+    }
+
+    void toggleLocked()
+    {
+        setLocked(!locked);
+    }
+
     // startDecaying dictates if the scope context should start the timer for the visual to change
     // also will immediately stop decaying if the type has been set
-    void setType(ScopeContextType newType) {
+    void setType(ScopeContextType newType, bool force = false) {
+        if (locked && !force)
+            return;
         type = newType;
         decaying = false;
     }
 
     void startDecaying() {
+        if (locked)
+            return;
         decaying = true;
         timeTillReset = waitTime;
     }
 
     // call in frame rendering, it will keep track of it's own time
     void updateFrame() {
-        if (decaying) {
-            if (timeTillReset > 0.0f) {
-                auto now = juce::Time::getMillisecondCounterHiRes();
-                auto elapsed = lastTime > 0.0 ? juce::jlimit(0.0, 1.0, (now - lastTime) * 0.001) : 0.0;
-        
-                timeTillReset -= elapsed;
-                lastTime = now;
-            } else {
-                decaying = false;
-                timeTillReset = 0.0f;
-        
-                type = defaultType;
-            }
+        if (!decaying || locked)
+            return;
+        if (timeTillReset > 0.0f) {
+            auto now = juce::Time::getMillisecondCounterHiRes();
+            auto elapsed = lastTime > 0.0 ? juce::jlimit(0.0, 1.0, (now - lastTime) * 0.001) : 0.0;
+    
+            timeTillReset -= elapsed;
+            lastTime = now;
+        } else {
+            decaying = false;
+            timeTillReset = 0.0f;
+    
+            type = defaultType;
         }
     }
 
 private:
     double lastTime = 0.0; // last measured time from millisecond counter
     bool decaying = false;
+    bool locked = false;
 
     double timeTillReset = 0.0; // when the user presses a knob it stays decayed for some amt of time
     static constexpr double waitTime = 2.0; // two seconds until the default view is returned

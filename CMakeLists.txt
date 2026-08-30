@@ -147,6 +147,8 @@ target_compile_definitions("${BaseTargetName}" PUBLIC
 juce_add_binary_data("${BaseTargetName}BinaryData" HEADER_NAME BinaryData.h NAMESPACE BinaryData SOURCES
     Assets/poweron.png
     Assets/poweroff.png
+    Assets/lockon.png
+    Assets/lockoff.png
     Assets/HamburgerLogo.png
     Assets/Questrial-Regular.ttf
     Assets/Quicksand-Bold.ttf
