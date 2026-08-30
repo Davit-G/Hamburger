@@ -210,7 +210,7 @@ namespace ParamIDs
     static const ParameterInfo tubeBias{{"tubeBias", 1},
                                         "Offsets the waveform into the tube curve, adding even harmonics"};
     static const ParameterInfo jeffAmount{{"jeffAmount", 1},
-                                          "Adds an extra aggressive tube stage on top"};
+                                          "Adds an extra aggressive sine waveshaping on top of the signal"};
 
     // tape hysteresis
     static const ParameterInfo tapeBias{{"tapeBias", 2},
