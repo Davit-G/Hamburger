@@ -3,7 +3,7 @@
 #include "../Panel.h"
 #include "../Scope.h"
 
-class ScopePanel : public Panel, private juce::Timer
+class ScopePanel : public Panel
 {
 public:
     ScopePanel(AudioPluginAudioProcessor &p) : Panel(p, "SETTINGS"),
@@ -20,12 +20,8 @@ public:
             p.getScopeContext().toggleLocked();
             repaint();
         };
-        startTimerHz(30);
         lockedButton->setAlpha(lockNormalAlpha);
-    }
-
-    ~ScopePanel() override {
-        stopTimer();
+        addMouseListener(this, true);
     }
 
     void resized() override
@@ -44,29 +40,33 @@ public:
         );
     }
 
-    void timerCallback() override
+    void doHoverAnim(bool isHovered)
     {
         if (lockedButton == nullptr)
             return;
-        auto mousePosition = getMouseXYRelative();
-        bool isHovered = getLocalBounds().contains(mousePosition);
 
-        if (isHovered != wasHovered)
-        {
-            wasHovered = isHovered;
+        auto& animator = juce::Desktop::getInstance().getAnimator();
 
-            auto& animator = juce::Desktop::getInstance().getAnimator();
+        animator.animateComponent(
+            lockedButton.get(),
+            lockedButton->getBounds(),
+            isHovered ? lockHoverAlpha : lockNormalAlpha,
+            isHovered ? static_cast<int>(lockHoverTime * 1.1f) : lockHoverTime,
+            false,
+            isHovered ? 0.5 : 0.0,
+            isHovered ? 0.1 : 0.0
+        );
+    }
 
-            animator.animateComponent(
-                lockedButton.get(),
-                lockedButton->getBounds(),
-                isHovered ? lockHoverAlpha : lockNormalAlpha,
-                isHovered ? static_cast<int>(lockHoverTime * 1.1) : lockHoverTime,
-                false,
-                isHovered ? 0.5 : 0.0,
-                isHovered ? 0.1 : 0.0
-            );
-        }
+    void mouseEnter(const juce::MouseEvent&) override
+    {
+        doHoverAnim(true);
+    }
+
+    void mouseExit(const juce::MouseEvent&) override
+    {
+        if (!isMouseOver(true))
+            doHoverAnim(false);
     }
 
 private:
