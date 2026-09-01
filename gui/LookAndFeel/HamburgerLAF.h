@@ -21,12 +21,15 @@ public:
 
     juce::Font getLabelFont(juce::Label &label) override;
 
+    static void setLabelFontScale(juce::Label &label, float scale)
+    {
+        label.getProperties().set("fontScale", scale);
+        label.repaint();
+    }
+
     juce::Font getComboBoxFont(juce::ComboBox &box) override;
 
     juce::Font getPopupMenuFont() override;
-
-    void drawRotarySlider(juce::Graphics &g, int x, int y, int width, int height, float sliderPos,
-                          const float rotaryStartAngle, const float rotaryEndAngle, juce::Slider &slider) override;
 
     void drawComboBox(juce::Graphics &g, int width, int height, bool,
                       int, int, int, int, juce::ComboBox &box) override;
@@ -47,6 +50,59 @@ public:
                            const bool hasSubMenu, const juce::String &text,
                            const juce::String &shortcutKeyText,
                            const juce::Drawable *icon, const juce::Colour *const textColourToUse) override;
+    
+    static constexpr int tooltipPaddingX = 24;
+    static constexpr int tooltipPaddingY = 16;
+    
+    juce::TextLayout createTooltipLayout(const juce::String &text) const
+    {
+        const float maxTooltipWidth = 300.0f; // max width before wrapping text
+
+        juce::Font font = *quicksandFont;
+
+        juce::AttributedString s;
+        s.setJustification(juce::Justification::centred);
+        s.append(text, font, juce::Colours::white);
+
+        juce::TextLayout tl;
+        tl.createLayout(s, maxTooltipWidth);
+        return tl;
+    }
+
+    juce::Rectangle<int> getTooltipBounds(const juce::String &tipText, juce::Point<int> screenPos,
+                                          juce::Rectangle<int> parentArea) override
+    {
+        auto layout = createTooltipLayout(tipText);
+
+        auto w = (int)std::ceil(layout.getWidth()) + tooltipPaddingX;
+        auto h = (int)std::ceil(layout.getHeight()) + tooltipPaddingY;
+
+        return juce::Rectangle<int>(screenPos.x > parentArea.getCentreX() ? screenPos.x - (w + 12) : screenPos.x + 24,
+                                    screenPos.y > parentArea.getCentreY() ? screenPos.y - (h + 6) : screenPos.y + 6,
+                                    w, h)
+            .constrainedWithin(parentArea);
+    }
+
+    void drawTooltip(juce::Graphics &g, const juce::String &text, int width, int height) override
+    {
+        auto bounds = juce::Rectangle<int>(width, height);
+
+        // bg
+        g.setColour(juce::Colours::black);
+        g.fillRoundedRectangle(bounds.toFloat(), 5.0f);
+
+        // outline
+        g.setColour(juce::Colours::white.withAlpha(0.8f));
+        g.drawRoundedRectangle(bounds.toFloat().reduced(0.5f, 0.5f), 5.0f, 2.0f);
+
+        auto layout = createTooltipLayout(text);
+
+        float textX = (width - layout.getWidth()) / 2.0f;
+        float textY = (height - layout.getHeight()) / 2.0f;
+
+        layout.draw(g, juce::Rectangle<float>(textX, textY, layout.getWidth(), layout.getHeight()));
+    }
+
 private:
     juce::Colour knobColour;
 

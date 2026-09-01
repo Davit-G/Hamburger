@@ -5,14 +5,16 @@
 #include "juce_dsp/juce_dsp.h"
 #include "chowdsp_simd/chowdsp_simd.h"
 
+#include "../utils/Params.h"
+
 using SmoothedValue = juce::SmoothedValue<float, juce::ValueSmoothingTypes::Linear>;
 
 /* Only for use with floats / knobs, not categorical parameters */
 class SmoothParam
 {
 public:
-    explicit SmoothParam(juce::AudioProcessorValueTreeState& treeState, juce::ParameterID attachmentID)
-        : param (dynamic_cast<juce::AudioParameterFloat *>(treeState.getParameter(attachmentID.getParamID())))
+    explicit SmoothParam(juce::AudioProcessorValueTreeState& treeState, ParamIDs::ParameterInfo paramInfo)
+        : param (dynamic_cast<juce::AudioParameterFloat *>(treeState.getParameter(paramInfo.getParamID())))
     {
         if (param == nullptr)
             jassertfalse; // heads up if the parameter doesn't exist

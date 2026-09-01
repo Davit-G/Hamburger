@@ -13,7 +13,7 @@ public:
                                                         threshold(state, ParamIDs::MBCompThreshold),
                                                         ratio(state, ParamIDs::compRatio),
                                                         tilt(state, ParamIDs::compBandTilt),
-                                                        speed(state, ParamIDs::compSpeed),
+                                                        speed(state, ParamIDs::MBCompSpeed),
                                                         makeup(state, ParamIDs::compOut),
                                                         scopeDataCollector(dataCollector) {}
     ~MBComp() {}

@@ -6,7 +6,7 @@ Set(FETCHCONTENT_QUIET FALSE)
 set(BUILD_CLAP TRUE)
 
 cmake_minimum_required(VERSION 3.15)
-set(ProjectVersion 0.8)
+set(ProjectVersion 0.9)
 set(PluginName "Hamburger")
 
 set(BaseTargetName Hamburger)
@@ -152,6 +152,7 @@ juce_add_binary_data("${BaseTargetName}BinaryData" HEADER_NAME BinaryData.h NAME
     Assets/HamburgerLogo.png
     Assets/Questrial-Regular.ttf
     Assets/Quicksand-Bold.ttf
+    Assets/OverpassMono-Regular.ttf
     Assets/clap-icon.png
     Assets/vst-icon.png
     Assets/wompwuzhere.png

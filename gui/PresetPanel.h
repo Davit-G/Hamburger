@@ -65,6 +65,7 @@ public:
 
 	void refreshFilesToRender()
 	{
+		DBG("REFRESH FILES TO RENDER");
 		filesToRender.clear();
 
 		auto &collection = *filesFolders;

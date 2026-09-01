@@ -32,7 +32,7 @@ public:
 
     void resized() override
     {
-        fourKnobLayout(satKnob, wave, rectKnob, normKnob, toneKnob);
+        fiveKnobLayout(satKnob, wave, rectKnob, normKnob, shiftKnob, toneKnob);
     }
 
 private:

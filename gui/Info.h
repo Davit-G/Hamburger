@@ -2,44 +2,87 @@
 
 #include "LookAndFeel/HamburgerLAF.h"
 
+class LogoLookAndFeel : public juce::LookAndFeel_V4
+{
+public:
+    LogoLookAndFeel(float height = 30.0f) : fontHeight(height)
+    {
+        logoTypeface = juce::Typeface::createSystemTypefaceFor (
+            BinaryData::OverpassMonoRegular_ttf, 
+            BinaryData::OverpassMonoRegular_ttfSize
+        );
+    }
+
+    juce::Font getLabelFont (juce::Label& label) override
+    {
+        return juce::Font (juce::FontOptions { logoTypeface }.withHeight (fontHeight));
+    }
+
+private:
+    juce::Typeface::Ptr logoTypeface;
+
+    float fontHeight;
+};
+
 class AviaryLogo : public juce::Component
 {
 public:
     AviaryLogo()
     {
-        auto aviaryString = R"svgDELIM(
-        <svg viewBox="0 0 186 48" xmlns="http://www.w3.org/2000/svg">
-        <path d="m22.04 16.16h1.56l11.44 27.84h-1.6l-3.76-9.2h-13.72l-3.8 9.2h-1.56l11.44-27.84zm-5.48 17.2h12.52l-6.28-15.28-6.24 15.28zm25.169-17.2 10.64 25.88 10.64-25.88h1.56l-11.44 27.84h-1.56l-11.44-27.84h1.6zm49.329 0v1.48h-8.32v24.88h8.32v1.48h-18.04v-1.48h8.28v-24.88h-8.28v-1.48h18.04zm19.809 0h1.56l11.44 27.84h-1.6l-3.76-9.2h-13.72l-3.8 9.2h-1.5599l11.44-27.84zm-5.48 17.2h12.52l-6.28-15.28-6.24 15.28zm41.89-16.28c1.6 0.7467 2.853 1.8533 3.76 3.32 0.933 1.4667 1.4 3.0933 1.4 4.88 0 2.08-0.64 3.9467-1.92 5.6-1.254 1.6267-2.867 2.7067-4.84 3.24l7.08 9.88h-1.76l-6.84-9.6-1.28 0.04h-10.04v9.56h-1.48v-27.84h10.6c1.173 0 2.173 0.08 3 0.24 0.853 0.1333 1.626 0.36 2.32 0.68zm-4 15.88c1.386 0 2.666-0.3467 3.84-1.04 1.173-0.6933 2.106-1.6267 2.8-2.8 0.693-1.1733 1.04-2.4533 1.04-3.84 0-1.5467-0.414-2.9467-1.24-4.2-0.8-1.2533-1.92-2.1867-3.36-2.8-1.04-0.4267-2.507-0.64-4.4-0.64h-9.12v15.32h10.44zm17.729-16.8 9.88 14.88 9.8-14.88h1.76l-10.84 16.44v11.4h-1.48v-11.4l-10.88-16.44h1.76z" fill="#575757"/>
-        <path d="m18.04 12.16h1.56l11.44 27.84h-1.6l-3.76-9.2h-13.72l-3.8 9.2h-1.56l11.44-27.84zm-5.48 17.2h12.52l-6.28-15.28-6.24 15.28zm25.169-17.2 10.64 25.88 10.64-25.88h1.56l-11.44 27.84h-1.56l-11.44-27.84h1.6zm49.329 0v1.48h-8.32v24.88h8.32v1.48h-18.04v-1.48h8.28v-24.88h-8.28v-1.48h18.04zm19.809 0h1.56l11.44 27.84h-1.6l-3.76-9.2h-13.72l-3.7999 9.2h-1.56l11.44-27.84zm-5.48 17.2h12.52l-6.28-15.28-6.24 15.28zm41.89-16.28c1.6 0.7467 2.853 1.8533 3.76 3.32 0.933 1.4667 1.4 3.0933 1.4 4.88 0 2.08-0.64 3.9467-1.92 5.6-1.254 1.6267-2.867 2.7067-4.84 3.24l7.08 9.88h-1.76l-6.84-9.6-1.28 0.04h-10.04v9.56h-1.48v-27.84h10.6c1.173 0 2.173 0.08 3 0.24 0.853 0.1333 1.626 0.36 2.32 0.68zm-4 15.88c1.386 0 2.666-0.3467 3.84-1.04 1.173-0.6933 2.106-1.6267 2.8-2.8 0.693-1.1733 1.04-2.4533 1.04-3.84 0-1.5467-0.414-2.9467-1.24-4.2-0.8-1.2533-1.92-2.1867-3.36-2.8-1.04-0.4267-2.507-0.64-4.4-0.64h-9.12v15.32h10.44zm17.729-16.8 9.88 14.88 9.8-14.88h1.76l-10.84 16.44v11.4h-1.48v-11.4l-10.88-16.44h1.76z" fill="#A7A7A7"/>
-        <path d="m14.04 8.16h1.56l11.44 27.84h-1.6l-3.76-9.2h-13.72l-3.8 9.2h-1.56l11.44-27.84zm-5.48 17.2h12.52l-6.28-15.28-6.24 15.28zm25.169-17.2 10.64 25.88 10.64-25.88h1.56l-11.44 27.84h-1.56l-11.44-27.84h1.6zm49.329 0v1.48h-8.32v24.88h8.32v1.48h-18.04v-1.48h8.28v-24.88h-8.28v-1.48h18.04zm19.809 0h1.56l11.44 27.84h-1.6l-3.76-9.2h-13.72l-3.8 9.2h-1.56l11.44-27.84zm-5.4799 17.2h12.52l-6.28-15.28-6.2399 15.28zm41.89-16.28c1.6 0.74667 2.853 1.8533 3.76 3.32 0.933 1.4667 1.4 3.0933 1.4 4.88 0 2.08-0.64 3.9467-1.92 5.6-1.254 1.6267-2.867 2.7067-4.84 3.24l7.08 9.88h-1.76l-6.84-9.6-1.28 0.04h-10.04v9.56h-1.48v-27.84h10.6c1.173 0 2.173 0.08 3 0.24 0.853 0.13333 1.626 0.36 2.32 0.68zm-4 15.88c1.386 0 2.666-0.3467 3.84-1.04 1.173-0.6933 2.106-1.6267 2.8-2.8 0.693-1.1733 1.04-2.4533 1.04-3.84 0-1.5467-0.414-2.9467-1.24-4.2-0.8-1.2533-1.92-2.1867-3.36-2.8-1.04-0.42667-2.507-0.64-4.4-0.64h-9.12v15.32h10.44zm17.729-16.8 9.88 14.88 9.8-14.88h1.76l-10.84 16.44v11.4h-1.48v-11.4l-10.88-16.44h1.76z" fill="#fff"/>
-        </svg>
-        )svgDELIM";
-        
-        auto parsedLogoStringAviary{juce::XmlDocument::parse(juce::String(aviaryString))};
-        jassert(parsedLogoStringAviary != nullptr);
-        drawableAviary = juce::Drawable::createFromSVG(*parsedLogoStringAviary);
-        jassert(drawableAviary != nullptr);
-
-        setSize(drawableAviary->getDrawableBounds().getWidth(), drawableAviary->getDrawableBounds().getHeight());
-
         setMouseCursor(juce::MouseCursor::PointingHandCursor);
 
-        addAndMakeVisible(*drawableAviary);
+        aviaryLogo.setColour(juce::Label::textColourId, juce::Colours::white);
+        aviaryLogo.setText("(~)> Aviary Audio", juce::dontSendNotification);
+        aviaryLogo.setMinimumHorizontalScale(1.0f);
+        aviaryLogo.setJustificationType(juce::Justification::centredRight);
+        aviaryLogo.setLookAndFeel(&logolaf);
+        addAndMakeVisible(aviaryLogo);
+
+        setInterceptsMouseClicks(true, false);
+
+        aviaryLogo.addMouseListener(this, true);
+        aviaryLogo.setMouseCursor(juce::MouseCursor::PointingHandCursor);
+    }
+
+    ~AviaryLogo() {
+        aviaryLogo.removeMouseListener(this);
+        aviaryLogo.setLookAndFeel(nullptr);
+    }
+
+    void mouseEnter (const juce::MouseEvent& event) override
+    {
+        aviaryLogo.setText("(O)> Aviary Audio", juce::dontSendNotification);
+        repaint(); 
+    }
+
+    void mouseExit (const juce::MouseEvent& event) override
+    {
+        aviaryLogo.setText("(~)> Aviary Audio", juce::dontSendNotification);
+        repaint();
     }
 
     void mouseUp(const juce::MouseEvent &event) override
     {
         DBG("Mouse up");
+        aviaryLogo.setText("(~)> Aviary Audio", juce::dontSendNotification);
         juce::URL("https://aviaryaudio.com").launchInDefaultBrowser();
+    }
+
+    void mouseDown(const juce::MouseEvent &event) override {
+        aviaryLogo.setText("(^)> Aviary Audio", juce::dontSendNotification);
     }
 
     void resized() override
     {
-        drawableAviary->setBounds(getLocalBounds());
+        aviaryLogo.setBounds(getLocalBounds());
     }
 
 private:
-    std::unique_ptr<juce::Drawable> drawableAviary = nullptr;
+    juce::Label aviaryLogo;
+
+    LogoLookAndFeel logolaf;
+
+    const juce::Typeface::Ptr fontTypeface = juce::Typeface::createSystemTypefaceFor(BinaryData::OverpassMonoRegular_ttf, BinaryData::OverpassMonoRegular_ttfSize);
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AviaryLogo)
 };
@@ -49,7 +92,7 @@ private:
 class Info : public juce::Component
 {
 public:
-    Info(AudioPluginAudioProcessor &p) : changePresetFolderButton("Change Preset Folder")
+    Info(AudioPluginAudioProcessor &p) : changePresetFolderButton("Change Preset Folder"), processorRef(p)
     {
 
         auto logoString = R"svgDELIM(
@@ -64,12 +107,25 @@ public:
         </svg>
         )svgDELIM";
 
-        changePresetFolderButton.setLookAndFeel(&hamburgerLAF);
+        // changePresetFolderButton.setLookAndFeel(getLookAndFeel());
 
         changePresetFolderButton.setColour(juce::TextButton::buttonColourId, juce::Colours::black);
         changePresetFolderButton.setColour(juce::TextButton::textColourOffId, juce::Colours::white);
         changePresetFolderButton.setColour(juce::TextButton::textColourOnId, juce::Colours::white);
 
+        settingsTitle.setJustificationType(juce::Justification::topLeft);
+        settingsTitle.setText("Settings", juce::dontSendNotification);
+        HamburgerLAF::setLabelFontScale(settingsTitle, 2.0f);
+
+        tooltipTypeTitle.setJustificationType(juce::Justification::centredLeft);
+        tooltipTypeTitle.setText("Tooltip Type: ", juce::dontSendNotification);
+
+        presetFolderTitle.setJustificationType(juce::Justification::centredLeft);
+        presetFolderTitle.setText("Preset Folder: ", juce::dontSendNotification);
+
+        addAndMakeVisible(settingsTitle);
+        addAndMakeVisible(tooltipTypeTitle);
+        addAndMakeVisible(presetFolderTitle);
         addAndMakeVisible(changePresetFolderButton);
 
         auto& presetManager = p.getPresetManager();
@@ -114,10 +170,11 @@ public:
         versionLabel.setText("Version: Release v" + juce::String(JucePlugin_VersionString) + " (" + juce::String(GIT_HASH) + ")", juce::NotificationType::dontSendNotification);
 #endif
 
-        auto font = hamburgerLAF.getLabelFont(descriptionLabel);
+        auto font = getLookAndFeel().getLabelFont(descriptionLabel);
 
         versionLabel.setJustificationType(juce::Justification::bottomRight);
         versionLabel.setFont(font);
+
 
         descriptionLabel.setJustificationType(juce::Justification::topLeft);
         descriptionLabel.setText("Hamburger is a powerful distortion effect plugin with dynamics controls and equalisation designed for more control. Hamburger takes inspiration from other distortion and analog emulation plugins, and provides a tight set of controls that allow for fast pleasing results. \n \nHuge thanks to Sam (womp), Danburger (Antfactory), Bean, DEPARTURE, Sheaf, HurleybirdJr, Ewan Bristow, Alyssa, Patrhetoric, the dubstep den chaps, all the people in the Aviary Audio discord server and anyone else I've left out, for all the help with development, testing, debugging and contributions.\n\nIf you want to know more about Aviary or join the community, click the aviary logo on the top right (opens a page to https://aviaryaudio.com). \n\nClick anywhere on the screen to return to the plugin", juce::NotificationType::dontSendNotification);
@@ -132,6 +189,19 @@ public:
 
         addAndMakeVisible(versionLabel);
         addAndMakeVisible(descriptionLabel);
+
+        tooltipType.addItem("None", 1);
+        tooltipType.addItem("Hovering", 2);
+        tooltipType.addItem("Replace Logo", 3);
+
+        tooltipType.setSelectedId(static_cast<int>(this->processorRef.getAppProperties().getTooltipType()) + 1);        
+
+        tooltipType.onChange = [this] {
+            auto selected = tooltipType.getSelectedId() - 1;
+            this->processorRef.getAppProperties().setTooltipType(static_cast<AppProperties::TooltipType>(selected));
+        };
+
+        addAndMakeVisible(tooltipType);
     }
 
     ~Info() override
@@ -154,35 +224,56 @@ public:
         g.fillPath(p);
 
         auto bounds = getLocalBounds().reduced(20);
+        auto logoArea = bounds.removeFromBottom(50);
 
-        auto logoArea = bounds.removeFromBottom(80);
+        g.drawImage(vstLogo, logoArea.removeFromLeft(100 * 0.5).toFloat(), juce::Justification::centred);
+        logoArea.removeFromLeft(10);
+        g.drawImage(clapLogo, logoArea.removeFromLeft(70 * 0.5).toFloat(), juce::Justification::centred);
+        logoArea.removeFromLeft(10);
+        g.drawImage(gplLogo, logoArea.removeFromLeft(110 * 0.5).toFloat(), juce::Justification::centred);
+        logoArea.removeFromLeft(10);
+        g.drawImage(womp, logoArea.removeFromLeft(130 * 0.5).toFloat(), juce::Justification::centred);
 
-        g.drawImage(vstLogo, logoArea.removeFromLeft(100).toFloat(), juce::Justification::centred);
-        logoArea.removeFromLeft(10);
-        g.drawImage(clapLogo, logoArea.removeFromLeft(70).toFloat(), juce::Justification::centred);
-        logoArea.removeFromLeft(10);
-        g.drawImage(gplLogo, logoArea.removeFromLeft(110).toFloat(), juce::Justification::centred);
-        logoArea.removeFromLeft(10);
-        g.drawImage(womp, logoArea.removeFromLeft(130).toFloat(), juce::Justification::centred);
     }
 
     void resized() override
     {
         drawableLogoString->setBoundsToFit(getLocalBounds().reduced(20), juce::Justification::topLeft, true);
 
+        auto bounds = getLocalBounds().reduced(20);
+
+        // leave room for the logos up top and the version/format logos down the bottom, before
+        // splitting into columns, so the description and the settings share the same top and bottom
+        bounds.removeFromTop(60);
+        bounds.removeFromBottom(80);
+
+        auto settingsBounds = bounds.removeFromRight(bounds.getWidth() / 2.0f);
+        settingsBounds.reduce(50, 0);
+
+        settingsTitle.setBounds(settingsBounds.removeFromTop(36));
+        settingsBounds.removeFromTop(30);
+
+        auto tooltipBounds = settingsBounds.removeFromTop(30);
+        tooltipTypeTitle.setBounds(tooltipBounds.removeFromLeft(tooltipBounds.getWidth() / 3.0f));
+        tooltipType.setBounds(tooltipBounds);
+
+        settingsBounds.removeFromTop(10);
+
+        auto presetFolderBounds = settingsBounds.removeFromTop(20);
+        presetFolderTitle.setBounds(presetFolderBounds.removeFromLeft(presetFolderBounds.getWidth() / 3.0f));
+        changePresetFolderButton.setBounds(presetFolderBounds);
 
         versionLabel.setBounds(getLocalBounds().reduced(20).removeFromBottom(20));
 
-        auto infoRegion = getLocalBounds().reduced(19).removeFromLeft(getLocalBounds().getWidth() / 2);
-        descriptionLabel.setBounds(infoRegion.withTrimmedTop(80).withTrimmedBottom(80));
-
-        changePresetFolderButton.setBounds(infoRegion.withTrimmedBottom(80).removeFromBottom(80));
+        descriptionLabel.setBounds(bounds);
 
         // top right corner
-        aviaryLogo.setBounds(getLocalBounds().reduced(20).removeFromTop(aviaryLogo.getHeight()).removeFromRight(aviaryLogo.getWidth()));
+        aviaryLogo.setBounds(getLocalBounds().reduced(20).removeFromTop(30).removeFromRight(300));
     }
 
 private:
+    AudioPluginAudioProcessor& processorRef;
+
     std::unique_ptr<juce::Drawable> drawableLogoString = nullptr;
 
     juce::Label versionLabel;
@@ -197,9 +288,14 @@ private:
 
     juce::TextButton changePresetFolderButton;
 
-    AviaryLogo aviaryLogo;
+    juce::Label settingsTitle;
 
-    HamburgerLAF hamburgerLAF;
+    juce::ComboBox tooltipType;
+    juce::Label tooltipTypeTitle;
+
+    juce::Label presetFolderTitle;
+
+    AviaryLogo aviaryLogo;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Info)
 };

@@ -4,102 +4,21 @@
 #include "juce_gui_basics/juce_gui_basics.h"
 #include "KnobUtils.h"
 
+#include "GenericKnob.h"
+
 enum RectSliderType {
     LeftJustifified,
     CenterJustifified,
     RightJustifified,
 };
 
-class RectSlider : public juce::Slider, private juce::Timer {
+class RectSlider : public GenericKnob {
 public:
-    RectSlider(AudioPluginAudioProcessor &p, juce::String knobName, juce::ParameterID attachmentID, ParamUnits knobUnit = ParamUnits::none, ScopeContextType scopeContextType = ScopeContextType::LR_SCOPE) : processorRef(p), kName(knobName), unit(knobUnit) {
-        knobAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(processorRef.treeState, attachmentID.getParamID(), *this);
-        jassert(knobAttachment);
-
-        auto knobParamRange = p.treeState.getParameterRange(attachmentID.getParamID());
-        
-        if (knobUnit == ParamUnits::x || knobUnit == ParamUnits::category) {
-            setRange(knobParamRange.start, knobParamRange.end, 1.0);
-        } else {
-            setRange(knobParamRange.start, knobParamRange.end, 0.001);
-        }
-
-        setPaintingIsUnclipped(true);
-        setBufferedToImage(true);
-
-        setName(knobName);
-
-        preferredScopeContextType = scopeContextType;
-
-        onDragStart = [this] { 
-            // display the parameter value as the text instead of the parameter name
-            this->isDragging = true;
-            this->text.setText(createParamString(this->getValue(), this->unit), juce::dontSendNotification);
-            processorRef.getScopeContext().setType(preferredScopeContextType);
-
-            this->dragAmount = 1.0f;
-            startTimerHz(60);
-            repaint();
-        };
-
-        // when value is changing, set it to what the knob is, but only if we're dragging
-        onValueChange = [this] {
-            if (this->isDragging) {
-                auto value = this->getValue();
-                this->text.setText(createParamString(value, this->unit), juce::dontSendNotification);
-            } else {
-                this->text.setText(this->kName, juce::dontSendNotification);
-            }
-        };
-
-        onDragEnd = [this] { 
-            // display the parameter name as the text again
-            this->isDragging = false;
-            this->text.setText(this->kName, juce::dontSendNotification);
-            processorRef.getScopeContext().startDecaying();
-        };
-
-        if (getParentComponent() != nullptr) { // on linux the parent happens to be broken somehow
-            auto font = getParentComponent()->getLookAndFeel().getLabelFont(text);
-            text.setFont(font);
-        }
-
-        startTimerHz(60);
-
+    RectSlider(AudioPluginAudioProcessor &p, juce::String knobName, const ParamIDs::ParameterInfo& attachmentParam, ParamUnits knobUnit = ParamUnits::none, ScopeContextType scopeContextType = ScopeContextType::LR_SCOPE) 
+    : GenericKnob(p, knobName, attachmentParam, knobUnit, scopeContextType) {
         // can't use linear bar or linear horizontal
         // cause some weird stuff happens and it immediately snaps to max. might be cause default text box flattens the pixel range?
-        setSliderStyle(juce::Slider::SliderStyle::RotaryVerticalDrag); 
-
-        setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
-
-        auto font = getParentComponent()->getLookAndFeel().getLabelFont(text);
-        text.setFont(font);
-
-        addAndMakeVisible(text);
-
-        text.setJustificationType(juce::Justification::centredBottom);
-        text.setInterceptsMouseClicks(false, false);
-        text.setText(kName, juce::dontSendNotification);
-    }
-
-    void timerCallback() override
-    {
-        if (isDragging) // hold at full brightness until the user lets go
-            return;
-
-        dragAmount *= dragDecayRate;
-
-        if (dragAmount < dragDecayThreshold) {
-            dragAmount = 0.0f;
-            stopTimer();
-        }
-
-        repaint();
-    }
-
-    ~RectSlider() override {
-        stopTimer();
-        knobAttachment = nullptr;
+        setSliderStyle(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag); 
     }
 
     void setJustification(const RectSliderType type) {
@@ -108,13 +27,13 @@ public:
         switch (type)
         {
         case RectSliderType::LeftJustifified:
-            text.setJustificationType(juce::Justification::bottomLeft);
+            label.setJustificationType(juce::Justification::bottomLeft);
             break;
         case RectSliderType::CenterJustifified:
-            text.setJustificationType(juce::Justification::centredBottom);
+            label.setJustificationType(juce::Justification::centredBottom);
             break;
         case RectSliderType::RightJustifified:
-            text.setJustificationType(juce::Justification::bottomRight);
+            label.setJustificationType(juce::Justification::bottomRight);
             break;
         default:
             break;
@@ -129,6 +48,8 @@ public:
 
         auto sliderBounds = bounds.removeFromBottom(sliderHeight);
         sliderBounds.reduce(15, 0);
+        sliderBounds.setSize(sliderBounds.getWidth(), sliderBounds.getHeight() + dragAmount);
+        sliderBounds.translate(0, -2.0f);
         float rounded = 2.0f;
 
         juce::Path clipTrack;
@@ -136,62 +57,25 @@ public:
 
         g.reduceClipRegion(clipTrack);
 
-        auto centerBounds = getLocalBounds().toFloat().removeFromBottom(sliderHeight);
-        centerBounds.reduce(15, 0);
+        juce::Rectangle<float> centerBounds = sliderBounds;
 
         g.setColour(juce::Colours::darkgrey);
         g.fillRect(sliderBounds);
 
         g.setColour (knobColour);
 
-        switch (sliderType)
-        {
-        case RectSliderType::LeftJustifified:
-            g.fillRect(sliderBounds.removeFromLeft(valueToProportionOfLength(getValue()) * sliderBounds.getWidth()));
-            break;
-        
-        case RectSliderType::CenterJustifified:
-            centerBounds.reduce(static_cast<int>((1.0f - valueToProportionOfLength(getValue()) ) * 0.5f * sliderBounds.getWidth()), 0);
-
-            g.fillRect(centerBounds);
-            break;
-            
-        case RectSliderType::RightJustifified:
-            g.fillRect(sliderBounds.removeFromRight(valueToProportionOfLength(getValue()) * sliderBounds.getWidth()));
-            break;
-        
-        default:
-            break;
-        }
+        g.fillRect(sliderBounds.removeFromLeft(valueToProportionOfLength(getValue()) * sliderBounds.getWidth()));
     }
 
     void resized() override {
         auto bounds = getLocalBounds().withTrimmedBottom(sliderHeight);
         bounds.reduce(10, 0);
-        text.setBounds(bounds);
+        bounds.setHeight(bounds.getHeight() - 2.0f);
+        label.setBounds(bounds);
     }
     
-    std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> knobAttachment = nullptr;
 private:
     const float sliderHeight = 4.0f;
 
     RectSliderType sliderType = RectSliderType::CenterJustifified;
-
-    float valueOnMouseDown = 0.0f;
-
-    AudioPluginAudioProcessor &processorRef;
-    ScopeContextType preferredScopeContextType = ScopeContextType::LR_SCOPE;
-
-    juce::Rectangle<int> knobBounds;
-
-    juce::String kName;
-    ParamUnits unit;
-
-    bool isDragging = false;
-
-    float dragAmount = 0.0f;
-    static constexpr float dragDecayRate = 0.88f; 
-    static constexpr float dragDecayThreshold = 0.01f;
-
-    juce::Label text;
 };

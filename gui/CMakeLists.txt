@@ -7,4 +7,7 @@ target_sources("${BaseTargetName}"
         UpdateChecker.cpp
         UpdateChecker.h
         RectSlider.h
+        ResizableEditor.h
+        Editor.h
+        GenericKnob.h
         )

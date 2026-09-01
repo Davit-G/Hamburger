@@ -6,10 +6,10 @@
 
 #include "../Scope.h"
 
-class LogoPanel : public Panel
+class LogoPanel : public Panel, private juce::Timer, public juce::ChangeListener
 {
 public:
-    LogoPanel(AudioPluginAudioProcessor &p) : Panel(p, "SETTINGS", juce::Colours::whitesmoke)
+    LogoPanel(AudioPluginAudioProcessor &p) : Panel(p, "SETTINGS", juce::Colours::whitesmoke), processorRef(p)
     {
         auto logoString = R"svgDELIM(
 <svg viewBox="0 0 150 56" xmlns="http://www.w3.org/2000/svg">
@@ -28,9 +28,46 @@ public:
         drawableLogoString = juce::Drawable::createFromSVG (*parsedLogoString);
         jassert(drawableLogoString != nullptr);
 
+        helptext.setJustificationType(juce::Justification::topLeft);
+        helptext.setFont(getLookAndFeel().getLabelFont(helptext));
+        helptext.setMinimumHorizontalScale(0.9f);
+        helptext.setInterceptsMouseClicks(false, false);
+        addAndMakeVisible(helptext);
+
+        displayHelpText = p.getAppProperties().getTooltipType() == AppProperties::TooltipType::boxLabel;
+
         setMouseCursor(juce::MouseCursor::PointingHandCursor);
 
         addAndMakeVisible(*drawableLogoString);
+        juce::Desktop::getInstance().addGlobalMouseListener(&tooltipHelper);
+
+        p.getAppProperties().addChangeListener(this);
+    }
+
+    void changeListenerCallback (juce::ChangeBroadcaster* source) override {
+        auto appProperties = &processorRef.getAppProperties();
+        if (source == appProperties) {
+            displayHelpText = appProperties->getTooltipType() == AppProperties::TooltipType::boxLabel;
+            
+            if (!displayHelpText) {
+                drawableLogoString->setVisible(true);
+                helptext.setVisible(false);
+            }
+            repaint();
+        }
+    }
+
+    void timerCallback() {
+        if (displayHelpText) {
+            drawableLogoString->setVisible(true);
+            helptext.setVisible(false);
+            repaint();
+        }
+    }
+
+    ~LogoPanel() {
+        juce::Desktop::getInstance().removeGlobalMouseListener(&tooltipHelper);
+        processorRef.getAppProperties().removeChangeListener(this);
     }
 
     void mouseUp(const juce::MouseEvent &event) override
@@ -41,8 +78,55 @@ public:
     void resized() override
     {
         drawableLogoString->setBoundsToFit(getLocalBounds(), juce::Justification::centred, true);
+        helptext.setBounds(getLocalBounds());
     }
-
+    
+    void changeLabelText(juce::String txt) {
+        if (displayHelpText) {
+            helptext.setText(txt, juce::dontSendNotification);
+            drawableLogoString->setVisible(false);
+            helptext.setVisible(true);
+            repaint();
+    
+            startTimer(10000);
+        }
+    }
 private:
+    AudioPluginAudioProcessor &processorRef;
+
+    class TooltipListenerHelper : public juce::MouseListener
+    {
+        public:
+        TooltipListenerHelper(LogoPanel &l) : lp(l) {}
+
+        void mouseMove(const juce::MouseEvent& event) override
+            {
+                juce::Point<int> screenPos = event.getScreenPosition();
+
+                if (auto* hoveredComponent = dynamic_cast<juce::Slider*>(juce::Desktop::getInstance().findComponentAt(screenPos)))
+                {   
+                    if (hoveredComponent == previousComponent) {
+                        return;
+                    }
+
+                    juce::String tooltip = hoveredComponent->getTooltip();
+
+                    if (tooltip.isNotEmpty())
+                    {
+                        previousComponent = hoveredComponent;
+                        lp.changeLabelText(hoveredComponent->getName() + ": " + tooltip);
+                    }
+                }
+            }
+        juce::Component* previousComponent = nullptr;
+
+        LogoPanel &lp;
+    };
+
+    TooltipListenerHelper tooltipHelper {*this}; 
+
+    juce::Label helptext;
+    bool displayHelpText = false;
+
     std::unique_ptr<juce::Drawable> drawableLogoString = nullptr;
 };

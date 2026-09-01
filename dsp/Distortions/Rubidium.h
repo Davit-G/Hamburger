@@ -6,11 +6,11 @@
 class RubidiumDistortion
 {
 public:
-    RubidiumDistortion(juce::AudioProcessorValueTreeState &treeState) : drive(treeState, "rubidiumAmount"),
-                                                                        hysteresis(treeState, "rubidiumAsym"),
-                                                                        tone(treeState, "rubidiumTone"),
-                                                                        mojo(treeState, "rubidiumMojo"),
-                                                                        bias(treeState, "rubidiumBias")
+    RubidiumDistortion(juce::AudioProcessorValueTreeState &treeState) : drive(treeState, ParamIDs::rubidiumAmount),
+                                                                        hysteresis(treeState, ParamIDs::rubidiumAsym),
+                                                                        tone(treeState, ParamIDs::rubidiumTone),
+                                                                        mojo(treeState, ParamIDs::rubidiumMojo),
+                                                                        bias(treeState, ParamIDs::rubidiumBias)
     {
     }
 

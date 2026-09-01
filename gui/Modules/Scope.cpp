@@ -657,7 +657,7 @@ void Scope<SampleType>::drawTiledContextLabel(juce::Graphics &g, juce::Rectangle
     if (w <= 0.0f || h <= 0.0f)
         return;
 
-    const auto font = hamburgerLAF.getPopupMenuFont().withHeight(juce::jlimit(12.0f, 34.0f, h * 0.22f));
+    const auto font = getLookAndFeel().getPopupMenuFont().withHeight(juce::jlimit(12.0f, 34.0f, h * 0.22f));
 
     g.setFont(font);
     g.setColour(juce::Colour::fromRGBA(255, 255, 255, contextLabelAlpha));
@@ -720,7 +720,7 @@ void Scope<SampleType>::drawCompBands(juce::Graphics &g, juce::Rectangle<SampleT
         return juce::jmap(juce::jlimit(mindB, maxdB, db), mindB, maxdB, cellArea.getBottom(), cellArea.getY());
     };
 
-    g.setFont(hamburgerLAF.getPopupMenuFont());
+    g.setFont(getLookAndFeel().getPopupMenuFont());
     g.setFont(readoutFontHeight);
 
     auto cell = juce::Rectangle<float>(cellArea.getX(), cellArea.getY(), cellWidth, cellArea.getHeight());
@@ -907,7 +907,7 @@ void Scope<SampleType>::drawParamHeader(juce::Graphics &g, juce::Rectangle<Sampl
 
     const auto bar = juce::Rectangle<float>(0.0f, 0.0f, (float) scopeRect.getWidth(), (float) headerHeight(scopeRect));
 
-    g.setFont(hamburgerLAF.getPopupMenuFont());
+    g.setFont(getLookAndFeel().getPopupMenuFont());
     g.setFont(readoutFontHeight);
 
     const auto solidBar = labels.size() > 2;
@@ -982,7 +982,7 @@ void Scope<SampleType>::drawDistortionAmount(juce::Graphics &g, juce::Rectangle<
     if (label.isEmpty())
         return;
 
-    g.setFont(hamburgerLAF.getPopupMenuFont());
+    g.setFont(getLookAndFeel().getPopupMenuFont());
     g.setFont(readoutFontHeight);
 
     const auto rowHeight = (float) headerHeight(scopeRect);
@@ -992,12 +992,10 @@ void Scope<SampleType>::drawDistortionAmount(juce::Graphics &g, juce::Rectangle<
     drawTabbedLabel(g, row, label, juce::Justification::centredRight, false);
 }
 
-// the scope only paints on the gui thread, so looking these up per frame instead of caching a
-// pointer for every distortion in the plugin is cheap enough
 template <typename SampleType>
-float Scope<SampleType>::paramValue(const juce::ParameterID &id) const
+float Scope<SampleType>::paramValue(const ParamIDs::ParameterInfo &paramInfo) const
 {
-    if (auto *param = dynamic_cast<juce::AudioParameterFloat *>(apvts.getParameter(id.getParamID())))
+    if (auto *param = dynamic_cast<juce::AudioParameterFloat *>(apvts.getParameter(paramInfo.getParamID())))
         return param->get();
 
     return 0.0f;
@@ -1017,9 +1015,9 @@ float Scope<SampleType>::bandLevel(LevelMeter &meter) const
 
 // only the threshold differs between the three compressor views, and the stereo one has no tilt
 template <typename SampleType>
-juce::StringArray Scope<SampleType>::getCompHeaderLabels(const juce::ParameterID &thresholdID, bool withTilt) const
+juce::StringArray Scope<SampleType>::getCompHeaderLabels(const ParamIDs::ParameterInfo &thresholdParam, bool withTilt) const
 {
-    juce::StringArray labels { formatDecibels(paramValue(thresholdID)),
+    juce::StringArray labels { formatDecibels(paramValue(thresholdParam)),
                                juce::String(compRatio(), 1) + ":1" };
 
     if (withTilt)
@@ -1029,7 +1027,7 @@ juce::StringArray Scope<SampleType>::getCompHeaderLabels(const juce::ParameterID
 }
 
 template <typename SampleType>
-juce::AudioParameterChoice* Scope<SampleType>::choiceParam(const juce::ParameterID &id) const
+juce::AudioParameterChoice* Scope<SampleType>::choiceParam(const ParamIDs::ParameterInfo &id) const
 {
     return dynamic_cast<juce::AudioParameterChoice *>(apvts.getParameter(id.getParamID()));
 }

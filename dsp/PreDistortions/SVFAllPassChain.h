@@ -13,9 +13,9 @@ using Format = juce::AudioData::Format<juce::AudioData::Float32, juce::AudioData
 class SVFAllPassChain
 {
 public:
-    SVFAllPassChain(juce::AudioProcessorValueTreeState &treeState) : allPassFrequency(treeState, "allPassFreq"),
-                                                                     allPassQ(treeState, "allPassQ"),
-                                                                     allPassAmount(treeState, "allPassAmount")
+    SVFAllPassChain(juce::AudioProcessorValueTreeState &treeState) : allPassFrequency(treeState, ParamIDs::allPassFreq),
+                                                                     allPassQ(treeState, ParamIDs::allPassQ),
+                                                                     allPassAmount(treeState, ParamIDs::allPassAmount)
     {
         for (size_t i = 0; i < 50; ++i)
         {

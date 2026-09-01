@@ -43,33 +43,6 @@ HamburgerLAF::HamburgerLAF(juce::Colour color) : knobColour(color)
 }
 
 
-
-void HamburgerLAF::drawRotarySlider(juce::Graphics &g, int x, int y, int width, int height, float sliderPos,
-                        const float rotaryStartAngle, const float rotaryEndAngle, juce::Slider &slider)
-{
-    auto thumb = slider.findColour(juce::Slider::thumbColourId);
-
-    auto bounds = juce::Rectangle<int>(x, y, width, height).toFloat().reduced(5.0f);
-
-    auto radius = juce::jmin(bounds.getWidth(), bounds.getHeight()) / 2.0f;
-    auto toAngle = rotaryStartAngle + sliderPos * (rotaryEndAngle - rotaryStartAngle);
-    auto lineW = juce::jmin(8.0f, radius * 0.5f);
-    auto arcRadius = radius - lineW * 0.5f;
-
-    juce::Line<float> marker;
-
-    float xOffset = std::sin(toAngle) * arcRadius;
-    float yOffset = -std::cos(toAngle) * arcRadius;
-
-    marker.setStart(xOffset * 0.8f + bounds.getCentreX(), yOffset * 0.8f + bounds.getCentreY());
-    marker.setEnd(xOffset + bounds.getCentreX(), yOffset + bounds.getCentreY());
-
-    juce::Path p;
-    p.addLineSegment(marker, radius * 0.08f);
-    g.setColour(thumb);
-    g.strokePath(p, juce::PathStrokeType(radius * 0.08f, juce::PathStrokeType::JointStyle::curved, juce::PathStrokeType::EndCapStyle::rounded));
-}
-
 void HamburgerLAF::drawComboBox(juce::Graphics &g, int width, int height, bool,
                     int, int, int, int, juce::ComboBox &box)
 {
@@ -99,7 +72,12 @@ juce::Font HamburgerLAF::getQuicksandFont()
 
 juce::Font HamburgerLAF::getLabelFont(juce::Label &label)
 {
-    return *questrialFont14;
+    auto font = *questrialFont14;
+
+    const auto scale = static_cast<float>(label.getProperties().getWithDefault("fontScale", 1.0f));
+    font.setHeight(font.getHeight() * scale);
+
+    return font;
 }
 
 juce::Font HamburgerLAF::getComboBoxFont(juce::ComboBox &box)
