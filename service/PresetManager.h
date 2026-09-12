@@ -14,7 +14,7 @@ namespace Preset
 												 .getChildFile(JucePlugin_Manufacturer)
 												 .getChildFile(JucePlugin_Name)
 												 .getChildFile("./presets/")};
-	static const juce::String extension{"borgir"};
+	static const juce::String extension{"burger"};
 	static const juce::String presetPathProperty{"presetPath"};
 
 	class PresetFile

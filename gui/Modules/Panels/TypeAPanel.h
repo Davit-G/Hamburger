@@ -1,16 +1,17 @@
 #pragma once
 
 #include "../Panel.h"
+#include "../../../dsp/EffectInfos.h"
 
 
 class TypeAPanel : public Panel
 {
 public:
-    TypeAPanel(AudioPluginAudioProcessor &p) : Panel(p, "TYPE A"),
-                                               threshold(p, "THRES", ParamIDs::TypeAThreshold, ParamUnits::db, ScopeContextType::COMPRESSION),
-                                               speed(p, "SPEED", ParamIDs::compSpeed, ParamUnits::ms, ScopeContextType::COMPRESSION),
-                                               out(p, "OUT", ParamIDs::TypeAOut, ParamUnits::db, ScopeContextType::COMPRESSION),
-                                               tilt(p, "TILT", ParamIDs::TypeATilt, ParamUnits::db, ScopeContextType::COMPRESSION)
+    TypeAPanel(AudioPluginAudioProcessor &p, SlotId slot = SlotId{ModuleId::dynamics, 0}) : Panel(p, "TYPE A"),
+                                               threshold(p, "THRES", slot, ParamIDs::TypeAThreshold, ScopeContextType::COMPRESSION),
+                                               speed(p, "SPEED", slot, ParamIDs::TypeACompSpeed, ScopeContextType::COMPRESSION),
+                                               out(p, "OUT", slot, ParamIDs::TypeAOut, ScopeContextType::COMPRESSION),
+                                               tilt(p, "TILT", slot, ParamIDs::TypeATilt, ScopeContextType::COMPRESSION)
     {
         addAndMakeVisible(threshold);
         addAndMakeVisible(speed);

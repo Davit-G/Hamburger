@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../Panel.h"
+#include "../../../dsp/EffectInfos.h"
 
 
 #include "../../Knob.h"
@@ -8,9 +9,9 @@
 class GrungePanel : public Panel
 {
 public:
-    GrungePanel(AudioPluginAudioProcessor &p) : Panel(p, "GRUNGE", Palette::colours[2]),
-    amount(p, "AMT", ParamIDs::grungeAmt),
-    tone(p, "TONE", ParamIDs::grungeTone) {
+    GrungePanel(AudioPluginAudioProcessor &p, SlotId slot = SlotId{ModuleId::module2, 0}) : Panel(p, "GRUNGE", Palette::colours[2]),
+    amount(p, "AMT", slot, ParamIDs::grungeAmt),
+    tone(p, "TONE", slot, ParamIDs::grungeTone) {
 
         addAndMakeVisible(amount);
         addAndMakeVisible(tone);

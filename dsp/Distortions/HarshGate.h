@@ -2,16 +2,21 @@
 
  
 #include "../SmoothParam.h"
+#include "../EffectBase.h"
+#include "../EffectInfos.h"
 
 //==============================================================================
 /*
  */
-class HarshGate
+class HarshGate : public MacroEffect
 {
 public:
-    HarshGate(juce::AudioProcessorValueTreeState& treeState): amount(treeState, ParamIDs::gateAmt), mix(treeState, ParamIDs::gateMix) {};
+    HarshGate(juce::AudioProcessorValueTreeState& treeState)
+        : MacroEffect(treeState, SlotId{ModuleId::module1, 0}),
+          amount(getParam(ParamIDs::gateAmt)),
+          mix(getParam(ParamIDs::gateMix)) {}
 
-    void processBlock(juce::dsp::AudioBlock<float>& block) {
+    void processBlock(juce::dsp::AudioBlock<float>& block) override {
         amount.update();
         mix.update();
 

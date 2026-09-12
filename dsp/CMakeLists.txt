@@ -11,4 +11,7 @@ target_sources("${BaseTargetName}"
         EnvelopeFollower.cpp
         SVTPTFilter.cpp
         SVTPTFilter.h
+        MacroParam.h
+        EffectBase.h
+        EffectInfos.h
         )

@@ -3,18 +3,24 @@
 #include "juce_core/juce_core.h"
 #include "juce_audio_processors/juce_audio_processors.h"
 
-class RubidiumDistortion
+#include "../../utils/Params.h"
+#include "../SmoothParam.h"
+#include "../EffectBase.h"
+
+class RubidiumDistortion : public MacroEffect
 {
 public:
-    RubidiumDistortion(juce::AudioProcessorValueTreeState &treeState) : drive(treeState, ParamIDs::rubidiumAmount),
-                                                                        hysteresis(treeState, ParamIDs::rubidiumAsym),
-                                                                        tone(treeState, ParamIDs::rubidiumTone),
-                                                                        mojo(treeState, ParamIDs::rubidiumMojo),
-                                                                        bias(treeState, ParamIDs::rubidiumBias)
+    RubidiumDistortion(juce::AudioProcessorValueTreeState& treeState, SlotId slot)
+        : MacroEffect(treeState, slot),
+          drive(getParam(ParamIDs::rubidiumAmount)),
+          hysteresis(getParam(ParamIDs::rubidiumAsym)),
+          tone(getParam(ParamIDs::rubidiumTone)),
+          mojo(getParam(ParamIDs::rubidiumMojo)),
+          bias(getParam(ParamIDs::rubidiumBias))
     {
     }
 
-    void prepare(juce::dsp::ProcessSpec &spec)
+    void prepare(juce::dsp::ProcessSpec &spec) override
     {
         srate = spec.sampleRate;
         dt = 1 / spec.sampleRate;

@@ -7,13 +7,14 @@ inline float weirdRectify(float x, float a) {
 }
 
 //==============================================================================
-PhaseDist::PhaseDist(juce::AudioProcessorValueTreeState& treeState) : 
-	amount(treeState, ParamIDs::phaseAmount),
-	tone(treeState, ParamIDs::phaseDistTone),
-	stereo(treeState, ParamIDs::phaseDistStereo),
-	rectify(treeState, ParamIDs::phaseRectify),
-	shift(treeState, ParamIDs::phaseShift)
-	{};
+PhaseDist::PhaseDist(juce::AudioProcessorValueTreeState& treeState, SlotId slot)
+	: MacroEffect(treeState, slot),
+	  amount(getParam(ParamIDs::phaseAmount)),
+	  tone(getParam(ParamIDs::phaseDistTone)),
+	  stereo(getParam(ParamIDs::phaseDistStereo)),
+	  rectify(getParam(ParamIDs::phaseRectify)),
+	  shift(getParam(ParamIDs::phaseShift))
+	{}
 
 void PhaseDist::prepare(juce::dsp::ProcessSpec& spec) noexcept {
 	this->sampleRate = spec.sampleRate;

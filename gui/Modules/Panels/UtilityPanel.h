@@ -9,9 +9,9 @@ class UtilityPanel : public Panel
 {
 public:
     UtilityPanel(AudioPluginAudioProcessor &p) : Panel(p, "UTILITY"),
-    inGain(p, "IN", ParamIDs::inputGain, ParamUnits::db),
-    mix(p, "MIX", ParamIDs::mix, ParamUnits::percent),
-    outGain(p, "OUT", ParamIDs::outputGain, ParamUnits::db)
+    inGain(p, "IN", ParamIDs::inputGain),
+    mix(p, "MIX", ParamIDs::mix),
+    outGain(p, "OUT", ParamIDs::outputGain)
     {
         
         addAndMakeVisible(inGain);

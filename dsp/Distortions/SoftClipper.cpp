@@ -1,6 +1,8 @@
 #include "SoftClipper.h"
 
-SoftClip::SoftClip(juce::AudioProcessorValueTreeState& treeState) : saturationKnob(treeState, ParamIDs::saturationAmount) {}
+SoftClip::SoftClip(juce::AudioProcessorValueTreeState& treeState, SlotId slot)
+    : MacroEffect(treeState, slot),
+      saturationKnob(getParam(ParamIDs::saturationAmount)) {}
 
 SoftClip::~SoftClip()
 {

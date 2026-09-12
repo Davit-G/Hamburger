@@ -4,21 +4,25 @@
 #include "Grunge.h"
 #include "../../utils/Params.h"
 
-class PreDistortion
+#include "../EffectBase.h"
+
+class PreDistortion : public EffectBase
 {
 public:
     PreDistortion(juce::AudioProcessorValueTreeState &state) : treeStateRef(state) {
-        type = dynamic_cast<juce::AudioParameterChoice *>(state.getParameter(ParamIDs::preDistortionType.getParamID())); jassert(type);
-        preDistortionEnabled = dynamic_cast<juce::AudioParameterBool *>(state.getParameter(ParamIDs::preDistortionEnabled.getParamID())); jassert(preDistortionEnabled);
+        type = dynamic_cast<juce::AudioParameterChoice *>(state.getParameter(SlotId{ModuleId::module2, 0}.type().getParamID())); jassert(type);
+        preDistortionEnabled = dynamic_cast<juce::AudioParameterBool *>(state.getParameter(SlotId{ModuleId::module2, 0}.enabled().getParamID())); jassert(preDistortionEnabled);
 
         svfAllPass = std::make_unique<SVFAllPassChain>(state);
         grungeDSP = std::make_unique<Grunge>(state);
     }
     ~PreDistortion() {}
 
-    void processBlock(juce::dsp::AudioBlock<float>& block) {
+
+    void processBlock(juce::dsp::AudioBlock<float>& block) override {
         int typeSetting = type->getIndex();
-        
+
+
         if (preDistortionEnabled->get() == false)
             return;
 
@@ -36,7 +40,7 @@ public:
         }
     }
 
-    void prepare(juce::dsp::ProcessSpec& spec) {
+    void prepare(juce::dsp::ProcessSpec& spec) override {
         svfAllPass->prepare(spec);
         grungeDSP->prepare(spec);
     }
@@ -47,6 +51,7 @@ public:
 
 private:
     juce::AudioProcessorValueTreeState &treeStateRef;
+
     juce::AudioParameterChoice *type = nullptr;
     
     std::unique_ptr<SVFAllPassChain> svfAllPass = nullptr;

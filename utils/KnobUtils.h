@@ -85,17 +85,9 @@ inline juce::String stripParamUnitSuffix(const juce::String &text, ParamUnits un
 inline std::optional<float> parseParamString(const juce::String &text, ParamUnits unit) noexcept {
     auto stripped = stripParamUnitSuffix(text, unit);
 
-    auto s = text.trimStart();
-
-    if (s.startsWithChar('-') || s.startsWithChar('+'))
-        s = s.substring(1);
-
-    if (s.startsWithChar('.'))
-        s = s.substring(1);
-
-    bool startsWithNumber = s.isNotEmpty() && juce::CharacterFunctions::isDigit(s[0]);
-
-    if (!startsWithNumber)
+    // getFloatValue() returns 0 for anything unparseable, so a digit is what separates
+    // "0" the value from "abc" the typo
+    if (!stripped.containsAnyOf("0123456789"))
         return std::nullopt;
 
     return displayToParamValue(stripped.getFloatValue(), unit);

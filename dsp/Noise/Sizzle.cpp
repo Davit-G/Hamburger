@@ -12,11 +12,12 @@
 
 //==============================================================================
 Sizzle::Sizzle(juce::AudioProcessorValueTreeState &treeState)
-	: envelopeDetector(true),
-	  noiseAmount(treeState, ParamIDs::sizzleAmount),
-	  filterTone(treeState, ParamIDs::sizzleFrequency),
-	  fizzAmount(treeState, ParamIDs::fizzAmount),
-	  filterQ(treeState, ParamIDs::sizzleQ) {}
+	: MacroEffect(treeState, SlotId{ModuleId::module1, 0}),
+	  envelopeDetector(true),
+	  noiseAmount(getParam(ParamIDs::sizzleAmount)),
+	  filterTone(getParam(ParamIDs::sizzleFrequency)),
+	  fizzAmount(getParam(ParamIDs::fizzAmount)),
+	  filterQ(getParam(ParamIDs::sizzleQ)) {}
 
 Sizzle::~Sizzle()
 {
@@ -35,7 +36,7 @@ void Sizzle::prepare(juce::dsp::ProcessSpec &spec)
 	envelopeDetector.setReleaseTime(2);
 	envelopeDetector.prepare(spec);
 
-	filterComputed = false;
+	lastSizzleFreq = -1.0f;
 
 	filter.prepare(spec);
 }
@@ -55,8 +56,11 @@ void Sizzle::processBlock(juce::dsp::AudioBlock<float> &block)
 
 	auto sizzleFreq = filterTone.getRaw(0);
 
-	if (filterTone.isChanged() || !filterComputed)
+	if (! juce::approximatelyEqual(sizzleFreq, lastSizzleFreq))
+	{
 		*filter.coefficients = juce::dsp::IIR::ArrayCoefficients<float>::makeLowPass(sampleRate, sizzleFreq, 0.707f);
+		lastSizzleFreq = sizzleFreq;
+	}
 
 	for (int sample = 0; sample < block.getNumSamples(); sample++)
 	{

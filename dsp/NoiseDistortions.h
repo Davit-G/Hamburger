@@ -7,16 +7,17 @@
 #include "./Distortions/HarshGate.h"
 
 #include "SmoothParam.h"
+#include "EffectBase.h"
 
-class NoiseDistortions
+class NoiseDistortions : public EffectBase
 {
 public:
     NoiseDistortions(juce::AudioProcessorValueTreeState &state)
     {
-        distoType = dynamic_cast<juce::AudioParameterChoice *>(state.getParameter("noiseDistortionType"));
+        distoType = dynamic_cast<juce::AudioParameterChoice *>(state.getParameter(SlotId{ModuleId::module1, 0}.type().getParamID()));
         jassert(distoType);
 
-        noiseEnabled = dynamic_cast<juce::AudioParameterBool *>(state.getParameter("noiseDistortionEnabled"));
+        noiseEnabled = dynamic_cast<juce::AudioParameterBool *>(state.getParameter(SlotId{ModuleId::module1, 0}.enabled().getParamID()));
         jassert(noiseEnabled);
 
         sizzle = std::make_unique<Sizzle>(state);
@@ -27,9 +28,11 @@ public:
     }
     ~NoiseDistortions(){}
 
-    void processBlock(juce::dsp::AudioBlock<float> &block)
+
+    void processBlock(juce::dsp::AudioBlock<float> &block) override
     {
         int distoTypeIndex = distoType->getIndex();
+
 
         if (noiseEnabled->get() != true) return;
 
@@ -63,7 +66,7 @@ public:
         }
     }
 
-    void prepare(juce::dsp::ProcessSpec& spec)
+    void prepare(juce::dsp::ProcessSpec& spec) override
     {
         sizzle->prepare(spec);
         erosion->prepare(spec);
@@ -78,6 +81,7 @@ public:
 
 private:
     // juce::AudioProcessorValueTreeState &treeStateRef;
+
     juce::AudioParameterChoice *distoType = nullptr;
 
     juce::AudioParameterBool* noiseEnabled;

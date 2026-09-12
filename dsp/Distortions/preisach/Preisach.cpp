@@ -5,10 +5,11 @@
 #include "../../../utils/Params.h"
 #include "../../WaveShapers.h"
 
-Preisach::Preisach(juce::AudioProcessorValueTreeState& treeState) :
-    drive(treeState, ParamIDs::tapeDrive),
-    bias(treeState, ParamIDs::tapeBias),
-    remanence(treeState, ParamIDs::tapeWidth) {}
+Preisach::Preisach(juce::AudioProcessorValueTreeState& treeState, SlotId slot)
+    : MacroEffect(treeState, slot),
+      drive(getParam(ParamIDs::tapeDrive)),
+      bias(getParam(ParamIDs::tapeBias)),
+      remanence(getParam(ParamIDs::tapeWidth)) {}
 
 Preisach::~Preisach() {
 }

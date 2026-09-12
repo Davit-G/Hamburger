@@ -1,18 +1,19 @@
 #pragma once
 
 #include "../Panel.h"
+#include "../../../dsp/EffectInfos.h"
 
 #include "../../LookAndFeel/Palette.h"
 
 class MBCompPanel : public Panel
 {
 public:
-    MBCompPanel(AudioPluginAudioProcessor &p) : Panel(p, "MB", Palette::colours[3]),
-                                                   threshold(p, "THRES", ParamIDs::MBCompThreshold, ParamUnits::db, ScopeContextType::COMPRESSION),
-                                                   ratio(p, "RATIO", ParamIDs::compRatio, ParamUnits::compressionRatio, ScopeContextType::COMPRESSION),
-                                                   tilt(p, "TILT", ParamIDs::compBandTilt, ParamUnits::db, ScopeContextType::COMPRESSION),
-                                                   attack(p, "SPEED", ParamIDs::compSpeed, ParamUnits::ms, ScopeContextType::COMPRESSION),
-                                                   makeup(p, "GAIN", ParamIDs::compOut, ParamUnits::db, ScopeContextType::COMPRESSION)
+    MBCompPanel(AudioPluginAudioProcessor &p, SlotId slot = SlotId{ModuleId::dynamics, 0}) : Panel(p, "MB", Palette::colours[3]),
+                                                   threshold(p, "THRES", slot, ParamIDs::MBCompThreshold, ScopeContextType::COMPRESSION),
+                                                   ratio(p, "RATIO", slot, ParamIDs::compRatio, ScopeContextType::COMPRESSION),
+                                                   tilt(p, "TILT", slot, ParamIDs::compBandTilt, ScopeContextType::COMPRESSION),
+                                                   attack(p, "SPEED", slot, ParamIDs::MBCompSpeed, ScopeContextType::COMPRESSION),
+                                                   makeup(p, "GAIN", slot, ParamIDs::compOut, ScopeContextType::COMPRESSION)
     {
         addAndMakeVisible(threshold);
         addAndMakeVisible(ratio);

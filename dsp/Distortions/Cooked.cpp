@@ -1,9 +1,9 @@
 #include "Cooked.h"
 
 //==============================================================================
-Cooked::Cooked(juce::AudioProcessorValueTreeState& treeState) :
-amount(treeState, ParamIDs::fold)
-// stages(treeState, ParamIDs::stages) 
+Cooked::Cooked(juce::AudioProcessorValueTreeState& treeState, SlotId slot)
+    : MacroEffect(treeState, slot),
+      amount(getParam(ParamIDs::fold))
 {}
 
 Cooked::~Cooked() {}

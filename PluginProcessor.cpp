@@ -1,8 +1,13 @@
 #include "PluginProcessor.h"
+#include "dsp/EffectBase.h"
 #include "gui/ResizableEditor.h"
 
+#include <atomic>
 #include <chrono>
 #include <ctime>
+
+#include "dsp/MacroParam.h"
+#include "dsp/EffectInfos.h"
 
 
 //==============================================================================
@@ -15,43 +20,42 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor() : AudioProcessor(BusesPro
                                                          dryWetMixer(30),
                                                          noiseDistortionSelection(treeState),
                                                          preDistortionSelection(treeState),
-                                                         emphasisFilter(treeState)
+                                                         emphasisFilter(treeState),
+                                                         distortionTypeSelection(treeState)
 {
     treeState.state = juce::ValueTree("savedParams");
 
-    inputGainKnob = dynamic_cast<juce::AudioParameterFloat *>(treeState.getParameter(ParamIDs::inputGain.id.getParamID()));
+    slots[(size_t) ModuleId::preEmphasis] = &emphasisPreFilter;
+    slots[(size_t) ModuleId::postEmphasis] = &emphasisPostFilter;
+    slots[(size_t) ModuleId::dynamics] = &dynamics;
+    slots[(size_t) ModuleId::module1] = &noiseDistortionSelection;
+    slots[(size_t) ModuleId::module2] = &preDistortionSelection;
+    slots[(size_t) ModuleId::main] = &distortionTypeSelection;
+    slots[(size_t) ModuleId::postClip] = &postClip;
+
+    inputGainKnob = dynamic_cast<juce::AudioParameterFloat *>(treeState.getParameter(ParamIDs::inputGain.getParamID()));
     if (inputGainKnob == nullptr)
         jassertfalse;
 
-    outputGainKnob = dynamic_cast<juce::AudioParameterFloat *>(treeState.getParameter(ParamIDs::outputGain.id.getParamID()));
+    outputGainKnob = dynamic_cast<juce::AudioParameterFloat *>(treeState.getParameter(ParamIDs::outputGain.getParamID()));
     if (outputGainKnob == nullptr)
         jassertfalse;
 
-    mixKnob = dynamic_cast<juce::AudioParameterFloat *>(treeState.getParameter(ParamIDs::mix.id.getParamID()));
+    mixKnob = dynamic_cast<juce::AudioParameterFloat *>(treeState.getParameter(ParamIDs::mix.getParamID()));
     if (mixKnob == nullptr)
         jassertfalse;
 
-    hamburgerEnabledButton = dynamic_cast<juce::AudioParameterBool *>(treeState.getParameter(ParamIDs::hamburgerEnabled.id.getParamID()));
+    hamburgerEnabledButton = dynamic_cast<juce::AudioParameterBool *>(treeState.getParameter(ParamIDs::hamburgerEnabled.getParamID()));
     if (hamburgerEnabledButton == nullptr)
         jassertfalse;
 
-    stages = dynamic_cast<juce::AudioParameterInt *>(treeState.getParameter(ParamIDs::stages.id.getParamID()));
-    if (stages == nullptr)
-        jassertfalse;
-
-    hq = dynamic_cast<juce::AudioParameterInt *>(treeState.getParameter(ParamIDs::oversamplingFactor.id.getParamID()));
+    hq = dynamic_cast<juce::AudioParameterInt *>(treeState.getParameter(ParamIDs::oversamplingFactor.getParamID()));
     if (hq == nullptr)
         jassertfalse;
 
-    clipEnabled = dynamic_cast<juce::AudioParameterBool *>(treeState.getParameter(ParamIDs::postClipEnabled.id.getParamID()));
-    if (clipEnabled == nullptr)
-        jassertfalse;
+    // the clipper gates itself on its own slot toggle, see PostClip::processBlock
 
     presetManager = std::make_unique<Preset::PresetManager>(treeState, appProperties);
-
-    for (int i = 0; i < ParamIDs::maxStages; i++) {
-        distortionTypeSelection.push_back(std::make_unique<PrimaryDistortion>(treeState));
-    }
 
 #if PERFETTO
     // MelatoninPerfetto::get().beginSession(300000);
@@ -65,144 +69,89 @@ AudioPluginAudioProcessor::~AudioPluginAudioProcessor()
 #endif
 }
 
-inline auto makeRange(float start, float end)
-{
-    return juce::NormalisableRange<float>(start, end, 0.001f);
-}
-
 juce::AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::createParameterLayout()
 {
     juce::AudioProcessorValueTreeState::ParameterLayout params;
-
+    std::vector<std::unique_ptr<juce::RangedAudioParameter>> collected;
+    
     std::cout << "Creating parameters..." << std::endl;
+    
+    
+    collected.push_back(std::make_unique<MacroParam>(ParamIDs::inputGain));
+    collected.push_back(std::make_unique<MacroParam>(ParamIDs::outputGain));
+    collected.push_back(std::make_unique<MacroParam>(ParamIDs::mix));
+    collected.push_back(std::make_unique<juce::AudioParameterInt>(ParamIDs::oversamplingFactor.getParameterID(), "Oversampling Factor", 0, 2, 0));
+    
+    for (int i = 0; i < ParamIDs::numGlobalMacros; ++i)
+        collected.push_back (std::make_unique<MacroParam> (*ParamIDs::globalMacros[(size_t) i]));
+    
+    collected.push_back(std::make_unique<juce::AudioParameterInt>(ParamIDs::slewType.getParameterID(), "Slew Type", 0, 2, 0));
+    collected.push_back(std::make_unique<juce::AudioParameterBool>(ParamIDs::hamburgerEnabled.getParameterID(), "Hamburger Enabled", true));
+    collected.push_back(std::make_unique<juce::AudioParameterBool>(ParamIDs::emphasisOn.getParameterID(), "Emphasis EQ On", true));
 
-    params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::inputGain.id, "Input Gain", makeRange(-24.0f, 24.0f), 0.f));
-    params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::outputGain.id, "Out Gain", makeRange(-24.0f, 24.0f), 0.f));
-    params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::mix.id, "Mix", makeRange(0.0f, 100.0f), 100.f));
-
-    // grill
-    params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::saturationAmount.id, "Grill Saturation", makeRange(0.0f, 100.0f), 0.f));
-    params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::diode.id, "Grill Diode", makeRange(0.0f, 100.0f), 0.0f));
-    params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::fold.id, "Grill Fold", makeRange(0.0f, 100.0f), 0.0f));
-    params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::grillBias.id, "Grill Bias", makeRange(0.0f, 1.0f), 0.0f));
-
-    // tubejuce::
-    params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::tubeAmount.id, "Tube Saturation", makeRange(0.0f, 100.0f), 0.f));
-    params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::jeffAmount.id, "Tube Jeff Amt", makeRange(0.0f, 100.0f), 0.f));
-    params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::tubeBias.id, "Tube Bias", makeRange(0.0f, 1.0f), 0.0f));
-    params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::tubeTone.id, "Tube Tone", makeRange(0.0f, 1.0f), 1.0f));
-
-    // phasejuce::
-    params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::phaseAmount.id, "Phase Distortion", makeRange(0.0f, 100.0f), 0.f));
-    params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::phaseDistTone.id, "Phase Dist Tone", juce::NormalisableRange<float>(20.0f, 20000.0f, 0.f, 0.25f), 355.0f));
-    params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::phaseDistStereo.id, "Phase Dist Stereo", makeRange(0.0f, 1.0f), 0.f));
-    params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::phaseShift.id, "Phase Dist Shift", makeRange(-1.0f, 1.0f), 0.f));
-    params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::phaseRectify.id, "Phase Dist Rectify", makeRange(0.0f, 1.0f), 0.f));
-
-    // rubidiumjuce::
-    params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::rubidiumAmount.id, "Rubidium Saturation", makeRange(0.0f, 100.0f), 5.f));
-    params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::rubidiumMojo.id, "Rubidium Mojo", makeRange(0.0f, 100.0f), 5.f));
-    params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::rubidiumAsym.id, "Rubidium Asymmetry", makeRange(0.0f, 10.0f), 0.f));
-    params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::rubidiumTone.id, "Rubidium Tone", juce::NormalisableRange<float>(4.0f, 100.0f, 0.f, 0.5f), 5.0f));
-    params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::rubidiumBias.id, "Rubidium Bias", makeRange(0.0f, 1.0f), 0.f));
-
-    // matrixjuce::
-    params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::matrix1.id, "Matrix #1", makeRange(0.0f, 1.0f), 0.f));
-    params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::matrix2.id, "Matrix #2", makeRange(0.0f, 1.0f), 0.f));
-    params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::matrix3.id, "Matrix #3", makeRange(0.0f, 1.0f), 0.f));
-    params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::matrix4.id, "Matrix #4", makeRange(0.0f, 1.0f), 0.f));
-    params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::matrix5.id, "Matrix #5", makeRange(0.0f, 1.0f), 0.f));
-    params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::matrix6.id, "Matrix #6", makeRange(0.0f, 1.0f), 0.f));
-    params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::matrix7.id, "Matrix #7", makeRange(0.0f, 1.0f), 0.f));
-    params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::matrix8.id, "Matrix #8", makeRange(0.0f, 1.0f), 0.f));
-    params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::matrix9.id, "Matrix #9", makeRange(0.0f, 1.0f), 1.f));
-
-    // tapejuce::
-    params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::tapeDrive.id, "Tape Drive", makeRange(0.0f, 1.0f), 0.f));
-    params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::tapeBias.id, "Tape Bias", makeRange(0.0f, 1.0f), 0.f));
-    params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::tapeWidth.id, "Tape Age", makeRange(0.0f, 1.0f), 0.3f));
-
-    // categoricaljuce::
-    params.add(std::make_unique<juce::AudioParameterChoice>(ParamIDs::primaryDistortionType.id, "Distortion Type", ParamIDs::distortion.categories, 0));
-    params.add(std::make_unique<juce::AudioParameterChoice>(ParamIDs::noiseDistortionType.id, "Noise Type", ParamIDs::noiseTypes.categories, 0));
-    params.add(std::make_unique<juce::AudioParameterChoice>(ParamIDs::compressionType.id, "Compression Type", ParamIDs::dynamics.categories, 0));
 
     // compressorjuce::
-    params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::compSpeed.id, "Comp Speed", juce::NormalisableRange<float>(0.0f, 400.0f, 0.f, 0.25f), 100.f));
-    params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::compBandTilt.id, "Comp Band Tilt", makeRange(-20.0f, 20.0f), 0.f));
-    params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::compStereoLink.id, "Stereo Link", makeRange(0.0f, 100.0f), 100.f));
-    params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::compRatio.id, "Comp Ratio", makeRange(1.0f, 10.0f), 3.5f));
-    params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::compOut.id, "Comp Makeup", makeRange(-24.0f, 24.0f), 0.f));
+    // collected.push_back(std::make_unique<MacroParam>(ParamIDs::compSpeed.getParamID(), "Comp Speed", juce::NormalisableRange<float>(0.0f, 400.0f, 0.f, 0.25f), 100.f));
+    // collected.push_back(std::make_unique<MacroParam>(ParamIDs::compBandTilt.getParamID(), "Comp Band Tilt", makeRange(-20.0f, 20.0f), 0.f));
+    // collected.push_back(std::make_unique<MacroParam>(ParamIDs::compStereoLink.getParamID(), "Stereo Link", makeRange(0.0f, 100.0f), 100.f));
+    // collected.push_back(std::make_unique<MacroParam>(ParamIDs::compRatio.getParamID(), "Comp Ratio", makeRange(1.0f, 10.0f), 3.5f));
+    // collected.push_back(std::make_unique<MacroParam>(ParamIDs::compOut.getParamID(), "Comp Makeup", makeRange(-24.0f, 24.0f), 0.f));
 
-    params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::stereoCompThreshold.id, "Stereo Comp Threshold", makeRange(-48.0f, 0.0f), -24.f));
-    params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::MBCompThreshold.id, "MB Comp Threshold", makeRange(-48.0f, 0.0f), -24.f));
-    params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::MSCompThreshold.id, "MS Comp Threshold", makeRange(-48.0f, 0.0f), -24.f));
-
-    params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::TypeAThreshold.id, "Type A Threshold", makeRange(-48.0f, 0.0f), -40.f));
-    params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::TypeARatio.id, "Type A Ratio", makeRange(1.0f, 4.0f), 2.0f));
-    params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::TypeATilt.id, "Type A Tilt", makeRange(-20.0f, 20.0f), -2.f));
-    params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::TypeAOut.id, "Type A Out", makeRange(-24.0f, 24.0f), -12.0f));
-
-    // noise distortionsjuce::
-    params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::sizzleAmount.id, "Sizzle Amt", makeRange(0.0f, 100.0f), 5.f));
-    params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::sizzleFrequency.id, "Sizzle Freq", juce::NormalisableRange<float>(20.0f, 20000.0f, 0.f, 0.25f), 4000.0f));
-    params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::sizzleQ.id, "Sizzle Q", makeRange(0.1f, 1.5f), 1.f));
-
-    params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::erosionAmount.id, "Erosion Amt", makeRange(0.0f, 100.0f), 3.f));
-    params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::erosionFrequency.id, "Noise Freq", juce::NormalisableRange<float>(20.0f, 20000.0f, 0.f, 0.25f), 400.0f));
-    params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::erosionQ.id, "Erosion Q", makeRange(0.1f, 1.5f), 1.f));
-
-    params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::gateAmt.id, "Gate Amt", makeRange(0.0f, 1.0f), 0.f));
-    params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::gateMix.id, "Gate Mix", makeRange(0.0f, 1.0f), 1.f));
-
-    params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::downsampleFreq.id, "Dwnsmpl Freq", juce::NormalisableRange<float>(200.0f, 40000.0f, 0.f, 0.25f), 40000.0f));
-    params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::downsampleMix.id, "Dwnsmpl Mix", makeRange(0.0f, 1.0f), 1.f));
-    params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::bitReduction.id, "Dwnsmpl Bits", makeRange(1.0f, 32.0f), 32.f));
-
-    params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::fizzAmount.id, "Fizz Amt", makeRange(0.0f, 100.0f), 5.f));
-
-    // predistjuce::
-    params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::allPassFreq.id, "AllPass Frequency", juce::NormalisableRange<float>(20.0f, 20000.0f, 0.f, 0.25f), 85.0f));
-    params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::allPassQ.id, "AllPass Q", makeRange(0.01f, 1.41f), 0.4f));
-    params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::allPassAmount.id, "AllPass Number", makeRange(0.0f, 50.0f), 10.0f));
-
-    params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::grungeAmt.id, "Grunge Amt", makeRange(0.0f, 1.0f), 0.0f));
-    params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::grungeTone.id, "Grunge Tone", makeRange(0.0f, 1.0f), 0.5f));
+    // collected.push_back(std::make_unique<MacroParam>(ParamIDs::MBCompSpeed.getParamID(), "Multiband Comp Speed", juce::NormalisableRange<float>(0.0f, 400.0f, 0.f, 0.25f), 100.f));
+    // collected.push_back(std::make_unique<MacroParam>(ParamIDs::MSCompSpeed.getParamID(), "Mid Side Comp Speed", juce::NormalisableRange<float>(0.0f, 400.0f, 0.f, 0.25f), 100.f));
+    
+    // collected.push_back(std::make_unique<MacroParam>(ParamIDs::stereoCompThreshold.getParamID(), "Stereo Comp Threshold", makeRange(-48.0f, 0.0f), -24.f));
+    // collected.push_back(std::make_unique<MacroParam>(ParamIDs::MBCompThreshold.getParamID(), "MB Comp Threshold", makeRange(-48.0f, 0.0f), -24.f));
+    // collected.push_back(std::make_unique<MacroParam>(ParamIDs::MSCompThreshold.getParamID(), "MS Comp Threshold", makeRange(-48.0f, 0.0f), -24.f));
+    
+    // collected.push_back(std::make_unique<MacroParam>(ParamIDs::TypeAThreshold.getParamID(), "Type A Threshold", makeRange(-48.0f, 0.0f), -40.f));
+    // collected.push_back(std::make_unique<MacroParam>(ParamIDs::TypeARatio.getParamID(), "Type A Ratio", makeRange(1.0f, 4.0f), 2.0f));
+    // collected.push_back(std::make_unique<MacroParam>(ParamIDs::TypeATilt.getParamID(), "Type A Tilt", makeRange(-20.0f, 20.0f), -2.f));
+    // collected.push_back(std::make_unique<MacroParam>(ParamIDs::TypeAOut.getParamID(), "Type A Out", makeRange(-24.0f, 24.0f), -12.0f));
+    // collected.push_back(std::make_unique<MacroParam>(ParamIDs::TypeACompSpeed.getParamID(), "Type A Comp Speed", juce::NormalisableRange<float>(0.0f, 400.0f, 0.f, 0.25f), 100.f));
 
     // emphasisjuce::
-    params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::emphasisLowGain.id, "Emphasis Low Gain", makeRange(-18.0f, 18.0f), 0.f));
-    params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::emphasisHighGain.id, "Emphasis Hi Gain", makeRange(-18.0f, 18.0f), 0.f));
+    collected.push_back(std::make_unique<MacroParam>(ParamIDs::emphasisLowGain));
+    collected.push_back(std::make_unique<MacroParam>(ParamIDs::emphasisHighGain));
 
-    params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::emphasisLowFreq.id, "Emphasis Low Frequency", juce::NormalisableRange<float>(20.0f, 20000.0f, 0.f, 0.25f), 62.0f));
-    params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::emphasisHighFreq.id, "Emphasis Hi Frequency", juce::NormalisableRange<float>(20.0f, 20000.0f, 0.f, 0.25f), 9000.0f));
+    collected.push_back(std::make_unique<MacroParam>(ParamIDs::emphasisLowFreq));
+    collected.push_back(std::make_unique<MacroParam>(ParamIDs::emphasisHighFreq));
 
-    // togglesjuce::
-    params.add(std::make_unique<juce::AudioParameterBool>(ParamIDs::hamburgerEnabled.id, "Hamburger Enabled", true));
-    params.add(std::make_unique<juce::AudioParameterBool>(ParamIDs::compressionOn.id, "Compressor On", false));
-    params.add(std::make_unique<juce::AudioParameterBool>(ParamIDs::primaryDistortionEnabled.id, "Dist Enabled", true));
-    params.add(std::make_unique<juce::AudioParameterBool>(ParamIDs::emphasisOn.id, "Emphasis EQ On", true));
-    params.add(std::make_unique<juce::AudioParameterBool>(ParamIDs::preDistortionEnabled.id, "Pre-Dist Enabled", false));
-    params.add(std::make_unique<juce::AudioParameterBool>(ParamIDs::noiseDistortionEnabled.id, "Noise Enabled", false));
-    params.add(std::make_unique<juce::AudioParameterBool>(ParamIDs::postClipEnabled.id, "SoftClip Enabled", true));
 
-    params.add(std::make_unique<juce::AudioParameterInt>(ParamIDs::oversamplingFactor.id, "Oversampling Factor", 0, 2, 0));
-    params.add(std::make_unique<juce::AudioParameterInt>(ParamIDs::stages.id, "Stages", 1, ParamIDs::maxStages, 1));
+    for (const auto& m : pluginModules)
+    {
+        for (int sub = 0; sub < m.slotCount; ++sub)
+        {
+            const SlotId slot { m.id, sub };
 
-    // utilityjuce::
-    params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::postClipGain.id, "SoftClip Gain", makeRange(-18.0f, 18.0f), 0.f));
-    params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::postClipKnee.id, "SoftClip Knee", makeRange(0.0f, 4.0f), 0.5f));
-    
-    params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::alphaParam.id, "Strength", makeRange(0.0f, 1.0f), 1.0f));
-    params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::slewSpeed.id, "Slew Tone", makeRange(0.0f, 1.0f), 0.5f));
-    params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::directionality.id, "Slew Bias", makeRange(-1.0f, 1.0f), 0.f));
-    params.add(std::make_unique<juce::AudioParameterInt>(ParamIDs::slewType.id, "Slew Type", 0, 2, 0));
-    
-    params.add(std::make_unique<juce::AudioParameterChoice>(ParamIDs::preDistortionType.id, "Pre-Distortion Type", ParamIDs::preDistortionTypes.categories, 0));
+            collected.push_back (std::make_unique<juce::AudioParameterBool> (
+                slot.enabled(), slot.displayNamePrefix() + " ENABLED", m.enabledByDefault));
 
-    params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::MBCompSpeed.id, "Multiband Comp Speed", juce::NormalisableRange<float>(0.0f, 400.0f, 0.f, 0.25f), 100.f));
-    params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::MSCompSpeed.id, "Mid Side Comp Speed", juce::NormalisableRange<float>(0.0f, 400.0f, 0.f, 0.25f), 100.f));
-    params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::TypeACompSpeed.id, "Type A Comp Speed", juce::NormalisableRange<float>(0.0f, 400.0f, 0.f, 0.25f), 100.f));
+            if (const auto* types = ParamIDs::categoriesFor (m.id))
+                collected.push_back (std::make_unique<juce::AudioParameterChoice> (
+                    slot.type(), slot.displayNamePrefix() + " TYPE", types->categories, 0));
 
+            juce::StringArray alreadyAdded;
+
+            for (const auto* layout : EffectInfos::layoutsFor (m.id))
+            {
+                for (const auto& descriptor : layout->params)
+                {
+                    if (descriptor.id.isNull() || alreadyAdded.contains (descriptor.getParamID()))
+                        continue;
+
+                    alreadyAdded.add (descriptor.getParamID());
+                    collected.push_back (std::make_unique<MacroParam> (slot, descriptor));
+                }
+            }
+        }
+    }
+
+    std::stable_sort (collected.begin(), collected.end(),
+                      [] (const auto& a, const auto& b) { return a->getVersionHint() < b->getVersionHint(); });
+
+    for (auto& parameter : collected)
+        params.add (std::move (parameter));
 
     return params;
 }
@@ -251,17 +200,15 @@ void AudioPluginAudioProcessor::prepareToPlay(double sampleRate, int samplesPerB
     oversampledSpec.maximumBlockSize = samplesPerBlock * pow(2, oversamplingStack.getOversamplingFactor());
     oversampledSpec.numChannels = getTotalNumOutputChannels();
 
-    for (int i = 0; i < ParamIDs::maxStages; i++) {
-        distortionTypeSelection[i]->prepare(oversampledSpec);
-    }
-
     emphasisFilter.prepare(oversampledSpec);
-    postClip.prepare(oversampledSpec);
-    preDistortionSelection.prepare(oversampledSpec);
-    noiseDistortionSelection.prepare(oversampledSpec);
-    dynamics.prepare(oversampledSpec);
 
     float totalLatency = oversamplingStack.getLatencySamples();
+
+    for (size_t i = 0; i < (size_t) ModuleId::count; i++) {
+        EffectBase* slot = slots[i];
+        slot->prepare(oversampledSpec);
+        totalLatency += (float) slot->getLatencySamples();
+    }
 
     DBG("Total Latency: " << totalLatency);
 
@@ -299,6 +246,17 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
 
     juce::ignoreUnused(midiMessages);
 
+    juce::ScopedNoDenormals noDenormals;
+    auto totalNumInputChannels = getTotalNumInputChannels();
+    auto totalNumOutputChannels = getTotalNumOutputChannels();
+
+    if (totalNumInputChannels == 0)
+        return;
+    if (totalNumOutputChannels == 0)
+        return;
+
+    
+
     const int oversampleAmount = (hq != nullptr) ? hq->get() : 0;
     {
         // TRACE_EVENT("dsp", "oversampling config");
@@ -315,14 +273,6 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
         }
     }
 
-    juce::ScopedNoDenormals noDenormals;
-    auto totalNumInputChannels = getTotalNumInputChannels();
-    auto totalNumOutputChannels = getTotalNumOutputChannels();
-
-    if (totalNumInputChannels == 0)
-        return;
-    if (totalNumOutputChannels == 0)
-        return;
 
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear(i, 0, buffer.getNumSamples());
@@ -338,68 +288,41 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
 
     juce::dsp::AudioBlock<float> oversampledBlock = oversamplingStack.processSamplesUp(block);
 
-    emphasisFilter.processBefore(oversampledBlock);
+    emphasisFilter.beforeProcessing(oversampledBlock.getNumSamples());
 
-    {
-        // TRACE_EVENT("dsp", "companding");
-        dynamics.processBlock(oversampledBlock);
+    const auto routingOrder = order.load(std::memory_order_acquire);
+    for (size_t i = 0; i < (size_t) ModuleId::count; i++) {
+        const auto moduleId = routingOrder[i];
+        EffectBase* slot = slots[(size_t)moduleId];
+
+        /*  Tap either side of the main distortion so the scope's pre/post traces follow it
+            wherever the routing order puts it, rather than a fixed point in the chain. */
+        const bool isMainDistortion = (moduleId == ModuleId::main);
+
+        if (isMainDistortion)
+            scopeDataCollector.capturePreDistortion(oversampledBlock.getChannelPointer(0),
+                                                   oversampledBlock.getNumSamples(),
+                                                   oversampleAmount);
+
+        slot->updateParamsEveryBlock();
+        slot->processBlock(oversampledBlock);
+
+        if (isMainDistortion)
+            scopeDataCollector.capturePostDistortion(oversampledBlock.getChannelPointer(0),
+                                                    oversampledBlock.getNumSamples(),
+                                                    oversampleAmount);
     }
 
-    {
-        // TRACE_EVENT("dsp", "noise distortion");
-        noiseDistortionSelection.processBlock(oversampledBlock);
-    }
+    oversamplingStack.processSamplesDown(block);
 
-    {
-        // TRACE_EVENT("dsp", "pre distortion");
-        preDistortionSelection.processBlock(oversampledBlock);
-    }
+    scopeDataCollector.process(buffer.getReadPointer(0), buffer.getReadPointer(1), (size_t)buffer.getNumSamples());
 
-    scopeDataCollector.capturePreDistortion(oversampledBlock.getChannelPointer(0), oversampledBlock.getNumSamples(), oversampleAmount);
+    outputGain.setGainDecibels((outputGainKnob != nullptr) ? outputGainKnob->get() : 0.0f);
+    outputGain.process(context);
 
-    {
-        const int stagesAmt = (stages != nullptr) ? stages->get() : 1;
+    dryWetMixer.setWetMixProportion((mixKnob != nullptr) ? (mixKnob->get() * 0.01f) : 1.0f);
 
-        // TRACE_EVENT("dsp", "primary distortion");
-        for (int i = 0; i < stagesAmt; i++) {
-            if (i != 0) {
-                float decreaseVolumeAmt = -0.7f; // negative includes the dc flip
-                
-                juce::FloatVectorOperations::multiply(oversampledBlock.getChannelPointer(0), oversampledBlock.getChannelPointer(0), decreaseVolumeAmt, oversampledBlock.getNumSamples());
-                juce::FloatVectorOperations::multiply(oversampledBlock.getChannelPointer(1), oversampledBlock.getChannelPointer(1), decreaseVolumeAmt, oversampledBlock.getNumSamples());
-            }
-            distortionTypeSelection[i]->processBlock(oversampledBlock);
-        }
-        if (stagesAmt % 2 == 0) {
-            // when it's even, we need to flip the phase around again one more time
-            // to avoid phase cancellation during mixing
-            juce::FloatVectorOperations::multiply(oversampledBlock.getChannelPointer(0), oversampledBlock.getChannelPointer(0), -1.0f, oversampledBlock.getNumSamples());
-            juce::FloatVectorOperations::multiply(oversampledBlock.getChannelPointer(1), oversampledBlock.getChannelPointer(1), -1.0f, oversampledBlock.getNumSamples());
-        }
-    }
-
-    scopeDataCollector.capturePostDistortion(oversampledBlock.getChannelPointer(0), oversampledBlock.getNumSamples(), oversampleAmount);
-
-    emphasisFilter.processAfter(oversampledBlock);
-
-    {
-        // TRACE_EVENT("dsp", "other");
-        if (clipEnabled == nullptr || clipEnabled->get())
-        {   
-            postClip.processBlock(oversampledBlock);
-        }
-
-        oversamplingStack.processSamplesDown(block);
-
-        scopeDataCollector.process(buffer.getReadPointer(0), buffer.getReadPointer(1), (size_t)buffer.getNumSamples());
-
-        outputGain.setGainDecibels((outputGainKnob != nullptr) ? outputGainKnob->get() : 0.0f);
-        outputGain.process(context);
-
-        dryWetMixer.setWetMixProportion((mixKnob != nullptr) ? (mixKnob->get() * 0.01f) : 1.0f);
-
-        dryWetMixer.mixWetSamples(block);
-    }
+    dryWetMixer.mixWetSamples(block);
 }
 
 //==============================================================================
@@ -431,9 +354,11 @@ void AudioPluginAudioProcessor::setStateInformation(const void *data, int sizeIn
     if (xmlState.get() == nullptr)
         return;
 
-    if (xmlState->hasTagName(treeState.state.getType()))
+    if (xmlState->hasTagName(treeState.state.getType())) {
         // treeState.replaceState(juce::ValueTree::fromXml(*xmlState));
-        treeState.state = juce::ValueTree::fromXml(*xmlState);
+        juce::ValueTree copyState = juce::ValueTree::fromXml(*xmlState);
+        treeState.replaceState(copyState);
+    }
 }
 
 //==============================================================================

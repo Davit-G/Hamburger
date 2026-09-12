@@ -7,21 +7,14 @@ class OtherUtils : public Panel
 {
 public:
     OtherUtils(AudioPluginAudioProcessor &p) : Panel(p, "OTHER?"),
-    quality(p, "OVERSMPL", ParamIDs::oversamplingFactor, ParamUnits::oversample),
-    stages(p, "STAGES", ParamIDs::stages, ParamUnits::x)
+    quality(p, "OVERSMPL", ParamIDs::oversamplingFactor)
     {
         addAndMakeVisible(quality);
-        addAndMakeVisible(stages);
     }
 
     void resized() {
-        auto bounds = getLocalBounds();
-
-        quality.setBounds(bounds.removeFromLeft(bounds.getWidth() / 2));
-        stages.setBounds(bounds);
+        quality.setBounds(getLocalBounds());
     }
 private:
-    juce::Grid grid;
     ParamKnob quality;
-    ParamKnob stages;
 };

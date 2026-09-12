@@ -1,16 +1,17 @@
 #pragma once
  
 #include "../Panel.h"
+#include "../../../dsp/EffectInfos.h"
 #include "../../Knob.h"
 
 class SlewRatePanel : public Panel, private juce::AudioProcessorValueTreeState::Listener
 {
 public:
-    SlewRatePanel(AudioPluginAudioProcessor &p) : apvts(p), Panel(p, "SLEW"), 
-        alpha(p, "ALPHA", ParamIDs::alphaParam, ParamUnits::none, ScopeContextType::IN_OUT),
-        bias(p, "TONE", ParamIDs::slewSpeed, ParamUnits::none, ScopeContextType::IN_OUT),
-        directionality(p, "BEND", ParamIDs::directionality, ParamUnits::none, ScopeContextType::IN_OUT),
-        type(p, "TYPE", ParamIDs::slewType, ParamUnits::category, ScopeContextType::IN_OUT),
+    SlewRatePanel(AudioPluginAudioProcessor &p, SlotId slot = SlotId{ModuleId::main, 0}) : apvts(p), Panel(p, "SLEW"), 
+        alpha(p, "ALPHA", slot, ParamIDs::alphaParam, ScopeContextType::IN_OUT),
+        bias(p, "TONE", slot, ParamIDs::slewSpeed, ScopeContextType::IN_OUT),
+        directionality(p, "BEND", slot, ParamIDs::directionality, ScopeContextType::IN_OUT),
+        type(p, "TYPE", ParamIDs::slewType, ScopeContextType::IN_OUT),
         slewIcon(BinaryData::Slew_svg, BinaryData::Slew_svgSize, 3)
     {
         addAndMakeVisible(bias);

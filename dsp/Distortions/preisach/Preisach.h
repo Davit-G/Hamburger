@@ -4,16 +4,17 @@
 #include "juce_dsp/juce_dsp.h"
 #include "juce_audio_processors/juce_audio_processors.h"
 #include "../../SmoothParam.h"
+#include "../../EffectBase.h"
 
 #define PREISACH_USING_SIMD 1
 
-class Preisach {
+class Preisach : public MacroEffect {
 public:
-    Preisach(juce::AudioProcessorValueTreeState& treeState);
+    Preisach(juce::AudioProcessorValueTreeState& treeState, SlotId slot);
     ~Preisach();
 
-    void prepare(juce::dsp::ProcessSpec& spec);
-    void processBlock(juce::dsp::AudioBlock<float> &block);
+    void prepare(juce::dsp::ProcessSpec& spec) override;
+    void processBlock(juce::dsp::AudioBlock<float> &block) override;
 
     
 private:

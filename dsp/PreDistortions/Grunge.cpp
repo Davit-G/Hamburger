@@ -1,7 +1,9 @@
 #include "Grunge.h"
 
-Grunge::Grunge(juce::AudioProcessorValueTreeState &treeState) : amount(treeState, ParamIDs::grungeAmt),
-                                                                tone(treeState, ParamIDs::grungeTone)
+Grunge::Grunge(juce::AudioProcessorValueTreeState &treeState)
+    : MacroEffect(treeState, SlotId{ModuleId::module2, 0}),
+      amount(getParam(ParamIDs::grungeAmt)),
+      tone(getParam(ParamIDs::grungeTone))
 {
 }
 

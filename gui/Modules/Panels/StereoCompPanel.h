@@ -1,17 +1,18 @@
 #pragma once
 
 #include "../Panel.h"
+#include "../../../dsp/EffectInfos.h"
 
 
 class StereoCompPanel : public Panel
 {
 public:
-    StereoCompPanel(AudioPluginAudioProcessor &p) : Panel(p, ""),
-                                                   threshold(p, "THRES", ParamIDs::stereoCompThreshold, ParamUnits::db, ScopeContextType::COMPRESSION),
-                                                   ratio(p, "RATIO", ParamIDs::compRatio, ParamUnits::compressionRatio, ScopeContextType::COMPRESSION),
-                                                //    tilt(p, "S-LNK", "compStereoLink", ParamUnits::percent),
-                                                   attack(p, "SPEED", ParamIDs::compSpeed, ParamUnits::ms, ScopeContextType::COMPRESSION),
-                                                   makeup(p, "GAIN", ParamIDs::compOut, ParamUnits::db, ScopeContextType::COMPRESSION)
+    StereoCompPanel(AudioPluginAudioProcessor &p, SlotId slot = SlotId{ModuleId::dynamics, 0}) : Panel(p, ""),
+                                                   threshold(p, "THRES", slot, ParamIDs::stereoCompThreshold, ScopeContextType::COMPRESSION),
+                                                   ratio(p, "RATIO", slot, ParamIDs::compRatio, ScopeContextType::COMPRESSION),
+                                                //    tilt(p, "S-LNK", "compStereoLink"),
+                                                   attack(p, "SPEED", slot, ParamIDs::compSpeed, ScopeContextType::COMPRESSION),
+                                                   makeup(p, "GAIN", slot, ParamIDs::compOut, ScopeContextType::COMPRESSION)
     {
         addAndMakeVisible(threshold);
         addAndMakeVisible(ratio);

@@ -9,10 +9,12 @@
 #include "StereoComp.h"
 #include "TypeA.h"
 
+#include "../EffectBase.h"
+
 // todo: add compander class, omfg imagine multiband compander
 // todo: add gate?
 
-class Dynamics
+class Dynamics : public EffectBase
 {
 public:
     Dynamics(juce::AudioProcessorValueTreeState &state, ScopeDataCollector<float> &dataCollector) :
@@ -21,14 +23,17 @@ public:
         stereoComp(state, dataCollector),
         typeA(state, dataCollector)
     {
-        distoType = dynamic_cast<juce::AudioParameterChoice *>(state.getParameter(ParamIDs::compressionType.getParamID())); jassert(distoType);
-        enabled = dynamic_cast<juce::AudioParameterBool *>(state.getParameter(ParamIDs::compressionOn.getParamID())); jassert(enabled);
+        distoType = dynamic_cast<juce::AudioParameterChoice *>(state.getParameter(SlotId{ModuleId::dynamics, 0}.type().getParamID())); jassert(distoType);
+        enabled = dynamic_cast<juce::AudioParameterBool *>(state.getParameter(SlotId{ModuleId::dynamics, 0}.enabled().getParamID())); jassert(enabled);
     }
     ~Dynamics() {}
 
-    void processBlock(juce::dsp::AudioBlock<float>& block) {
-        if (!enabled->get()) return;
+
+    void processBlock(juce::dsp::AudioBlock<float>& block) override {
         int distoTypeIndex = distoType->getIndex();
+
+
+        if (!enabled->get()) return;
 
         switch (distoTypeIndex)
         {
@@ -55,7 +60,7 @@ public:
 
     }
 
-    void prepare(juce::dsp::ProcessSpec& spec) {
+    void prepare(juce::dsp::ProcessSpec& spec) override {
         mbComp.prepare(spec);
         msComp.prepare(spec);
         stereoComp.prepare(spec);
@@ -64,6 +69,7 @@ public:
 
 private:
     // juce::AudioProcessorValueTreeState &treeStateRef;
+
     juce::AudioParameterChoice *distoType = nullptr;
 
     juce::AudioParameterBool* enabled = nullptr;

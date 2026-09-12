@@ -1,14 +1,15 @@
 #pragma once
 
 #include "../Panel.h"
+#include "../../../dsp/EffectInfos.h"
 
 
 class GatePanel : public Panel
 {
 public:
-    GatePanel(AudioPluginAudioProcessor &p) : Panel(p, "GATE", Palette::colours[1]),
-    gate(p, "GATE", ParamIDs::gateAmt, ParamUnits::none, ScopeContextType::NOISE),
-    gateMix(p, "MIX", ParamIDs::gateMix, ParamUnits::none, ScopeContextType::NOISE)
+    GatePanel(AudioPluginAudioProcessor &p, SlotId slot = SlotId{ModuleId::module1, 0}) : Panel(p, "GATE", Palette::colours[1]),
+    gate(p, "GATE", slot, ParamIDs::gateAmt, ScopeContextType::NOISE),
+    gateMix(p, "MIX", slot, ParamIDs::gateMix, ScopeContextType::NOISE)
     {
         addAndMakeVisible(gate);
         addAndMakeVisible(gateMix);

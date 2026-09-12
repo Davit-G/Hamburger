@@ -1,4 +1,5 @@
 #include "Scope.h"
+#include "../../dsp/EffectInfos.h"
 
 #include "../../dsp/WaveShapers.h"
 #include "../../dsp/Dynamics/Compressor.h"
@@ -9,20 +10,6 @@ static constexpr size_t triggerDecimation = 8; // we do detection on a decimated
 static constexpr size_t triggerMatchLength = 32; // how much of the waveform is matched against the previous frame
 static constexpr juce::uint8 contextLabelAlpha = 20; // brightness of background watermark on scope
 static constexpr float readoutFontHeight = 11.0f; // font height for info / stats on scope
-
-// midpoint and half range of a block, so trigger levels sit relative to the signal rather than to zero
-template <typename SampleType>
-struct SignalRange
-{
-    SampleType mid;
-    SampleType amplitude;
-};
-
-template <typename SampleType>
-static SignalRange<SampleType> midAndAmplitude(SampleType lo, SampleType hi)
-{
-    return { (hi + lo) * SampleType(0.5), (hi - lo) * SampleType(0.5) };
-}
 
 static juce::String formatFrequency(float freq)
 {
@@ -67,9 +54,9 @@ Scope<SampleType>::Scope(juce::AudioProcessorValueTreeState& valueTree, ScopeDat
     highFreqParam = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter(ParamIDs::emphasisHighFreq.getParamID()));
     lowGainParam = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter(ParamIDs::emphasisLowGain.getParamID()));
     highGainParam = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter(ParamIDs::emphasisHighGain.getParamID()));
-    postClipKneeParam = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter(ParamIDs::postClipKnee.getParamID()));
+    postClipKneeParam = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter(EffectInfos::paramIdForDescriptor(ParamIDs::postClipKnee)));
 
-    compressionType = dynamic_cast<juce::AudioParameterChoice*>(apvts.getParameter(ParamIDs::compressionType.getParamID()));
+    compressionType = dynamic_cast<juce::AudioParameterChoice*>(apvts.getParameter(SlotId{ModuleId::dynamics, 0}.type().getParamID()));
 
     juce::dsp::ProcessSpec spec; // this is not realtime so whatever
     spec.maximumBlockSize = 128;
@@ -281,20 +268,23 @@ void Scope<SampleType>::updateTriggerOffset()
         lowHi = std::max(lowHi, blockMean);
     }
 
-    const auto raw = midAndAmplitude(rawLo, rawHi);
-    const auto lowPassed = midAndAmplitude(lowLo, lowHi);
+    // midpoint and half range, so trigger levels sit relative to the signal rather than to zero
+    const auto rawMid      = (rawHi + rawLo) * SampleType(0.5);
+    const auto rawAmp      = (rawHi - rawLo) * SampleType(0.5);
+    const auto lowMid      = (lowHi + lowLo) * SampleType(0.5);
+    const auto lowAmp      = (lowHi - lowLo) * SampleType(0.5);
 
     // ignore detection (and preserve current trigger offset)
-    if (juce::jmax(raw.amplitude, lowPassed.amplitude) < SampleType(0.0005))
+    if (juce::jmax(rawAmp, lowAmp) < SampleType(0.0005))
         return;
 
     // all the content sits above the cutoff, so the filtered copy has nothing left to lock onto
-    if (lowPassed.amplitude < raw.amplitude * SampleType(0.25))
+    if (lowAmp < rawAmp * SampleType(0.25))
     {
         // somehow the lowpassed audio is so quiet / we don't have a lot of lowpassed info. it barely makes a dent compared to the raw waveform.
         // take the first clean rising edge
-        auto armLevel = raw.mid - raw.amplitude * SampleType(0.2);
-        auto fireLevel = raw.mid + raw.amplitude * SampleType(0.2);
+        auto armLevel = rawMid - rawAmp * SampleType(0.2);
+        auto fireLevel = rawMid + rawAmp * SampleType(0.2);
         
         // arming in this case means that 
         bool armed = false;
@@ -313,8 +303,8 @@ void Scope<SampleType>::updateTriggerOffset()
         return;
     }
 
-    auto armLevel = lowPassed.mid - lowPassed.amplitude * SampleType(0.2);
-    auto fireLevel = lowPassed.mid + lowPassed.amplitude * SampleType(0.2);
+    auto armLevel = lowMid - lowAmp * SampleType(0.2);
+    auto fireLevel = lowMid + lowAmp * SampleType(0.2);
     
     auto searchEndDecimated = searchEnd / triggerDecimation;
 
@@ -992,13 +982,24 @@ void Scope<SampleType>::drawDistortionAmount(juce::Graphics &g, juce::Rectangle<
     drawTabbedLabel(g, row, label, juce::Justification::centredRight, false);
 }
 
+// caching parameter fetches here so we dont need to keep checking what the IDs are every time
 template <typename SampleType>
 float Scope<SampleType>::paramValue(const ParamIDs::ParameterInfo &paramInfo) const
 {
-    if (auto *param = dynamic_cast<juce::AudioParameterFloat *>(apvts.getParameter(paramInfo.getParamID())))
-        return param->get();
+    auto [entry, inserted] = paramCache.try_emplace(&paramInfo, nullptr);
 
-    return 0.0f;
+    if (inserted)
+    {
+        // most descriptors are macros now; fall back to the descriptor's own id for fixed ones
+        auto id = EffectInfos::paramIdForDescriptor(paramInfo);
+
+        if (id.isEmpty())
+            id = paramInfo.getParamID();
+
+        entry->second = dynamic_cast<juce::AudioParameterFloat *>(apvts.getParameter(id));
+    }
+
+    return entry->second != nullptr ? entry->second->get() : 0.0f;
 }
 
 template <typename SampleType>
@@ -1033,9 +1034,15 @@ juce::AudioParameterChoice* Scope<SampleType>::choiceParam(const ParamIDs::Param
 }
 
 template <typename SampleType>
+juce::AudioParameterChoice* Scope<SampleType>::choiceParamForSlot(SlotId slot) const
+{
+    return dynamic_cast<juce::AudioParameterChoice *>(apvts.getParameter(slot.type().getParamID()));
+}
+
+template <typename SampleType>
 juce::StringArray Scope<SampleType>::getDistortionHeaderLabels() const
 {
-    auto *type = choiceParam(ParamIDs::primaryDistortionType);
+    auto *type = choiceParamForSlot(SlotId{ModuleId::main, 0});
 
     if (type == nullptr)
         return {};
@@ -1047,7 +1054,7 @@ juce::StringArray Scope<SampleType>::getDistortionHeaderLabels() const
 template <typename SampleType>
 juce::String Scope<SampleType>::getDistortionAmountLabel() const
 {
-    auto *type = choiceParam(ParamIDs::primaryDistortionType);
+    auto *type = choiceParamForSlot(SlotId{ModuleId::main, 0});
 
     if (type == nullptr)
         return {};
@@ -1068,7 +1075,7 @@ juce::String Scope<SampleType>::getDistortionAmountLabel() const
 template <typename SampleType>
 juce::StringArray Scope<SampleType>::getNoiseHeaderLabels() const
 {
-    auto *type = choiceParam(ParamIDs::noiseDistortionType);
+    auto *type = choiceParamForSlot(SlotId{ModuleId::module1, 0});
 
     if (type == nullptr)
         return {};

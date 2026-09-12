@@ -1,17 +1,18 @@
 #pragma once
 
 #include "../Panel.h"
+#include "../../../dsp/EffectInfos.h"
 
 
 class MSCompPanel : public Panel
 {
 public:
-    MSCompPanel(AudioPluginAudioProcessor &p) : Panel(p, "MS", Palette::colours[3]),
-                                                   threshold(p, "THRES", ParamIDs::MSCompThreshold, ParamUnits::db, ScopeContextType::COMPRESSION),
-                                                   ratio(p, "RATIO", ParamIDs::compRatio, ParamUnits::compressionRatio, ScopeContextType::COMPRESSION),
-                                                   tilt(p, "TILT", ParamIDs::compBandTilt, ParamUnits::db, ScopeContextType::COMPRESSION),
-                                                   attack(p, "SPEED", ParamIDs::compSpeed, ParamUnits::ms, ScopeContextType::COMPRESSION),
-                                                   makeup(p, "GAIN", ParamIDs::compOut, ParamUnits::db, ScopeContextType::COMPRESSION)
+    MSCompPanel(AudioPluginAudioProcessor &p, SlotId slot = SlotId{ModuleId::dynamics, 0}) : Panel(p, "MS", Palette::colours[3]),
+                                                   threshold(p, "THRES", slot, ParamIDs::MSCompThreshold, ScopeContextType::COMPRESSION),
+                                                   ratio(p, "RATIO", slot, ParamIDs::compRatio, ScopeContextType::COMPRESSION),
+                                                   tilt(p, "TILT", slot, ParamIDs::compBandTilt, ScopeContextType::COMPRESSION),
+                                                   attack(p, "SPEED", slot, ParamIDs::MSCompSpeed, ScopeContextType::COMPRESSION),
+                                                   makeup(p, "GAIN", slot, ParamIDs::compOut, ScopeContextType::COMPRESSION)
     {
         addAndMakeVisible(threshold);
         addAndMakeVisible(ratio);

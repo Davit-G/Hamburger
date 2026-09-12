@@ -6,7 +6,7 @@ Set(FETCHCONTENT_QUIET FALSE)
 set(BUILD_CLAP TRUE)
 
 cmake_minimum_required(VERSION 3.15)
-set(ProjectVersion 0.9)
+set(ProjectVersion 0.10)
 set(PluginName "Hamburger")
 
 set(BaseTargetName Hamburger)
@@ -74,9 +74,9 @@ endif()
 
 juce_add_plugin("${BaseTargetName}"
     VERSION "${ProjectVersion}"                 # Set this if the plugin version is different to the project version
-    PRODUCT_NAME "${PluginName}"                # The name of the final executable, which can differ from the target name
+    PRODUCT_NAME "${PluginName} v${ProjectVersion}"                # The name of the final executable, which can differ from the target name
     PLUGIN_MANUFACTURER_CODE Avry               # A four-character manufacturer id with at least one upper-case character
-    PLUGIN_CODE Hmb2                            # A unique four-character plugin id with exactly one upper-case character
+    PLUGIN_CODE Hmb3                            # A unique four-character plugin id with exactly one upper-case character
     DESCRIPTION "Hamburger is a distortion plugin, capable of both subtle tangy harmonics and absolute annihilation and noise-wall-ification to any sound."
                                                 # GarageBand 10.3 requires the first letter to be upper-case, and the remaining letters to be lower-case
     # ICON_BIG ...                              # ICON_* arguments specify a path to an image file to use as an icon for the Standalone
@@ -206,7 +206,7 @@ endif()
 
 if (BUILD_CLAP)
     clap_juce_extensions_plugin(TARGET "${BaseTargetName}"
-    CLAP_ID "com.AviaryAudio.${PluginName}"
+    CLAP_ID "com.AviaryAudio.${PluginName}${ProjectVersion}"
     CLAP_FEATURES effect "distortion analog compressor" audio-effect)
 endif()
 

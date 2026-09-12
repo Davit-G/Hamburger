@@ -1,38 +1,41 @@
 #pragma once
 
 #include "../PluginProcessor.h"
-#include "KnobUtils.h"
+#include "../utils/KnobUtils.h"
 
 class GenericKnob : public juce::Slider, public juce::Timer, public juce::Label::Listener
 {
 public:
-    GenericKnob(AudioPluginAudioProcessor &p, juce::String knobName, const ParamIDs::ParameterInfo& attachmentInfo, ParamUnits knobUnit = ParamUnits::none, ScopeContextType scopeContextType = ScopeContextType::LR_SCOPE)
-    : processorRef(p), kName(knobName), unit(knobUnit), paramInfo(attachmentInfo) {
-        knobAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(processorRef.treeState, attachmentInfo.getParamID(), *this);
-        jassert(knobAttachment);
+    //  Manual setup
+    GenericKnob(AudioPluginAudioProcessor &p, juce::String knobName, const ParamIDs::ParameterInfo& attachmentInfo, ScopeContextType scopeContextType = ScopeContextType::LR_SCOPE)
+    : GenericKnob(p, knobName, attachmentInfo.getParameterID(), attachmentInfo, scopeContextType) {}
 
-        auto knobParamRange = p.treeState.getParameterRange(attachmentInfo.getParamID());
+    // Per-slot setup
+    GenericKnob(AudioPluginAudioProcessor &p, juce::String knobName, SlotId slot, const ParamIDs::ParameterInfo& attachmentInfo, ScopeContextType scopeContextType = ScopeContextType::LR_SCOPE)
+    : GenericKnob(p, knobName, paramIdFor(slot, attachmentInfo), attachmentInfo, scopeContextType) {}
+
+private:
+    GenericKnob(AudioPluginAudioProcessor &p, juce::String knobName, juce::ParameterID macroIdentifier, const ParamIDs::ParameterInfo& attachmentInfo, ScopeContextType scopeContextType)
+    : identifier(macroIdentifier), processorRef(p), kName(knobName), unit(attachmentInfo.unit), paramInfo(attachmentInfo) {
+        jassert (processorRef.treeState.getParameter (macroIdentifier.getParamID()) != nullptr); // wrong slot, or never registered
+        knobAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(processorRef.treeState, macroIdentifier.getParamID(), *this);
+
 
         setSliderStyle(juce::Slider::RotaryVerticalDrag);
         setTextBoxStyle(juce::Slider::TextBoxBelow, true, 0, 0);
-        
+         
         setPaintingIsUnclipped(true);
         setBufferedToImage(true);
         setTooltip(paramInfo.paramTooltip);
         setName(knobName);
 
-        if (knobUnit == ParamUnits::x || knobUnit == ParamUnits::category) {
-            setRange(knobParamRange.start, knobParamRange.end, 1.0);
-        } else {
-            setRange(knobParamRange.start, knobParamRange.end, 0.001);
-        }
 
         preferredScopeContextType = scopeContextType;
 
         onDragStart = [this] { 
             // display the parameter value as the text instead of the parameter name
             this->isDragging = true;
-            this->label.setText(createParamString(this->getValue(), this->unit), juce::dontSendNotification);
+            this->label.setText(createParamString((float) this->getValue(), this->unit), juce::dontSendNotification);
             processorRef.getScopeContext().setType(preferredScopeContextType);
 
             this->dragAmount = 1.0f;
@@ -43,7 +46,7 @@ public:
         // when value is changing, set it to what the knob is, but only if we're dragging
         onValueChange = [this] {
             if (this->isDragging) {
-                auto value = this->getValue();
+                auto value = (float) this->getValue();
                 this->label.setText(createParamString(value, this->unit), juce::dontSendNotification);
             } else {
                 this->label.setText(this->kName, juce::dontSendNotification);
@@ -73,6 +76,7 @@ public:
         startTimerHz(60);
     }
 
+
     void mouseDoubleClick(const juce::MouseEvent & e) override {
         // double click triggers label edit
         label.showEditor();
@@ -98,7 +102,7 @@ public:
         if (labelThatWasShown != &label)
             return;
 
-        editorStartText = createParamString(getValue(), unit);
+        editorStartText = createParamString((float) getValue(), unit);
 
         ed.setText(editorStartText, false);
         ed.selectAll();
@@ -122,13 +126,13 @@ public:
     void labelTextChanged(juce::Label *) override {}
 
     void resetToDefault() {
-        auto *param = processorRef.treeState.getParameter(paramInfo.getParamID());
+        auto *param = processorRef.treeState.getParameter(identifier.getParamID());
 
         if (param == nullptr)
             return;
         
         param->beginChangeGesture();
-        param->setValueNotifyingHost(param->getDefaultValue());
+        param->setValueNotifyingHost(paramInfo.range.convertTo0to1(paramInfo.defaultValue));
         param->endChangeGesture();
     }
 
@@ -162,6 +166,7 @@ public:
         repaint();
     }
 
+public:
     ~GenericKnob() {
         stopTimer();
         knobAttachment = nullptr;
@@ -173,6 +178,8 @@ protected:
     AudioPluginAudioProcessor &processorRef;
     ScopeContextType preferredScopeContextType = ScopeContextType::LR_SCOPE;
 
+    juce::ParameterID identifier;
+
     juce::Label label;
 
     juce::Rectangle<int> knobBounds;
@@ -182,6 +189,7 @@ protected:
     ParamUnits unit;
 
     const ParamIDs::ParameterInfo& paramInfo;
+
 
     bool isDragging = false;
 

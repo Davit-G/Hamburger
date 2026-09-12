@@ -3,16 +3,17 @@
  
 
 #include "../Panel.h"
+#include "../../../dsp/EffectInfos.h"
 
 
 
 class ReductionPanel : public Panel
 {
 public:
-    ReductionPanel(AudioPluginAudioProcessor &p) : Panel(p, "BIT", Palette::colours[1]),
-                                                   downSample(p, "RATE", ParamIDs::downsampleFreq, ParamUnits::hz, ScopeContextType::NOISE),
-                                                   bitReduction(p, "BITS", ParamIDs::bitReduction, ParamUnits::none, ScopeContextType::NOISE),
-                                                   downsampleMix(p, "MIX", ParamIDs::downsampleMix, ParamUnits::none, ScopeContextType::NOISE)
+    ReductionPanel(AudioPluginAudioProcessor &p, SlotId slot = SlotId{ModuleId::module1, 0}) : Panel(p, "BIT", Palette::colours[1]),
+                                                   downSample(p, "RATE", slot, ParamIDs::downsampleFreq, ScopeContextType::NOISE),
+                                                   bitReduction(p, "BITS", slot, ParamIDs::bitReduction, ScopeContextType::NOISE),
+                                                   downsampleMix(p, "MIX", slot, ParamIDs::downsampleMix, ScopeContextType::NOISE)
     {
         addAndMakeVisible(downSample);
         addAndMakeVisible(bitReduction);

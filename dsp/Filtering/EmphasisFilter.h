@@ -4,6 +4,8 @@
 #include "ACoffs.h"
 #include "chowdsp_filters/chowdsp_filters.h"
 
+#include "../EffectBase.h"
+
 class EmphasisFilter
 {
 public:
@@ -44,8 +46,7 @@ public:
         emphasisHighFreqBuffer.resize(blockSize, 0.0f);
     }
 
-    void processBefore(juce::dsp::AudioBlock<float>& block)
-    {
+    void beforeProcessing(size_t numSamples) {
         if (enableEmphasis != nullptr)
             emphasisOn = enableEmphasis->get();
 
@@ -54,14 +55,10 @@ public:
         emphasisLowFreqSmooth.update();
         emphasisHighFreqSmooth.update();
 
+        if (!emphasisOn) return;
+        
         parametersNeedUpdates = emphasisLowSmooth.isSmoothing(0) || emphasisHighSmooth.isSmoothing(0) || emphasisLowFreqSmooth.isSmoothing(0) || emphasisHighFreqSmooth.isSmoothing(0);
-
-        if (!emphasisOn)
-            return;
-
-        const auto numChannels = block.getNumChannels();
-        const auto numSamples = block.getNumSamples();
-
+        
         if (parametersNeedUpdates) {
             for (size_t sample = 0; sample < numSamples; ++sample)
             {
@@ -71,6 +68,16 @@ public:
                 emphasisHighFreqBuffer[sample] = emphasisHighFreqSmooth.getNextValue(0);
             }
         }
+            
+    }
+
+    void processBefore(juce::dsp::AudioBlock<float>& block)
+    {
+        if (!emphasisOn)
+            return;
+
+        const auto numChannels = block.getNumChannels();
+        const auto numSamples = block.getNumSamples();
 
         for (size_t sample = 0; sample < numSamples; ++sample)
         {
@@ -155,4 +162,34 @@ private:
 
     chowdsp::SVFBell<float> peakFilterBeforeSVF[2];
     chowdsp::SVFBell<float> peakFilterAfterSVF[2];
+};
+
+// same instance applies to either pre or post
+class EmphasisEffectFilter : public EffectBase {
+public:
+    EmphasisEffectFilter(EmphasisFilter& eRef, bool post) : emphasis(eRef) {
+        isPost = post;
+    }
+
+    ~EmphasisEffectFilter() {}
+
+    void prepare(juce::dsp::ProcessSpec& spec) override {};
+    
+    void processBlock(juce::dsp::AudioBlock<float>& block) override {
+        switch (isPost) {
+            case false: {
+                emphasis.processBefore(block);
+                break;
+            }
+            case true: {
+                emphasis.processAfter(block);
+                break;
+            }
+        }
+    }
+
+private:
+    EmphasisFilter& emphasis;
+
+    bool isPost = false;
 };

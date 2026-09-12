@@ -2,6 +2,7 @@
 
  
 #include "../Panel.h"
+#include "../../../dsp/EffectInfos.h"
 #include "../../Knob.h"
 #include "../../RectSlider.h"
 
@@ -10,11 +11,11 @@
 class ClassicSatPanel : public Panel
 {
 public:
-    ClassicSatPanel(AudioPluginAudioProcessor &p) : Panel(p, "GRILL", Palette::colours[0]), 
-        satKnob(p, "SATURATION", ParamIDs::saturationAmount, ParamUnits::percent, ScopeContextType::IN_OUT),
-        biasKnob(p, "DC BIAS", ParamIDs::grillBias, ParamUnits::none, ScopeContextType::IN_OUT),
-        fuzzKnob(p, "DIODE", ParamIDs::diode, ParamUnits::none, ScopeContextType::IN_OUT),
-        cookedKnob(p, "WAVEFOLD", ParamIDs::fold, ParamUnits::none, ScopeContextType::IN_OUT),
+    ClassicSatPanel(AudioPluginAudioProcessor &p, SlotId slot = SlotId{ModuleId::main, 0}) : Panel(p, "GRILL", Palette::colours[0]), 
+        satKnob(p, "SATURATION", slot, ParamIDs::saturationAmount, ScopeContextType::IN_OUT),
+        biasKnob(p, "DC BIAS", slot, ParamIDs::grillBias, ScopeContextType::IN_OUT),
+        fuzzKnob(p, "DIODE", slot, ParamIDs::diode, ScopeContextType::IN_OUT),
+        cookedKnob(p, "WAVEFOLD", slot, ParamIDs::fold, ScopeContextType::IN_OUT),
         tube(BinaryData::Grill_svg, BinaryData::Grill_svgSize, -3)
     {
         addAndMakeVisible(satKnob);

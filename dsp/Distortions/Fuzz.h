@@ -3,6 +3,7 @@
  
 #include "../SmoothParam.h"
 #include "../../utils/Params.h"
+#include "../EffectBase.h"
 
 #include "../EnvelopeFollower.h"
 
@@ -10,14 +11,14 @@
 #include <melatonin_perfetto/melatonin_perfetto.h>
 #endif // PERFETTO
 
-class Fuzz
+class Fuzz : public MacroEffect
 {
 public:
-	Fuzz(juce::AudioProcessorValueTreeState& treeState);
+	Fuzz(juce::AudioProcessorValueTreeState& treeState, SlotId slot);
 	~Fuzz();
 
-	void processBlock(juce::dsp::AudioBlock<float>& block);
-	void prepare(juce::dsp::ProcessSpec& spec);
+	void processBlock(juce::dsp::AudioBlock<float>& block) override;
+	void prepare(juce::dsp::ProcessSpec& spec) override;
 
 private:
     SmoothParam bias;

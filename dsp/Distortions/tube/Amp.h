@@ -6,14 +6,16 @@
 
 #include "../../../utils/Params.h"
 #include "../../SmoothParam.h"
+#include "../../EffectBase.h"
 
-class Amp
+class Amp : public MacroEffect
 {
 public:
-    Amp(juce::AudioProcessorValueTreeState &treeState) : 
-        tubeTone(treeState, ParamIDs::tubeTone),
-        drive(treeState, ParamIDs::tubeAmount),
-        bias(treeState, ParamIDs::tubeBias)
+    Amp(juce::AudioProcessorValueTreeState& treeState, SlotId slot)
+        : MacroEffect(treeState, slot),
+          tubeTone(getParam(ParamIDs::tubeTone)),
+          drive(getParam(ParamIDs::tubeAmount)),
+          bias(getParam(ParamIDs::tubeBias))
         {}
 
     ~Amp() {}

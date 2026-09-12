@@ -5,6 +5,8 @@
 
 #include "../SmoothParam.h"
 #include "../EnvelopeFollower.h"
+#include "../EffectBase.h"
+#include "../EffectInfos.h"
 
 #include "juce_core/juce_core.h"
 #include "juce_dsp/juce_dsp.h"
@@ -14,15 +16,15 @@
 #endif // PERFETTO
 
 
-class Sizzle
+class Sizzle : public MacroEffect
 {
 public:
 	Sizzle(juce::AudioProcessorValueTreeState& treeState);
 	~Sizzle();
 
-	void processBlock(juce::dsp::AudioBlock<float>& block);
+	void processBlock(juce::dsp::AudioBlock<float>& block) override;
 	void processBlockOG(juce::dsp::AudioBlock<float>& block);
-	void prepare(juce::dsp::ProcessSpec& spec);
+	void prepare(juce::dsp::ProcessSpec& spec) override;
 
 	void setSampleRate(float sampleRate) { envelopeDetector.setSampleRate(sampleRate);}
 
@@ -70,7 +72,7 @@ private:
 	// filter to filter out sizzle tone
 	juce::dsp::IIR::Filter<float> filter;
 
-	bool filterComputed = false;
+	float lastSizzleFreq = -1.0f; // sentinel, so the first block always computes coefficients
 
 	double sampleRate;
 };

@@ -1,6 +1,8 @@
 #include "Jeff.h"
 
-Jeff::Jeff(juce::AudioProcessorValueTreeState &treeState) : amount(treeState, ParamIDs::jeffAmount) {}
+Jeff::Jeff(juce::AudioProcessorValueTreeState& treeState, SlotId slot)
+	: MacroEffect(treeState, slot),
+	  amount(getParam(ParamIDs::jeffAmount)) {}
 
 Jeff::~Jeff()
 {

@@ -7,6 +7,9 @@ cmake-build-debug
 .git
 JUCE
 
+# clangd
+.cache
+
 todo.md
 
 *.bat

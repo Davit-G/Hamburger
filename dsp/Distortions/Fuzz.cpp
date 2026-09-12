@@ -1,7 +1,10 @@
 #include "Fuzz.h"
 
 //==============================================================================
-Fuzz::Fuzz(juce::AudioProcessorValueTreeState& treeState) : bias(treeState, ParamIDs::grillBias), follower(false) {}
+Fuzz::Fuzz(juce::AudioProcessorValueTreeState& treeState, SlotId slot)
+	: MacroEffect(treeState, slot),
+	  bias(getParam(ParamIDs::grillBias)),
+	  follower(false) {}
 
 Fuzz::~Fuzz() {}
 

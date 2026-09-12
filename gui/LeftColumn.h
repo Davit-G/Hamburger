@@ -26,7 +26,7 @@ public:
         companderPanels.push_back(std::make_unique<MBCompPanel>(p));
         companderPanels.push_back(std::make_unique<MSCompPanel>(p));
         companderPanels.push_back(std::make_unique<TypeAPanel>(p));
-        compander = std::make_unique<Module>(p, "COMP", "compressionOn", "compressionType", std::move(companderPanels));
+        compander = std::make_unique<Module>(p, "COMP", SlotId{ModuleId::dynamics, 0}.enabled().getParamID().toStdString(), SlotId{ModuleId::dynamics, 0}.type().getParamID().toStdString(), std::move(companderPanels));
         addAndMakeVisible(compander.get());
         
 
@@ -34,7 +34,7 @@ public:
         // ORDERING IS VERY IMPORTANT
         preDistortionPanels.push_back(std::make_unique<AllPassPanel>(p));
         preDistortionPanels.push_back(std::make_unique<GrungePanel>(p));
-        preDistortion = std::make_unique<Module>(p, "", "preDistortionEnabled", "preDistortionType", std::move(preDistortionPanels));
+        preDistortion = std::make_unique<Module>(p, "", SlotId{ModuleId::module2, 0}.enabled().getParamID().toStdString(), SlotId{ModuleId::module2, 0}.type().getParamID().toStdString(), std::move(preDistortionPanels));
         addAndMakeVisible(preDistortion.get());
 
         std::vector<std::unique_ptr<Panel>> logoPanels;

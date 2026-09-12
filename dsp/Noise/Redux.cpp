@@ -3,9 +3,11 @@
  
 
 //==============================================================================
-Redux::Redux(juce::AudioProcessorValueTreeState &treeState) : downsample(treeState, ParamIDs::downsampleFreq),
-															  downsampleMix(treeState, ParamIDs::downsampleMix),
-															  bitReduction(treeState, ParamIDs::bitReduction)
+Redux::Redux(juce::AudioProcessorValueTreeState &treeState)
+	: MacroEffect(treeState, SlotId{ModuleId::module1, 0}),
+	  downsample(getParam(ParamIDs::downsampleFreq)),
+	  downsampleMix(getParam(ParamIDs::downsampleMix)),
+	  bitReduction(getParam(ParamIDs::bitReduction))
 {
 }
 

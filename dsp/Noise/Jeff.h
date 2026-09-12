@@ -10,18 +10,19 @@
 #include <melatonin_perfetto/melatonin_perfetto.h>
 #endif // PERFETTO
 #include "../SmoothParam.h"
+#include "../EffectBase.h"
 
 //==============================================================================
 /*
 */
-class Jeff
+class Jeff : public MacroEffect
 {
 public:
-	Jeff(juce::AudioProcessorValueTreeState& treeState);
+	Jeff(juce::AudioProcessorValueTreeState& treeState, SlotId slot);
 	~Jeff();
 
-	void processBlock(juce::dsp::AudioBlock<float>& block);
-	void prepare(juce::dsp::ProcessSpec& spec);
+	void processBlock(juce::dsp::AudioBlock<float>& block) override;
+	void prepare(juce::dsp::ProcessSpec& spec) override;
 
 private:
 	SmoothParam amount;

@@ -5,7 +5,7 @@
 #include "../../utils/Params.h"
 #include "../FrequencyShifting/HilbertBiquad.h"
 
-
+#include "../EffectBase.h"
 
 #if PERFETTO
 #include <melatonin_perfetto/melatonin_perfetto.h>
@@ -13,14 +13,14 @@
 //==============================================================================
 /*
  */
-class PhaseDist
+class PhaseDist : public MacroEffect
 {
 public:
-    PhaseDist(juce::AudioProcessorValueTreeState& treeState);
+    PhaseDist(juce::AudioProcessorValueTreeState& treeState, SlotId slot);
     ~PhaseDist() {}
 
-    void processBlock(juce::dsp::AudioBlock<float> &block) noexcept;
-    void prepare(juce::dsp::ProcessSpec& spec) noexcept;
+    void processBlock(juce::dsp::AudioBlock<float> &block) noexcept override;
+    void prepare(juce::dsp::ProcessSpec& spec) noexcept override;
 
 private:
     SmoothParam amount;

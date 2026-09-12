@@ -2,24 +2,28 @@
 
 #include "../EnvelopeFollower.h"
 #include "../../gui/Modules/ScopeDataCollector.h"
+#include "../EffectBase.h"
+#include "../EffectInfos.h"
 
  
 
 // mid side compression
-class MSComp
+class MSComp : public MacroEffect
 {
 public:
-    MSComp(juce::AudioProcessorValueTreeState &state, ScopeDataCollector<float> &dataCollector) : compressorMid(CompressionType::COMPRESSOR),
+    MSComp(juce::AudioProcessorValueTreeState &state, ScopeDataCollector<float> &dataCollector)
+                                                      : MacroEffect(state, SlotId{ModuleId::dynamics, 0}),
+                                                        compressorMid(CompressionType::COMPRESSOR),
                                                         compressorSide(CompressionType::COMPRESSOR),
-                                                        threshold(state, ParamIDs::MSCompThreshold),
-                                                        ratio(state, ParamIDs::compRatio),
-                                                        tilt(state, ParamIDs::compBandTilt),
-                                                        speed(state, ParamIDs::MSCompSpeed),
-                                                        makeup(state, ParamIDs::compOut),
+                                                        threshold(getParam(ParamIDs::MSCompThreshold)),
+                                                        ratio(getParam(ParamIDs::compRatio)),
+                                                        tilt(getParam(ParamIDs::compBandTilt)),
+                                                        speed(getParam(ParamIDs::MSCompSpeed)),
+                                                        makeup(getParam(ParamIDs::compOut)),
                                                         scopeDataCollector(dataCollector) {}
     ~MSComp() {}
 
-    void processBlock(juce::dsp::AudioBlock<float> &block)
+    void processBlock(juce::dsp::AudioBlock<float> &block) override
     {
 
         speed.update();

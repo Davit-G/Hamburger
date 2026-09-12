@@ -27,6 +27,7 @@
 
 #include "clap-juce-extensions/clap-juce-extensions.h"
 
+#include "dsp/EffectBase.h"
 
 //==============================================================================
 class AudioPluginAudioProcessor : public juce::AudioProcessor, public clap_juce_extensions::clap_properties
@@ -86,22 +87,20 @@ private:
     juce::AudioParameterFloat *mixKnob = nullptr;
     juce::AudioParameterFloat *outputGainKnob = nullptr;
 
-    juce::AudioParameterBool *clipEnabled = nullptr;
     juce::AudioParameterInt *hq = nullptr;
     juce::AudioParameterBool *hamburgerEnabledButton = nullptr;
-    juce::AudioParameterInt *stages = nullptr;
 
     juce::AudioParameterChoice *oversamplingFactor = nullptr;
 
-    PreDistortion preDistortionSelection;
-    
-    std::vector<std::unique_ptr<PrimaryDistortion>> distortionTypeSelection {};
+    EmphasisFilter emphasisFilter; // base effect
 
-    NoiseDistortions noiseDistortionSelection;
+    EmphasisEffectFilter emphasisPreFilter { emphasisFilter, false };
     Dynamics dynamics;
+    PreDistortion preDistortionSelection;
+    NoiseDistortions noiseDistortionSelection;
+    PrimaryDistortion distortionTypeSelection;
+    EmphasisEffectFilter emphasisPostFilter { emphasisFilter, true };
     PostClip postClip;
-
-    EmphasisFilter emphasisFilter;
 
     juce::dsp::Gain<float> inputGain;
     juce::dsp::Gain<float> outputGain;
@@ -123,6 +122,12 @@ private:
         std::unique_ptr<perfetto::TracingSession> tracingSession;
     #endif
 
+    std::atomic<RoutingOrder> order { defaultRouting };
+
+    // makes sure that routingOrder doesnt get converted into a mutex under the hood
+    static_assert (std::atomic<RoutingOrder>::is_always_lock_free);
+
+    std::array<EffectBase*, (size_t) ModuleId::count> slots;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AudioPluginAudioProcessor)
 };

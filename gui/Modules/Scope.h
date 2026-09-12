@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <atomic>
 #include <cmath>
+#include <map>
 #include <memory>
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <juce_dsp/juce_dsp.h>
@@ -210,9 +211,12 @@ private:
     SampleType headerHeight(juce::Rectangle<SampleType> scopeRect) const;
 
     float paramValue(const ParamIDs::ParameterInfo &paramInfo) const;
+    
+    mutable std::map<const ParamIDs::ParameterInfo *, juce::AudioParameterFloat *> paramCache;
 
 
     juce::AudioParameterChoice* choiceParam(const ParamIDs::ParameterInfo &id) const;
+    juce::AudioParameterChoice* choiceParamForSlot(SlotId slot) const;
     // black tab sized to its text, grown past the top or bottom edge so only the inner corners round
     void drawTabbedLabel(juce::Graphics &g, juce::Rectangle<float> cell, const juce::String &text,
                          juce::Justification justification, bool hangingFromTop);

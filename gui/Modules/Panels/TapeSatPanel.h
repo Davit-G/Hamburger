@@ -1,15 +1,16 @@
 #pragma once
  
 #include "../Panel.h"
+#include "../../../dsp/EffectInfos.h"
 #include "../../Knob.h"
 
 class TapeSatPanel : public Panel
 {
 public:
-    TapeSatPanel(AudioPluginAudioProcessor &p) : Panel(p, "TAPE"), 
-        drive(p, "DRIVE", ParamIDs::tapeDrive, ParamUnits::none, ScopeContextType::IN_OUT),
-        bias(p, "DC BIAS", ParamIDs::tapeBias, ParamUnits::none, ScopeContextType::IN_OUT),
-        tapeWidth(p, "AGE", ParamIDs::tapeWidth, ParamUnits::none, ScopeContextType::IN_OUT),
+    TapeSatPanel(AudioPluginAudioProcessor &p, SlotId slot = SlotId{ModuleId::main, 0}) : Panel(p, "TAPE"), 
+        drive(p, "DRIVE", slot, ParamIDs::tapeDrive, ScopeContextType::IN_OUT),
+        bias(p, "DC BIAS", slot, ParamIDs::tapeBias, ScopeContextType::IN_OUT),
+        tapeWidth(p, "AGE", slot, ParamIDs::tapeWidth, ScopeContextType::IN_OUT),
         reel(BinaryData::FilmReel_svg, BinaryData::FilmReel_svgSize)
     {
         addAndMakeVisible(drive);
