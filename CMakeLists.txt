@@ -195,7 +195,8 @@ FetchContent_Declare (xsimd
 FetchContent_Declare (clap-juce-extensions
     GIT_REPOSITORY https://github.com/free-audio/clap-juce-extensions.git
     GIT_SHALLOW 1
-    GIT_TAG origin/main)
+    GIT_TAG 55525c9858d4b25687be7759a5e0f70eccef218e # pinned so the patch below keeps applying
+    PATCH_COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/patch-clap-dpi.cmake)
 
 FetchContent_MakeAvailable (clap-juce-extensions)
 FetchContent_MakeAvailable (xsimd)
