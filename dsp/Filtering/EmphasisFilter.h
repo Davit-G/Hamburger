@@ -1,19 +1,19 @@
 #pragma once
 
 #include "juce_core/juce_core.h"
-#include "ACoffs.h"
 #include "chowdsp_filters/chowdsp_filters.h"
 
 #include "../EffectBase.h"
+#include "../SmoothParam.h"
 
 class EmphasisFilter
 {
 public:
     explicit EmphasisFilter(juce::AudioProcessorValueTreeState& treeState)
-        : emphasisHighFreqSmooth(treeState, ParamIDs::emphasisHighFreq),
-          emphasisLowFreqSmooth(treeState, ParamIDs::emphasisLowFreq),
+        : emphasisLowSmooth(treeState, ParamIDs::emphasisLowGain),
           emphasisHighSmooth(treeState, ParamIDs::emphasisHighGain),
-          emphasisLowSmooth(treeState, ParamIDs::emphasisLowGain)
+          emphasisLowFreqSmooth(treeState, ParamIDs::emphasisLowFreq),
+          emphasisHighFreqSmooth(treeState, ParamIDs::emphasisHighFreq)
     {
         enableEmphasis = dynamic_cast<juce::AudioParameterBool *>(treeState.getParameter(ParamIDs::emphasisOn.getParamID()));
         jassert(enableEmphasis);

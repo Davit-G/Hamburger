@@ -26,7 +26,7 @@ public:
         distoType = dynamic_cast<juce::AudioParameterChoice *>(state.getParameter(SlotId{ModuleId::dynamics, 0}.type().getParamID())); jassert(distoType);
         enabled = dynamic_cast<juce::AudioParameterBool *>(state.getParameter(SlotId{ModuleId::dynamics, 0}.enabled().getParamID())); jassert(enabled);
     }
-    ~Dynamics() {}
+    ~Dynamics() override {}
 
 
     void processBlock(juce::dsp::AudioBlock<float>& block) override {
