@@ -521,10 +521,10 @@ private:
         return gainToY (db, pinToTrack);
     }
 
-    // the exciter's split is a Linkwitz-Riley high pass, a squared second order Butterworth
     float highpassDb (double freq) const
     {
-        const auto ratio = std::pow (freq / (double) crossovers[0]->get(), 4.0);
+        const auto slope = MainRouting::crossoverSlopeFrom (apvts.state.getProperty (MainRouting::crossoverSlopeProperty));
+        const auto ratio = std::pow (freq / (double) crossovers[0]->get(), slope / 6.0);
         return juce::Decibels::gainToDecibels ((float) (ratio / (1.0 + ratio)), -100.0f);
     }
 

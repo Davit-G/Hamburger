@@ -2,6 +2,7 @@
 
 #include "EffectBase.h"
 #include "EffectInfos.h"
+#include "Crossover.h"
 #include "DCBlockingHighPass.h"
 #include "PrimaryDistortion.h"
 #include "SmoothParam.h"
@@ -9,9 +10,20 @@
 #include "../gui/Modules/ScopeDataCollector.h"
 
 //  Owns the main stage's distortion slots and decides how audio is routed through them
-class MainRouting : public EffectBase
+class MainRouting : public EffectBase,
+                    private juce::ValueTree::Listener
 {
 public:
+    /*  The band splits' slope, 12, 24 or 48 dB/oct. Kept in the plugin state rather than as a parameter, so it saves
+        with presets and projects but isn't automatable. */
+    static inline const juce::Identifier crossoverSlopeProperty { "crossoverSlope" };
+
+    static int crossoverSlopeFrom (const juce::var& stored)
+    {
+        const auto slope = (int) stored;
+        return slope == 12 || slope == 48 ? slope : 24;
+    }
+
     // keep in line with ParamIDs::routingTypes. multiband's band count is a parameter of its own, ParamIDs::bandCount
     enum Routing { stack, multiband, midSide, exciter };
 
@@ -78,6 +90,7 @@ public:
           stackFilterQ (state, ParamIDs::stackFilterQ),
           stackRotation (state, ParamIDs::stackRotation),
           msBalance (state, ParamIDs::msBalance),
+          apvts (state),
           scope (scopeCollector)
     {
         /*  The only waveshape curve shared anywhere: slot 1's, with the stack's extra stages below, which are copies of slot 1
@@ -123,7 +136,13 @@ public:
             bandSolos[(size_t) band] = dynamic_cast<juce::AudioParameterBool*> (state.getParameter (ParamIDs::bandSolos[band]->getParamID()));
             jassert (bandMutes[(size_t) band] && bandSolos[(size_t) band]);
         }
+
+        // the state tree gets swapped whole on a preset or project load, which is valueTreeRedirected
+        apvts.state.addListener (this);
+        syncCrossoverSlope();
     }
+
+    ~MainRouting() override { apvts.state.removeListener (this); }
 
     void prepare (juce::dsp::ProcessSpec& spec) override
     {
@@ -175,17 +194,11 @@ public:
             rotation.setCurrentAndTargetValue (stackRotation.getRaw());
 
         for (auto& split : splits)
-        {
             split.prepare (spec);
-            split.setType (juce::dsp::LinkwitzRileyFilterType::allpass);
-        }
 
         for (auto& row : allpasses)
             for (auto& compensator : row)
-            {
                 compensator.prepare (spec);
-                compensator.setType (juce::dsp::LinkwitzRileyFilterType::allpass);
-            }
 
         for (auto& blocker : pathBlockers)
             blocker.prepare (spec);
@@ -206,6 +219,15 @@ public:
 
     void processBlock (juce::dsp::AudioBlock<float>& block) override
     {
+        const auto slope = crossoverSlope.load (std::memory_order_relaxed);
+
+        for (auto& split : splits)
+            split.setSlope (slope);
+
+        for (auto& row : allpasses)
+            for (auto& compensator : row)
+                compensator.setSlope (slope);
+
         crossoverLow.update();
         crossoverMid.update();
         crossoverHigh.update();
@@ -412,7 +434,6 @@ private:
 
         for (int i = 0; i < numBands - 1; ++i)
         {
-            splits[(size_t) i].setType (juce::dsp::LinkwitzRileyFilterType::lowpass);
             splits[(size_t) i].setCutoffFrequency (cutoffs[i]);
 
             /*  A band that came off crossover i never passed through the crossovers after it, so
@@ -420,7 +441,6 @@ private:
                 allpass at each later crossover gives every band the same phase history. */
             for (int later = i + 1; later < numBands - 1; ++later)
             {
-                allpasses[(size_t) i][(size_t) later].setType (juce::dsp::LinkwitzRileyFilterType::allpass);
                 allpasses[(size_t) i][(size_t) later].setCutoffFrequency (cutoffs[later]);
             }
         }
@@ -440,7 +460,7 @@ private:
                     splits[(size_t) band].processSample (ch, remaining, low, high);
 
                     for (int later = band + 1; later < numBands - 1; ++later)
-                        low = allpasses[(size_t) band][(size_t) later].processSample (ch, low);
+                        low = allpasses[(size_t) band][(size_t) later].allpass (ch, low);
 
                     bandBuffers[(size_t) band].setSample (ch, n, low);
                     remaining = high;
@@ -521,7 +541,6 @@ private:
         const auto numSamples = (int) block.getNumSamples();
         const auto numChannels = (int) block.getNumChannels();
 
-        splits[0].setType (juce::dsp::LinkwitzRileyFilterType::lowpass);
         splits[0].setCutoffFrequency (crossoverLow.getRaw (0));
 
         for (int ch = 0; ch < numChannels; ++ch)
@@ -632,11 +651,25 @@ private:
     // the stack's per stage blockers again, on the stack mix's dry
     std::array<DCBlockingHighPass, maxSlots> dryBlockers;
 
-    std::array<juce::dsp::LinkwitzRileyFilter<float>, maxSlots - 1> splits;
+    std::array<Crossover, maxSlots - 1> splits;
 
     // [band][crossover]: only entries where crossover > band are ever used
-    std::array<std::array<juce::dsp::LinkwitzRileyFilter<float>, maxSlots - 1>, maxSlots - 1> allpasses;
+    std::array<std::array<Crossover, maxSlots - 1>, maxSlots - 1> allpasses;
     std::array<juce::AudioBuffer<float>, maxSlots> bandBuffers;
+
+    // may come from whichever thread loads the state, hence the atomic the audio thread reads
+    void syncCrossoverSlope() { crossoverSlope.store (crossoverSlopeFrom (apvts.state.getProperty (crossoverSlopeProperty)), std::memory_order_relaxed); }
+
+    void valueTreePropertyChanged (juce::ValueTree& tree, const juce::Identifier& property) override
+    {
+        if (tree == apvts.state && property == crossoverSlopeProperty)
+            syncCrossoverSlope();
+    }
+
+    void valueTreeRedirected (juce::ValueTree&) override { syncCrossoverSlope(); }
+
+    juce::AudioProcessorValueTreeState& apvts;
+    std::atomic<int> crossoverSlope { 24 };
 
     ScopeDataCollector<float>& scope;
     int tapSlot = -1, tapOversampling = 0;

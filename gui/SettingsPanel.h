@@ -204,12 +204,14 @@ private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (FxOrderList)
 };
 
-class SettingsPanel : public juce::Component
+class SettingsPanel : public juce::Component,
+                      private juce::ValueTree::Listener,
+                      private juce::AsyncUpdater
 {
 public:
     explicit SettingsPanel (AudioPluginAudioProcessor& p) : processorRef (p), fxOrder (p)
     {
-        for (auto* label : { &title, &tooltipTitle, &presetFolderTitle, &fxOrderTitle })
+        for (auto* label : { &title, &tooltipTitle, &presetFolderTitle, &crossoverTitle, &fxOrderTitle })
         {
             label->setColour (juce::Label::textColourId, juce::Colours::white);
             label->setJustificationType (juce::Justification::centredLeft);
@@ -221,6 +223,7 @@ public:
 
         tooltipTitle.setText ("TOOLTIPS", juce::dontSendNotification);
         presetFolderTitle.setText ("PRESET FOLDER", juce::dontSendNotification);
+        crossoverTitle.setText ("CROSSOVER SLOPE", juce::dontSendNotification);
         fxOrderTitle.setText ("FX ORDER", juce::dontSendNotification);
 
         tooltipType.addItem ("None", 1);
@@ -237,8 +240,24 @@ public:
         changePresetFolder.onClick = [this] { choosePresetFolder(); };
         addAndMakeVisible (changePresetFolder);
 
+        // in the plugin state rather than the app's settings, so it saves with the preset or project like the sound does
+        for (const auto slope : { 12, 24, 48 })
+            crossoverSlope.addItem (juce::String (slope) + " dB/oct", slope);
+
+        crossoverSlope.setTooltip ("How steep the multiband and exciter band splits are. Saved with the preset");
+        crossoverSlope.onChange = [this] {
+            processorRef.treeState.state.setProperty (MainRouting::crossoverSlopeProperty, crossoverSlope.getSelectedId(), nullptr);
+        };
+        addAndMakeVisible (crossoverSlope);
+
+        // the state tree gets swapped whole on a preset or project load, which is valueTreeRedirected
+        processorRef.treeState.state.addListener (this);
+        showCrossoverSlope();
+
         addAndMakeVisible (fxOrder);
     }
+
+    ~SettingsPanel() override { processorRef.treeState.state.removeListener (this); }
 
     FxOrderList& getFxOrder() noexcept { return fxOrder; }
 
@@ -264,6 +283,12 @@ public:
         auto presetRow = bounds.removeFromTop (rowHeight);
         presetFolderTitle.setBounds (presetRow.removeFromLeft (presetRow.getWidth() * 2 / 5));
         changePresetFolder.setBounds (presetRow);
+
+        bounds.removeFromTop (6);
+
+        auto crossoverRow = bounds.removeFromTop (rowHeight);
+        crossoverTitle.setBounds (crossoverRow.removeFromLeft (crossoverRow.getWidth() * 2 / 5));
+        crossoverSlope.setBounds (crossoverRow);
 
         bounds.removeFromTop (16);
 
@@ -294,12 +319,28 @@ private:
         });
     }
 
+    void showCrossoverSlope()
+    {
+        crossoverSlope.setSelectedId (MainRouting::crossoverSlopeFrom (processorRef.treeState.state.getProperty (MainRouting::crossoverSlopeProperty)),
+                                      juce::dontSendNotification);
+    }
+
+    // a load can come in on any thread, so the menu catches up on the message thread
+    void valueTreePropertyChanged (juce::ValueTree& tree, const juce::Identifier& property) override
+    {
+        if (tree == processorRef.treeState.state && property == MainRouting::crossoverSlopeProperty)
+            triggerAsyncUpdate();
+    }
+
+    void valueTreeRedirected (juce::ValueTree&) override { triggerAsyncUpdate(); }
+    void handleAsyncUpdate() override { showCrossoverSlope(); }
+
     static constexpr int rowHeight = 24;
 
     AudioPluginAudioProcessor& processorRef;
 
-    juce::Label title, tooltipTitle, presetFolderTitle, fxOrderTitle;
-    juce::ComboBox tooltipType;
+    juce::Label title, tooltipTitle, presetFolderTitle, crossoverTitle, fxOrderTitle;
+    juce::ComboBox tooltipType, crossoverSlope;
     juce::TextButton changePresetFolder { "CHANGE FOLDER" };
     std::unique_ptr<juce::FileChooser> presetFolderChooser;
 

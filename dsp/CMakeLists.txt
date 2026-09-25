@@ -15,4 +15,5 @@ target_sources("${BaseTargetName}"
         EffectBase.h
         EffectInfos.h
         MainRouting.h
+        Crossover.h
         )
