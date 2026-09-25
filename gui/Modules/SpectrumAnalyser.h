@@ -141,7 +141,8 @@ public:
     }
 
     // the curve with the area under it shaded, how every spectrum on screen is drawn
-    void paint (juce::Graphics& g, juce::Rectangle<float> area, double sampleRate, float thickness) const
+    void paint (juce::Graphics& g, juce::Rectangle<float> area, double sampleRate, float thickness,
+                juce::Colour lineColour, juce::Colour fillColour) const
     {
         const auto curve = makePath (area, sampleRate);
 
@@ -150,15 +151,13 @@ public:
         fill.lineTo (area.getBottomLeft());
         fill.closeSubPath();
 
-        g.setColour (colour.withAlpha (0.12f));
+        g.setColour (fillColour);
         g.fillPath (fill);
-        g.setColour (colour);
+        g.setColour (lineColour);
         g.strokePath (curve, juce::PathStrokeType (thickness));
     }
 
 private:
-    static inline const juce::Colour colour = juce::Colour::fromRGB (153, 153, 0);
-
     static constexpr float analysisFloorDb = -70.0f, analysisCeilingDb = 50.0f;
     static constexpr float drawFloorDb = -70.0f, drawCeilingDb = 18.0f;
     static constexpr float tiltDbPerOctave = 4.5f;

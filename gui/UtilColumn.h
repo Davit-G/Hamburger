@@ -7,7 +7,6 @@
 #include "Modules/Panels/UtilityPanel.h"
 #include "Modules/Panels/ScopePanel.h"
 #include "Modules/Panels/OtherUtils.h"
-#include "LookAndFeel/Palette.h"
 
 class UtilColumn : public juce::Component
 {

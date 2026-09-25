@@ -14,6 +14,7 @@
 #include "SpectrumAnalyser.h"
 
 #include "../LookAndFeel/HamburgerLAF.h"
+#include "../LookAndFeel/Theme.h"
 #include "../../utils/Params.h"
 
 #include "../../dsp/NoiseDistortions.h"
@@ -140,6 +141,7 @@ public:
     void drawResponseCurve(juce::Graphics &g, const SampleType w, const SampleType centerY, const SampleType maxHeight);
     
     void resized() override;
+    void lookAndFeelChanged() override;
 
     bool viewSpectrum = false;
 
@@ -173,7 +175,7 @@ private:
     std::array<SampleType, 2> originLineData = {SampleType(1), SampleType(1)};
 
     juce::Image inOutFB;
-    juce::Colour inOutBackground {juce::Colours::black};
+    juce::Colour trailBackground;
 
 
     // for analysing what the result of noise distortion is, we store a copy of the DSP so we can operate on it!

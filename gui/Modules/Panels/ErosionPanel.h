@@ -6,7 +6,7 @@
 class ErosionPanel : public Panel
 {
 public:
-    ErosionPanel(AudioPluginAudioProcessor &p, SlotId slot = SlotId{ModuleId::module1, 0}) : Panel(p, "EROSION", Palette::colours[1]),
+    ErosionPanel(AudioPluginAudioProcessor &p, SlotId slot = SlotId{ModuleId::module1, 0}) : Panel(p, "EROSION", &Theme::erosion),
                                                  erosionAmt(p, "AMOUNT", slot, ParamIDs::erosionAmount, ScopeContextType::NOISE),
                                                  erosionFreq(p, "FREQ", slot, ParamIDs::erosionFrequency, ScopeContextType::NOISE),
                                                  erosionQ(p, "Q", slot, ParamIDs::erosionQ, ScopeContextType::NOISE)
@@ -15,10 +15,6 @@ public:
         addAndMakeVisible(erosionAmt);
         addAndMakeVisible(erosionFreq);
         addAndMakeVisible(erosionQ);
-
-        Palette::setKnobColoursOfComponent(&erosionAmt, Palette::colours[1]);
-        Palette::setKnobColoursOfComponent(&erosionFreq, Palette::colours[1]);
-        Palette::setKnobColoursOfComponent(&erosionQ, Palette::colours[1]);
     }
 
     void resized()

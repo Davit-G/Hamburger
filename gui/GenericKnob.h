@@ -2,6 +2,8 @@
 
 #include "../PluginProcessor.h"
 #include "../utils/KnobUtils.h"
+#include "LookAndFeel/Theme.h"
+#include "Modules/LightButton.h"
 
 class GenericKnob : public juce::Slider, public juce::Timer, public juce::Label::Listener
 {
@@ -67,7 +69,6 @@ private:
             label.setFont(font);
         }
 
-        label.setColour(juce::Label::textColourId, juce::Colours::white);
         label.setJustificationType(juce::Justification::centredTop);
         label.setEditable(false, true, false);
         label.setInterceptsMouseClicks(false, false);
@@ -186,7 +187,27 @@ public:
     void paintOverChildren(juce::Graphics &g) override
     {
         if (showsLock())
-            g.drawImage(lockImage, lockArea(), juce::RectanglePlacement::centred);
+            drawGlowingGlyph(g, lockGlyph(), lockArea(), theme().lockOn);
+    }
+
+    // the module type whose colours this is drawn in
+    void setAccent(AccentColours Theme::* newAccent)
+    {
+        accent = newAccent;
+        label.setColour(juce::Label::textColourId, colours().text);
+        repaint();
+    }
+
+    // a theme change comes through here as well, and the slider only needs to rebuild itself for a new look and feel
+    void lookAndFeelChanged() override
+    {
+        if (&getLookAndFeel() != lookAndFeelSeen)
+        {
+            lookAndFeelSeen = &getLookAndFeel();
+            juce::Slider::lookAndFeelChanged();
+        }
+
+        setAccent(accent);
     }
 
     void timerCallback() override
@@ -220,6 +241,10 @@ protected:
 
     juce::Label label;
 
+    AccentColours Theme::* accent = &Theme::plain;
+    juce::LookAndFeel* lookAndFeelSeen = nullptr;
+    const AccentColours& colours() const { return theme().*accent; }
+
     juce::Rectangle<int> knobBounds;
     juce::String editorStartText;
 
@@ -244,7 +269,6 @@ protected:
     juce::AudioParameterBool* gainLink = nullptr;
     bool linkOutputSide = false;
     std::unique_ptr<juce::ParameterAttachment> linkAttachment;
-    juce::Image lockImage = juce::ImageCache::getFromMemory(BinaryData::lockon_png, BinaryData::lockon_pngSize);
 
     void setLinked(bool shouldLink)
     {

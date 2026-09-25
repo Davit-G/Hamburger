@@ -9,15 +9,12 @@
 class GrungePanel : public Panel
 {
 public:
-    GrungePanel(AudioPluginAudioProcessor &p, SlotId slot = SlotId{ModuleId::module2, 0}) : Panel(p, "GRUNGE", Palette::colours[2]),
+    GrungePanel(AudioPluginAudioProcessor &p, SlotId slot = SlotId{ModuleId::module2, 0}) : Panel(p, "GRUNGE", &Theme::grunge),
     amount(p, "AMT", slot, ParamIDs::grungeAmt),
     tone(p, "TONE", slot, ParamIDs::grungeTone) {
 
         addAndMakeVisible(amount);
         addAndMakeVisible(tone);
-
-        Palette::setKnobColoursOfComponent(&amount, Palette::colours[2]);
-        Palette::setKnobColoursOfComponent(&tone, Palette::colours[2]);
     }
 
     void resized() override

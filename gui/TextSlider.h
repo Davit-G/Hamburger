@@ -38,6 +38,13 @@ public:
         updateText();
     }
 
+    // the gain colour goes over the plain text colour the base class sets
+    void lookAndFeelChanged() override
+    {
+        GenericKnob::lookAndFeelChanged();
+        updateText();
+    }
+
     void paint (juce::Graphics&) override {}
 
     void resized() override { 
@@ -88,15 +95,13 @@ private:
         const auto db = (float) getValue();
 
         if (db < 0.0f)
-            return juce::Colours::white.interpolatedWith (darkestGrey, juce::jmin (1.0f, -db / dbGrayThres));
+            return colours().text.interpolatedWith (theme().gainTextLow, juce::jmin (1.0f, -db / dbGrayThres));
 
-        return juce::Colours::white.interpolatedWith (findColour (juce::Slider::rotarySliderFillColourId, true),
-                                                      juce::jmin (1.0f, db / dbColorThres));
+        return colours().text.interpolatedWith (colours().main, juce::jmin (1.0f, db / dbColorThres));
     }
 
     static constexpr float dbGrayThres = 24.0f;
     static constexpr float dbColorThres = 12.0f;
-    static inline const juce::Colour darkestGrey = juce::Colour::fromRGB (140, 140, 140);
 
     bool colourByGain = false;
 };

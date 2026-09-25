@@ -4,6 +4,7 @@
 #include "../../PluginProcessor.h"
 #include "../../dsp/WaveShapers.h"
 #include "../../dsp/EffectInfos.h"
+#include "../LookAndFeel/Theme.h"
 
 class ClipIndicator : public juce::Component,
                        private juce::Timer
@@ -26,11 +27,11 @@ public:
 
         const auto level = collector.clipIndicator.getNext();
 
-        auto dotColour = juce::Colours::darkgrey;
+        auto dotColour = theme().clipDotIdle;
         if (level >= hardClipLevel)
-            dotColour = juce::Colours::red;
+            dotColour = theme().clipDotHard;
         else if (isSoftClipperKnee(level, 1.0f, *p.treeState.getRawParameterValue(kneeId)))
-            dotColour = juce::Colours::orange;
+            dotColour = theme().clipDotKnee;
 
         g.setColour(dotColour);
         g.fillEllipse(getLocalBounds().toFloat().reduced(1.0f));

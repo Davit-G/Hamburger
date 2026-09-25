@@ -7,23 +7,16 @@
 class TapeSatPanel : public Panel
 {
 public:
-    TapeSatPanel(AudioPluginAudioProcessor &p, SlotId slot = SlotId{ModuleId::main, 0}) : Panel(p, "TAPE", Palette::colours[7], slot), 
+    TapeSatPanel(AudioPluginAudioProcessor &p, SlotId slot = SlotId{ModuleId::main, 0}) : Panel(p, "TAPE", &Theme::tape, slot), 
         drive(p, "DRIVE", slot, ParamIDs::tapeDrive, ScopeContextType::IN_OUT),
         bias(p, "DC BIAS", slot, ParamIDs::tapeBias, ScopeContextType::IN_OUT),
         tapeWidth(p, "AGE", slot, ParamIDs::tapeWidth, ScopeContextType::IN_OUT),
-        reel(BinaryData::FilmReel_svg, BinaryData::FilmReel_svgSize)
+        reel(BinaryData::FilmReel_svg, BinaryData::FilmReel_svgSize, &Theme::tape)
     {
         addAndMakeVisible(drive);
         addAndMakeVisible(bias);
         addAndMakeVisible(tapeWidth);
         addAndMakeVisible(reel);
-
-        const auto colour = Palette::colours[7];
-        Palette::setKnobColoursOfComponent(this, colour);
-
-        Palette::setKnobColoursOfComponent(&drive, colour);
-        Palette::setKnobColoursOfComponent(&bias, colour);
-        Palette::setKnobColoursOfComponent(&tapeWidth, colour);
     }
 
     void resized() override

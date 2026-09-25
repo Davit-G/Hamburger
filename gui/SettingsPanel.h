@@ -2,7 +2,9 @@
 
 #include "../PluginProcessor.h"
 #include "LookAndFeel/HamburgerLAF.h"
+#include "LookAndFeel/ThemeManager.h"
 #include "Modules/Panel.h"
+#include "ThemeCustomiser.h"
 
 class FxOrderList : public juce::Component,
                     private juce::Timer
@@ -33,16 +35,16 @@ public:
             const auto id = order[(size_t) row];
 
             // the dragged row lit up, so it's clear which one is in hand
-            g.setColour (row == dragRow ? juce::Colour::fromRGB (70, 70, 70) : juce::Colour::fromRGB (22, 22, 22));
+            g.setColour (row == dragRow ? theme().rowDragged : theme().row);
             g.fillRoundedRectangle (area.reduced (0.0f, 1.5f), 4.0f);
 
             auto text = area.reduced (8.0f, 0.0f);
 
             g.setFont (font.withHeight (juce::jmin (15.0f, area.getHeight() * 0.6f)));
-            g.setColour (juce::Colours::grey);
+            g.setColour (theme().textSettingsDim);
             g.drawText (juce::String (row + 1), text.removeFromLeft (20.0f), juce::Justification::centredLeft, false);
 
-            g.setColour (colourFor != nullptr ? colourFor (id) : juce::Colours::white);
+            g.setColour (colourFor != nullptr ? colourFor (id) : theme().textSettings);
             g.drawText (nameFor (id), text, juce::Justification::centredLeft, false);
         }
     }
@@ -206,14 +208,14 @@ private:
 
 class SettingsPanel : public juce::Component,
                       private juce::ValueTree::Listener,
-                      private juce::AsyncUpdater
+                      private juce::AsyncUpdater,
+                      private juce::ChangeListener
 {
 public:
     explicit SettingsPanel (AudioPluginAudioProcessor& p) : processorRef (p), fxOrder (p)
     {
-        for (auto* label : { &title, &tooltipTitle, &presetFolderTitle, &crossoverTitle, &fxOrderTitle })
+        for (auto* label : allLabels())
         {
-            label->setColour (juce::Label::textColourId, juce::Colours::white);
             label->setJustificationType (juce::Justification::centredLeft);
             addAndMakeVisible (label);
         }
@@ -225,6 +227,7 @@ public:
         presetFolderTitle.setText ("PRESET FOLDER", juce::dontSendNotification);
         crossoverTitle.setText ("CROSSOVER SLOPE", juce::dontSendNotification);
         fxOrderTitle.setText ("FX ORDER", juce::dontSendNotification);
+        themeTitle.setText ("THEME", juce::dontSendNotification);
 
         tooltipType.addItem ("None", 1);
         tooltipType.addItem ("Hovering", 2);
@@ -235,8 +238,6 @@ public:
         };
         addAndMakeVisible (tooltipType);
 
-        changePresetFolder.setColour (juce::TextButton::buttonColourId, juce::Colour::fromRGB (22, 22, 22));
-        changePresetFolder.setColour (juce::TextButton::textColourOffId, juce::Colours::white);
         changePresetFolder.onClick = [this] { choosePresetFolder(); };
         addAndMakeVisible (changePresetFolder);
 
@@ -255,16 +256,60 @@ public:
         showCrossoverSlope();
 
         addAndMakeVisible (fxOrder);
+
+        themeSelector.onChange = [this] {
+            if (const auto index = themeSelector.getSelectedId() - 1; juce::isPositiveAndBelow (index, themeEntries.size()))
+                themes->select (themeEntries[index].id);
+        };
+        addAndMakeVisible (themeSelector);
+
+        customiseTheme.setTooltip ("Opens a window with every colour in the theme");
+        customiseTheme.onClick = [this] {
+            if (customiser == nullptr)
+                customiser = std::make_unique<ThemeCustomiser>();
+
+            customiser->setVisible (true);
+            customiser->toFront (true);
+        };
+        addAndMakeVisible (customiseTheme);
+
+        themes->addChangeListener (this);
+        showThemes();
     }
 
-    ~SettingsPanel() override { processorRef.treeState.state.removeListener (this); }
+    ~SettingsPanel() override
+    {
+        themes->removeChangeListener (this);
+        processorRef.treeState.state.removeListener (this);
+    }
 
     FxOrderList& getFxOrder() noexcept { return fxOrder; }
 
     void paint (juce::Graphics& g) override
     {
-        g.setColour (juce::Colours::black);
-        g.fillRoundedRectangle (getLocalBounds().reduced (Panel::boxInset).toFloat(), Panel::boxCornerSize);
+        const auto box = getLocalBounds().reduced (Panel::boxInset).toFloat();
+
+        g.setColour (theme().box);
+        g.fillRoundedRectangle (box, Panel::boxCornerSize);
+
+        if (theme().boxBorders)
+        {
+            g.setColour (theme().boxBorder);
+            g.drawRoundedRectangle (box.reduced (0.5f), Panel::boxCornerSize, 1.0f);
+        }
+    }
+
+    void lookAndFeelChanged() override
+    {
+        for (auto* label : allLabels())
+            label->setColour (juce::Label::textColourId, theme().textSettings);
+    }
+
+    // a theme dropped in the folder shows up the next time the page opens
+    void visibilityChanged() override
+    {
+        if (isVisible())
+            showThemes();
     }
 
     void resized() override
@@ -292,15 +337,52 @@ public:
 
         bounds.removeFromTop (16);
 
-        // half the width, leaving the other half free for whatever sits beside it later
         auto orderColumn = bounds.removeFromLeft (bounds.getWidth() / 2);
 
         fxOrderTitle.setBounds (orderColumn.removeFromTop (rowHeight));
         orderColumn.removeFromTop (4);
         fxOrder.setBounds (orderColumn);
+
+        auto themeColumn = bounds.withTrimmedLeft (16);
+
+        themeTitle.setBounds (themeColumn.removeFromTop (rowHeight));
+        themeColumn.removeFromTop (4);
+        themeSelector.setBounds (themeColumn.removeFromTop (rowHeight));
+        themeColumn.removeFromTop (6);
+        customiseTheme.setBounds (themeColumn.removeFromTop (rowHeight));
     }
 
 private:
+    std::array<juce::Label*, 6> allLabels() { return { &title, &tooltipTitle, &presetFolderTitle, &crossoverTitle, &fxOrderTitle, &themeTitle }; }
+
+    void showThemes()
+    {
+        shownThemeId = themes->getSelectedId();
+        themeEntries = themes->list();
+        themeSelector.clear (juce::dontSendNotification);
+
+        for (int i = 0; i < themeEntries.size(); ++i)
+        {
+            themeSelector.addItem (themeEntries[i].label, i + 1);
+
+            if (themeEntries[i].id == themes->getSelectedId())
+                themeSelector.setSelectedId (i + 1, juce::dontSendNotification);
+        }
+    }
+
+    // whichever instance or window picked or edited the theme, every open settings page keeps the choice.
+    // colour edits keep the same theme picked, and reading every theme file on each move of a picker drag is slow
+    void changeListenerCallback (juce::ChangeBroadcaster*) override
+    {
+        if (themes->getSelectedId() == shownThemeId)
+            return;
+
+        showThemes();
+
+        if (auto* settings = processorRef.getAppProperties().appProperties.getUserSettings())
+            settings->setValue ("theme", themes->getSelectedId());
+    }
+
     void choosePresetFolder()
     {
         presetFolderChooser = std::make_unique<juce::FileChooser> ("Select a folder to save presets to", Preset::defaultDirectory, "*.*", true);
@@ -339,12 +421,17 @@ private:
 
     AudioPluginAudioProcessor& processorRef;
 
-    juce::Label title, tooltipTitle, presetFolderTitle, crossoverTitle, fxOrderTitle;
-    juce::ComboBox tooltipType, crossoverSlope;
-    juce::TextButton changePresetFolder { "CHANGE FOLDER" };
+    juce::Label title, tooltipTitle, presetFolderTitle, crossoverTitle, fxOrderTitle, themeTitle;
+    juce::ComboBox tooltipType, crossoverSlope, themeSelector;
+    juce::TextButton changePresetFolder { "CHANGE FOLDER" }, customiseTheme { "CUSTOMISE" };
     std::unique_ptr<juce::FileChooser> presetFolderChooser;
 
     FxOrderList fxOrder;
+
+    juce::SharedResourcePointer<ThemeManager> themes;
+    juce::Array<ThemeManager::Entry> themeEntries;
+    juce::String shownThemeId;
+    std::unique_ptr<ThemeCustomiser> customiser;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SettingsPanel)
 };

@@ -29,12 +29,12 @@ public:
         // each echo lands on top of the one before it, so the bottom right one is in front of the rest of them
         for (int echo = 1; echo < count; ++echo)
         {
-            g.setColour (findColour (juce::Slider::rotarySliderFillColourId).withAlpha (0.6f / (float) echo));
+            g.setColour (theme().stackEcho.withMultipliedAlpha (1.0f / (float) echo));
             g.drawText (text, area.translated (echoStep * (float) echo, echoStep * (float) echo), juce::Justification::centredLeft, false);
         }
 
         // and the number itself over all of them
-        g.setColour (juce::Colours::white);
+        g.setColour (colours().text);
         g.drawText (text, area, juce::Justification::centredLeft, false);
     }
 
@@ -153,8 +153,8 @@ private:
         else
             arrow.addTriangle (tri.getTopLeft(), tri.getTopRight(), { tri.getCentreX(), tri.getBottom() });
 
-        g.setColour (! canStep ? juce::Colours::white.withAlpha (0.15f)
-                               : hovered ? juce::Colours::white : juce::Colours::grey);
+        g.setColour (! canStep ? theme().stackArrowDisabled
+                               : hovered ? theme().stackArrowHover : theme().stackArrow);
         g.fillPath (arrow);
     }
 

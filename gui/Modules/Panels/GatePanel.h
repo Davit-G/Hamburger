@@ -7,15 +7,12 @@
 class GatePanel : public Panel
 {
 public:
-    GatePanel(AudioPluginAudioProcessor &p, SlotId slot = SlotId{ModuleId::module1, 0}) : Panel(p, "GATE", Palette::colours[1]),
+    GatePanel(AudioPluginAudioProcessor &p, SlotId slot = SlotId{ModuleId::module1, 0}) : Panel(p, "GATE", &Theme::gate),
     gate(p, "GATE", slot, ParamIDs::gateAmt, ScopeContextType::NOISE),
     gateMix(p, "MIX", slot, ParamIDs::gateMix, ScopeContextType::NOISE)
     {
         addAndMakeVisible(gate);
         addAndMakeVisible(gateMix);
-
-        Palette::setKnobColoursOfComponent(&gate, Palette::colours[1]);
-        Palette::setKnobColoursOfComponent(&gateMix, Palette::colours[1]);
     }
 
     void resized() override

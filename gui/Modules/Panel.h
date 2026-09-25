@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../LookAndFeel/Palette.h"
+#include "../LookAndFeel/Theme.h"
 
 #include "../RectSlider.h"
 #include "../Knob.h"
@@ -40,11 +40,19 @@ public:
     static constexpr int boxPadding = 12;
     static constexpr float boxCornerSize = 15.0f;
 
-    Panel(AudioPluginAudioProcessor &p, juce::String theName, juce::Colour color = juce::Colours::white,
-          SlotId slotId = SlotId{ModuleId::main, 0}) : slot(slotId), name(theName) {
+    Panel(AudioPluginAudioProcessor &p, juce::String theName, AccentColours Theme::* accentColours = &Theme::plain,
+          SlotId slotId = SlotId{ModuleId::main, 0}) : slot(slotId), accent(accentColours), name(theName) {
         setName(theName);
+    }
 
-        Palette::setKnobColoursOfComponent(this, color);
+    AccentColours Theme::* getAccent() const { return accent; }
+
+    // the knobs the panel holds are drawn in its colours
+    void lookAndFeelChanged() override
+    {
+        for (auto* child : getChildren())
+            if (auto* knob = dynamic_cast<GenericKnob*>(child))
+                knob->setAccent(accent);
     }
 
     // not used in ore or post
@@ -149,6 +157,7 @@ public:
     virtual ~Panel() = default;
 
 protected:
+    AccentColours Theme::* accent;
 
     juce::String name;
 };

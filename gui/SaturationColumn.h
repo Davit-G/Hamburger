@@ -11,8 +11,6 @@
 #include "Modules/Panels/GatePanel.h"
 #include "Modules/Panels/SlewSaturator.h"
 
-#include "LookAndFeel/Palette.h"
-
 #include "Modules/ClipIndicator.h"
 #include "Modules/Panels/RoutingPanel.h"
 #include "SettingsPanel.h"
@@ -164,7 +162,7 @@ public:
 
 private:
     void updateRoutingAccent() {
-        routingPanel.setAccentColour(mainModules[(size_t) activeSlot]->getAccentColour());
+        routingPanel.setAccentColour(mainModules[(size_t) activeSlot]->getAccent());
     }
 
     ScopeContext& scopeContext;

@@ -5,23 +5,7 @@
 
 HamburgerLAF::HamburgerLAF(juce::Colour color) : knobColour(color)
 {
-    setColour(juce::Slider::rotarySliderOutlineColourId, juce::Colours::black);
-    setColour(juce::Slider::rotarySliderFillColourId, juce::Colours::white);
-    setColour(juce::Slider::thumbColourId, juce::Colours::whitesmoke);
-    // setColour(Slider::rotarySliderFillColourId, color);
-
-    setColour(juce::ComboBox::ColourIds::backgroundColourId, juce::Colours::transparentBlack);
-    setColour(juce::ComboBox::ColourIds::buttonColourId, juce::Colours::transparentBlack);
-    setColour(juce::ComboBox::ColourIds::outlineColourId, juce::Colours::transparentBlack);
-    setColour(juce::ComboBox::ColourIds::textColourId, juce::Colours::white);
-    setColour(juce::ComboBox::arrowColourId, juce::Colours::white);
-
-    // setColour(juce::ComboBox::ColourIds::focusedOutlineColourId, juce::Colours::transparentBlack);
-
-    setColour(juce::PopupMenu::ColourIds::backgroundColourId, juce::Colours::black);
-    setColour(juce::PopupMenu::ColourIds::textColourId, juce::Colours::white);
-    setColour(juce::PopupMenu::ColourIds::highlightedBackgroundColourId, juce::Colour::fromHSV(0.0f, 0.0f, 0.2f, 1.0f));
-    setColour(juce::PopupMenu::ColourIds::highlightedTextColourId, juce::Colours::white);
+    applyTheme();
 
     // dont use setsizeandstyle, it will remove the typeface info for windows specifically (weird bug)
 
@@ -42,6 +26,24 @@ HamburgerLAF::HamburgerLAF(juce::Colour color) : knobColour(color)
 #endif
 }
 
+
+void HamburgerLAF::applyTheme()
+{
+    setColour(juce::ComboBox::ColourIds::backgroundColourId, juce::Colours::transparentBlack);
+    setColour(juce::ComboBox::ColourIds::buttonColourId, juce::Colours::transparentBlack);
+    setColour(juce::ComboBox::ColourIds::outlineColourId, juce::Colours::transparentBlack);
+    setColour(juce::ComboBox::ColourIds::textColourId, theme().textSettings);
+    setColour(juce::ComboBox::arrowColourId, theme().textSettings);
+
+    setColour(juce::TextButton::buttonColourId, theme().row);
+    setColour(juce::TextButton::textColourOffId, theme().textSettings);
+    setColour(juce::TextButton::textColourOnId, theme().textSettings);
+
+    setColour(juce::PopupMenu::ColourIds::backgroundColourId, theme().popupBackground);
+    setColour(juce::PopupMenu::ColourIds::textColourId, theme().popupText);
+    setColour(juce::PopupMenu::ColourIds::highlightedBackgroundColourId, theme().popupHighlight);
+    setColour(juce::PopupMenu::ColourIds::highlightedTextColourId, theme().popupText);
+}
 
 void HamburgerLAF::drawComboBox(juce::Graphics &g, int width, int height, bool,
                     int, int, int, int, juce::ComboBox &box)

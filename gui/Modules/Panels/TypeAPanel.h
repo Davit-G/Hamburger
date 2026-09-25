@@ -7,7 +7,7 @@
 class TypeAPanel : public Panel
 {
 public:
-    TypeAPanel(AudioPluginAudioProcessor &p, SlotId slot = SlotId{ModuleId::dynamics, 0}) : Panel(p, "TYPE A"),
+    TypeAPanel(AudioPluginAudioProcessor &p, SlotId slot = SlotId{ModuleId::dynamics, 0}) : Panel(p, "TYPE A", &Theme::typeAComp),
                                                threshold(p, "THRES", slot, ParamIDs::TypeAThreshold, ScopeContextType::COMPRESSION),
                                                speed(p, "SPEED", slot, ParamIDs::TypeACompSpeed, ScopeContextType::COMPRESSION),
                                                out(p, "OUT", slot, ParamIDs::TypeAOut, ScopeContextType::COMPRESSION),
@@ -17,11 +17,6 @@ public:
         addAndMakeVisible(speed);
         addAndMakeVisible(out);
         addAndMakeVisible(tilt);
-
-        Palette::setKnobColoursOfComponent(&threshold, Palette::colours[3]);
-        Palette::setKnobColoursOfComponent(&speed, Palette::colours[3]);
-        Palette::setKnobColoursOfComponent(&out, Palette::colours[3]);
-        Palette::setKnobColoursOfComponent(&tilt, Palette::colours[3]);
     }
 
     void resized() override

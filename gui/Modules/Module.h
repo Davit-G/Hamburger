@@ -4,14 +4,13 @@
 #include "LightButton.h"
 #include "../Knob.h"
 #include "Panel.h"
+#include "SlotLevels.h"
 
 class Module : public juce::Component
 {
 public:
     Module(AudioPluginAudioProcessor &processor, const std::string &moduleName, const std::string buttonAttachmentId, const std::string categoryAttachmentId, std::vector<std::unique_ptr<Panel>> panels, bool noHeader = false)
         : modulePanels(std::move(panels)),
-          powerOffImage(juce::ImageCache::getFromMemory(BinaryData::poweroff_png, BinaryData::poweroff_pngSize)), // yes it's using imageCache but stop constructing new instances! unify somehow
-          powerOnImage(juce::ImageCache::getFromMemory(BinaryData::poweron_png, BinaryData::poweron_pngSize)),
           scopeContext(processor.getScopeContext())
     {
         this->noHeader = noHeader;
@@ -72,7 +71,7 @@ public:
 
         if (buttonAttachmentId.length() > 0)
         {
-            enabledButton = std::make_unique<LightButton>(processor, powerOffImage, powerOnImage);
+            enabledButton = std::make_unique<LightButton>(powerGlyph(), &Theme::powerOn, &Theme::powerOff);
             enabledButton->setTooltip(powerTooltipFor(buttonAttachmentId, moduleName));
             attachment = std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment>(processor.treeState, buttonAttachmentId, *enabledButton);
             addAndMakeVisible(enabledButton.get());
@@ -139,21 +138,20 @@ public:
 
     void paint(juce::Graphics &g) override
     {
-        juce::Path p;
-        p.addRoundedRectangle(getLocalBounds().reduced(Panel::boxInset).toFloat(), Panel::boxCornerSize);
+        const auto box = getLocalBounds().reduced(Panel::boxInset).toFloat();
+        const auto on = enabledButton == nullptr || enabledButton->getToggleState();
 
-        if (enabledButton == nullptr) {
-            g.setColour(juce::Colour::fromRGB(0, 0, 0));
-        } else {
-            if (enabledButton->getToggleState()) {
-                g.setColour(juce::Colour::fromRGBA(0, 0, 0, 255));
-            } else {
-                g.setColour(juce::Colour::fromRGBA(0, 0, 0, 150));
-            }
+        g.setColour(on ? theme().box : theme().boxDisabled);
+        g.fillRoundedRectangle(box, Panel::boxCornerSize);
+
+        if (theme().boxBorders)
+        {
+            g.setColour(on ? theme().boxBorder : theme().boxBorderDisabled);
+            g.drawRoundedRectangle(box.reduced(0.5f), Panel::boxCornerSize, 1.0f);
         }
-
-        g.fillPath(p);
     }
+
+    void lookAndFeelChanged() override { applyAccent(); }
 
     void resized() override
     {
@@ -233,14 +231,14 @@ public:
         }
     }
 
-    // the colour of the panel on screen, when needed
-    juce::Colour getAccentColour() const
+    // the colours of the panel on screen
+    AccentColours Theme::* getAccent() const
     {
         for (auto &panel : modulePanels)
             if (panel->isVisible())
-                return panel->findColour(juce::Slider::rotarySliderFillColourId);
+                return panel->getAccent();
 
-        return juce::Colours::white;
+        return &Theme::plain;
     }
 
     std::function<void()> onScreenChanged;
@@ -250,7 +248,7 @@ public:
         footer = std::move(newFooter);
         footerHeight = height;
         addAndMakeVisible(*footer);
-        colourFooter();
+        applyAccent();
         resized();
     }
 
@@ -294,10 +292,17 @@ private:
     static constexpr int lowerContentShare = 2;
     static constexpr int footerHitMargin = 4;
     
-    void colourFooter()
+    // the heading and the levels under the panels follow whichever type is showing
+    void applyAccent()
     {
-        if (footer != nullptr)
-            footer->setColour(juce::Slider::rotarySliderFillColourId, getAccentColour());
+        const auto& accent = theme().*getAccent();
+
+        titleLabel.setColour(juce::Label::textColourId, accent.text);
+        categorySelector.setColour(juce::ComboBox::textColourId, accent.text);
+        categorySelector.setColour(juce::ComboBox::arrowColourId, accent.text);
+
+        if (auto* levels = dynamic_cast<SlotLevels*>(footer.get()))
+            levels->setAccent(getAccent());
     }
 
     void setupHeader()
@@ -325,7 +330,6 @@ private:
     void setupTitleLabel(const std::string &moduleName)
     {
         titleLabel.setText(moduleName, juce::dontSendNotification);
-        titleLabel.setColour(juce::Label::textColourId, juce::Colours::white);
         
         addAndMakeVisible(titleLabel);
         
@@ -377,7 +381,7 @@ private:
             }
             modulePanels[index]->setVisible(true);
 
-            colourFooter();
+            applyAccent();
 
             if (onScreenChanged != nullptr)
                 onScreenChanged();
@@ -401,7 +405,4 @@ private:
     std::string moduleNameTitle;
 
     bool noHeader;
-
-    juce::Image powerOffImage;
-    juce::Image powerOnImage;
 };

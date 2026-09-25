@@ -47,9 +47,6 @@ public:
     }
 
     void paint (juce::Graphics &g) override {
-        // auto outline = this->findColour(juce::Slider::rotarySliderOutlineColourId);
-        auto knobColour = this->findColour(juce::Slider::rotarySliderFillColourId);
-
         auto bounds = getLocalBounds().toFloat();
 
         auto sliderBounds = bounds.removeFromBottom(sliderHeight);
@@ -65,10 +62,10 @@ public:
 
         juce::Rectangle<float> centerBounds = sliderBounds;
 
-        g.setColour(juce::Colours::darkgrey);
+        g.setColour(theme().sliderTrack);
         g.fillRect(sliderBounds);
 
-        g.setColour (knobColour);
+        g.setColour(colours().slider.interpolatedWith(colours().sliderHeld, dragAmount));
 
         g.fillRect(sliderBounds.removeFromLeft(valueToProportionOfLength(getValue()) * sliderBounds.getWidth()));
     }

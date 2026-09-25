@@ -148,22 +148,30 @@ public:
         bandView.setActiveBand (activeSlot);
     }
 
-    // the controls take the colour of whichever distortion the box above is showing
-    void setAccentColour (juce::Colour colour)
+    // the controls take the colours of whichever distortion the box above is showing, apart from a stack's own
+    void setAccentColour (AccentColours Theme::* newDistortionAccent)
     {
-        for (auto* slider : allSliders())
-            Palette::setKnobColoursOfComponent (slider, colour);
-
-        Palette::setKnobColoursOfComponent (&stackFlip, colour);
-        stackFilterButton.setColour (juce::TextButton::textColourOffId, colour);
-        Palette::setKnobColoursOfComponent (&stackCount, colour);
-        repaint();
+        distortionAccent = newDistortionAccent;
+        applyAccent();
     }
+
+    void lookAndFeelChanged() override { applyAccent(); }
 
     void resized() override { layOutVisible(); }
 
 private:
     int currentRouting() const { return routing != nullptr ? routing->getIndex() : MainRouting::stack; }
+
+    void applyAccent()
+    {
+        accent = currentRouting() == MainRouting::stack ? &Theme::stack : distortionAccent;
+        Panel::lookAndFeelChanged();
+
+        stackFlip.setAccent (accent);
+        stackFilterButton.setColour (juce::TextButton::textColourOffId, (theme().*accent).main);
+        repaint();
+    }
+
     int currentBandCount() const { return bandCount != nullptr ? bandCount->get() : 2; }
 
     // numbered with the slot's type, except in mid/side where what the slot takes matters more than what it runs
@@ -246,7 +254,7 @@ private:
             selectSlot (0);
 
         layOutVisible();
-        repaint();
+        applyAccent();
 
         if (onRoutingChanged != nullptr)
             onRoutingChanged();
@@ -354,6 +362,7 @@ private:
     std::array<std::unique_ptr<juce::ParameterAttachment>, MainRouting::maxSlots> slotTypeAttachments;
 
     int activeSlot = 0;
+    AccentColours Theme::* distortionAccent = &Theme::plain;
 
     static constexpr int slotRadioGroup = 8201;
 

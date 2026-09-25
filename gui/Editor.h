@@ -18,6 +18,7 @@
 #include "UpdateChecker.h"
 
 #include "LookAndFeel/HamburgerLAF.h"
+#include "LookAndFeel/ThemeManager.h"
 
 class EditorV2 : public juce::Component, public juce::ChangeListener
 {
@@ -30,11 +31,18 @@ public:
                                              ,presetPanel(p.getPresetManager()),
                                              header(p)
     {   
+        // the first editor opened picks up the theme from last time, any others share it
+        if (themes->getSelectedId().isEmpty() && ! themes->select(p.getAppProperties().appProperties.getUserSettings()->getValue("theme", ThemeManager::defaultId)))
+            themes->select(ThemeManager::defaultId);
+
+        themes->addChangeListener(this);
+
         setLookAndFeel(&hamburgerLAF);
         infoPanel.setLookAndFeel(&hamburgerLAF);
         leftColumn.setLookAndFeel(&hamburgerLAF);
         saturationColumn.setLookAndFeel(&hamburgerLAF);
         utilColumn.setLookAndFeel(&hamburgerLAF);
+        presetPanel.setLookAndFeel(&hamburgerLAF);
 
         addAndMakeVisible(leftColumn);
         addAndMakeVisible(saturationColumn);
@@ -46,9 +54,9 @@ public:
         saturationColumn.setModuleColours ([this] (ModuleId id) {
             for (auto* module : { leftColumn.moduleFor (id), saturationColumn.moduleFor (id), utilColumn.moduleFor (id) })
                 if (module != nullptr)
-                    return module->getAccentColour();
+                    return (theme().*module->getAccent()).main;
 
-            return juce::Colours::white;
+            return theme().plain.main;
         });
         addAndMakeVisible(presetPanel);
 
@@ -127,14 +135,20 @@ public:
         leftColumn.setLookAndFeel(nullptr);
         saturationColumn.setLookAndFeel(nullptr);
         utilColumn.setLookAndFeel(nullptr);
+        presetPanel.setLookAndFeel(nullptr);
         if (tooltipWindow != nullptr) {
             tooltipWindow->setLookAndFeel(nullptr);
         }
 
         audioProcessorRef.getAppProperties().removeChangeListener(this);
+        themes->removeChangeListener(this);
     }
 
     void changeListenerCallback (juce::ChangeBroadcaster* source) override {
+        // every component reads its colours from theme() again, and repaints
+        if (source == &themes.get())
+            sendLookAndFeelChange();
+
         if (source == &audioProcessorRef.getAppProperties()) {
             bool displayTooltips = audioProcessorRef.getAppProperties().getTooltipType() == AppProperties::TooltipType::window;
 
@@ -146,9 +160,33 @@ public:
         }
     }
 
+    void lookAndFeelChanged() override
+    {
+        hamburgerLAF.applyTheme();
+
+        // drawing it is the slow part, so only when the themed svg comes out different
+        auto svg = themes->backgroundSvg();
+        applyThemeToSvg(*svg);
+
+        if (const auto themed = svg->toString(); themed != backgroundSvg)
+        {
+            backgroundSvg = themed;
+            background = {};
+        }
+    }
+
+    // the svg is drawn once into an image, and again only when the theme or the scale changes
     void paint(juce::Graphics &g) override
     {
-        g.drawImage(image, getLocalBounds().toFloat(), juce::RectanglePlacement::fillDestination);
+        const auto scale = g.getInternalContext().getPhysicalPixelScaleFactor();
+
+        if (! background.isValid() || ! juce::approximatelyEqual(scale, backgroundScale))
+        {
+            backgroundScale = scale;
+            background = makeBackground(backgroundSvg, juce::roundToInt((float) getWidth() * scale), juce::roundToInt((float) getHeight() * scale));
+        }
+
+        g.drawImage(background, getLocalBounds().toFloat());
     }
 
     // pressing 1-4 will switch positions on the main editor if we're in a multiband view or similar
@@ -200,7 +238,22 @@ public:
     }
 
 private:
+    static juce::Image makeBackground(const juce::String& svg, int width, int height)
+    {
+        auto drawable = juce::Drawable::createFromSVG(*juce::parseXML(svg));
+
+        // shapes can run well past the svg's canvas, so it's the canvas that's fitted rather than the drawing's bounds
+        const auto canvas = dynamic_cast<juce::DrawableComposite&>(*drawable).getContentArea();
+
+        juce::Image image(juce::Image::RGB, width, height, true);
+        juce::Graphics g(image);
+
+        drawable->draw(g, 1.0f, juce::RectanglePlacement(juce::RectanglePlacement::fillDestination).getTransformToFit(canvas, image.getBounds().toFloat()));
+        return image;
+    }
+
     AudioPluginAudioProcessor& audioProcessorRef;
+    juce::SharedResourcePointer<ThemeManager> themes;
 
     LeftColumn leftColumn;
     SaturationColumn saturationColumn;
@@ -216,7 +269,9 @@ private:
 
     Info infoPanel;
 
-    juce::Image image = juce::ImageCache::getFromMemory(BinaryData::bg4_jpg, BinaryData::bg4_jpgSize);
+    juce::Image background;
+    float backgroundScale = 0.0f;
+    juce::String backgroundSvg;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(EditorV2)
 };

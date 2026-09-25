@@ -32,7 +32,6 @@ public:
     {
         setMouseCursor(juce::MouseCursor::PointingHandCursor);
 
-        aviaryLogo.setColour(juce::Label::textColourId, juce::Colours::white);
         aviaryLogo.setText("(~)> Aviary Audio", juce::dontSendNotification);
         aviaryLogo.setMinimumHorizontalScale(1.0f);
         aviaryLogo.setJustificationType(juce::Justification::centredRight);
@@ -48,6 +47,11 @@ public:
     ~AviaryLogo() {
         aviaryLogo.removeMouseListener(this);
         aviaryLogo.setLookAndFeel(nullptr);
+    }
+
+    void lookAndFeelChanged() override
+    {
+        aviaryLogo.setColour(juce::Label::textColourId, theme().textInfo);
     }
 
     void mouseEnter (const juce::MouseEvent& event) override
@@ -151,11 +155,17 @@ public:
         getParentComponent()->postCommandMessage(1);
     }
 
+    void lookAndFeelChanged() override
+    {
+        versionLabel.setColour(juce::Label::textColourId, theme().textInfo);
+        descriptionLabel.setColour(juce::Label::textColourId, theme().textInfo);
+    }
+
     void paint(juce::Graphics &g) override
     {
         juce::Path p;
         p.addRoundedRectangle(getLocalBounds().reduced(4).toFloat(), 15.0f);
-        g.setColour(juce::Colour::fromRGB(0, 0, 0));
+        g.setColour(theme().box);
         g.fillPath(p);
 
         auto bounds = getLocalBounds().reduced(20);

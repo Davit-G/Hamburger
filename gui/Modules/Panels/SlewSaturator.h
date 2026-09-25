@@ -7,26 +7,18 @@
 class SlewRatePanel : public Panel, private juce::AudioProcessorValueTreeState::Listener
 {
 public:
-    SlewRatePanel(AudioPluginAudioProcessor &p, SlotId slot = SlotId{ModuleId::main, 0}) : apvts(p), Panel(p, "SLEW", Palette::colours[1], slot), 
+    SlewRatePanel(AudioPluginAudioProcessor &p, SlotId slot = SlotId{ModuleId::main, 0}) : apvts(p), Panel(p, "SLEW", &Theme::slew, slot), 
         alpha(p, "ALPHA", slot, ParamIDs::alphaParam, ScopeContextType::IN_OUT),
         bias(p, "TONE", slot, ParamIDs::slewSpeed, ScopeContextType::IN_OUT),
         directionality(p, "BEND", slot, ParamIDs::directionality, ScopeContextType::IN_OUT),
         type(p, "TYPE", ParamIDs::slewType, ScopeContextType::IN_OUT),
-        slewIcon(BinaryData::Slew_svg, BinaryData::Slew_svgSize, 3)
+        slewIcon(BinaryData::Slew_svg, BinaryData::Slew_svgSize, &Theme::slew, 3)
     {
         addAndMakeVisible(bias);
         addAndMakeVisible(alpha);
         addAndMakeVisible(directionality);
         addAndMakeVisible(type);
         addAndMakeVisible(slewIcon);
-
-        const auto colour = Palette::colours[1];
-        Palette::setKnobColoursOfComponent(this, colour);
-
-        Palette::setKnobColoursOfComponent(&alpha, colour);
-        Palette::setKnobColoursOfComponent(&bias, colour);
-        Palette::setKnobColoursOfComponent(&type, colour);
-        Palette::setKnobColoursOfComponent(&directionality, colour);
 
         p.treeState.addParameterListener(ParamIDs::slewType.getParamID(), this);
 

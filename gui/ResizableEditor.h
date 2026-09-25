@@ -122,13 +122,13 @@ public:
                                           readoutFontHeight + readoutPaddingY)
                        .withCentre(getLocalBounds().toFloat().getCentre());
 
-        g.setColour(juce::Colours::black.withAlpha(0.85f));
+        g.setColour(theme().tooltipBackground);
         g.fillRoundedRectangle(box, 5.0f);
 
-        g.setColour(juce::Colours::white.withAlpha(0.8f));
+        g.setColour(theme().tooltipOutline);
         g.drawRoundedRectangle(box.reduced(0.5f), 5.0f, 2.0f);
 
-        g.setColour(juce::Colours::white);
+        g.setColour(theme().tooltipText);
         g.drawText(text, box, juce::Justification::centred);
     }
 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "juce_gui_basics/juce_gui_basics.h"
+#include "LookAndFeel/Theme.h"
 
 // custom toggle button
 class BoxToggle : public juce::ToggleButton
@@ -11,7 +12,6 @@ public:
         setButtonText (text);
 
         label.setText (text, juce::dontSendNotification);
-        label.setColour (juce::Label::textColourId, juce::Colours::white);
         label.setBorderSize ({});
         label.setInterceptsMouseClicks (false, false);
         addAndMakeVisible (label);
@@ -21,11 +21,18 @@ public:
     {
         const auto box = juce::Rectangle<float> (boxSize, boxSize).withCentre ({ boxSize * 0.5f, (float) getHeight() * 0.5f });
 
-        g.setColour (findColour (juce::Slider::rotarySliderFillColourId));
+        g.setColour ((theme().*accent).slider);
         g.drawRect (box, 1.0f);
 
         if (getToggleState())
             g.fillRect (box.reduced (2.0f));
+    }
+
+    void setAccent (AccentColours Theme::* newAccent)
+    {
+        accent = newAccent;
+        label.setColour (juce::Label::textColourId, (theme().*accent).text);
+        repaint();
     }
 
     void resized() override {
@@ -37,4 +44,5 @@ private:
     static constexpr int gap = 10;
 
     juce::Label label;
+    AccentColours Theme::* accent = &Theme::plain;
 };

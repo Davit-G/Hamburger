@@ -7,12 +7,10 @@ class ScopePanel : public Panel
 {
 public:
     ScopePanel(AudioPluginAudioProcessor &p) : Panel(p, "SETTINGS"),
-        scope(p.treeState, p.getScopeDataCollector(), p.getScopeContext()),
-        lockOffImage(juce::ImageCache::getFromMemory(BinaryData::lockoff_png, BinaryData::lockoff_pngSize)),
-        lockOnImage(juce::ImageCache::getFromMemory(BinaryData::lockon_png, BinaryData::lockon_pngSize))
+        scope(p.treeState, p.getScopeDataCollector(), p.getScopeContext())
     {
         addAndMakeVisible(scope);
-        lockedButton = std::make_unique<LightButton>(p, lockOffImage, lockOnImage);
+        lockedButton = std::make_unique<LightButton>(lockGlyph(), &Theme::lockOn, &Theme::lockOff);
         addAndMakeVisible(*lockedButton);
 
         lockedButton->setTooltip("This button locks the currently visible scope view so it doesn't change when updating parameters.");
@@ -80,6 +78,4 @@ private:
 
     Scope<float> scope;
     std::unique_ptr<LightButton> lockedButton;
-    juce::Image lockOffImage;
-    juce::Image lockOnImage;
 };

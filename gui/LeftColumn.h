@@ -11,8 +11,6 @@
 #include "Modules/Panels/LogoPanel.h"
 #include "Modules/Panels/TypeAPanel.h"
 
-#include "LookAndFeel/Palette.h"
-
 class LeftColumn : public juce::Component
 {
 public:

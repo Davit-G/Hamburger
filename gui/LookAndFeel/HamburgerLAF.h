@@ -2,11 +2,15 @@
 
 #include "juce_gui_basics/juce_gui_basics.h"
 #include "BinaryData.h"
+#include "Theme.h"
 
 class HamburgerLAF : public juce::LookAndFeel_V4
 {
 public:
     HamburgerLAF(juce::Colour color = juce::Colour::fromRGB(50, 255, 205));
+
+    // the colours JUCE's own widgets look up, like the dropdown menus
+    void applyTheme();
 
     const juce::Typeface::Ptr questrialTypeface = juce::Typeface::createSystemTypefaceFor(BinaryData::QuestrialRegular_ttf, BinaryData::QuestrialRegular_ttfSize);
     const juce::Typeface::Ptr quicksandTypeface = juce::Typeface::createSystemTypefaceFor(BinaryData::QuicksandBold_ttf, BinaryData::QuicksandBold_ttfSize);
@@ -62,7 +66,7 @@ public:
 
         juce::AttributedString s;
         s.setJustification(juce::Justification::centred);
-        s.append(text, font, juce::Colours::white);
+        s.append(text, font, theme().tooltipText);
 
         juce::TextLayout tl;
         tl.createLayout(s, maxTooltipWidth);
@@ -88,11 +92,11 @@ public:
         auto bounds = juce::Rectangle<int>(width, height);
 
         // bg
-        g.setColour(juce::Colours::black);
+        g.setColour(theme().tooltipBackground);
         g.fillRoundedRectangle(bounds.toFloat(), 5.0f);
 
         // outline
-        g.setColour(juce::Colours::white.withAlpha(0.8f));
+        g.setColour(theme().tooltipOutline);
         g.drawRoundedRectangle(bounds.toFloat().reduced(0.5f, 0.5f), 5.0f, 2.0f);
 
         auto layout = createTooltipLayout(text);

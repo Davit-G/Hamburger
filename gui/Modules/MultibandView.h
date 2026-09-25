@@ -3,6 +3,7 @@
 #include "../../PluginProcessor.h"
 #include "SpectrumAnalyser.h"
 #include "Panel.h"
+#include "LightButton.h"
 #include "../../dsp/EffectInfos.h"
 
 class MultibandView : public juce::Component,
@@ -139,7 +140,7 @@ public:
         g.saveState();
         g.reduceClipRegion (outline);
 
-        g.setColour (juce::Colours::black);
+        g.setColour (theme().multibandBackground);
         g.fillRect (area);
 
         // each band's in gain behind everything, for reference against its out gain line: just where it's set, not live
@@ -148,14 +149,13 @@ public:
             const auto span = levelSpan (band);
             const auto y = gainToY (inGains[(size_t) band]->get());
 
-            g.setColour (juce::Colours::grey.withAlpha (0.4f));
+            g.setColour (theme().multibandInGain);
             g.drawLine (span.getStart() + 6.0f, y, span.getEnd() - 6.0f, y, 1.0f);
         }
 
-        spectrum.paint (g, area, collector.getSampleRate(), 1.5f);
+        spectrum.paint (g, area, collector.getSampleRate(), 1.5f, theme().multibandSpectrumLine, theme().multibandSpectrumFill);
 
-        
-        g.setColour (juce::Colours::white.withAlpha (0.6f));
+        g.setColour (theme().multibandInputSpectrum);
         g.strokePath (inputSpectrum.makePath (area, collector.getSampleRate()), juce::PathStrokeType (1.0f));
 
         g.setFont (getLookAndFeel().getPopupMenuFont().withHeight (fontHeight));
@@ -175,7 +175,7 @@ public:
 
         g.restoreState();
 
-        g.setColour (juce::Colour::fromRGB (48, 48, 48));
+        g.setColour (theme().multibandTopEdge);
         g.drawLine (area.getX(), area.getY() + 0.5f, area.getRight(), area.getY() + 0.5f, 1.0f);
     }
 
@@ -634,21 +634,21 @@ private:
         // darkened rather than washed out, so the band being edited is the brightest one
         if (band != activeBand)
         {
-            g.setColour (juce::Colours::black.withAlpha (0.45f));
+            g.setColour (theme().multibandInactiveShade);
             g.fillRect (area);
         }
 
         // silenced by its own mute or someone else's solo
         if (!isAudible (band))
         {
-            g.setColour (juce::Colours::black.withAlpha (0.55f));
+            g.setColour (theme().multibandSilencedShade);
             g.fillRect (area);
         }
 
         // lit whole while it's being slid, it being the whole band that's grabbed
         if (drag.kind == Kind::slide && drag.index == band && sliding)
         {
-            g.setColour (juce::Colours::white.withAlpha (0.05f));
+            g.setColour (theme().multibandBandHighlight);
             g.fillRect (area);
         }
 
@@ -657,7 +657,7 @@ private:
         // the flat lines also get the strip they can be grabbed by
         if (heat > 0.0f)
         {
-            g.setColour (juce::Colours::white.withAlpha (0.05f * heat));
+            g.setColour (theme().multibandBandHighlight.withMultipliedAlpha (heat));
             g.fillRect (area);
 
             if (!(exciter && band == 1))
@@ -665,7 +665,7 @@ private:
                 const auto span = levelSpan (band);
                 const auto y = levelY (band, area.getCentreX());
 
-                g.setColour (juce::Colours::white.withAlpha (0.08f * heat));
+                g.setColour (theme().multibandBandHighlight.withMultipliedAlpha (1.6f * heat));
                 g.fillRect (juce::Rectangle<float> (span.getStart(), y - grabDistance, span.getLength(), grabDistance * 2.0f));
             }
         }
@@ -682,7 +682,7 @@ private:
         const auto db = gains[(size_t) band]->get();
         const auto y = levelY (band, area.getCentreX());
         const auto hovered = hotness (Kind::level, band) > 0.0f;
-        const auto lineColour = juce::Colours::white.withAlpha (active || hovered ? 0.9f : 0.4f);
+        const auto lineColour = active || hovered ? theme().multibandLevelHighlight : theme().multibandLevel;
 
         g.setColour (lineColour);
 
@@ -694,7 +694,7 @@ private:
 
         if (exciter)
         {
-            g.setColour (juce::Colours::grey);
+            g.setColour (theme().multibandLabel);
             g.drawText (band == 0 ? "FULL" : "HIGH", area.reduced (6.0f, 3.0f).withHeight (fontHeight),
                         juce::Justification::centredRight, false);
             g.setColour (lineColour);
@@ -711,8 +711,8 @@ private:
         paintRemove (g, band);
         paintDrive (g, band);
         paintPower (g, toggleArea (band, 0), powers[(size_t) band]->get());
-        paintToggle (g, toggleArea (band, 1), "M", mutes[(size_t) band]->get(), juce::Colour::fromRGB (220, 70, 70));
-        paintToggle (g, toggleArea (band, 2), "S", solos[(size_t) band]->get(), juce::Colours::yellow);
+        paintToggle (g, toggleArea (band, 1), "M", mutes[(size_t) band]->get(), theme().multibandMute);
+        paintToggle (g, toggleArea (band, 2), "S", solos[(size_t) band]->get(), theme().multibandSolo);
     }
 
     void paintToggle (juce::Graphics& g, juce::Rectangle<float> area, const juce::String& text, bool on, juce::Colour onColour)
@@ -720,23 +720,23 @@ private:
         if (area.isEmpty())
             return;
 
-        g.setColour (on ? onColour : juce::Colour::fromRGB (30, 30, 30));
+        g.setColour (on ? onColour : theme().multibandButton);
         g.fillRoundedRectangle (area, 3.0f);
 
-        g.setColour (on ? juce::Colours::black : juce::Colours::grey);
+        g.setColour (on ? theme().multibandButtonTextOn : theme().multibandButtonText);
         g.drawText (text, area, juce::Justification::centred, false);
     }
 
-    // the band's distortion on or off, with the same icons as the box's own power button
+    // the band's distortion on or off, drawn like the box's own power button
     void paintPower (juce::Graphics& g, juce::Rectangle<float> area, bool on)
     {
         if (area.isEmpty())
             return;
 
-        g.setColour (juce::Colour::fromRGB (30, 30, 30));
+        g.setColour (theme().multibandButton);
         g.fillRoundedRectangle (area, 3.0f);
 
-        g.drawImage (on ? powerOnImage : powerOffImage, area.reduced (2.0f), juce::RectanglePlacement::centred);
+        drawGlowingGlyph (g, powerGlyph(), area, on ? theme().powerOn : theme().powerOff);
     }
 
     void resetTarget (Target target)
@@ -965,7 +965,11 @@ private:
 
         const auto heat = hotness (Kind::drive, band);
 
-        g.setColour (juce::Colours::white.withAlpha (heat > 0.0f ? 0.6f + 0.4f * heat : (band == activeBand ? 0.7f : 0.45f)));
+        if (heat > 0.0f)
+            g.setColour (theme().multibandDriveActive.interpolatedWith (theme().multibandDriveHot, heat));
+        else
+            g.setColour (band == activeBand ? theme().multibandDriveActive : theme().multibandDrive);
+
         g.drawText (driveText (*param), area, juce::Justification::centred, false);
     }
 
@@ -979,14 +983,14 @@ private:
 
         const auto hot = hover.kind == Kind::remove && hover.index == band;
 
-        g.setColour (juce::Colour::fromRGB (30, 30, 30));
+        g.setColour (theme().multibandButton);
         g.fillRoundedRectangle (area, 3.0f);
 
         const auto icon = area.reduced (3.0f);
         const auto lidY = icon.getY() + icon.getHeight() * 0.22f;
         const auto body = icon.withTop (lidY + 1.5f).reduced (icon.getWidth() * 0.12f, 0.0f);
 
-        g.setColour (hot ? juce::Colour::fromRGB (220, 70, 70) : juce::Colours::grey);
+        g.setColour (hot ? theme().multibandRemoveHot : theme().multibandRemove);
         g.drawLine (icon.getX(), lidY, icon.getRight(), lidY, 1.2f);
         g.drawLine (icon.getCentreX() - 1.5f, icon.getY(), icon.getCentreX() + 1.5f, icon.getY(), 1.2f);
         g.drawRect (body, 1.0f);
@@ -1001,15 +1005,15 @@ private:
     // where a click on the top strip would put the new split, a grey line down the view and a plus at the top
     void paintAddPreview (juce::Graphics& g)
     {
-        g.setColour (juce::Colours::grey.withAlpha (0.6f));
+        g.setColour (theme().multibandAddLine);
         g.drawLine (addX, 0.0f, addX, (float) getHeight(), 1.0f);
 
         const auto badge = juce::Rectangle<float> (addBadgeSize, addBadgeSize).withCentre ({ addX, addStripHeight * 0.5f });
-        g.setColour (juce::Colour::fromRGB (70, 70, 70));
+        g.setColour (theme().multibandAddBadge);
         g.fillEllipse (badge);
 
         const auto cross = badge.reduced (addBadgeSize * 0.28f);
-        g.setColour (juce::Colours::white);
+        g.setColour (theme().multibandAddCross);
         g.drawLine (cross.getX(), cross.getCentreY(), cross.getRight(), cross.getCentreY(), 1.5f);
         g.drawLine (cross.getCentreX(), cross.getY(), cross.getCentreX(), cross.getBottom(), 1.5f);
     }
@@ -1023,17 +1027,17 @@ private:
         // the strip it can be grabbed by
         if (hot)
         {
-            g.setColour (juce::Colours::white.withAlpha (0.1f * heat));
+            g.setColour (theme().multibandCrossoverHighlight.withMultipliedAlpha (heat));
             g.fillRect (juce::Rectangle<float> (x - grabDistance, 0.0f, grabDistance * 2.0f, (float) getHeight()));
         }
 
-        g.setColour (juce::Colours::white.withAlpha (hot ? 0.9f : 0.45f));
+        g.setColour (hot ? theme().multibandCrossoverHot : theme().multibandCrossover);
         g.drawLine (x, 0.0f, x, (float) getHeight(), hot ? 2.0f : 1.0f);
 
         const auto freq = crossovers[(size_t) edge]->get();
         const auto label = freq >= 1000.0f ? juce::String (freq / 1000.0f, 1) + "k" : juce::String (juce::roundToInt (freq));
 
-        g.setColour (hot ? juce::Colours::white : juce::Colours::grey);
+        g.setColour (hot ? theme().multibandCrossoverTextHot : theme().multibandCrossoverText);
         g.drawText (label, juce::Rectangle<float> (x + 3.0f, (float) getHeight() - bottomMargin - fontHeight - 2.0f, 40.0f, fontHeight),
                     juce::Justification::centredLeft, false);
     }
@@ -1108,9 +1112,6 @@ private:
     juce::AudioParameterInt* bandCount = nullptr; // what adding and removing bands changes
 
     float addX = 0.0f; // where the add preview sits while the mouse is on the top strip
-
-    juce::Image powerOnImage = juce::ImageCache::getFromMemory (BinaryData::poweron_png, BinaryData::poweron_pngSize);
-    juce::Image powerOffImage = juce::ImageCache::getFromMemory (BinaryData::poweroff_png, BinaryData::poweroff_pngSize);
 
     int numBands = 2;
     int activeBand = 0;

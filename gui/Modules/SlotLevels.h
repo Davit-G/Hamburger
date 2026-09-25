@@ -30,8 +30,11 @@ public:
         out.setJustification (juce::Justification::centredRight);
     }
 
-    void colourChanged() override
+    void setAccent (AccentColours Theme::* accent)
     {
+        for (auto* readout : { &in, &wet, &out })
+            readout->setAccent (accent);
+
         in.refreshText();
         out.refreshText();
     }

@@ -5,6 +5,7 @@
 #include "BinaryData.h"
 
 #include "../PluginProcessor.h"
+#include "LookAndFeel/Theme.h"
 
 class PluginHeader : public juce::Component,
                      public juce::TooltipClient
@@ -63,7 +64,7 @@ public:
 
     void paint (juce::Graphics& g) override
     {
-        g.setColour (juce::Colours::black);
+        g.setColour (theme().box);
         g.fillRoundedRectangle (pill().toFloat(), 15.0f);
 
         auto bar = tabRow();
@@ -74,13 +75,12 @@ public:
         {
             const auto cell = cells[(size_t) i];
             const auto active = tabFor (i) == selectedTab;
-            const auto alpha = active ? 1.0f : (i == hoveredCell ? hoverAlpha : inactiveAlpha);
 
-            g.setColour (juce::Colours::white.withAlpha (alpha));
+            g.setColour (active ? theme().textHeader : (i == hoveredCell ? theme().textHeaderHover : theme().textHeaderIdle));
 
             if (isSettingsCell (i))
-                settingsIcon->drawWithin (g, cell.toFloat().withSizeKeepingCentre (iconSize, iconSize),
-                                          juce::RectanglePlacement::centred, alpha);
+                g.fillPath (settingsIcon, juce::RectanglePlacement (juce::RectanglePlacement::centred)
+                                              .getTransformToFit ({ 0.0f, 0.0f, 24.0f, 24.0f }, cell.toFloat().withSizeKeepingCentre (iconSize, iconSize)));
             else if (showsMode (i))
                 drawMode (g, cell);
             else
@@ -95,7 +95,7 @@ public:
 
     void drawDivider (juce::Graphics& g, juce::Rectangle<int> bar, float x) const
     {
-        g.setColour (dividerColour);
+        g.setColour (theme().headerDivider);
         g.drawLine (x, (float) bar.getY() + dividerInset, x, (float) bar.getBottom() - dividerInset, 1.0f);
     }
 
@@ -143,7 +143,7 @@ private:
         return juce::roundToInt (width) + cellPad * 2;
     }
 
-    static std::unique_ptr<juce::Drawable> makeSettingsIcon()
+    static juce::Path makeSettingsIcon()
     {
         static constexpr auto svg = R"svg(
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="#ffffff">
@@ -155,7 +155,7 @@ private:
         auto parsed = juce::XmlDocument::parse (juce::String (svg));
         jassert (parsed != nullptr);
 
-        return juce::Drawable::createFromSVG (*parsed);
+        return juce::Drawable::createFromSVG (*parsed)->getOutlineAsPath();
     }
 
     // PRE | MAIN | POST packed left, the gear alone on the right
@@ -188,7 +188,7 @@ private:
     juce::AudioParameterChoice* routing = nullptr;
     std::unique_ptr<juce::ParameterAttachment> routingAttachment;
 
-    std::unique_ptr<juce::Drawable> settingsIcon = makeSettingsIcon();
+    const juce::Path settingsIcon = makeSettingsIcon();
 
     void drawMode (juce::Graphics& g, juce::Rectangle<int> cell) const
     {
@@ -295,11 +295,6 @@ private:
     static constexpr float dividerInset = 12.0f;
 
     static constexpr int iconSize = 14;
-    // white at these alphas over black matches the text greys, so the icon shares them
-    static constexpr float inactiveAlpha = 0.43f;
-    static constexpr float hoverAlpha = 0.67f;
-
-    const juce::Colour dividerColour { juce::Colour::fromRGB (74, 74, 74) };
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PluginHeader)
 };

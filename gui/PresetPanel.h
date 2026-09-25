@@ -3,6 +3,7 @@
 #include "juce_gui_basics/juce_gui_basics.h"
 
 #include "BurgerAlert.h"
+#include "LookAndFeel/Theme.h"
 
 std::unique_ptr<juce::Drawable> makeIcon(const char *iconString)
 {
@@ -124,7 +125,7 @@ public:
 
 		if (rowIsSelected && !isDir)
 		{
-			g.fillAll(juce::Colour::fromRGB(33, 33, 33));
+			g.fillAll(theme().rowSelected);
 		}
 
 		auto depth = row.getFile().getRelativePathFrom(presetManager.getPresetDirectory()).retainCharacters("/\\").length();
@@ -136,24 +137,18 @@ public:
 
 			// Path p;
 			// p.addRoundedRectangle(5 + depth * 30, 0, width - (depth * 30 + delta * 4), height - 2 * delta, 15.0f);
-			g.setColour(juce::Colour::fromRGB(44, 44, 44));
+			g.setColour(theme().divider);
 			// g.fillPath(p);
 			g.drawLine(5 + depth * 30, height, width, height, 2);
 
 			// g.fillAll(juce::Colour::fromRGB(22, 22, 22));
 
-			g.setColour(juce::Colours::white);
-
 			auto drawArea = juce::Rectangle<float>(5 + depth * 30, 0, height, height).reduced(12).toFloat();
 
-			if (collapsed)
-			{
-				folderClosedIcon->drawWithin(g, drawArea, juce::RectanglePlacement::centred, 1.0f);
-			}
-			else
-			{
-				folderOpenIcon->drawWithin(g, drawArea, juce::RectanglePlacement::centred, 1.0f);
-			}
+			// the icons are drawn in white
+			auto icon = (collapsed ? folderClosedIcon : folderOpenIcon)->createCopy();
+			icon->replaceColour(juce::Colours::white, theme().textPresets);
+			icon->drawWithin(g, drawArea, juce::RectanglePlacement::centred, 1.0f);
 		}
 
 		auto extraRoom = 0;
@@ -161,7 +156,7 @@ public:
 		if (isDir)
 			extraRoom = 35;
 
-		g.setColour(juce::LookAndFeel::getDefaultLookAndFeel().findColour(juce::Label::textColourId));
+		g.setColour(theme().textPresets);
 		g.setFont(quicksandFont);
 
 		auto presetName = row.getFile().getFileNameWithoutExtension();
@@ -175,7 +170,7 @@ public:
 				   15 + depth * 30 + extraRoom, 0, width, height,
 				   juce::Justification::centredLeft, true);
 
-		g.setColour(juce::Colour::fromRGB(100, 100, 100));
+		g.setColour(theme().textPresetsAuthor);
 		g.setFont(quicksandFont);
 
 
@@ -272,12 +267,17 @@ public:
 		setColour(juce::ListBox::ColourIds::outlineColourId, juce::Colours::black);
 
 		setOpaque(false);
+	}
+
+	void lookAndFeelChanged() override
+	{
+		juce::ListBox::lookAndFeelChanged();
 
 		auto &vertScroll = this->getVerticalScrollBar();
 
-		vertScroll.setColour(juce::ScrollBar::ColourIds::thumbColourId, Palette::colours[3]);
-		vertScroll.setColour(juce::ScrollBar::ColourIds::trackColourId, Palette::colours[3]);
-		vertScroll.setColour(juce::ScrollBar::ColourIds::backgroundColourId, juce::Colours::black);
+		vertScroll.setColour(juce::ScrollBar::ColourIds::thumbColourId, theme().scrollbar);
+		vertScroll.setColour(juce::ScrollBar::ColourIds::trackColourId, theme().scrollbar);
+		vertScroll.setColour(juce::ScrollBar::ColourIds::backgroundColourId, theme().box);
 	}
 
 	void paint(juce::Graphics &g) override
@@ -288,7 +288,7 @@ public:
 
 		juce::Path p;
 		p.addRoundedRectangle(getLocalBounds().reduced(4).withTrimmedTop(-4).toFloat(), 15.0f);
-		g.setColour(juce::Colour::fromRGB(0, 0, 0));
+		g.setColour(theme().box);
 		g.fillPath(p);
 	}
 
@@ -312,33 +312,33 @@ public:
 		auto saveIcon = makeIcon(R"svgDELIM(
 		<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="white" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-save"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg>
 		)svgDELIM");
-		saveButton.setImages(saveIcon.get());
+		buttonIcons.push_back({ &saveButton, std::move(saveIcon) });
 
 		auto deleteIcon = makeIcon(R"svgDELIM(
 		<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="white" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-trash-2"><path d="M3 6h18M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2M10 11v6M14 11v6"/></svg>
 		)svgDELIM");
-		deleteButton.setImages(deleteIcon.get());
+		buttonIcons.push_back({ &deleteButton, std::move(deleteIcon) });
 
 		auto leftChevronIcon = makeIcon(R"svgDELIM(
 			<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-left"><path d="m15 18-6-6 6-6"/></svg>
 		)svgDELIM");
-		previousPresetButton.setImages(leftChevronIcon.get());
+		buttonIcons.push_back({ &previousPresetButton, std::move(leftChevronIcon) });
 
 		auto rightChevronIcon = makeIcon(R"svgDELIM(
 			<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-right"><path d="m9 18 6-6-6-6"/></svg>
 		)svgDELIM");
-		nextPresetButton.setImages(rightChevronIcon.get());
+		buttonIcons.push_back({ &nextPresetButton, std::move(rightChevronIcon) });
 
 		auto closeIcon = makeIcon(R"svgDelim(
 			<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 30 30" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
 		)svgDelim");
-		closeButton.setImages(closeIcon.get());
+		buttonIcons.push_back({ &closeButton, std::move(closeIcon) });
 
 		auto folderClosedIconString = makeIcon(R"svgDELIM(
 			<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-folder-closed"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/><path d="M2 10h20"/></svg>
 		)svgDELIM");
 
-		openPresetFolderButton.setImages(folderClosedIconString.get());
+		buttonIcons.push_back({ &openPresetFolderButton, std::move(folderClosedIconString) });
 
 		setupButton(saveButton, "Save");
 		setupButton(deleteButton, "Delete");
@@ -382,9 +382,6 @@ public:
 		};
 
 		// currentPresetLabel.setLookAndFeel(&comboBoxLAF);
-		currentPresetLabel.setColour(juce::ComboBox::backgroundColourId, juce::Colours::black);
-		currentPresetLabel.setColour(juce::TextButton::ColourIds::buttonColourId, juce::Colours::black);
-
 		currentPresetLabel.setMouseCursor(juce::MouseCursor::PointingHandCursor);
 		addAndMakeVisible(currentPresetLabel);
 		currentPresetLabel.addListener(this);
@@ -409,6 +406,23 @@ public:
 			// });
 
 		currentPresetLabel.setButtonText("Hamburger");
+	}
+
+	// the icons are drawn in white, so that's what gets swapped for the text colour
+	void lookAndFeelChanged() override
+	{
+		for (auto &[button, icon] : buttonIcons)
+		{
+			auto themed = icon->createCopy();
+			themed->replaceColour(juce::Colours::white, theme().textPresets);
+			button->setImages(themed.get());
+
+			button->setColour(juce::TextButton::ColourIds::buttonOnColourId, theme().box);
+			button->setColour(juce::TextButton::ColourIds::buttonColourId, theme().box);
+		}
+
+		currentPresetLabel.setColour(juce::TextButton::ColourIds::buttonColourId, theme().box);
+		currentPresetLabel.setColour(juce::TextButton::ColourIds::textColourOffId, theme().textPresets);
 	}
 
 	~PresetPanel() override {
@@ -525,11 +539,6 @@ private:
 		// button.setButtonText(buttonText);
 		button.setMouseCursor(juce::MouseCursor::PointingHandCursor);
 
-		button.setColour(juce::TextButton::ColourIds::buttonOnColourId, juce::Colour::fromRGB(0, 0, 0));
-		button.setColour(juce::TextButton::ColourIds::buttonColourId, juce::Colour::fromRGB(0, 0, 0));
-		button.setColour(juce::TextButton::ColourIds::textColourOffId, juce::Colour::fromRGB(255, 255, 255));
-		button.setColour(juce::ComboBox::outlineColourId, juce::Colour::fromRGB(0, 0, 0));
-
 		addAndMakeVisible(button);
 		button.addListener(this);
 	}
@@ -548,6 +557,7 @@ private:
 	Preset::PresetManager &
 		presetManager;
 	juce::DrawableButton saveButton, deleteButton, previousPresetButton, nextPresetButton, closeButton, openPresetFolderButton;
+	std::vector<std::pair<juce::DrawableButton *, std::unique_ptr<juce::Drawable>>> buttonIcons;
 
 	static constexpr int switcherWidth = 24;
 	static constexpr int presetNameWidth = 170;

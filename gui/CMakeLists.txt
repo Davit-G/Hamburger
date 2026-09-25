@@ -14,4 +14,6 @@ target_sources("${BaseTargetName}"
         GenericKnob.h
         PluginHeader.h
         SettingsPanel.h
+        ThemeCustomiser.h
+        ThemeCustomiserParts.h
         )

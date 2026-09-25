@@ -10,10 +10,10 @@ inline juce::Colour waveshapeGroupColour (waveshapes::Group group)
 {
     switch (group)
     {
-        case waveshapes::Analog:  return Palette::colours[2];
-        case waveshapes::Digital: return Palette::colours[6];
-        case waveshapes::Folding: return Palette::colours[3];
-        case waveshapes::Heavy:   return Palette::colours[4];
+        case waveshapes::Analog:  return theme().waveshapeAnalog;
+        case waveshapes::Digital: return theme().waveshapeDigital;
+        case waveshapes::Folding: return theme().waveshapeFolding;
+        case waveshapes::Heavy:   return theme().waveshapeHeavy;
         case waveshapes::GroupCount:
         default:                  return juce::Colours::white;
     }
@@ -83,11 +83,11 @@ public:
 
             const auto& point = pointForShape (blend.index[i]);
 
-            g.setColour (juce::Colours::white.withAlpha (0.35f + 0.45f * weight));
+            g.setColour (theme().waveshapeBlendLine.withMultipliedAlpha (0.35f + 0.45f * weight));
             g.drawLine ({ handleOnScreen, toScreen (point.x, point.y) }, 0.5f + 3.0f * weight);
         }
 
-        g.setColour (juce::Colours::white);
+        g.setColour (theme().waveshapeHandle);
         g.drawEllipse (juce::Rectangle<float> (handleRadius * 2.0f, handleRadius * 2.0f).withCentre (handleOnScreen), 2.0f);
     }
 
@@ -240,9 +240,9 @@ private:
             juce::Path backing;
             backing.addEllipse (area);
 
-            g.setColour (juce::Colours::white.withAlpha (0.06f));
+            g.setColour (theme().waveshapeRingFill);
             g.fillPath (backing);
-            g.setColour (juce::Colours::white.withAlpha (0.25f));
+            g.setColour (theme().waveshapeRingOutline);
             g.strokePath (backing, juce::PathStrokeType (1.5f));
 
             // only the shapes the filter lets into the blend
@@ -323,7 +323,7 @@ class WaveshapePanel : public Panel,
 {
 public:
     WaveshapePanel (AudioPluginAudioProcessor& p, SlotId slot = SlotId { ModuleId::main, 0 })
-        : Panel (p, "WAVESHAPE", Palette::colours[3], slot),
+        : Panel (p, "WAVESHAPE", &Theme::waveshape, slot),
           apvts (p.treeState),
           filterProperty (waveshapes::groupFilterProperty (slot)),
           pad (p, slot),
@@ -336,10 +336,7 @@ public:
         pad.onActiveGroupsChanged = [this] { repaint(); };
 
         for (auto* slider : { &drive, &smooth, &bias, &asym })
-        {
             addAndMakeVisible (slider);
-            Palette::setKnobColoursOfComponent (slider, Palette::colours[3]);
-        }
 
         // a preset or project load swaps the whole state, which is valueTreeRedirected
         apvts.state.addListener (this);
@@ -364,18 +361,18 @@ public:
 
             if (! WaveshapePad::isActive (filter, group))
             {
-                fill = juce::Colour::fromRGB (40, 40, 40);
-                text = juce::Colours::grey;
+                fill = theme().waveshapePillOff;
+                text = theme().waveshapePillOffText;
             }
             else if (WaveshapePad::isActive (active, group))
             {
                 fill = colour;
-                text = juce::Colours::black;
+                text = theme().waveshapePillText;
             }
             else
             {
                 fill = waveshapeIdleColour (group);
-                text = juce::Colours::black;
+                text = theme().waveshapePillText;
             }
 
             g.setColour (fill);

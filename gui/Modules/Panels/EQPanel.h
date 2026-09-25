@@ -5,7 +5,7 @@
 class EQPanel : public Panel
 {
 public:
-    EQPanel(AudioPluginAudioProcessor &p) : Panel(p, "EMPHASIS", Palette::colours[2]),
+    EQPanel(AudioPluginAudioProcessor &p) : Panel(p, "EMPHASIS", &Theme::emphasis),
                                             lowFreq(p, "FREQ", ParamIDs::emphasisLowFreq, ScopeContextType::SPECTRUM_EMPHASIS),
                                             highFreq(p, "FREQ", ParamIDs::emphasisHighFreq, ScopeContextType::SPECTRUM_EMPHASIS),
                                             lowGain(p, "GAIN", ParamIDs::emphasisLowGain, ScopeContextType::SPECTRUM_EMPHASIS),
@@ -25,11 +25,6 @@ public:
 
         addAndMakeVisible(band1);
         addAndMakeVisible(band2);
-
-        Palette::setKnobColoursOfComponent(&lowFreq, Palette::colours[2]);
-        Palette::setKnobColoursOfComponent(&highFreq, Palette::colours[2]);
-        Palette::setKnobColoursOfComponent(&lowGain, Palette::colours[2]);
-        Palette::setKnobColoursOfComponent(&highGain, Palette::colours[2]);
     }
 
     void resized()
@@ -56,11 +51,19 @@ public:
         grid.performLayout(bounds);
     }
 
+    void lookAndFeelChanged() override
+    {
+        Panel::lookAndFeelChanged();
+
+        for (auto* label : { &band1, &band2 })
+            label->setColour(juce::Label::textColourId, (theme().*accent).text);
+    }
+
     void paint(juce::Graphics &g) override
     {
         // draw line down the middle
 
-        g.setColour(juce::Colour::fromRGB(44, 44, 44));
+        g.setColour(theme().divider);
 
         int height = 100;
 

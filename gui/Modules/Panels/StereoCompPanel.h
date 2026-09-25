@@ -7,7 +7,7 @@
 class StereoCompPanel : public Panel
 {
 public:
-    StereoCompPanel(AudioPluginAudioProcessor &p, SlotId slot = SlotId{ModuleId::dynamics, 0}) : Panel(p, "STEREO", Palette::colours[3]),
+    StereoCompPanel(AudioPluginAudioProcessor &p, SlotId slot = SlotId{ModuleId::dynamics, 0}) : Panel(p, "STEREO", &Theme::stereoComp),
                                                    threshold(p, "THRES", slot, ParamIDs::stereoCompThreshold, ScopeContextType::COMPRESSION),
                                                    ratio(p, "RATIO", slot, ParamIDs::compRatio, ScopeContextType::COMPRESSION),
                                                 //    tilt(p, "S-LNK", "compStereoLink"),
@@ -19,12 +19,6 @@ public:
         // addAndMakeVisible(tilt);
         addAndMakeVisible(attack);
         addAndMakeVisible(makeup);
-
-        Palette::setKnobColoursOfComponent(&threshold, Palette::colours[3]);
-        Palette::setKnobColoursOfComponent(&ratio, Palette::colours[3]);
-        // Palette::setKnobColoursOfComponent(&tilt, Palette::colours[3]);
-        Palette::setKnobColoursOfComponent(&attack, Palette::colours[3]);
-        Palette::setKnobColoursOfComponent(&makeup, Palette::colours[3]);
     }
 
     void resized() override

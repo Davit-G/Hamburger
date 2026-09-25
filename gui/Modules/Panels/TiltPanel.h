@@ -7,11 +7,10 @@ class TiltPanel : public Panel
 {
 public:
     explicit TiltPanel (AudioPluginAudioProcessor& p)
-        : Panel (p, "TILT", Palette::colours[2]),
+        : Panel (p, "TILT", &Theme::tilt),
           tilt (p, "TILT", ParamIDs::emphasisTilt, ScopeContextType::SPECTRUM_TILT)
     {
         addAndMakeVisible (tilt);
-        Palette::setKnobColoursOfComponent (&tilt, Palette::colours[2]);
     }
 
     void resized() override

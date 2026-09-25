@@ -7,7 +7,7 @@
 class MSCompPanel : public Panel
 {
 public:
-    MSCompPanel(AudioPluginAudioProcessor &p, SlotId slot = SlotId{ModuleId::dynamics, 0}) : Panel(p, "MS", Palette::colours[3]),
+    MSCompPanel(AudioPluginAudioProcessor &p, SlotId slot = SlotId{ModuleId::dynamics, 0}) : Panel(p, "MS", &Theme::midSideComp),
                                                    threshold(p, "THRES", slot, ParamIDs::MSCompThreshold, ScopeContextType::COMPRESSION),
                                                    ratio(p, "RATIO", slot, ParamIDs::compRatio, ScopeContextType::COMPRESSION),
                                                    tilt(p, "TILT", slot, ParamIDs::compBandTilt, ScopeContextType::COMPRESSION),
@@ -19,12 +19,6 @@ public:
         addAndMakeVisible(tilt);
         addAndMakeVisible(attack);
         addAndMakeVisible(makeup);
-
-        Palette::setKnobColoursOfComponent(&threshold, Palette::colours[3]);
-        Palette::setKnobColoursOfComponent(&ratio, Palette::colours[3]);
-        Palette::setKnobColoursOfComponent(&tilt, Palette::colours[3]);
-        Palette::setKnobColoursOfComponent(&attack, Palette::colours[3]);
-        Palette::setKnobColoursOfComponent(&makeup, Palette::colours[3]);
     }
 
     void resized() override

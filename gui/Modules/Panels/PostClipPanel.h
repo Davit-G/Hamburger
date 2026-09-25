@@ -6,14 +6,11 @@
 class PostClipPanel : public Panel
 {
 public:
-    PostClipPanel(AudioPluginAudioProcessor &p, SlotId slot = SlotId{ModuleId::postClip, 0}) : Panel(p, "CLIPPER", Palette::colours[4]),
+    PostClipPanel(AudioPluginAudioProcessor &p, SlotId slot = SlotId{ModuleId::postClip, 0}) : Panel(p, "CLIPPER", &Theme::tube),
     gain(p, "GAIN", slot, ParamIDs::postClipGain, ScopeContextType::CLIPPER),
     knee(p, "KNEE", slot, ParamIDs::postClipKnee, ScopeContextType::CLIPPER) {
         addAndMakeVisible(gain);
         addAndMakeVisible(knee);
-
-        Palette::setKnobColoursOfComponent(&gain, Palette::colours[4]);
-        Palette::setKnobColoursOfComponent(&knee, Palette::colours[4]);
     }
 
     void resized() override

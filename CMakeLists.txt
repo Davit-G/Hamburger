@@ -60,6 +60,15 @@ FetchContent_MakeAvailable(pffft)
 
 set_target_properties(PFFFT PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
 
+FetchContent_Declare(
+	simpleini
+	GIT_REPOSITORY https://github.com/brofield/simpleini.git
+	GIT_TAG fd6db69efc40a687bf4ef81486b54066e34992dd
+	GIT_PROGRESS TRUE
+)
+
+FetchContent_MakeAvailable(simpleini)
+
 # set commit hash for use in general idk
 execute_process(
     COMMAND git log -1 --format=%h
@@ -158,11 +167,10 @@ target_compile_definitions("${BaseTargetName}" PUBLIC
     GIT_HASH="${GIT_HASH}"
 )
 
+# built in themes, anything dropped in here shows up in the theme list, along with any svg backgrounds they use
+file(GLOB BuiltInThemes CONFIGURE_DEPENDS Assets/Themes/*.ini Assets/Themes/*.svg)
+
 juce_add_binary_data("${BaseTargetName}BinaryData" HEADER_NAME BinaryData.h NAMESPACE BinaryData SOURCES
-    Assets/poweron.png
-    Assets/poweroff.png
-    Assets/lockon.png
-    Assets/lockoff.png
     Assets/HamburgerLogo.png
     Assets/Questrial-Regular.ttf
     Assets/Quicksand-Bold.ttf
@@ -172,13 +180,15 @@ juce_add_binary_data("${BaseTargetName}BinaryData" HEADER_NAME BinaryData.h NAME
     Assets/wompwuzhere.png
     Assets/gplv3-icon.png
     Assets/tick.png
-    Assets/bg4.jpg
+    Assets/hamburger-bg.svg
+    Assets/HamBurgerText.svg
     Assets/Icons/FilmReel.svg
     Assets/Icons/Flask.svg
     Assets/Icons/Grill.svg
     Assets/Icons/Slew.svg
     Assets/Icons/Tube.svg
     Assets/Icons/Waves.svg
+    ${BuiltInThemes}
 )
 set_target_properties("${BaseTargetName}BinaryData" PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
 
@@ -230,6 +240,7 @@ target_link_libraries("${BaseTargetName}"
         juce::juce_audio_utils
         "${BaseTargetName}BinaryData"
         PFFFT::PFFFT
+        SimpleIni::SimpleIni
     PUBLIC
         juce::juce_recommended_config_flags
         juce::juce_recommended_lto_flags

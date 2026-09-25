@@ -8,7 +8,7 @@
 class AllPassPanel : public Panel
 {
 public:
-    AllPassPanel(AudioPluginAudioProcessor &p, SlotId slot = SlotId{ModuleId::module2, 0}) : Panel(p, "ALLPASS", Palette::colours[2]),
+    AllPassPanel(AudioPluginAudioProcessor &p, SlotId slot = SlotId{ModuleId::module2, 0}) : Panel(p, "ALLPASS", &Theme::allpass),
         amount(p, "AMOUNT", slot, ParamIDs::allPassAmount),
         freq(p, "FREQ", slot, ParamIDs::allPassFreq),
         q(p, "Q", slot, ParamIDs::allPassQ)
@@ -16,10 +16,6 @@ public:
         addAndMakeVisible(amount);
         addAndMakeVisible(freq);
         addAndMakeVisible(q);
-
-        Palette::setKnobColoursOfComponent(&amount, Palette::colours[2]);
-        Palette::setKnobColoursOfComponent(&freq, Palette::colours[2]);
-        Palette::setKnobColoursOfComponent(&q, Palette::colours[2]);
     }
 
     void resized() override {

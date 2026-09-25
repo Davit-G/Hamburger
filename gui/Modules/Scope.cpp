@@ -10,7 +10,6 @@
 
 static constexpr size_t triggerDecimation = 8; // we do detection on a decimated audio stream so its way cheaper
 static constexpr size_t triggerMatchLength = 32; // how much of the waveform is matched against the previous frame
-static constexpr juce::uint8 contextLabelAlpha = 20; // brightness of background watermark on scope
 static constexpr float readoutFontHeight = 11.0f; // font height for info / stats on scope
 
 static juce::String formatFrequency(float freq)
@@ -74,7 +73,18 @@ void Scope<SampleType>::resized() {
                           false);
 
     juce::Graphics imgG(inOutFB);
-    imgG.fillAll(inOutBackground);
+    imgG.fillAll(theme().scopeBackground);
+}
+
+// the trails fade into the background colour, so a new one starts them over
+template <typename SampleType>
+void Scope<SampleType>::lookAndFeelChanged()
+{
+    if (trailBackground != theme().scopeBackground)
+    {
+        trailBackground = theme().scopeBackground;
+        resized();
+    }
 }
 
 template <typename SampleType>
@@ -184,11 +194,11 @@ void Scope<SampleType>::paint(juce::Graphics &g)
             const auto noiseRect = scopeRect.withTrimmedTop(headerHeight(scopeRect));
 
             // draw line halfway
-            g.setColour(juce::Colours::darkgrey);
+            g.setColour(theme().scopeNoiseAxis);
             g.drawLine(SampleType(0), noiseRect.getCentreY(), w, noiseRect.getCentreY());
 
             // draw wave
-            g.setColour(juce::Colours::yellow);
+            g.setColour(theme().scopeNoise);
             plotStraightLine(noiseDistBuf.getReadPointer(0) + 32, noiseDistBuf.getNumSamples() - 32, g, noiseRect, SampleType(0.5), noiseRect.getHeight() / 2);
 
             drawParamHeader(g, scopeRect, getNoiseHeaderLabels());
@@ -385,14 +395,14 @@ void Scope<SampleType>::drawLRScope(juce::Graphics &g, juce::Rectangle<SampleTyp
     const auto h = scopeRect.getHeight();
     const auto hop = hopSize;
 
-    g.setColour(juce::Colours::grey);
+    g.setColour(theme().scopeGrid);
     plotStraightLine(originLineData.data(), 2, g, scopeRect, SampleType(0.5), h / 2);
     plotStraightLine(originLineData.data(), 2, g, scopeRect, SampleType(-0.5), h / 2);
 
     // trigger offset is position where trigger was detected
-    g.setColour(juce::Colours::yellow);
+    g.setColour(theme().scopeLeft);
     plotStraightLine(sampleDataL.data() + triggerOffset, hop, g, scopeRect, SampleType(0.5), h / 2);
-    g.setColour(juce::Colours::lime);
+    g.setColour(theme().scopeRight);
     plotStraightLine(sampleDataR.data() + triggerOffset, hop, g, scopeRect, SampleType(0.5), h / 2);
 }
 
@@ -410,7 +420,7 @@ void Scope<SampleType>::drawInOut(juce::Graphics &g, juce::Rectangle<SampleType>
         const auto halfW = plot.getHeight() * SampleType(0.95);
         const auto halfH = plot.getHeight() * SampleType(0.46);
 
-        g.setColour(juce::Colours::yellow);
+        g.setColour(theme().scopeTransfer);
         const auto count = juce::jmin(sampleDataPreDistortion.size(), sampleDataPostDistortion.size());
         for (size_t i = 1; i < count; ++i)
         {
@@ -531,7 +541,7 @@ void Scope<SampleType>::drawWaveshapeCurve(juce::Graphics &g, juce::Rectangle<Sa
 
     g.saveState();
     g.reduceClipRegion(plot.toNearestInt());
-    g.setColour(juce::Colours::white.withAlpha(0.25f));
+    g.setColour(theme().scopeWaveshapeCurve);
     g.strokePath(path, juce::PathStrokeType(1.5f));
     g.restoreState();
 }
@@ -546,7 +556,7 @@ void Scope<SampleType>::drawInOutAxes(juce::Graphics &g, juce::Rectangle<SampleT
     const auto centerX = w * SampleType(0.5);
     const auto centerY = h * SampleType(0.5);
 
-    g.setColour(juce::Colours::grey);
+    g.setColour(theme().scopeGrid);
     g.drawLine(centerX, SampleType(0), centerX, h);
     g.drawLine(SampleType(0), centerY, w, centerY);
 }
@@ -559,7 +569,7 @@ void Scope<SampleType>::renderInOutFrame(bool stampNewTrace)
     juce::Graphics imgG(inOutFB);
 
     // fading toward the background rather than clearing is what leaves the older frames behind
-    imgG.setColour(inOutBackground.withAlpha(inOutFade));
+    imgG.setColour(theme().scopeBackground.withAlpha(inOutFade));
     imgG.fillRect(inOutFB.getBounds());
 
     if (!stampNewTrace)
@@ -579,7 +589,7 @@ void Scope<SampleType>::drawSpectrumEmphasis(juce::Graphics &g, juce::Rectangle<
     const auto maxHeight = h - headerHeight(scopeRect);
 
     spectrum.paint(g, juce::Rectangle<float>(0.0f, (float) (h - maxHeight), (float) w, (float) maxHeight),
-                   dataCollector.getSampleRate(), 2.f);
+                   dataCollector.getSampleRate(), 2.f, theme().scopeSpectrumLine, theme().scopeSpectrumFill);
 
     drawResponseCurve(g, w, h, maxHeight);
 
@@ -597,7 +607,8 @@ void Scope<SampleType>::drawSpectrumTilt(juce::Graphics &g, juce::Rectangle<Samp
     const auto maxHeight = h - (float) headerHeight(scopeRect);
     const auto tilt = (double) tiltParam->get();
 
-    spectrum.paint(g, juce::Rectangle<float>(0.0f, h - maxHeight, w, maxHeight), dataCollector.getSampleRate(), 2.f);
+    spectrum.paint(g, juce::Rectangle<float>(0.0f, h - maxHeight, w, maxHeight), dataCollector.getSampleRate(), 2.f,
+                   theme().scopeSpectrumLine, theme().scopeSpectrumFill);
 
     auto curveFor = [&](double direction)
     {
@@ -625,9 +636,9 @@ void Scope<SampleType>::drawSpectrumTilt(juce::Graphics &g, juce::Rectangle<Samp
     const auto pre = curveFor(-1.0), post = curveFor(1.0);
 
     // pre first, so white draws over it where they cross at the pivot
-    g.setColour(juce::Colours::grey);
+    g.setColour(theme().scopeCurvePre);
     g.strokePath(pre, juce::PathStrokeType(2.0f));
-    g.setColour(juce::Colours::white);
+    g.setColour(theme().scopeCurvePost);
     g.strokePath(post, juce::PathStrokeType(2.0f));
 
     // named at the right hand end, the higher curve's name above it and the other's below, so they never overlap
@@ -643,8 +654,8 @@ void Scope<SampleType>::drawSpectrumTilt(juce::Graphics &g, juce::Rectangle<Samp
                    juce::Justification::centredRight, false);
     };
 
-    name(pre, "PRE", juce::Colours::grey, !postHigher);
-    name(post, "POST", juce::Colours::white, postHigher);
+    name(pre, "PRE", theme().scopeCurvePre, !postHigher);
+    name(post, "POST", theme().scopeCurvePost, postHigher);
 
     drawParamHeader(g, scopeRect, { formatDecibels(tiltParam->get()) });
 }
@@ -675,16 +686,16 @@ void Scope<SampleType>::drawClipper(juce::Graphics &g, juce::Rectangle<SampleTyp
 
         // translucent rather than a solid fill, so the watermark underneath still reads through it -
         // alpha 22 over black lands on the same 22,22,22 the solid version used to paint
-        g.setColour(juce::Colour::fromRGBA(255, 255, 255, 22));
+        g.setColour(theme().scopeClipKneeRegion);
         g.fillRect(juce::Rectangle<float>(kneeStart, 0.0f, kneeEnd - kneeStart, h));
     }
 
     // line at 1.0
-    g.setColour(juce::Colours::darkgrey);
+    g.setColour(theme().scopeClipAxis);
     g.drawLine(0.0f, toY(0.0f), w, toY(0.0f));
 
     // f(x) = x
-    g.setColour(juce::Colour::fromRGB(64, 64, 64));
+    g.setColour(theme().scopeClipGuide);
     g.drawLine(toX(0.0f), toY(0.0f), toX(maxOut), toY(maxOut));
 
     // where the flat top lands
@@ -713,19 +724,19 @@ void Scope<SampleType>::drawClipper(juce::Graphics &g, juce::Rectangle<SampleTyp
         return path;
     };
 
-    g.setColour(juce::Colours::white.withAlpha(0.05f));
+    g.setColour(theme().scopeClipFill);
     g.fillPath(closeToBaseline(curve, toX(maxIn)));
 
-    g.setColour(juce::Colours::darkgrey);
+    g.setColour(theme().scopeClipCurve);
     g.strokePath(curve, juce::PathStrokeType(2.0f));
     
     const auto level = juce::jlimit(0.0f, maxIn, dataCollector.levelMeter.getNext());
 
-    auto levelColour = juce::Colours::yellow;
+    auto levelColour = theme().scopeClipBelow;
     if (level > threshold + knee * 0.5f)
-        levelColour = juce::Colours::red;
+        levelColour = theme().scopeClipHard;
     else if (isSoftClipperKnee(level, threshold, knee))
-        levelColour = juce::Colours::orange;
+        levelColour = theme().scopeClipKnee;
 
     g.setColour(levelColour);
     
@@ -771,7 +782,7 @@ void Scope<SampleType>::drawTiledContextLabel(juce::Graphics &g, juce::Rectangle
     const auto font = getLookAndFeel().getPopupMenuFont().withHeight(juce::jlimit(12.0f, 34.0f, h * 0.22f));
 
     g.setFont(font);
-    g.setColour(juce::Colour::fromRGBA(255, 255, 255, contextLabelAlpha));
+    g.setColour(theme().scopeWatermark);
 
     const auto rowHeight = font.getHeight();
     const auto tileWidth = juce::GlyphArrangement::getStringWidth(font, text);
@@ -850,10 +861,10 @@ void Scope<SampleType>::drawCompBands(juce::Graphics &g, juce::Rectangle<SampleT
             cell = juce::Rectangle<float>(cellArea.getX() + (float) cellIndex * cellWidth, cellArea.getY(),
                                           cellWidth, cellArea.getHeight());
             
-            g.setColour(juce::Colours::black);
+            g.setColour(theme().compCell);
             g.fillRect(cell);
 
-            g.setColour(juce::Colour::fromRGB(22, 22, 22));
+            g.setColour(theme().compOverThreshold);
             g.fillRect(cell.withBottom(thresholdY));
         }
 
@@ -863,10 +874,10 @@ void Scope<SampleType>::drawCompBands(juce::Graphics &g, juce::Rectangle<SampleT
 
         if (stacked)
         {
-            g.setColour(juce::Colour::fromRGB(30, 30, 30));
+            g.setColour(theme().compStackedOverThreshold);
             g.fillRect(region.withBottom(thresholdY));
 
-            g.setColour(juce::Colours::white.withAlpha(0.25f));
+            g.setColour(theme().compStackDivider);
             g.drawLine(region.getX(), region.getY(), region.getX(), region.getBottom(), 1.0f);
         }
 
@@ -875,7 +886,7 @@ void Scope<SampleType>::drawCompBands(juce::Graphics &g, juce::Rectangle<SampleT
         const auto kneeTop = toY(thresholdDb + Compressor::standardKneeDb * 0.5f);
         const auto kneeBottom = toY(thresholdDb - Compressor::standardKneeDb * 0.5f);
 
-        g.setColour(juce::Colour::fromRGB(38, 38, 38));
+        g.setColour(theme().compKnee);
         g.fillRect(juce::Rectangle<float>(region.getX(), kneeTop, region.getWidth(), kneeBottom - kneeTop)
                        .withSizeKeepingCentre(region.getWidth(), juce::jmax(minKneeHeight, kneeBottom - kneeTop)));
 
@@ -892,7 +903,7 @@ void Scope<SampleType>::drawCompBands(juce::Graphics &g, juce::Rectangle<SampleT
 
             const auto rungY = toY(outDb);
 
-            g.setColour(juce::Colours::grey.withAlpha(0.5f - 0.09f * (float) rung));
+            g.setColour(theme().compRatioLines.withMultipliedAlpha(1.0f - 0.18f * (float) rung));
             g.drawLine(region.getX() + 1.0f, rungY, region.getRight() - 1.0f, rungY, 1.0f);
         }
 
@@ -900,13 +911,13 @@ void Scope<SampleType>::drawCompBands(juce::Graphics &g, juce::Rectangle<SampleT
 
         if (levelDb > mindB)
         {
-            g.setColour(levelDb > thresholdDb ? juce::Colours::orange : juce::Colours::yellow);
+            g.setColour(levelDb > thresholdDb ? theme().compLevelOver : theme().compLevel);
             g.fillRect(region.withTop(toY(levelDb)).reduced(region.getWidth() * 0.28f, 0.0f));
         }
 
         constexpr auto lineInset = 6.0f;
 
-        g.setColour(juce::Colours::white.withAlpha(0.9f));
+        g.setColour(theme().compThreshold);
         g.drawLine(region.getX() + lineInset, thresholdY, region.getRight() - lineInset, thresholdY, 1.5f);
 
         constexpr auto readoutHeight = 12.0f;
@@ -915,7 +926,7 @@ void Scope<SampleType>::drawCompBands(juce::Graphics &g, juce::Rectangle<SampleT
                                                     readoutAbove ? cell.getY() + 1.0f : thresholdY + 1.0f,
                                                     region.getWidth(), readoutHeight);
 
-        g.setColour(juce::Colours::darkgrey);
+        g.setColour(theme().compText);
 
         if (!stacked || ! juce::approximatelyEqual(thresholdDb, bands[band - 1].thresholdDb))
             g.drawText(juce::String(juce::roundToInt(thresholdDb)) + " dB", readout, juce::Justification::centred, false);
@@ -928,15 +939,15 @@ void Scope<SampleType>::drawCompBands(juce::Graphics &g, juce::Rectangle<SampleT
         {
             const auto offset = bands[band].gainOffsetDb;
 
-            g.setColour(juce::Colour::fromRGB(90, 90, 90));
+            g.setColour(theme().compGainOffsetText);
             g.drawText(juce::String(offset > 0.0f ? "+" : "") + juce::String(offset, 1),
                        juce::Rectangle<float>(region.getX(), cell.getBottom() - 25.0f, region.getWidth(), 12.0f),
                        juce::Justification::centred, false);
-            g.setColour(juce::Colours::darkgrey);
+            g.setColour(theme().compText);
         }
     }
 
-    g.setColour(juce::Colours::white.withAlpha(0.45f));
+    g.setColour(theme().compCellEdge);
 
     for (int edge = 1; edge < cellCount; ++edge)
     {
@@ -1027,7 +1038,7 @@ void Scope<SampleType>::drawParamHeader(juce::Graphics &g, juce::Rectangle<Sampl
 
     if (solidBar)
     {
-        g.setColour(juce::Colours::black);
+        g.setColour(theme().scopeHeader);
         g.fillRect(bar);
     }
 
@@ -1046,7 +1057,7 @@ void Scope<SampleType>::drawParamHeader(juce::Graphics &g, juce::Rectangle<Sampl
 
         if (solidBar)
         {
-            g.setColour(juce::Colours::grey);
+            g.setColour(theme().scopeHeaderText);
             g.drawText(labels[i], cell, justification, false);
         }
         else
@@ -1079,10 +1090,10 @@ void Scope<SampleType>::drawTabbedLabel(juce::Graphics &g, juce::Rectangle<float
     const auto grown = hangingFromTop ? tab.withTop(tab.getY() - corner)
                                       : tab.withBottom(tab.getBottom() + corner);
 
-    g.setColour(juce::Colours::black);
+    g.setColour(theme().scopeHeader);
     g.fillRoundedRectangle(grown.expanded(corner * 0.5f, 0.0f), corner);
 
-    g.setColour(juce::Colours::grey);
+    g.setColour(theme().scopeHeaderText);
     g.drawText(text, cell, justification, false);
 }
 
@@ -1293,10 +1304,10 @@ void Scope<SampleType>::drawResponseCurve(juce::Graphics &g, const SampleType w,
         return;
 
     // draw inverse path first so white can draw over it
-    g.setColour(juce::Colours::grey);
+    g.setColour(theme().scopeCurvePre);
     g.strokePath(eqInversePath, juce::PathStrokeType(2.0f));
 
-    g.setColour(juce::Colours::white);
+    g.setColour(theme().scopeCurvePost);
     g.strokePath(eqPath, juce::PathStrokeType(2.0f));
 
     // placed with the same summed response the curve is built from, so they sit on it rather than

@@ -3,12 +3,10 @@
 #include "../Panel.h"
 #include "../../../dsp/EffectInfos.h"
 
-#include "../../LookAndFeel/Palette.h"
-
 class MBCompPanel : public Panel
 {
 public:
-    MBCompPanel(AudioPluginAudioProcessor &p, SlotId slot = SlotId{ModuleId::dynamics, 0}) : Panel(p, "MB", Palette::colours[3]),
+    MBCompPanel(AudioPluginAudioProcessor &p, SlotId slot = SlotId{ModuleId::dynamics, 0}) : Panel(p, "MB", &Theme::multibandComp),
                                                    threshold(p, "THRES", slot, ParamIDs::MBCompThreshold, ScopeContextType::COMPRESSION),
                                                    ratio(p, "RATIO", slot, ParamIDs::compRatio, ScopeContextType::COMPRESSION),
                                                    tilt(p, "TILT", slot, ParamIDs::compBandTilt, ScopeContextType::COMPRESSION),
@@ -20,12 +18,6 @@ public:
         addAndMakeVisible(tilt);
         addAndMakeVisible(attack);
         addAndMakeVisible(makeup);
-
-        Palette::setKnobColoursOfComponent(&threshold, Palette::colours[3]);
-        Palette::setKnobColoursOfComponent(&ratio, Palette::colours[3]);
-        Palette::setKnobColoursOfComponent(&tilt, Palette::colours[3]);
-        Palette::setKnobColoursOfComponent(&attack, Palette::colours[3]);
-        Palette::setKnobColoursOfComponent(&makeup, Palette::colours[3]);
     }
 
     void resized() override

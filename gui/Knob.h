@@ -24,8 +24,6 @@ public:
     void drawRotarySlider(juce::Graphics &g, int x, int y, int width, int height, float sliderPos,
                         const float rotaryStartAngle, const float rotaryEndAngle, juce::Slider &slider)
     {
-        auto thumb = slider.findColour(juce::Slider::thumbColourId);
-
         auto bounds = juce::Rectangle<int>(x, y, width, height).toFloat().reduced(5.0f);
 
         auto radius = juce::jmin(bounds.getWidth(), bounds.getHeight()) / 2.0f;
@@ -43,27 +41,21 @@ public:
 
         juce::Path p;
         p.addLineSegment(marker, radius * 0.08f);
-        g.setColour(thumb);
+        g.setColour(theme().knobThumb);
         g.strokePath(p, juce::PathStrokeType(radius * 0.08f, juce::PathStrokeType::JointStyle::curved, juce::PathStrokeType::EndCapStyle::rounded));
     }
 
     void paint(juce::Graphics &g) override
     {
         auto bounds = knobBounds.reduced(5.0f);
-        
-        auto outline = this->findColour(juce::Slider::rotarySliderOutlineColourId);
-        auto knobColour = this->findColour(juce::Slider::rotarySliderFillColourId);
 
-
-        g.setColour(outline);
-        
         float size = std::min(knobBounds.getWidth(), knobBounds.getHeight());
 
         // the knob background
         // g.fillEllipse(juce::Rectangle<float>(size, size).reduced(5.0f).withCentre(bounds.getCentre()));
 
         // some circles or something
-        g.setColour(knobColour);
+        g.setColour(colours().main.interpolatedWith(colours().mainHeld, dragAmount));
 
         // g.drawEllipse(Rectangle<float>(size, size).reduced(7.0f).withCentre(bounds.getCentre()), 1.0f);
         g.drawEllipse(juce::Rectangle<float>(size, size).reduced(12.0f).withCentre(bounds.getCentre().toFloat()), 2.0f);
