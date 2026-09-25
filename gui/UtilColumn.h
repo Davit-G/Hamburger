@@ -3,6 +3,7 @@
 #include "Modules/Module.h"
 
 #include "Modules/Panels/EQPanel.h"
+#include "Modules/Panels/TiltPanel.h"
 #include "Modules/Panels/UtilityPanel.h"
 #include "Modules/Panels/ScopePanel.h"
 #include "Modules/Panels/OtherUtils.h"
@@ -17,7 +18,8 @@ public:
         std::vector<std::unique_ptr<Panel>> eqPanels;
         // ORDERING IS VERY IMPORTANT
         eqPanels.push_back(std::make_unique<EQPanel>(p));
-        eq = std::make_unique<Module>(p, "EMPHASIS", "emphasisOn", "", std::move(eqPanels));
+        eqPanels.push_back(std::make_unique<TiltPanel>(p));
+        eq = std::make_unique<Module>(p, "EMPHASIS", "emphasisOn", ParamIDs::emphasisType.getParamID().toStdString(), std::move(eqPanels));
         addAndMakeVisible(eq.get());
 
         std::vector<std::unique_ptr<Panel>> utilityPanels;

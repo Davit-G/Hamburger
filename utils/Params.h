@@ -177,6 +177,8 @@ namespace ParamIDs
     static const PanelInfo compTypes { juce::StringArray({"STEREO", "MB", "MS", "TYPE A"}) };
     static const PanelInfo noiseTypes { juce::StringArray({"SIZZLE", "EROSION", "BIT", "GATE", "FIZZ"}) };
     static const PanelInfo preFxTypes { juce::StringArray({"ALLPASS", "GRUNGE"}) };
+    // keep in line with EmphasisFilter::Mode
+    static const PanelInfo emphasisTypes { juce::StringArray({"EQ", "TILT"}) };
 
     // keep in step with MainRouting::Routing
     static const PanelInfo routingTypes { juce::StringArray({"STACK", "MULTIBAND", "MID/SIDE", "EXCITER"}) };
@@ -312,6 +314,11 @@ namespace ParamIDs
 
     static const ParameterInfo emphasisOn{"emphasisOn", "Emphasis EQ On", ParamUnits::none, makeSteppedRange(0.0f, 1.0f), 1.0f,
                                           "Enables the emphasis EQ around the distortion"};
+    static const ParameterInfo emphasisType{"emphasisType", "Emphasis Type", ParamUnits::category, makeSteppedRange(0.0f, choiceSlots - 1.0f), 0.0f,
+                                            "Two bands of emphasis, or one tilt across the whole spectrum"};
+    static const ParameterInfo emphasisTilt{"emphasisTilt", "Emphasis Tilt", ParamUnits::db, makeRange(-18.0f, 18.0f), 0.0f,
+                                            "Tilts the sound across the whole spectrum after the distortion, and the other way before it: "
+                                            "the difference between 20 Hz and 20 kHz"};
     static const ParameterInfo hamburgerEnabled{"hamburgerEnabled", "Hamburger Enabled", ParamUnits::none, makeSteppedRange(0.0f, 1.0f), 1.0f,
                                                 "Bypasses the entire plugin when off"};
 

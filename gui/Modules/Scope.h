@@ -24,6 +24,7 @@ enum ScopeContextType {
     WAVESHAPE, // input against output, over the curve the waveshape distortion is set to
     // SPECTRUM, // once button press happens?
     SPECTRUM_EMPHASIS, // draw curves for emphasis eq
+    SPECTRUM_TILT, // the emphasis tilt, before and after the distortion
     CLIPPER, // clipping curve + waveform
     COMPRESSION, // encapsulates all of the compressors. only display the active compressor at any given time
     NOISE, // get a sine wave and apply the noise distortions onto them so we can see what they look like
@@ -147,6 +148,7 @@ private:
     juce::AudioParameterFloat* highFreqParam;
     juce::AudioParameterFloat* lowGainParam;
     juce::AudioParameterFloat* highGainParam;
+    juce::AudioParameterFloat* tiltParam;
     juce::AudioParameterFloat* postClipKneeParam;
     juce::AudioParameterChoice* compressionType;
 
@@ -192,6 +194,7 @@ private:
     void drawInOutAxes(juce::Graphics &g, juce::Rectangle<SampleType> scopeRect);
     void renderInOutFrame(bool stampNewTrace);
     void drawSpectrumEmphasis(juce::Graphics &g, juce::Rectangle<SampleType> scopeRect);
+    void drawSpectrumTilt(juce::Graphics &g, juce::Rectangle<SampleType> scopeRect);
     void drawClipper(juce::Graphics &g, juce::Rectangle<SampleType> scopeRect);
     // one cell per band of whichever compressor is on screen
     struct CompBand

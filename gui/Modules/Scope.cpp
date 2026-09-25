@@ -1,4 +1,5 @@
 #include "Scope.h"
+#include "../../dsp/Filtering/EmphasisFilter.h"
 #include "../../dsp/EffectInfos.h"
 
 #include "../../dsp/WaveShapers.h"
@@ -42,6 +43,8 @@ Scope<SampleType>::Scope(juce::AudioProcessorValueTreeState& valueTree, ScopeDat
     highFreqParam = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter(ParamIDs::emphasisHighFreq.getParamID()));
     lowGainParam = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter(ParamIDs::emphasisLowGain.getParamID()));
     highGainParam = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter(ParamIDs::emphasisHighGain.getParamID()));
+    tiltParam = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter(ParamIDs::emphasisTilt.getParamID()));
+    jassert(tiltParam);
     postClipKneeParam = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter(EffectInfos::paramIdForDescriptor(ParamIDs::postClipKnee)));
 
     compressionType = dynamic_cast<juce::AudioParameterChoice*>(apvts.getParameter(SlotId{ModuleId::dynamics, 0}.type().getParamID()));
@@ -130,6 +133,10 @@ void Scope<SampleType>::paint(juce::Graphics &g)
         case ScopeContextType::SPECTRUM_EMPHASIS:
             drawTiledContextLabel(g, area, "EMPHASIS");
             drawSpectrumEmphasis(g, scopeRect);
+            break;
+        case ScopeContextType::SPECTRUM_TILT:
+            drawTiledContextLabel(g, area, "TILT");
+            drawSpectrumTilt(g, scopeRect);
             break;
         case ScopeContextType::CLIPPER:
             drawTiledContextLabel(g, area, "CLIPPER");
@@ -579,6 +586,68 @@ void Scope<SampleType>::drawSpectrumEmphasis(juce::Graphics &g, juce::Rectangle<
     drawParamHeader(g, scopeRect, { formatFrequency(lowFreqParam->get()), formatFrequency(highFreqParam->get()) });
 }
 
+
+/*  The tilt twice over the spectrum: grey going into the distortion, white coming out of it. On the same scale as the
+    emphasis bands, 18 dB to the top or bottom of the plot. */
+template <typename SampleType>
+void Scope<SampleType>::drawSpectrumTilt(juce::Graphics &g, juce::Rectangle<SampleType> scopeRect)
+{
+    const auto w = (float) scopeRect.getWidth();
+    const auto h = (float) scopeRect.getHeight();
+    const auto maxHeight = h - (float) headerHeight(scopeRect);
+    const auto tilt = (double) tiltParam->get();
+
+    spectrum.paint(g, juce::Rectangle<float>(0.0f, h - maxHeight, w, maxHeight), dataCollector.getSampleRate(), 2.f);
+
+    auto curveFor = [&](double direction)
+    {
+        juce::Path path;
+        constexpr int numPoints = 220;
+        const auto logMin = std::log10(scope_constants::minDrawFreq);
+        const auto logMax = std::log10(scope_constants::maxDrawFreq);
+
+        for (int i = 0; i <= numPoints; ++i)
+        {
+            const auto freq = std::pow(10.0, logMin + (logMax - logMin) * i / numPoints);
+            const auto db = EmphasisFilter::tiltResponseDb(freq, tilt * direction);
+            const auto y = h - (float) juce::jlimit(0.0, 1.0, 0.5 + db / 36.0) * maxHeight;
+            const auto x = (float) freqToX(freq, (SampleType) w);
+
+            if (i == 0)
+                path.startNewSubPath(x, y);
+            else
+                path.lineTo(x, y);
+        }
+
+        return path;
+    };
+
+    const auto pre = curveFor(-1.0), post = curveFor(1.0);
+
+    // pre first, so white draws over it where they cross at the pivot
+    g.setColour(juce::Colours::grey);
+    g.strokePath(pre, juce::PathStrokeType(2.0f));
+    g.setColour(juce::Colours::white);
+    g.strokePath(post, juce::PathStrokeType(2.0f));
+
+    // named at the right hand end, the higher curve's name above it and the other's below, so they never overlap
+    g.setFont(getLookAndFeel().getPopupMenuFont().withHeight(12.0f));
+
+    const auto postHigher = post.getCurrentPosition().y <= pre.getCurrentPosition().y;
+
+    auto name = [&](const juce::Path& path, const juce::String& text, juce::Colour colour, bool above)
+    {
+        const auto end = path.getCurrentPosition();
+        g.setColour(colour);
+        g.drawText(text, juce::Rectangle<float>(end.x - 44.0f, above ? end.y - 16.0f : end.y + 2.0f, 40.0f, 14.0f),
+                   juce::Justification::centredRight, false);
+    };
+
+    name(pre, "PRE", juce::Colours::grey, !postHigher);
+    name(post, "POST", juce::Colours::white, postHigher);
+
+    drawParamHeader(g, scopeRect, { formatDecibels(tiltParam->get()) });
+}
 
 template <typename SampleType>
 void Scope<SampleType>::drawClipper(juce::Graphics &g, juce::Rectangle<SampleType> scopeRect)
@@ -1260,7 +1329,8 @@ void Scope<SampleType>::timerCallback()
 
     const auto hop = hopSize;
     const auto newestHop = sampleDataL.size() - hop;
-    const auto spectrumView = scopeContext.getType() == ScopeContextType::SPECTRUM_EMPHASIS;
+    const auto spectrumView = scopeContext.getType() == ScopeContextType::SPECTRUM_EMPHASIS
+                              || scopeContext.getType() == ScopeContextType::SPECTRUM_TILT;
 
     // drain whatever has piled up rather than exactly one hop. the timer does not fire on an exact
     // 60hz, so even a matched hop drifts, and once the queue is full push() starts dropping the

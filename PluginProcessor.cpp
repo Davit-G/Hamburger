@@ -178,6 +178,9 @@ juce::AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::c
     collected.push_back(std::make_unique<juce::AudioParameterBool>(ParamIDs::emphasisOn.getParameterID(), "Emphasis EQ On", true));
 
     
+    collected.push_back(std::make_unique<juce::AudioParameterChoice>(ParamIDs::emphasisType.getParameterID(), ParamIDs::emphasisType.displayName,
+                                                                     ParamIDs::withReservedSlots (ParamIDs::emphasisTypes.categories), 0));
+    collected.push_back(std::make_unique<MacroParam>(ParamIDs::emphasisTilt));
     collected.push_back(std::make_unique<MacroParam>(ParamIDs::emphasisLowGain));
     collected.push_back(std::make_unique<MacroParam>(ParamIDs::emphasisHighGain));
 

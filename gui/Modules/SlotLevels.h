@@ -13,6 +13,9 @@ public:
         for (auto* readout : { &in, &wet, &out })
         {
             readout->setFontScale (fontScale);
+
+            // twice JUCE's drag distance over the whole range: the gains span 96 dB, and at the default a quick flick jumped them
+            readout->setMouseDragSensitivity (readout->getMouseDragSensitivity() * 2);
             addAndMakeVisible (readout);
         }
 
