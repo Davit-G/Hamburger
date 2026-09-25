@@ -15,6 +15,8 @@ public:
         lockedButton = std::make_unique<LightButton>(p, lockOffImage, lockOnImage);
         addAndMakeVisible(*lockedButton);
 
+        lockedButton->setTooltip("This button locks the currently visible scope view so it doesn't change when updating parameters.");
+
         lockedButton->onClick = [this, &p]
         {
             p.getScopeContext().toggleLocked();

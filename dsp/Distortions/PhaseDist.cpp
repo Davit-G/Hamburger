@@ -2,9 +2,6 @@
 
 #include "PhaseDist.h"
 
-inline float weirdRectify(float x, float a) {
-	return a * powf(abs(x) * 1.5f, 2.0f) + x * (1.0f - a);
-}
 
 //==============================================================================
 PhaseDist::PhaseDist(juce::AudioProcessorValueTreeState& treeState, SlotId slot)

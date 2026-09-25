@@ -119,6 +119,18 @@ juce::String Preset::PresetManager::getLastAuthor()
 	return {};
 }
 
+void Preset::loadState(juce::AudioProcessorValueTreeState &state, const juce::ValueTree &saved)
+{
+	// saved.getProperty(versionProperty) is the version that wrote it, missing from projects saved before it was stamped.
+	// migrations for anything renamed since go here
+
+	for (auto *param : state.processor.getParameters())
+		param->setValueNotifyingHost(param->getDefaultValue());
+
+	state.replaceState(saved);
+	state.state.setProperty(versionProperty, JucePlugin_VersionString, nullptr);
+}
+
 bool Preset::PresetManager::saveFile(const juce::File &presetFile, std::function<void(std::string)> cb) {
 	auto error = presetFile.create();
 	auto presetDir = getPresetDirectory();
@@ -277,7 +289,7 @@ void Preset::PresetManager::loadPreset(const juce::File &presetFile, std::functi
 		// Do not call the callback here — don't complain when opening old presets.
 	}
 
-	valueTreeState.replaceState(valueTreeToLoad);
+	loadState(valueTreeState, valueTreeToLoad);
 	// currentPreset.setValue(relativePath);
 	// currentAuthor.setValue(valueTreeToLoad.getChildWithName("author").getProperty("author", ""));
 }

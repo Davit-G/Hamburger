@@ -7,6 +7,7 @@
 #include "dsp/OversamplingStack.h"
 
 #include "dsp/PrimaryDistortion.h"
+#include "dsp/MainRouting.h"
 #include "dsp/NoiseDistortions.h"
 #include "dsp/PreDistortions/PreDistortion.h"
 #include "dsp/Dynamics/Dynamics.h"
@@ -28,9 +29,11 @@
 #include "clap-juce-extensions/clap-juce-extensions.h"
 
 #include "dsp/EffectBase.h"
+#include "utils/Params.h"
 
 //==============================================================================
-class AudioPluginAudioProcessor : public juce::AudioProcessor, public clap_juce_extensions::clap_properties
+class AudioPluginAudioProcessor : public juce::AudioProcessor, public clap_juce_extensions::clap_properties,
+                                  private juce::ValueTree::Listener
 
 {
 public:
@@ -78,6 +81,11 @@ public:
 
     ScopeDataCollector<float>& getScopeDataCollector() {return scopeDataCollector; };
 
+    RoutingOrder getRoutingOrder() const { return unpackRouting (order.load (std::memory_order_acquire)); }
+
+    // use in message thread
+    void setRoutingOrder (const RoutingOrder& newOrder);
+
     ScopeContext& getScopeContext() { return scopeContext; };
     Preset::PresetManager& getPresetManager() { return *presetManager; }
     AppProperties& getAppProperties() { return appProperties; }
@@ -86,6 +94,7 @@ private:
     juce::AudioParameterFloat *inputGainKnob = nullptr;
     juce::AudioParameterFloat *mixKnob = nullptr;
     juce::AudioParameterFloat *outputGainKnob = nullptr;
+    juce::AudioParameterBool *gainLink = nullptr;
 
     juce::AudioParameterInt *hq = nullptr;
     juce::AudioParameterBool *hamburgerEnabledButton = nullptr;
@@ -98,14 +107,20 @@ private:
     Dynamics dynamics;
     PreDistortion preDistortionSelection;
     NoiseDistortions noiseDistortionSelection;
-    PrimaryDistortion distortionTypeSelection;
+    MainRouting distortionTypeSelection;
     EmphasisEffectFilter emphasisPostFilter { emphasisFilter, true };
     PostClip postClip;
+
+    PrimaryDistortion preDistortion;
+    PrimaryDistortion postDistortion;
+
 
     juce::dsp::Gain<float> inputGain;
     juce::dsp::Gain<float> outputGain;
 
-    juce::dsp::DryWetMixer<float> dryWetMixer;
+    juce::dsp::DryWetMixer<float> dryWetMixer { 16384 };
+
+    void updateLatency();
 
     OversamplingStack oversamplingStack;
 
@@ -122,10 +137,16 @@ private:
         std::unique_ptr<perfetto::TracingSession> tracingSession;
     #endif
 
-    std::atomic<RoutingOrder> order { defaultRouting };
+    // packRouting/unpackRouting in Params.h say why this is a uint64 rather than the array
+    std::atomic<juce::uint64> order { packRouting (defaultRouting) };
+    
+    static inline const juce::Identifier routingOrderProperty { "routingOrder" };
+    void syncRoutingOrder();
+    void valueTreePropertyChanged (juce::ValueTree& tree, const juce::Identifier& property) override;
+    void valueTreeRedirected (juce::ValueTree& tree) override;
 
     // makes sure that routingOrder doesnt get converted into a mutex under the hood
-    static_assert (std::atomic<RoutingOrder>::is_always_lock_free);
+    static_assert (std::atomic<juce::uint64>::is_always_lock_free);
 
     std::array<EffectBase*, (size_t) ModuleId::count> slots;
 

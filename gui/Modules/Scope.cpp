@@ -4,6 +4,7 @@
 #include "../../dsp/WaveShapers.h"
 #include "../../dsp/Dynamics/Compressor.h"
 #include "../../dsp/Dynamics/TypeA.h"
+#include "../../dsp/Distortions/waveshape/Waveshape.h"
 
 
 static constexpr size_t triggerDecimation = 8; // we do detection on a decimated audio stream so its way cheaper
@@ -17,16 +18,6 @@ static juce::String formatFrequency(float freq)
         return juce::String(freq / 1000.0f, 1) + " kHz";
 
     return juce::String(juce::roundToInt(freq)) + " Hz";
-}
-
-static juce::String formatDecibels(float db)
-{
-    return juce::String(db > 0.0f ? "+" : "") + juce::String(db, 1) + " dB";
-}
-
-static juce::String formatPercent(float normalised)
-{
-    return juce::String(juce::roundToInt(normalised * 100.0f)) + "%";
 }
 
 
@@ -46,9 +37,6 @@ Scope<SampleType>::Scope(juce::AudioProcessorValueTreeState& valueTree, ScopeDat
     sampleDataPreDistortion.resize(scope_constants::defaultHopSize);
     sampleDataPostDistortion.resize(scope_constants::defaultHopSize);
     setFramesPerSecond(fps);
-
-    bufferedFFTInput.resize(scope_constants::fftSize);
-    fftHistory.resize(scope_constants::fftSize, SampleType(0));
 
     lowFreqParam = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter(ParamIDs::emphasisLowFreq.getParamID()));
     highFreqParam = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter(ParamIDs::emphasisHighFreq.getParamID()));
@@ -123,15 +111,22 @@ void Scope<SampleType>::paint(juce::Graphics &g)
                                             formatDecibels(paramValue(ParamIDs::outputGain)) });
         break;
         case ScopeContextType::IN_OUT:
+        case ScopeContextType::WAVESHAPE: {
             if (inOutFB.isValid())
                 g.drawImage(inOutFB, area.toFloat());
 
-            drawTiledContextLabel(g, area, "DISTORTION");
+            const auto withCurve = currentType == ScopeContextType::WAVESHAPE || focusIsWaveshape();
+
+            if (withCurve)
+                drawWaveshapeCurve(g, scopeRect);
+
+            drawTiledContextLabel(g, area, withCurve ? "WAVESHAPE" : "DISTORTION");
             drawParamHeader(g, scopeRect, getDistortionHeaderLabels());
             drawDistortionAmount(g, scopeRect);
         
             // drawInOutAxes(g, scopeRect);
             break;
+        }
         case ScopeContextType::SPECTRUM_EMPHASIS:
             drawTiledContextLabel(g, area, "EMPHASIS");
             drawSpectrumEmphasis(g, scopeRect);
@@ -427,6 +422,113 @@ void Scope<SampleType>::drawInOut(juce::Graphics &g, juce::Rectangle<SampleType>
     }
 }
 
+// the waveshape type's curve for the slot being watched. the table is only rebuilt when the blend or smoothing moves
+struct WaveshapeCurveCache
+{
+    waveshapes::FilteredMap filtered;
+    waveshapes::CurveTable table;
+    waveshapes::Mix mix;
+    double x = -1.0, y = -1.0, width = -1.0;
+
+    void update(double newX, double newY, double newWidth, unsigned groups)
+    {
+        const auto mapChanged = filtered.update(groups);
+
+        if (! mapChanged && newX == x && newY == y && newWidth == width)
+            return;
+
+        x = newX;
+        y = newY;
+        width = newWidth;
+        mix = filtered.mixAt(x, y);
+        table.build(mix, width);
+    }
+};
+
+template <typename SampleType>
+bool Scope<SampleType>::focusIsWaveshape() const
+{
+    const auto focus = scopeContext.getFocus();
+
+    // only the distortion slots can run it
+    if (focus.module != ModuleId::main && focus.module != ModuleId::preDistortion && focus.module != ModuleId::postDistortion)
+        return false;
+
+    auto *type = choiceParamForSlot(focus);
+    return type != nullptr && type->getCurrentChoiceName() == "WAVESHAPE";
+}
+
+template <typename SampleType>
+void Scope<SampleType>::drawWaveshapeCurve(juce::Graphics &g, juce::Rectangle<SampleType> scopeRect)
+{
+    const auto slot = scopeContext.getFocus();
+
+    auto value = [this, slot](const ParamIDs::ParameterInfo &info) {
+        auto *param = apvts.getParameter(paramIdFor(slot, info).getParamID());
+        return (double) (param != nullptr ? param->convertFrom0to1(param->getValue()) : info.defaultValue);
+    };
+
+    auto flag = [this](const juce::ParameterID &id) {
+        auto *param = apvts.getParameter(id.getParamID());
+        return param != nullptr && param->getValue() >= 0.5f;
+    };
+
+    if (waveshapeCurve == nullptr)
+        waveshapeCurve = std::make_shared<WaveshapeCurveCache>();
+
+    auto &curve = *waveshapeCurve;
+    curve.update(value(ParamIDs::waveshapeX), value(ParamIDs::waveshapeY),
+                 waveshapes::smoothToWidth(value(ParamIDs::waveshapeSmooth) * 0.01),
+                 waveshapes::groupFilterFrom(apvts.state.getProperty(waveshapes::groupFilterProperty(slot))));
+
+    const auto enabled = flag(slot.enabled());
+    const auto inDb = value(ParamIDs::slotInGain);
+    const auto linked = enabled && flag(paramIdFor(slot, ParamIDs::gainLink));
+
+    const auto inGain = juce::Decibels::decibelsToGain(inDb);
+    const auto outGain = juce::Decibels::decibelsToGain(value(ParamIDs::slotOutGain) - (linked ? inDb : 0.0));
+    const auto wet = value(ParamIDs::slotMix) * 0.01;
+
+    const auto driveDb = value(ParamIDs::waveshapeDrive);
+    const auto drive = juce::Decibels::decibelsToGain(driveDb);
+    const auto offset = waveshapes::biasCurve(value(ParamIDs::waveshapeBias));
+    const auto amount = value(ParamIDs::waveshapeAsym) * 0.01;
+
+    const auto loudness = waveshapes::mixLoudness(curve.mix, driveDb, waveshapes::loudnessGains)
+                        * waveshapes::mixRelevel(curve.mix, driveDb, waveshapes::loudnessGains);
+    const auto rest = curve.table.read(std::tanh(waveshapes::skew(offset, amount)));
+
+    auto transfer = [&](double in) {
+        if (! enabled)
+            return in * outGain;
+
+        const auto driven = std::tanh(waveshapes::skew(in * inGain * drive + offset, amount));
+        const auto shaped = (curve.table.read(driven) - rest) * loudness;
+
+        return (shaped * wet + in * (1.0 - wet)) * outGain;
+    };
+
+    const auto plot = scopeRect.withTrimmedTop(headerHeight(scopeRect));
+    const auto centreX = (float) plot.getCentreX();
+    const auto centreY = (float) plot.getCentreY();
+    const auto halfW = (float) plot.getHeight() * 0.95f;
+    const auto halfH = (float) plot.getHeight() * 0.46f;
+
+    auto pointAt = [&](float px) { return juce::Point<float>(px, centreY - (float) transfer((double) ((px - centreX) / halfW)) * halfH); };
+
+    juce::Path path;
+    path.startNewSubPath(pointAt((float) plot.getX()));
+
+    for (auto px = (float) plot.getX() + 2.0f; px <= (float) plot.getRight(); px += 2.0f)
+        path.lineTo(pointAt(px));
+
+    g.saveState();
+    g.reduceClipRegion(plot.toNearestInt());
+    g.setColour(juce::Colours::white.withAlpha(0.25f));
+    g.strokePath(path, juce::PathStrokeType(1.5f));
+    g.restoreState();
+}
+
 // kept out of the framebuffer so the axes stay crisp instead of being stamped and faded every frame
 template <typename SampleType>
 void Scope<SampleType>::drawInOutAxes(juce::Graphics &g, juce::Rectangle<SampleType> scopeRect)
@@ -465,64 +567,14 @@ void Scope<SampleType>::renderInOutFrame(bool stampNewTrace)
 template <typename SampleType>
 void Scope<SampleType>::drawSpectrumEmphasis(juce::Graphics &g, juce::Rectangle<SampleType> scopeRect)
 {
-    if (spectrumTransformed.size() > 1)
-    {
-        const auto w = scopeRect.getWidth();
-        const auto h = scopeRect.getHeight();
+    const auto w = scopeRect.getWidth();
+    const auto h = scopeRect.getHeight();
+    const auto maxHeight = h - headerHeight(scopeRect);
 
-        g.setColour(juce::Colour::fromRGB(255 * 0.6, 255 * 0.6, 0));
-        const auto centerY = h;
-        const auto maxHeight = h - headerHeight(scopeRect);
-        const auto binCount = static_cast<double>(spectrumTransformed.size());
-        const auto binToHz = dataCollector.getSampleRate() / static_cast<double>(scope_constants::fftSize);
-        const auto nyquist = binToHz * (binCount - 1.0);
-        constexpr auto tiltDbPerOctave = SampleType(4.5);
-        constexpr auto mindB = SampleType(-70);
-        constexpr auto maxdB = SampleType(18);
+    spectrum.paint(g, juce::Rectangle<float>(0.0f, (float) (h - maxHeight), (float) w, (float) maxHeight),
+                   dataCollector.getSampleRate(), 2.f);
 
-        juce::Path spectrumPath;
-        bool startedSpectrumPath = false;
-
-        for (size_t i = 0; i < spectrumTransformed.size(); ++i)
-        {
-            const auto freq = static_cast<double>(i) * binToHz;
-
-            if (freq < scope_constants::minDrawFreq)
-                continue;
-
-            const auto x = freqToX(freq, w);
-
-            const auto dbValue = juce::jmap(spectrumTransformed[i], SampleType(0), SampleType(1), mindB, maxdB);
-            const auto octaveIndex = std::max(SampleType(0), std::log2(static_cast<SampleType>(nyquist / freq)));
-            const auto tiltDb = -tiltDbPerOctave * octaveIndex;
-            const auto adjustedDb = dbValue + tiltDb;
-            const auto magnitude = juce::jlimit(SampleType(0), SampleType(1), juce::jmap(
-                juce::jlimit(mindB, maxdB, adjustedDb),
-                mindB,
-                maxdB,
-                SampleType(0),
-                SampleType(1)));
-            const auto y = centerY - magnitude * maxHeight;
-
-            if (!startedSpectrumPath)
-            {
-                spectrumPath.startNewSubPath(x, y);
-                startedSpectrumPath = true;
-            }
-            else
-            {
-                spectrumPath.lineTo(x, y);
-            }
-
-            // this bin already reached the right hand edge, anything past it is off screen
-            if (freq >= scope_constants::maxDrawFreq)
-                break;
-        }
-
-        if (startedSpectrumPath)
-            g.strokePath(spectrumPath, juce::PathStrokeType(2.f));
-        drawResponseCurve(g, w, centerY, maxHeight);
-    }
+    drawResponseCurve(g, w, h, maxHeight);
 
     drawParamHeader(g, scopeRect, { formatFrequency(lowFreqParam->get()), formatFrequency(highFreqParam->get()) });
 }
@@ -745,7 +797,7 @@ void Scope<SampleType>::drawCompBands(juce::Graphics &g, juce::Rectangle<SampleT
             g.setColour(juce::Colour::fromRGB(30, 30, 30));
             g.fillRect(region.withBottom(thresholdY));
 
-            g.setColour(juce::Colour::fromRGB(48, 48, 48));
+            g.setColour(juce::Colours::white.withAlpha(0.25f));
             g.drawLine(region.getX(), region.getY(), region.getX(), region.getBottom(), 1.0f);
         }
 
@@ -783,8 +835,10 @@ void Scope<SampleType>::drawCompBands(juce::Graphics &g, juce::Rectangle<SampleT
             g.fillRect(region.withTop(toY(levelDb)).reduced(region.getWidth() * 0.28f, 0.0f));
         }
 
-        g.setColour(juce::Colours::grey);
-        g.drawLine(region.getX(), thresholdY, region.getRight(), thresholdY, 1.5f);
+        constexpr auto lineInset = 6.0f;
+
+        g.setColour(juce::Colours::white.withAlpha(0.9f));
+        g.drawLine(region.getX() + lineInset, thresholdY, region.getRight() - lineInset, thresholdY, 1.5f);
 
         constexpr auto readoutHeight = 12.0f;
         const auto readoutAbove = thresholdY - cell.getY() >= readoutHeight + 2.0f;
@@ -813,7 +867,7 @@ void Scope<SampleType>::drawCompBands(juce::Graphics &g, juce::Rectangle<SampleT
         }
     }
 
-    g.setColour(juce::Colour::fromRGB(64, 64, 64));
+    g.setColour(juce::Colours::white.withAlpha(0.45f));
 
     for (int edge = 1; edge < cellCount; ++edge)
     {
@@ -1065,9 +1119,10 @@ juce::String Scope<SampleType>::getDistortionAmountLabel() const
         case 1: return formatPercent(paramValue(ParamIDs::tubeAmount) * 0.01f);       // TUBE
         case 2: return formatPercent(paramValue(ParamIDs::phaseAmount) * 0.01f);      // PHASE
         case 3: return formatPercent(paramValue(ParamIDs::rubidiumAmount) * 0.01f);   // RUBIDIUM
-        case 5: return formatPercent(paramValue(ParamIDs::tapeDrive));                // TAPE
-        case 6: return formatPercent(paramValue(ParamIDs::alphaParam));               // SLEW
-        default: return {};                                                            // MATRIX
+        case 4: return formatPercent(paramValue(ParamIDs::tapeDrive));                // TAPE
+        case 5: return formatPercent(paramValue(ParamIDs::alphaParam));               // SLEW
+        case 6: return formatDecibels(paramValue(ParamIDs::waveshapeDrive));          // WAVESHAPE
+        default: return {};
     }
 }
 
@@ -1096,24 +1151,17 @@ juce::StringArray Scope<SampleType>::getNoiseHeaderLabels() const
             return { formatPercent(paramValue(ParamIDs::gateAmt)),
                      "MIX " + formatPercent(paramValue(ParamIDs::gateMix)) };
 
-        default: // SIZZLE and SIZZLE_OG
+        default: // SIZZLE and FIZZ
             return { formatFrequency(paramValue(ParamIDs::sizzleFrequency)),
                      formatPercent(paramValue(ParamIDs::sizzleAmount) * 0.01f),
                      "Q " + juce::String(paramValue(ParamIDs::sizzleQ), 2) };
     }
 }
 
-// single source of truth for the x axis, everything drawn over the spectrum has to go through this
 template <typename SampleType>
 SampleType Scope<SampleType>::freqToX(double freq, SampleType w) const
 {
-    const auto clamped = juce::jlimit(scope_constants::minDrawFreq, scope_constants::maxDrawFreq, freq);
-
-    return static_cast<SampleType>(juce::jmap(std::log10(clamped),
-                                              std::log10(scope_constants::minDrawFreq),
-                                              std::log10(scope_constants::maxDrawFreq),
-                                              0.0,
-                                              static_cast<double>(w)));
+    return static_cast<SampleType>(SpectrumAnalyser::freqToX(freq, static_cast<float>(w)));
 }
 
 template <typename SampleType>
@@ -1234,15 +1282,8 @@ void Scope<SampleType>::timerCallback()
         ++hopsPopped;
 
         // every hop has to reach the spectrum history, even the ones only drained to catch up
-        if (spectrumView) {
-            for (size_t i = 0; i < hop; ++i)
-            {
-                const auto writeIndex = (fftHistoryWritePosition + i) % fftHistory.size();
-                fftHistory[writeIndex] = sampleDataL[newestHop + i];
-            }
-
-            fftHistoryWritePosition = (fftHistoryWritePosition + hop) % fftHistory.size();
-        }
+        if (spectrumView)
+            spectrum.push(sampleDataL.data() + newestHop, hop);
     }
 
     if (hopsPopped > 0) {
@@ -1250,44 +1291,8 @@ void Scope<SampleType>::timerCallback()
         if (scopeContext.getType() == ScopeContextType::LR_SCOPE)
             updateTriggerOffset();
 
-        if (spectrumView) {
-            const auto fftSize = fft.getSize();
-
-            if (fftHistory.size() >= fftSize)
-            {
-                std::fill(spectrumData.begin(), spectrumData.end(), SampleType(0));
-                std::fill(spectrumTransformed.begin(), spectrumTransformed.end(), SampleType(0));
-
-                for (int i = 0; i < fftSize; ++i)
-                {
-                    const auto historyIndex = (fftHistoryWritePosition + i + fftHistory.size() - fftSize) % fftHistory.size();
-                    spectrumData[i] = fftHistory[historyIndex];
-                }
-
-                windowFun.multiplyWithWindowingTable(spectrumData.data(), fftSize);
-                fft.performFrequencyOnlyForwardTransform(spectrumData.data(), true);
-
-                static constexpr auto mindB = SampleType(-70);
-                static constexpr auto maxdB = SampleType(50);
-                const auto binsToRender = juce::jmin<int>((int) spectrumTransformed.size(), fftSize / 2 + 1);
-
-                for (int i = 0; i < binsToRender; ++i)
-                {
-                    const auto magnitude = juce::jlimit(SampleType(1.0e-6), SampleType(1.0e6), spectrumData[i]);
-                    const auto db = juce::Decibels::gainToDecibels(magnitude, -70.0f);
-                    const auto normalized = juce::jmap(
-                        db,
-                        mindB,
-                        maxdB,
-                        SampleType(0),
-                        SampleType(1));
-
-                    const auto smoothed = averagedSpectrum[i] * scope_constants::spectrumSmoothing + normalized * (SampleType(1) - scope_constants::spectrumSmoothing);
-                    averagedSpectrum[i] = smoothed;
-                    spectrumTransformed[i] = smoothed;
-                }
-            }
-        }
+        if (spectrumView)
+            spectrum.update();
     }
 
     bool poppedInOut = false;
@@ -1305,7 +1310,9 @@ void Scope<SampleType>::timerCallback()
     }
 
     // fade every tick even without new data, so the trails decay away when the audio stops
-    if (scopeContext.getType() == ScopeContextType::IN_OUT && inOutFB.isValid())
+    const auto inOutView = scopeContext.getType() == ScopeContextType::IN_OUT || scopeContext.getType() == ScopeContextType::WAVESHAPE;
+
+    if (inOutView && inOutFB.isValid())
         renderInOutFrame(poppedInOut);
 
     repaint(getLocalBounds());

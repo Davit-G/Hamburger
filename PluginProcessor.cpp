@@ -8,6 +8,7 @@
 
 #include "dsp/MacroParam.h"
 #include "dsp/EffectInfos.h"
+#include "utils/Params.h"
 
 
 //==============================================================================
@@ -21,9 +22,12 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor() : AudioProcessor(BusesPro
                                                          noiseDistortionSelection(treeState),
                                                          preDistortionSelection(treeState),
                                                          emphasisFilter(treeState),
-                                                         distortionTypeSelection(treeState)
+                                                         distortionTypeSelection(treeState, scopeDataCollector),
+                                                         preDistortion(treeState, SlotId {ModuleId::preDistortion, 0}),
+                                                         postDistortion(treeState, SlotId {ModuleId::postDistortion, 0})
 {
     treeState.state = juce::ValueTree("savedParams");
+    treeState.state.setProperty(Preset::versionProperty, JucePlugin_VersionString, nullptr);
 
     slots[(size_t) ModuleId::preEmphasis] = &emphasisPreFilter;
     slots[(size_t) ModuleId::postEmphasis] = &emphasisPostFilter;
@@ -32,12 +36,16 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor() : AudioProcessor(BusesPro
     slots[(size_t) ModuleId::module2] = &preDistortionSelection;
     slots[(size_t) ModuleId::main] = &distortionTypeSelection;
     slots[(size_t) ModuleId::postClip] = &postClip;
+    slots[(size_t) ModuleId::preDistortion] = &preDistortion;
+    slots[(size_t) ModuleId::postDistortion] = &postDistortion;
 
     inputGainKnob = dynamic_cast<juce::AudioParameterFloat *>(treeState.getParameter(ParamIDs::inputGain.getParamID()));
     if (inputGainKnob == nullptr)
         jassertfalse;
 
     outputGainKnob = dynamic_cast<juce::AudioParameterFloat *>(treeState.getParameter(ParamIDs::outputGain.getParamID()));
+    gainLink = dynamic_cast<juce::AudioParameterBool *>(treeState.getParameter(ParamIDs::gainLink.getParamID()));
+    jassert(gainLink);
     if (outputGainKnob == nullptr)
         jassertfalse;
 
@@ -57,6 +65,9 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor() : AudioProcessor(BusesPro
 
     presetManager = std::make_unique<Preset::PresetManager>(treeState, appProperties);
 
+    // replaceState() swaps the tree out from under its listeners, which is valueTreeRedirected
+    treeState.state.addListener(this);
+
 #if PERFETTO
     // MelatoninPerfetto::get().beginSession(300000);
 #endif
@@ -64,9 +75,58 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor() : AudioProcessor(BusesPro
 
 AudioPluginAudioProcessor::~AudioPluginAudioProcessor()
 {
+    treeState.state.removeListener(this);
+
 #if PERFETTO
     // MelatoninPerfetto::get().endSession();
 #endif
+}
+
+void AudioPluginAudioProcessor::setRoutingOrder(const RoutingOrder& newOrder)
+{
+    treeState.state.setProperty(routingOrderProperty, (juce::int64) packRouting(newOrder), nullptr);
+}
+
+// anything that isn't every module exactly once - a state from before reordering existed, or a damaged one - is the default
+void AudioPluginAudioProcessor::syncRoutingOrder()
+{
+    const auto stored = treeState.state.getProperty(routingOrderProperty);
+
+    auto newOrder = defaultRouting;
+
+    if (stored.isInt64() || stored.isInt())
+    {
+        const auto candidate = unpackRouting((juce::uint64) (juce::int64) stored);
+
+        std::array<bool, (size_t) ModuleId::count> seen {};
+        auto valid = true;
+
+        for (auto id : candidate)
+        {
+            const auto index = (size_t) id;
+            valid = valid && index < seen.size() && !seen[index];
+
+            if (valid)
+                seen[index] = true;
+        }
+
+        if (valid)
+            newOrder = candidate;
+    }
+
+    order.store(packRouting(newOrder), std::memory_order_release);
+}
+
+void AudioPluginAudioProcessor::valueTreePropertyChanged(juce::ValueTree& tree, const juce::Identifier& property)
+{
+    if (tree == treeState.state && property == routingOrderProperty)
+        syncRoutingOrder();
+}
+
+void AudioPluginAudioProcessor::valueTreeRedirected(juce::ValueTree& tree)
+{
+    if (tree == treeState.state)
+        syncRoutingOrder();
 }
 
 juce::AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::createParameterLayout()
@@ -79,38 +139,45 @@ juce::AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::c
     
     collected.push_back(std::make_unique<MacroParam>(ParamIDs::inputGain));
     collected.push_back(std::make_unique<MacroParam>(ParamIDs::outputGain));
+    collected.push_back(std::make_unique<juce::AudioParameterBool>(ParamIDs::gainLink.getParameterID(), ParamIDs::gainLink.displayName, false));
     collected.push_back(std::make_unique<MacroParam>(ParamIDs::mix));
     collected.push_back(std::make_unique<juce::AudioParameterInt>(ParamIDs::oversamplingFactor.getParameterID(), "Oversampling Factor", 0, 2, 0));
     
     for (int i = 0; i < ParamIDs::numGlobalMacros; ++i)
         collected.push_back (std::make_unique<MacroParam> (*ParamIDs::globalMacros[(size_t) i]));
     
+    collected.push_back(std::make_unique<juce::AudioParameterChoice>(ParamIDs::mainRouting.getParameterID(), "Routing", ParamIDs::withReservedSlots (ParamIDs::routingTypes.categories), 0));
+    collected.push_back(std::make_unique<juce::AudioParameterInt>(ParamIDs::bandCount.getParameterID(), ParamIDs::bandCount.displayName,
+                                                                  (int) ParamIDs::bandCount.range.start, (int) ParamIDs::bandCount.range.end,
+                                                                  (int) ParamIDs::bandCount.defaultValue));
+    collected.push_back(std::make_unique<juce::AudioParameterInt>(ParamIDs::stackCount.getParameterID(), "Stack Count", 1, MainRouting::maxSlots, (int) ParamIDs::stackCount.defaultValue));
+    collected.push_back(std::make_unique<juce::AudioParameterBool>(ParamIDs::stackFlip.getParameterID(), "Stack Flip Polarity", true));
+    collected.push_back(std::make_unique<juce::AudioParameterChoice>(ParamIDs::stackFilter.getParameterID(), ParamIDs::stackFilter.displayName, ParamIDs::withReservedSlots (ParamIDs::stackFilterTypes.categories), 0));
+
+    collected.push_back(std::make_unique<MacroParam>(ParamIDs::crossoverLow));
+    collected.push_back(std::make_unique<MacroParam>(ParamIDs::crossoverMid));
+    collected.push_back(std::make_unique<MacroParam>(ParamIDs::crossoverHigh));
+    collected.push_back(std::make_unique<MacroParam>(ParamIDs::stackGain));
+    collected.push_back(std::make_unique<MacroParam>(ParamIDs::stackMix));
+    collected.push_back(std::make_unique<MacroParam>(ParamIDs::stackFilterFreq));
+    collected.push_back(std::make_unique<MacroParam>(ParamIDs::stackFilterQ));
+    collected.push_back(std::make_unique<MacroParam>(ParamIDs::stackRotation));
+    collected.push_back(std::make_unique<MacroParam>(ParamIDs::msBalance));
+
+    for (int band = 0; band < ParamIDs::numBands; ++band)
+    {
+        const auto& mute = *ParamIDs::bandMutes[band];
+        const auto& solo = *ParamIDs::bandSolos[band];
+
+        collected.push_back(std::make_unique<juce::AudioParameterBool>(mute.getParameterID(), mute.displayName, false));
+        collected.push_back(std::make_unique<juce::AudioParameterBool>(solo.getParameterID(), solo.displayName, false));
+    }
+
     collected.push_back(std::make_unique<juce::AudioParameterInt>(ParamIDs::slewType.getParameterID(), "Slew Type", 0, 2, 0));
     collected.push_back(std::make_unique<juce::AudioParameterBool>(ParamIDs::hamburgerEnabled.getParameterID(), "Hamburger Enabled", true));
     collected.push_back(std::make_unique<juce::AudioParameterBool>(ParamIDs::emphasisOn.getParameterID(), "Emphasis EQ On", true));
 
-
-    // compressorjuce::
-    // collected.push_back(std::make_unique<MacroParam>(ParamIDs::compSpeed.getParamID(), "Comp Speed", juce::NormalisableRange<float>(0.0f, 400.0f, 0.f, 0.25f), 100.f));
-    // collected.push_back(std::make_unique<MacroParam>(ParamIDs::compBandTilt.getParamID(), "Comp Band Tilt", makeRange(-20.0f, 20.0f), 0.f));
-    // collected.push_back(std::make_unique<MacroParam>(ParamIDs::compStereoLink.getParamID(), "Stereo Link", makeRange(0.0f, 100.0f), 100.f));
-    // collected.push_back(std::make_unique<MacroParam>(ParamIDs::compRatio.getParamID(), "Comp Ratio", makeRange(1.0f, 10.0f), 3.5f));
-    // collected.push_back(std::make_unique<MacroParam>(ParamIDs::compOut.getParamID(), "Comp Makeup", makeRange(-24.0f, 24.0f), 0.f));
-
-    // collected.push_back(std::make_unique<MacroParam>(ParamIDs::MBCompSpeed.getParamID(), "Multiband Comp Speed", juce::NormalisableRange<float>(0.0f, 400.0f, 0.f, 0.25f), 100.f));
-    // collected.push_back(std::make_unique<MacroParam>(ParamIDs::MSCompSpeed.getParamID(), "Mid Side Comp Speed", juce::NormalisableRange<float>(0.0f, 400.0f, 0.f, 0.25f), 100.f));
     
-    // collected.push_back(std::make_unique<MacroParam>(ParamIDs::stereoCompThreshold.getParamID(), "Stereo Comp Threshold", makeRange(-48.0f, 0.0f), -24.f));
-    // collected.push_back(std::make_unique<MacroParam>(ParamIDs::MBCompThreshold.getParamID(), "MB Comp Threshold", makeRange(-48.0f, 0.0f), -24.f));
-    // collected.push_back(std::make_unique<MacroParam>(ParamIDs::MSCompThreshold.getParamID(), "MS Comp Threshold", makeRange(-48.0f, 0.0f), -24.f));
-    
-    // collected.push_back(std::make_unique<MacroParam>(ParamIDs::TypeAThreshold.getParamID(), "Type A Threshold", makeRange(-48.0f, 0.0f), -40.f));
-    // collected.push_back(std::make_unique<MacroParam>(ParamIDs::TypeARatio.getParamID(), "Type A Ratio", makeRange(1.0f, 4.0f), 2.0f));
-    // collected.push_back(std::make_unique<MacroParam>(ParamIDs::TypeATilt.getParamID(), "Type A Tilt", makeRange(-20.0f, 20.0f), -2.f));
-    // collected.push_back(std::make_unique<MacroParam>(ParamIDs::TypeAOut.getParamID(), "Type A Out", makeRange(-24.0f, 24.0f), -12.0f));
-    // collected.push_back(std::make_unique<MacroParam>(ParamIDs::TypeACompSpeed.getParamID(), "Type A Comp Speed", juce::NormalisableRange<float>(0.0f, 400.0f, 0.f, 0.25f), 100.f));
-
-    // emphasisjuce::
     collected.push_back(std::make_unique<MacroParam>(ParamIDs::emphasisLowGain));
     collected.push_back(std::make_unique<MacroParam>(ParamIDs::emphasisHighGain));
 
@@ -129,7 +196,17 @@ juce::AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::c
 
             if (const auto* types = ParamIDs::categoriesFor (m.id))
                 collected.push_back (std::make_unique<juce::AudioParameterChoice> (
-                    slot.type(), slot.displayNamePrefix() + " TYPE", types->categories, 0));
+                    slot.type(), slot.displayNamePrefix() + " TYPE", ParamIDs::withReservedSlots (types->categories), 0));
+
+            // every distortion slot's own in, dry/wet and out, whichever type it is running
+            if (ParamIDs::categoriesFor (m.id) == &ParamIDs::distortionTypes)
+            {
+                for (const auto* level : { &ParamIDs::slotInGain, &ParamIDs::slotMix, &ParamIDs::slotOutGain })
+                    collected.push_back (std::make_unique<MacroParam> (slot, *level));
+
+                collected.push_back (std::make_unique<juce::AudioParameterBool> (
+                    paramIdFor (slot, ParamIDs::gainLink), slot.displayNamePrefix() + " " + ParamIDs::gainLink.displayName, false));
+            }
 
             juce::StringArray alreadyAdded;
 
@@ -149,6 +226,20 @@ juce::AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::c
 
     std::stable_sort (collected.begin(), collected.end(),
                       [] (const auto& a, const auto& b) { return a->getVersionHint() < b->getVersionHint(); });
+
+    // see VERSION HINTS in ParamIDs
+    DBG ("parameters: " << (int) collected.size());
+
+    if constexpr (ParamIDs::releasedParameterCount > 0)
+    {
+        const auto released = std::count_if (collected.begin(), collected.end(),
+                                             [] (const auto& p) { return p->getVersionHint() <= ParamIDs::releasedVersionHint; });
+
+        // a parameter added since the last release still has a released version hint (give it releasedVersionHint + 1),
+        // or a released parameter was removed. either breaks Logic and GarageBand automation
+        jassert (released == ParamIDs::releasedParameterCount);
+        juce::ignoreUnused (released);
+    }
 
     for (auto& parameter : collected)
         params.add (std::move (parameter));
@@ -202,23 +293,31 @@ void AudioPluginAudioProcessor::prepareToPlay(double sampleRate, int samplesPerB
 
     emphasisFilter.prepare(oversampledSpec);
 
-    float totalLatency = oversamplingStack.getLatencySamples();
-
-    for (size_t i = 0; i < (size_t) ModuleId::count; i++) {
-        EffectBase* slot = slots[i];
-        slot->prepare(oversampledSpec);
-        totalLatency += (float) slot->getLatencySamples();
-    }
-
-    DBG("Total Latency: " << totalLatency);
-
-    setLatencySamples((int)std::ceil(totalLatency));
+    for (size_t i = 0; i < (size_t) ModuleId::count; i++)
+        slots[i]->prepare(oversampledSpec);
 
     dryWetMixer.reset();
     dryWetMixer.prepare(spec);
-    dryWetMixer.setWetLatency(totalLatency);
+    updateLatency();
 
     scopeDataCollector.prepare(spec);
+}
+
+void AudioPluginAudioProcessor::updateLatency()
+{
+    const auto oversampledRatio = std::pow(2.0f, (float) oversamplingStack.getOversamplingFactor());
+
+    auto total = oversamplingStack.getLatencySamples();
+
+    for (auto* slot : slots)
+        total += (float) slot->getLatencySamples() / oversampledRatio;
+
+    const auto rounded = (int) std::ceil(total);
+
+    if (rounded != getLatencySamples())
+        setLatencySamples(rounded);
+
+    dryWetMixer.setWetLatency(total);
 }
 
 void AudioPluginAudioProcessor::releaseResources()
@@ -261,9 +360,6 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
     {
         // TRACE_EVENT("dsp", "oversampling config");
 
-        dryWetMixer.setWetLatency(oversamplingStack.getLatencySamples());
-
-
         oversamplingStack.setOversamplingFactor(oversampleAmount);
         if (oldOversamplingFactor != oversampleAmount)
         {
@@ -284,22 +380,27 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
     inputGain.setGainDecibels(gainAmount);
     inputGain.process(context);
 
+    scopeDataCollector.captureInput(buffer.getReadPointer(0), (size_t)buffer.getNumSamples());
+
     dryWetMixer.pushDrySamples(block);
 
     juce::dsp::AudioBlock<float> oversampledBlock = oversamplingStack.processSamplesUp(block);
 
     emphasisFilter.beforeProcessing(oversampledBlock.getNumSamples());
 
-    const auto routingOrder = order.load(std::memory_order_acquire);
+    
+    const auto scopeFocus = scopeContext.getFocus();
+    distortionTypeSelection.setScopeTap(scopeFocus.module == ModuleId::main ? scopeFocus.sub : -1, oversampleAmount);
+
+    const auto routingOrder = unpackRouting (order.load (std::memory_order_acquire));
     for (size_t i = 0; i < (size_t) ModuleId::count; i++) {
         const auto moduleId = routingOrder[i];
         EffectBase* slot = slots[(size_t)moduleId];
 
-        /*  Tap either side of the main distortion so the scope's pre/post traces follow it
-            wherever the routing order puts it, rather than a fixed point in the chain. */
-        const bool isMainDistortion = (moduleId == ModuleId::main);
+        const bool tapHere = moduleId == scopeFocus.module
+                             && (moduleId == ModuleId::preDistortion || moduleId == ModuleId::postDistortion);
 
-        if (isMainDistortion)
+        if (tapHere)
             scopeDataCollector.capturePreDistortion(oversampledBlock.getChannelPointer(0),
                                                    oversampledBlock.getNumSamples(),
                                                    oversampleAmount);
@@ -307,7 +408,7 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
         slot->updateParamsEveryBlock();
         slot->processBlock(oversampledBlock);
 
-        if (isMainDistortion)
+        if (tapHere)
             scopeDataCollector.capturePostDistortion(oversampledBlock.getChannelPointer(0),
                                                     oversampledBlock.getNumSamples(),
                                                     oversampleAmount);
@@ -317,7 +418,9 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
 
     scopeDataCollector.process(buffer.getReadPointer(0), buffer.getReadPointer(1), (size_t)buffer.getNumSamples());
 
-    outputGain.setGainDecibels((outputGainKnob != nullptr) ? outputGainKnob->get() : 0.0f);
+    // linked, the output takes back whatever the input added
+    const auto linkedInDb = (gainLink != nullptr && gainLink->get()) ? gainAmount : 0.0f;
+    outputGain.setGainDecibels(((outputGainKnob != nullptr) ? outputGainKnob->get() : 0.0f) - linkedInDb);
     outputGain.process(context);
 
     dryWetMixer.setWetMixProportion((mixKnob != nullptr) ? (mixKnob->get() * 0.01f) : 1.0f);
@@ -355,9 +458,7 @@ void AudioPluginAudioProcessor::setStateInformation(const void *data, int sizeIn
         return;
 
     if (xmlState->hasTagName(treeState.state.getType())) {
-        // treeState.replaceState(juce::ValueTree::fromXml(*xmlState));
-        juce::ValueTree copyState = juce::ValueTree::fromXml(*xmlState);
-        treeState.replaceState(copyState);
+        Preset::loadState(treeState, juce::ValueTree::fromXml(*xmlState));
     }
 }
 

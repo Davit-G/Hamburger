@@ -10,7 +10,7 @@
 class RubidiumSatPanel : public Panel
 {
 public:
-    RubidiumSatPanel(AudioPluginAudioProcessor &p, SlotId slot = SlotId{ModuleId::main, 0}) : Panel(p, "RUBIDIUM", Palette::colours[2]), 
+    RubidiumSatPanel(AudioPluginAudioProcessor &p, SlotId slot = SlotId{ModuleId::main, 0}) : Panel(p, "RUBIDIUM", Palette::colours[2], slot), 
         tone(p, "TONE", slot, ParamIDs::rubidiumTone, ScopeContextType::IN_OUT),
         mojo(p, "MOJO", slot, ParamIDs::rubidiumMojo, ScopeContextType::IN_OUT),
         hysteresis(p, "ASYM", slot, ParamIDs::rubidiumAsym, ScopeContextType::IN_OUT),
@@ -25,16 +25,22 @@ public:
         addAndMakeVisible(bias);
         addAndMakeVisible(flask);
 
-        Palette::setKnobColoursOfComponent(&tone, Palette::colours[2]);
-        Palette::setKnobColoursOfComponent(&drive, Palette::colours[2]);
-        Palette::setKnobColoursOfComponent(&mojo, Palette::colours[2]);
-        Palette::setKnobColoursOfComponent(&hysteresis, Palette::colours[2]);
-        Palette::setKnobColoursOfComponent(&bias, Palette::colours[2]);
+        const auto colour = Palette::colours[2];
+        Palette::setKnobColoursOfComponent(this, colour);
+
+        Palette::setKnobColoursOfComponent(&tone, colour);
+        Palette::setKnobColoursOfComponent(&drive, colour);
+        Palette::setKnobColoursOfComponent(&mojo, colour);
+        Palette::setKnobColoursOfComponent(&hysteresis, colour);
+        Palette::setKnobColoursOfComponent(&bias, colour);
     }
 
     void resized() override
     {
-        fiveKnobLayout(drive, flask, bias, hysteresis, mojo, tone);
+        if (usesCompactLayout())
+            compactLayout(drive, flask, {&bias, &hysteresis, &mojo, &tone});
+        else
+            fiveKnobLayout(drive, flask, bias, hysteresis, mojo, tone);
     }
 
     ParamKnob drive;

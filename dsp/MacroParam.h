@@ -47,9 +47,7 @@ private:
 
     static juce::String nameFor(SlotId slot, const ParamIDs::ParameterInfo& descriptor)
     {
-        // only qualify by slot once more than one slot exists, so names stay readable
-        return slot.sub == 0 ? descriptor.displayName
-                             : slot.displayNamePrefix() + " " + descriptor.displayName;
+        return slot.displayNamePrefix() + " " + descriptor.displayName;
     }
 
     const ParamIDs::ParameterInfo* info = nullptr;

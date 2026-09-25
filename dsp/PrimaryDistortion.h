@@ -9,6 +9,7 @@
 #include "Distortions/SoftClipper.h"
 #include "Distortions/nonlinslew/NonlinSlew.h"
 #include "Distortions/preisach/Preisach.h"
+#include "Distortions/waveshape/Waveshape.h"
 
 #include "DCBlockingHighPass.h"
 
@@ -27,7 +28,8 @@
 class PrimaryDistortion : public EffectBase {
   public:
     PrimaryDistortion(juce::AudioProcessorValueTreeState &state,
-                      SlotId slot = SlotId{ModuleId::main, 0})
+                      SlotId slot = SlotId{ModuleId::main, 0},
+                      std::shared_ptr<Waveshape::SharedCurve> sharedCurve = nullptr)
         : slot(slot) {
         distoType = dynamic_cast<juce::AudioParameterChoice *>(
             state.getParameter(slot.type().getParamID()));
@@ -58,7 +60,22 @@ class PrimaryDistortion : public EffectBase {
         preisach = std::make_unique<Preisach>(state, slot);
         nonlinSlew =
             std::make_unique<NonlinSlew>(state, slot);
+        waveshape = std::make_unique<Waveshape>(state, slot, std::move(sharedCurve));
+
+        auto level = [&state, slot](const ParamIDs::ParameterInfo &descriptor) {
+            return &MacroParam::fetch(state, paramIdFor(slot, descriptor).getParamID());
+        };
+
+        inGainParam = level(ParamIDs::slotInGain);
+        mixParam = level(ParamIDs::slotMix);
+        outGainParam = level(ParamIDs::slotOutGain);
+
+        gainLink = dynamic_cast<juce::AudioParameterBool *>(
+            state.getParameter(paramIdFor(slot, ParamIDs::gainLink).getParamID()));
+        jassert(gainLink);
     }
+
+    bool isEnabled() const { return distortionEnabled == nullptr || distortionEnabled->get(); }
 
     ~PrimaryDistortion() {}
 
@@ -74,6 +91,7 @@ class PrimaryDistortion : public EffectBase {
         rubidium->prepare(spec);
         preisach->prepare(spec);
         nonlinSlew->prepare(spec);
+        waveshape->prepare(spec);
 
         setSampleRate(spec.sampleRate);
 
@@ -86,28 +104,62 @@ class PrimaryDistortion : public EffectBase {
         emptyBuffer = juce::AudioBuffer<float>(spec.numChannels, 8192);
         emptyBlock = juce::dsp::AudioBlock<float>(emptyBuffer);
 
+        for (auto *gain : {&inGain, &outGain}) {
+            gain->prepare(spec);
+            gain->setRampDurationSeconds(0.02);
+        }
+
+        inGain.setGainDecibels(inGainParam->get());
+        outGain.setGainDecibels(outGainDb());
+        inGain.reset();
+        outGain.reset();
+
+        dryWet.prepare(spec);
+        dryWet.setWetMixProportion(mixParam->get() * 0.01f);
+        dryWet.reset();
+
+        previousDistType = distoType->getIndex();
         fillEmptyWithZeros();
-        processBlock(emptyBlock);
+        distort(previousDistType, emptyBlock);
     }
 
     void fillEmptyWithZeros() { emptyBlock.fill(0.0f); }
 
-
     void processBlock(juce::dsp::AudioBlock<float> &block) override {
-        int distoTypeIndex = distoType->getIndex();
+        const int distoTypeIndex = distoType->getIndex();
 
         if (previousDistType != distoTypeIndex) {
             previousDistType = distoTypeIndex;
 
-
             // declicking attempt
-            fillEmptyWithZeros();
-            processBlock(emptyBlock);
+            if (isEnabled()) {
+                fillEmptyWithZeros();
+                distort(distoTypeIndex, emptyBlock);
+            }
         }
 
-        if (distortionEnabled->get() == false)
-            return;
+        juce::dsp::ProcessContextReplacing<float> context(block);
 
+        if (isEnabled()) {
+            dryWet.pushDrySamples(block);
+
+            inGain.setGainDecibels(inGainParam->get());
+            inGain.process(context);
+
+            distort(distoTypeIndex, block);
+
+            dryWet.setWetMixProportion(mixParam->get() * 0.01f);
+            dryWet.mixWetSamples(block);
+        }
+
+        outGain.setGainDecibels(outGainDb());
+        outGain.process(context);
+    }
+
+    void setSampleRate(float newSampleRate) { sampleRate = newSampleRate; }
+
+  private:
+    void distort(int distoTypeIndex, juce::dsp::AudioBlock<float> &block) {
         switch (distoTypeIndex) {
         case 0: { // classic
             // TRACE_EVENT("dsp", "classic");
@@ -145,15 +197,27 @@ class PrimaryDistortion : public EffectBase {
             dcBlocker[2].processBlock(block);
             break;
         }
+        case 6: {
+            waveshape->processBlock(block); // dc blocking already included in waveshape
+            break;
+        }
         default:
             break;
         }
     }
 
-    void setSampleRate(float newSampleRate) { sampleRate = newSampleRate; }
+    float outGainDb() const {
+        const auto linked = gainLink != nullptr && gainLink->get() && isEnabled();
+        return outGainParam->get() - (linked ? inGainParam->get() : 0.0f);
+    }
 
-  private:
-    // juce::AudioProcessorValueTreeState &treeStateRef;
+    juce::AudioParameterBool *gainLink = nullptr;
+    MacroParam *inGainParam = nullptr;
+    MacroParam *mixParam = nullptr;
+    MacroParam *outGainParam = nullptr;
+
+    juce::dsp::Gain<float> inGain, outGain;
+    juce::dsp::DryWetMixer<float> dryWet;
 
     juce::AudioBuffer<float> emptyBuffer;
     juce::dsp::AudioBlock<float> emptyBlock;
@@ -172,6 +236,7 @@ class PrimaryDistortion : public EffectBase {
     std::unique_ptr<RubidiumDistortion> rubidium = nullptr;
     std::unique_ptr<Preisach> preisach = nullptr;
     std::unique_ptr<NonlinSlew> nonlinSlew = nullptr;
+    std::unique_ptr<Waveshape> waveshape = nullptr;
 
     DCBlockingHighPass dcBlocker[3];
 

@@ -4,6 +4,7 @@
 Fuzz::Fuzz(juce::AudioProcessorValueTreeState& treeState, SlotId slot)
 	: MacroEffect(treeState, slot),
 	  bias(getParam(ParamIDs::grillBias)),
+	  timing(getParam(ParamIDs::grillDcTiming)),
 	  follower(false) {}
 
 Fuzz::~Fuzz() {}
@@ -11,8 +12,8 @@ Fuzz::~Fuzz() {}
 void Fuzz::prepare(juce::dsp::ProcessSpec& spec) {
 	follower.prepare(spec);
 	bias.prepare(spec);
-	follower.setAttackTime(50);
-	follower.setReleaseTime(50);
+
+	appliedTiming = -1.0f;
 }
 
 void Fuzz::processBlock(juce::dsp::AudioBlock<float>& block) {
@@ -20,8 +21,13 @@ void Fuzz::processBlock(juce::dsp::AudioBlock<float>& block) {
 	// TRACE_EVENT("dsp", "Fuzz::processBlock");
 	#endif // PERFETTO
 
-
 	bias.update();
+
+	if (const auto ms = timing.getRaw(); ms != appliedTiming) {
+		follower.setAttackTime(ms);
+		follower.setReleaseTime(ms);
+		appliedTiming = ms;
+	}
 
 
 	for (int sample = 0; sample < static_cast<int>(block.getNumSamples()); sample++) {

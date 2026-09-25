@@ -22,6 +22,8 @@ public:
 
 private:
     SmoothParam bias;
+    SmoothParam timing;
+    float appliedTiming = -1.0f; // what the follower was last set to, so it's only recalculated on a change
 
     EnvelopeFollower follower;
     

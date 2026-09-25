@@ -7,6 +7,10 @@
 
 #include "../EffectBase.h"
 
+inline float weirdRectify(float x, float a) {
+	return a * powf(std::abs(x) * 1.5f, 2.0f) + x * (1.0f - a);
+}
+
 #if PERFETTO
 #include <melatonin_perfetto/melatonin_perfetto.h>
 #endif // PERFETTO

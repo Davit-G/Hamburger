@@ -103,22 +103,24 @@ private:
             {
                 juce::Point<int> screenPos = event.getScreenPosition();
 
-                if (auto* hoveredComponent = dynamic_cast<juce::Slider*>(juce::Desktop::getInstance().findComponentAt(screenPos)))
-                {   
-                    if (hoveredComponent == previousComponent) {
+                auto* hoveredComponent = juce::Desktop::getInstance().findComponentAt(screenPos);
+                
+                if (auto* client = dynamic_cast<juce::TooltipClient*>(hoveredComponent))
+                {
+                    const auto tooltip = client->getTooltip();
+
+                    if (tooltip.isEmpty() || tooltip == previousTooltip)
                         return;
-                    }
 
-                    juce::String tooltip = hoveredComponent->getTooltip();
+                    previousTooltip = tooltip;
 
-                    if (tooltip.isNotEmpty())
-                    {
-                        previousComponent = hoveredComponent;
-                        lp.changeLabelText(hoveredComponent->getName() + ": " + tooltip);
-                    }
+                    if (auto* slider = dynamic_cast<juce::Slider*>(hoveredComponent))
+                        lp.changeLabelText(slider->getName() + ": " + tooltip);
+                    else
+                        lp.changeLabelText(tooltip);
                 }
             }
-        juce::Component* previousComponent = nullptr;
+        juce::String previousTooltip;
 
         LogoPanel &lp;
     };

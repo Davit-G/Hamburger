@@ -23,28 +23,42 @@ public:
             setupCategorySelector(moduleName);
         }
 
-        setupPanels(moduleName);
+        this->moduleName = moduleName;
+
+        if (auto* type = dynamic_cast<juce::AudioParameterChoice*>(processor.treeState.getParameter(categoryAttachmentId)))
+        {
+            // only the implemented types, the parameter's reserved slots after them stay out of the menu
+            jassert(type->choices.size() >= (int) modulePanels.size());
+
+            for (int i = 0; i < (int) modulePanels.size(); ++i)
+                typeNames.add(type->choices[i]);
+        }
+        else
+        {
+            for (auto &panel : modulePanels)
+                typeNames.add(panel->getName());
+        }
+
+        setupPanels();
+
+        if (modulePanels.size() > 1)
+            categorySelector.setTooltip("Click to choose between different effect types");
 
         setPaintingIsUnclipped(true);
 
-        if (categoryAttachmentId.length() > 0)
+        /*  By index, not a ComboBoxAttachment: that spreads the parameter's 0 to 1 over the menu's items, and the menu
+            has fewer items than the parameter has choices. */
+        if (auto* type = dynamic_cast<juce::AudioParameterChoice*>(processor.treeState.getParameter(categoryAttachmentId)))
         {
-            // on some linux based OSes, the category selector element overrides the parameter value, causing it to reset to default when opening the GUI.
-            // the below two lines of code fixes that.
-            auto existingCategoryParam = dynamic_cast<juce::AudioParameterChoice *>(processor.treeState.getParameter(categoryAttachmentId));
-            if (existingCategoryParam != nullptr)
+            categoryAttachment = std::make_unique<juce::ParameterAttachment>(*type, [this](float index)
             {
-                categorySelector.setSelectedItemIndex(existingCategoryParam->getIndex(), juce::dontSendNotification);
-                DBG("not nullptr");
-            }
-            else
-            {
-                categorySelector.setSelectedItemIndex(0);
-                DBG("nullptr");
-            }
-            
-            categoryAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment>(processor.treeState, categoryAttachmentId, categorySelector);
-            setScreen(categorySelector.getSelectedItemIndex());
+                categorySelector.setSelectedItemIndex((int) index, juce::dontSendNotification);
+                setScreen((int) index);
+                setCategoryText(this->moduleName);
+                resized();
+            }, nullptr);
+
+            categoryAttachment->sendInitialUpdate();
         }
         else
         {
@@ -59,6 +73,7 @@ public:
         if (buttonAttachmentId.length() > 0)
         {
             enabledButton = std::make_unique<LightButton>(processor, powerOffImage, powerOnImage);
+            enabledButton->setTooltip(powerTooltipFor(buttonAttachmentId, moduleName));
             attachment = std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment>(processor.treeState, buttonAttachmentId, *enabledButton);
             addAndMakeVisible(enabledButton.get());
 
@@ -125,7 +140,7 @@ public:
     void paint(juce::Graphics &g) override
     {
         juce::Path p;
-        p.addRoundedRectangle(getLocalBounds().reduced(4).toFloat(), 15.0f);
+        p.addRoundedRectangle(getLocalBounds().reduced(Panel::boxInset).toFloat(), Panel::boxCornerSize);
 
         if (enabledButton == nullptr) {
             g.setColour(juce::Colour::fromRGB(0, 0, 0));
@@ -142,7 +157,7 @@ public:
 
     void resized() override
     {
-        auto bounds = getLocalBounds().reduced(12);
+        auto bounds = getLocalBounds().reduced(Panel::boxPadding);
 
         if (noHeader)
         {
@@ -152,6 +167,8 @@ public:
             }
             return;
         }
+
+        juce::ignoreUnused (lowerContent);
 
         auto titleBounds = bounds.removeFromTop(30);
         titleBounds.reduce(10, 0);
@@ -178,30 +195,130 @@ public:
 
         header.performLayout(titleBounds);
 
+        const auto box = getLocalBounds().reduced(Panel::boxInset);
+
+        auto placeFooterAtBottom = [&](juce::Rectangle<int>& area)
+        {
+            area.setBottom(box.getBottom() - footerBottomInset);
+            footer->setBounds(area.removeFromBottom(footerHeight).withLeft(bounds.getX()).withRight(bounds.getRight())
+                                  .expanded(0, footerHitMargin));
+        };
+
+        if (lowerContent != nullptr && lowerContent->isVisible() && lowerContent->getParentComponent() == this)
+        {
+            auto lower = bounds.removeFromBottom(bounds.getHeight() * lowerContentShare / 5).withLeft(box.getX()).withRight(box.getRight());
+
+            if (lowerContentIsFlush)
+                lower.setBottom(box.getBottom());
+            else if (footer != nullptr)
+                placeFooterAtBottom(lower);
+
+            // flush content starts footerBottomInset under the strip, which sits at the bottom of the panels' area
+            if (lowerContentIsFlush && footer != nullptr)
+            {
+                footer->setBounds(bounds.removeFromBottom(footerHeight).expanded(0, footerHitMargin));
+                lower.setTop(footer->getBottom() + footerBottomInset);
+            }
+
+            lowerContent->setBounds(lower);
+        }
+        else if (footer != nullptr)
+        {
+            placeFooterAtBottom(bounds);
+        }
+
         for (auto &panel : modulePanels)
         {
             panel->setBounds(bounds);
         }
     }
 
+    // the colour of the panel on screen, when needed
+    juce::Colour getAccentColour() const
+    {
+        for (auto &panel : modulePanels)
+            if (panel->isVisible())
+                return panel->findColour(juce::Slider::rotarySliderFillColourId);
+
+        return juce::Colours::white;
+    }
+
+    std::function<void()> onScreenChanged;
+
+    void setFooter(std::unique_ptr<juce::Component> newFooter, int height)
+    {
+        footer = std::move(newFooter);
+        footerHeight = height;
+        addAndMakeVisible(*footer);
+        colourFooter();
+        resized();
+    }
+
+    // flush content runs to the box's bottom edge, with the footer moved up above it
+    void setLowerContent(juce::Component* content, bool isFlush)
+    {
+        lowerContent = content;
+        lowerContentIsFlush = isFlush;
+
+        if (lowerContent != nullptr)
+            addAndMakeVisible(*lowerContent);
+
+        if (footer != nullptr)
+            footer->toFront(false);
+
+        resized();
+    }
+
     std::unique_ptr<LightButton> enabledButton = nullptr;
     juce::ComboBox categorySelector;
 
 private:
+    // disabling isn't quite the same for every box
+    static juce::String powerTooltipFor(const std::string &attachmentId, const std::string &moduleName)
+    {
+        if (attachmentId == ParamIDs::hamburgerEnabled.getParamID().toStdString())
+            return "Enable / disable hamburger.";
+
+        if (juce::String(moduleName).containsIgnoreCase("DISTORTION"))
+            return "Enable / disable this distortion. Out gain still applies.";
+
+        return "Enable / disable audio processing";
+    }
+
+    juce::Component* lowerContent = nullptr;
+    bool lowerContentIsFlush = false;
+
+    std::unique_ptr<juce::Component> footer;
+    int footerHeight = 0;
+    static constexpr int footerBottomInset = 4;
+    static constexpr int lowerContentShare = 2;
+    static constexpr int footerHitMargin = 4;
+    
+    void colourFooter()
+    {
+        if (footer != nullptr)
+            footer->setColour(juce::Slider::rotarySliderFillColourId, getAccentColour());
+    }
+
     void setupHeader()
     {
         header.flexDirection = juce::FlexBox::Direction::row;
         header.justifyContent = juce::FlexBox::JustifyContent::center;
     }
 
-    void setupPanels(const std::string &moduleName)
+    // a type as the menu shows it, with the module's name after it where it has one
+    juce::String typeLabel(int index) const
     {
-        int i = 1;
-        for (auto &panel : modulePanels)
+        return moduleName.empty() ? typeNames[index] : typeNames[index] + " " + moduleName;
+    }
+
+    void setupPanels()
+    {
+        for (int i = 0; i < (int) modulePanels.size(); ++i)
         {
-            categorySelector.addItem(panel->getName() + " " + moduleName, i++);
-            addAndMakeVisible(panel.get());
-            panel->setVisible(false);
+            categorySelector.addItem(typeLabel(i), i + 1);
+            addAndMakeVisible(modulePanels[(size_t) i].get());
+            modulePanels[(size_t) i]->setVisible(false);
         }
     }
 
@@ -218,14 +335,9 @@ private:
     {
         int index = categorySelector.getSelectedItemIndex(); 
         
-        if (index != -1 && index < modulePanels.size()) 
+        if (index != -1 && index < (int) modulePanels.size())
         {
-            auto panelName = modulePanels[index]->getName();
-            if (moduleName == "") {
-                categorySelector.setText(panelName, juce::dontSendNotification); 
-            } else {
-                categorySelector.setText(panelName + " " + moduleName, juce::dontSendNotification);
-            }
+            categorySelector.setText(typeLabel(index), juce::dontSendNotification);
         }
         else
         {
@@ -240,6 +352,9 @@ private:
             auto selection = categorySelector.getSelectedItemIndex();
             if (selection != -1)
             {
+                if (categoryAttachment != nullptr)
+                    categoryAttachment->setValueAsCompleteGesture((float) selection);
+
                 setScreen(selection);
                 this->resized();
             }
@@ -261,18 +376,25 @@ private:
                 panel->setVisible(false);
             }
             modulePanels[index]->setVisible(true);
+
+            colourFooter();
+
+            if (onScreenChanged != nullptr)
+                onScreenChanged();
         }
     }
 
     ScopeContext& scopeContext;
 
-    std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment> categoryAttachment = nullptr;
+    std::unique_ptr<juce::ParameterAttachment> categoryAttachment;
     std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> attachment = nullptr;
 
     juce::AudioParameterBool* hamburgerEnabled;
     
     // array of pointers of panel
     std::vector<std::unique_ptr<Panel>> modulePanels;
+    juce::StringArray typeNames;
+    std::string moduleName;
 
     juce::FlexBox header;
     juce::Label titleLabel;

@@ -7,7 +7,7 @@
 class SlewRatePanel : public Panel, private juce::AudioProcessorValueTreeState::Listener
 {
 public:
-    SlewRatePanel(AudioPluginAudioProcessor &p, SlotId slot = SlotId{ModuleId::main, 0}) : apvts(p), Panel(p, "SLEW"), 
+    SlewRatePanel(AudioPluginAudioProcessor &p, SlotId slot = SlotId{ModuleId::main, 0}) : apvts(p), Panel(p, "SLEW", Palette::colours[1], slot), 
         alpha(p, "ALPHA", slot, ParamIDs::alphaParam, ScopeContextType::IN_OUT),
         bias(p, "TONE", slot, ParamIDs::slewSpeed, ScopeContextType::IN_OUT),
         directionality(p, "BEND", slot, ParamIDs::directionality, ScopeContextType::IN_OUT),
@@ -20,10 +20,13 @@ public:
         addAndMakeVisible(type);
         addAndMakeVisible(slewIcon);
 
-        Palette::setKnobColoursOfComponent(&alpha, Palette::colours[1]);
-        Palette::setKnobColoursOfComponent(&bias, Palette::colours[1]);
-        Palette::setKnobColoursOfComponent(&type, Palette::colours[1]);
-        Palette::setKnobColoursOfComponent(&directionality, Palette::colours[1]);
+        const auto colour = Palette::colours[1];
+        Palette::setKnobColoursOfComponent(this, colour);
+
+        Palette::setKnobColoursOfComponent(&alpha, colour);
+        Palette::setKnobColoursOfComponent(&bias, colour);
+        Palette::setKnobColoursOfComponent(&type, colour);
+        Palette::setKnobColoursOfComponent(&directionality, colour);
 
         p.treeState.addParameterListener(ParamIDs::slewType.getParamID(), this);
 
@@ -36,7 +39,10 @@ public:
 
     void resized() override
     {
-        fourKnobLayout(alpha, slewIcon, bias, type, directionality);
+        if (usesCompactLayout())
+            compactLayout(alpha, slewIcon, {&bias, &type, &directionality});
+        else
+            fourKnobLayout(alpha, slewIcon, bias, type, directionality);
     }
 
     void parameterChanged(const juce::String& parameterID, float newValue) override
@@ -49,10 +55,12 @@ public:
     {
         const bool isDisabled = static_cast<int>(type.getValue()) != 0;
 
-        juce::MessageManager::callAsync([this, isDisabled]() mutable {
-            directionality.setAlpha(isDisabled ? 1.0f : 0.35f);
-            directionality.setEnabled(isDisabled);
-            directionality.repaint();
+        juce::MessageManager::callAsync([safe = juce::Component::SafePointer<SlewRatePanel>(this), isDisabled] {
+            if (safe == nullptr)
+                return;
+            safe->directionality.setAlpha(isDisabled ? 1.0f : 0.35f);
+            safe->directionality.setEnabled(isDisabled);
+            safe->directionality.repaint();
         });
     }
 

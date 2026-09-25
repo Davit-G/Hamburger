@@ -5,7 +5,7 @@
 class EQPanel : public Panel
 {
 public:
-    EQPanel(AudioPluginAudioProcessor &p) : Panel(p, "EMPHASIS"),
+    EQPanel(AudioPluginAudioProcessor &p) : Panel(p, "EMPHASIS", Palette::colours[2]),
                                             lowFreq(p, "FREQ", ParamIDs::emphasisLowFreq, ScopeContextType::SPECTRUM_EMPHASIS),
                                             highFreq(p, "FREQ", ParamIDs::emphasisHighFreq, ScopeContextType::SPECTRUM_EMPHASIS),
                                             lowGain(p, "GAIN", ParamIDs::emphasisLowGain, ScopeContextType::SPECTRUM_EMPHASIS),

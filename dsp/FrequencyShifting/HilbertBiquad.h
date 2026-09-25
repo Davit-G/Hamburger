@@ -52,28 +52,31 @@ public:
     }
 
     float processSample(float x, float phaseIncrement) {
-        float xcopy = x;
-
-        float firstPhaseResult = bql1.processSample(x);
-        firstPhaseResult = bql2.processSample(firstPhaseResult);
-        firstPhaseResult = bql3.processSample(firstPhaseResult);
-        firstPhaseResult = bql4.processSample(firstPhaseResult);
-
-        float secondPhaseResult = delay.processSample(xcopy);
-        secondPhaseResult = bqr1.processSample(secondPhaseResult);
-        secondPhaseResult = bqr2.processSample(secondPhaseResult);
-        secondPhaseResult = bqr3.processSample(secondPhaseResult);
-        secondPhaseResult = bqr4.processSample(secondPhaseResult);
-
-        float& real = firstPhaseResult;
-        float& imag = secondPhaseResult;
+        const auto [real, imag] = analytic(x);
 
         curPhase = fmodf(curPhase + phaseIncrement  * (44100.0 / sampleRate), 1.f); // with compensation for different sample rates, i know im supposed to change the biquads as well but eh
         float theta = 2 * juce::MathConstants<float>::pi * curPhase;
         return 2 * (real * std::cos(theta) + imag * std::sin(theta));
     }
 
+    float rotate(float x, float cosTheta, float sinTheta) {
+        const auto [real, imag] = analytic(x);
+        return real * cosTheta + imag * sinTheta;
+    }
+
 private:
+    std::pair<float, float> analytic(float x) {
+        float real = x, imag = delay.processSample(x);
+
+        for (auto* stage : { &bql1, &bql2, &bql3, &bql4 })
+            real = stage->processSample(real);
+
+        for (auto* stage : { &bqr1, &bqr2, &bqr3, &bqr4 })
+            imag = stage->processSample(imag);
+
+        return { real, imag };
+    }
+
     // todo for future: use polyphase designer for other sample rates
 
     CustomBiquadFilter bql1{0.161758, 0., -1, 0, -0.1617158};
@@ -88,7 +91,7 @@ private:
 
     OneSampleDelay delay;
 
-    float curPhase; // phase is incremented
+    float curPhase = 0.0f; // phase is incremented
 
     double sampleRate = 44100;
 };

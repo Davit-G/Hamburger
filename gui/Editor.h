@@ -14,6 +14,7 @@
 #include "UtilColumn.h"
 
 #include "PresetPanel.h"
+#include "PluginHeader.h"
 #include "UpdateChecker.h"
 
 #include "LookAndFeel/HamburgerLAF.h"
@@ -26,7 +27,8 @@ public:
                                              saturationColumn(p),
                                              utilColumn(p),
                                              infoPanel(p)
-                                             ,presetPanel(p.getPresetManager())
+                                             ,presetPanel(p.getPresetManager()),
+                                             header(p)
     {   
         setLookAndFeel(&hamburgerLAF);
         infoPanel.setLookAndFeel(&hamburgerLAF);
@@ -38,6 +40,16 @@ public:
         addAndMakeVisible(saturationColumn);
         addAndMakeVisible(utilColumn);
         addAndMakeVisible(infoPanel);
+        addAndMakeVisible(header);
+        header.onTabSelected = [this] (PluginHeader::Tab tab) { this->saturationColumn.setView (tab); };
+
+        saturationColumn.setModuleColours ([this] (ModuleId id) {
+            for (auto* module : { leftColumn.moduleFor (id), saturationColumn.moduleFor (id), utilColumn.moduleFor (id) })
+                if (module != nullptr)
+                    return module->getAccentColour();
+
+            return juce::Colours::white;
+        });
         addAndMakeVisible(presetPanel);
 
         if (audioProcessorRef.getAppProperties().getTooltipType() == AppProperties::TooltipType::window) {
@@ -45,6 +57,9 @@ public:
         }
 
         setOpaque(true);
+
+        // for 1 - 4 quick selection
+        setWantsKeyboardFocus(true);
 
         infoPanel.setVisible(false);
 
@@ -136,6 +151,18 @@ public:
         g.drawImage(image, getLocalBounds().toFloat(), juce::RectanglePlacement::fillDestination);
     }
 
+    // pressing 1-4 will switch positions on the main editor if we're in a multiband view or similar
+    bool keyPressed(const juce::KeyPress &key) override
+    {
+        const auto character = key.getTextCharacter();
+
+        if (key.getModifiers().isAnyModifierKeyDown() || character < '1' || character > '4')
+            return false;
+
+        saturationColumn.selectPosition((int) (character - '1'));
+        return true;
+    }
+
     void resized() override
     {
         auto bounds = getLocalBounds();
@@ -147,11 +174,9 @@ public:
 
         infoPanel.setBounds(bounds);
 
-        presetPanel.setBounds(bounds);
-        bounds.removeFromTop(45);
-
-        // this is where I would add a panel for switching between screens
+        header.setBounds(bounds.removeFromTop(PluginHeader::totalHeight));
         
+        presetPanel.setBounds(getLocalBounds().withTrimmedRight(PluginHeader::rightReserved));
 
         auto left = bounds.removeFromLeft(totalWidth);
         auto right = bounds.removeFromRight(totalWidth);
@@ -170,6 +195,7 @@ public:
         leftColumn.setVisible(show);
         saturationColumn.setVisible(show);
         utilColumn.setVisible(show);
+        header.setVisible(show);
         presetPanel.setVisible(show);
     }
 
@@ -185,6 +211,7 @@ private:
     std::unique_ptr<juce::TooltipWindow> tooltipWindow;
 
     PresetPanel presetPanel;
+    PluginHeader header;
     std::unique_ptr<UpdateChecker> updater;
 
     Info infoPanel;

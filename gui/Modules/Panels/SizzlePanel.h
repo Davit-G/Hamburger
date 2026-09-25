@@ -7,7 +7,7 @@
 class SizzlePanel : public Panel
 {
 public:
-    SizzlePanel(AudioPluginAudioProcessor &p, SlotId slot = SlotId{ModuleId::module1, 0}) : Panel(p, "SIZZLE"),
+    SizzlePanel(AudioPluginAudioProcessor &p, SlotId slot = SlotId{ModuleId::module1, 0}) : Panel(p, "SIZZLE", Palette::colours[1]),
     sizzleKnob(p, "SIZZLE", slot, ParamIDs::sizzleAmount, ScopeContextType::NOISE),
     sizzleFreq(p, "FREQ", slot, ParamIDs::sizzleFrequency, ScopeContextType::NOISE),
     sizzleQ(p, "Q", slot, ParamIDs::sizzleQ, ScopeContextType::NOISE) {
@@ -39,10 +39,11 @@ private:
 class SizzleOGPanel : public Panel
 {
 public:
-    SizzleOGPanel(AudioPluginAudioProcessor &p, SlotId slot = SlotId{ModuleId::module1, 0}) : Panel(p, "FIZZ"),
+    SizzleOGPanel(AudioPluginAudioProcessor &p, SlotId slot = SlotId{ModuleId::module1, 0}) : Panel(p, "FIZZ", Palette::colours[1]),
     sizzleKnob(p, "FIZZLE", slot, ParamIDs::fizzAmount, ScopeContextType::NOISE)
     {
         addAndMakeVisible(sizzleKnob);
+        Palette::setKnobColoursOfComponent(&sizzleKnob, Palette::colours[1]);
     }
 
     void resized() override

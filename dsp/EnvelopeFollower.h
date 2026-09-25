@@ -26,7 +26,7 @@ public:
 	{
 		// if (attackTime_mSec != attack_in_ms) { // saving performance
 			attackTime_mSec = attack_in_ms;
-			attackTime = exp(AUDIO_ENVELOPE_ANALOG_TC / (attack_in_ms * sampleRate * 0.001f));
+			attackTime = timeConstant(attack_in_ms);
 		// }
 	}
 
@@ -34,7 +34,7 @@ public:
 	{
 		// if (releaseTime_mSec != release_in_ms) { // saving performance
 			releaseTime_mSec = release_in_ms;
-			releaseTime = exp(AUDIO_ENVELOPE_ANALOG_TC / (release_in_ms * sampleRate * 0.001f));
+			releaseTime = timeConstant(release_in_ms);
 		// }
 	}
 	
@@ -46,6 +46,11 @@ public:
 	}
 
 private:
+	float timeConstant(float ms) const
+	{
+		return ms > 0.0f ? std::exp(AUDIO_ENVELOPE_ANALOG_TC / (ms * sampleRate * 0.001f)) : 0.0f;
+	}
+
 	float attackTime_mSec;
 	float attackTime;
 	float releaseTime_mSec;

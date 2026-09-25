@@ -73,15 +73,20 @@ public:
         g.fillRect(sliderBounds.removeFromLeft(valueToProportionOfLength(getValue()) * sliderBounds.getWidth()));
     }
 
+    float visibleHeight() {
+        return getLookAndFeel().getLabelFont(label).getHeight() + sliderHeight + labelGap;
+    }
+
     void resized() override {
         auto bounds = getLocalBounds().withTrimmedBottom(sliderHeight);
         bounds.reduce(10, 0);
-        bounds.setHeight(bounds.getHeight() - 2.0f);
+        bounds.setHeight(bounds.getHeight() - (int) labelGap);
         label.setBounds(bounds);
     }
     
 private:
     const float sliderHeight = 4.0f;
+    static constexpr float labelGap = 2.0f;
 
     RectSliderType sliderType = RectSliderType::CenterJustifified;
 };

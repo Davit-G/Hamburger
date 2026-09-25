@@ -39,6 +39,11 @@ public:
         settings->setLookAndFeel(nullptr);
     }
 
+    // the box for a module this column holds, nullptr for the rest. both emphasis halves are the one box
+    Module* moduleFor(ModuleId id) {
+        return id == ModuleId::preEmphasis || id == ModuleId::postEmphasis ? eq.get() : nullptr;
+    }
+
     void resized() override{
         auto bounds = getLocalBounds();
         auto height = bounds.getHeight();

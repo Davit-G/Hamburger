@@ -18,7 +18,8 @@ namespace EffectInfos
             ParamIDs::saturationAmount,
             ParamIDs::grillBias,
             ParamIDs::diode,
-            ParamIDs::fold
+            ParamIDs::fold,
+            ParamIDs::grillDcTiming
         }
     };
 
@@ -64,6 +65,17 @@ namespace EffectInfos
             ParamIDs::alphaParam,
             ParamIDs::slewSpeed,
             ParamIDs::directionality
+        }
+    };
+
+    static const ParamIDs::EffectInfo waveshape {
+        {
+            ParamIDs::waveshapeDrive,
+            ParamIDs::waveshapeX,
+            ParamIDs::waveshapeY,
+            ParamIDs::waveshapeSmooth,
+            ParamIDs::waveshapeBias,
+            ParamIDs::waveshapeAsym
         }
     };
 
@@ -173,15 +185,17 @@ namespace EffectInfos
 
     inline LayoutList layoutsFor (ModuleId id)
     {
-        static const ParamIDs::EffectInfo* const mainTypes[]     { &grill, &tube, &phase, &rubidium, &tape, &slew };
+        static const ParamIDs::EffectInfo* const mainTypes[]     { &grill, &tube, &phase, &rubidium, &tape, &slew, &waveshape };
         static const ParamIDs::EffectInfo* const dynamicsTypes[] { &stereoComp, &mbComp, &msComp, &typeA };
-        static const ParamIDs::EffectInfo* const noiseTypes[]    { &sizzle, &erosion, &redux, &gate, &sizzle }; // SIZZLE_OG reuses sizzle
+        static const ParamIDs::EffectInfo* const noiseTypes[]    { &sizzle, &erosion, &redux, &gate, &sizzle }; // FIZZ reuses sizzle
         static const ParamIDs::EffectInfo* const preDistTypes[]  { &disperser, &grunge };
         static const ParamIDs::EffectInfo* const postClipTypes[] { &postClip };
 
         switch (id)
         {
             case ModuleId::main:         return { mainTypes,     (int) std::size (mainTypes) };
+            case ModuleId::preDistortion:         return { mainTypes,     (int) std::size (mainTypes) };
+            case ModuleId::postDistortion:         return { mainTypes,     (int) std::size (mainTypes) };
             case ModuleId::dynamics:     return { dynamicsTypes, (int) std::size (dynamicsTypes) };
             case ModuleId::module1:      return { noiseTypes,    (int) std::size (noiseTypes) };
             case ModuleId::module2:      return { preDistTypes,  (int) std::size (preDistTypes) };

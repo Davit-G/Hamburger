@@ -37,17 +37,16 @@ public:
 
         switch (distoTypeIndex)
         {
-        case 0: // "STEREO"
+        case 0: // STEREO
             stereoComp.processBlock(block);
             break;
-        case 1: // "OTT"
+        case 1: // MB
             mbComp.processBlock(block);
             break;
-        case 2: // "MID-SIDE" 
+        case 2: // MS
             msComp.processBlock(block);
             break;
-        case 3:
-            // "TYPE A"
+        case 3: // TYPE A
             typeA.processBlock(block);
             break;
         case 4: // "DUAL-MONO"

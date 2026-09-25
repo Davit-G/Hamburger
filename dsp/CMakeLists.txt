@@ -14,4 +14,5 @@ target_sources("${BaseTargetName}"
         MacroParam.h
         EffectBase.h
         EffectInfos.h
+        MainRouting.h
         )

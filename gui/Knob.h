@@ -7,6 +7,8 @@
 class ParamKnob : public GenericKnob
 {
 public:
+    static constexpr int labelHeight = 18;
+
     // fixed parameter
     ParamKnob(AudioPluginAudioProcessor &p, juce::String knobName, const ParamIDs::ParameterInfo& attachmentInfo, ScopeContextType scopeContextType = ScopeContextType::LR_SCOPE) : 
     GenericKnob(p, knobName, attachmentInfo, scopeContextType) {
@@ -93,7 +95,7 @@ public:
         auto amt = valueToProportionOfLength(getValue());
 
         auto bounds = getLocalBounds();
-        label.setBounds(bounds.removeFromBottom(18));
+        label.setBounds(bounds.removeFromBottom(labelHeight));
 
         knobBounds = bounds;
     }

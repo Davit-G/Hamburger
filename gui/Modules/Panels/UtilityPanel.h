@@ -21,6 +21,10 @@ public:
         Palette::setKnobColoursOfComponent(&inGain, juce::Colours::whitesmoke);
         Palette::setKnobColoursOfComponent(&mix, juce::Colours::whitesmoke);
         Palette::setKnobColoursOfComponent(&outGain, juce::Colours::whitesmoke);
+
+        auto* link = p.treeState.getParameter(ParamIDs::gainLink.getParamID());
+        inGain.setGainLink(link, false);
+        outGain.setGainLink(link, true);
     }
 
     void resized() {

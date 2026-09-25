@@ -51,6 +51,15 @@ public:
         logo->setLookAndFeel(nullptr);
     }
 
+    // the box for a module this column holds, nullptr for the rest
+    Module* moduleFor(ModuleId id) {
+        switch (id) {
+            case ModuleId::dynamics: return compander.get();
+            case ModuleId::module2:  return preDistortion.get();
+            default:                 return nullptr;
+        }
+    }
+
     void paint(juce::Graphics &g) override
     {
         juce::ignoreUnused(g);

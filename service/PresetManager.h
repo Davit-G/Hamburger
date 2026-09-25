@@ -17,6 +17,14 @@ namespace Preset
 	static const juce::String extension{"burger"};
 	static const juce::String presetPathProperty{"presetPath"};
 
+	// the plugin version that saved a state, on every saved state: presets and projects both
+	static const juce::Identifier versionProperty{"version"};
+
+	/*	Loads a saved state, a preset or a project. Any parameter the state doesn't mention - one added since it was saved -
+		goes back to its default, where replaceState on its own would leave it as it was. Then it's stamped with this
+		version, so whatever is saved next says what wrote it. */
+	void loadState(juce::AudioProcessorValueTreeState &state, const juce::ValueTree &saved);
+
 	class PresetFile
 	{
 	public:

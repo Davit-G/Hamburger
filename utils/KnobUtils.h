@@ -16,6 +16,7 @@ enum class ParamUnits {
     category,
     compressionRatio,
     oversample,
+    degrees,
 
     numUnits
 };
@@ -26,6 +27,7 @@ struct ParamUnitFormat {
 };
 
 // keep in the same order as the enum
+// suffixes are utf-8
 inline constexpr ParamUnitFormat paramUnitFormats[] = {
     {"", 2},    // none
     {" Hz", 1}, // hz
@@ -36,6 +38,7 @@ inline constexpr ParamUnitFormat paramUnitFormats[] = {
     {"", 0},    // category
     {":1", 1},  // compressionRatio
     {"x", 0},   // oversample
+    {"\u00b0", 1}, // degrees
 };
 
 static_assert(std::size(paramUnitFormats) == static_cast<size_t>(ParamUnits::numUnits),
@@ -47,7 +50,7 @@ inline const ParamUnitFormat &getParamUnitFormat(ParamUnits unit) noexcept {
 }
 
 inline juce::String getParamUnitSuffix(ParamUnits unit) noexcept {
-    return getParamUnitFormat(unit).suffix;
+    return juce::String(juce::CharPointer_UTF8(getParamUnitFormat(unit).suffix));
 }
 
 
@@ -69,7 +72,15 @@ inline float displayToParamValue(float display, ParamUnits unit) noexcept {
 inline juce::String createParamString(float value, ParamUnits unit) noexcept {
     const auto &format = getParamUnitFormat(unit);
 
-    return juce::String(paramValueToDisplay(value, unit), format.decimalPlaces, false) + format.suffix;
+    return juce::String(paramValueToDisplay(value, unit), format.decimalPlaces, false) + getParamUnitSuffix(unit);
+}
+
+inline juce::String formatDecibels(float db) {
+    return juce::String(db > 0.0f ? "+" : "") + juce::String(db, 1) + " dB";
+}
+
+inline juce::String formatPercent(float normalised) {
+    return juce::String(juce::roundToInt(normalised * 100.0f)) + "%";
 }
 
 // removes unit from end of string that contains unit in it

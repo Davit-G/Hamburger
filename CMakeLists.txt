@@ -47,6 +47,19 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(JUCE)
 
+FetchContent_Declare(
+	pffft
+	GIT_REPOSITORY https://github.com/marton78/pffft.git
+	GIT_TAG e1dbebc9fbf74247d12f094accbbc470aaee8715
+	GIT_PROGRESS TRUE
+)
+
+set(PFFFT_USE_TYPE_DOUBLE OFF CACHE BOOL "" FORCE)
+set(INSTALL_PFFFT OFF CACHE BOOL "" FORCE)
+FetchContent_MakeAvailable(pffft)
+
+set_target_properties(PFFFT PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
+
 # set commit hash for use in general idk
 execute_process(
     COMMAND git log -1 --format=%h
@@ -107,6 +120,7 @@ target_sources("${BaseTargetName}"
 add_subdirectory(dsp)
 add_subdirectory(gui)
 add_subdirectory(service)
+add_subdirectory(waveshape_features)
 
 target_compile_features("${BaseTargetName}" PUBLIC cxx_std_17)
 
@@ -215,6 +229,7 @@ target_link_libraries("${BaseTargetName}"
         juce::juce_dsp
         juce::juce_audio_utils
         "${BaseTargetName}BinaryData"
+        PFFFT::PFFFT
     PUBLIC
         juce::juce_recommended_config_flags
         juce::juce_recommended_lto_flags

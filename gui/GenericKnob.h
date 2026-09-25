@@ -26,6 +26,8 @@ private:
          
         setPaintingIsUnclipped(true);
         setBufferedToImage(true);
+
+        setMouseCursor(juce::MouseCursor::PointingHandCursor);
         setTooltip(paramInfo.paramTooltip);
         setName(knobName);
 
@@ -76,13 +78,17 @@ private:
         startTimerHz(60);
     }
 
-
-    void mouseDoubleClick(const juce::MouseEvent & e) override {
-        // double click triggers label edit
-        label.showEditor();
+public:
+    void mouseDoubleClick(const juce::MouseEvent &) override {
+        resetToDefault();
     }
 
     void mouseDown(const juce::MouseEvent & e) override {
+        if (showsLock() && lockArea().contains(e.position)) {
+            setLinked(false);
+            return;
+        }
+
         // text edit
         if (e.mods.isPopupMenu()) {
             showResetMenu();
@@ -148,7 +154,39 @@ private:
                 safeThis->resetToDefault();
         });
 
+        menu.addItem("Enter Value", [safeThis] {
+            if (safeThis != nullptr)
+                safeThis->label.showEditor();
+        });
+
+        if (gainLink != nullptr)
+            menu.addItem("Link IN and OUT", true, gainLink->get(), [safeThis] {
+                if (safeThis != nullptr)
+                    safeThis->setLinked(! safeThis->gainLink->get());
+            });
+
         menu.showMenuAsync(juce::PopupMenu::Options().withTargetComponent(this).withMousePosition());
+    }
+
+    //  Pairs this with the other side of its gain stage through their link parameter
+    void setGainLink(juce::RangedAudioParameter* link, bool isOutputSide)
+    {
+        gainLink = dynamic_cast<juce::AudioParameterBool*>(link);
+        jassert(gainLink != nullptr);
+
+        linkOutputSide = isOutputSide;
+
+        if (gainLink != nullptr)
+            linkAttachment = std::make_unique<juce::ParameterAttachment>(*gainLink, [this](float) {
+                resized();
+                repaint();
+            }, nullptr);
+    }
+
+    void paintOverChildren(juce::Graphics &g) override
+    {
+        if (showsLock())
+            g.drawImage(lockImage, lockArea(), juce::RectanglePlacement::centred);
     }
 
     void timerCallback() override
@@ -190,8 +228,30 @@ protected:
 
     const ParamIDs::ParameterInfo& paramInfo;
 
+    bool showsLock() const { return gainLink != nullptr && linkOutputSide && gainLink->get(); }
+
+    // where the lock sits on a linked output, the top right corner unless the control says otherwise
+    virtual juce::Rectangle<float> lockArea() const
+    {
+        return getLocalBounds().toFloat().removeFromTop(lockSize).removeFromRight(lockSize);
+    }
+
+    static constexpr float lockSize = 12.0f;
+
 
     bool isDragging = false;
+
+    juce::AudioParameterBool* gainLink = nullptr;
+    bool linkOutputSide = false;
+    std::unique_ptr<juce::ParameterAttachment> linkAttachment;
+    juce::Image lockImage = juce::ImageCache::getFromMemory(BinaryData::lockon_png, BinaryData::lockon_pngSize);
+
+    void setLinked(bool shouldLink)
+    {
+        gainLink->beginChangeGesture();
+        *gainLink = shouldLink;
+        gainLink->endChangeGesture();
+    }
 
     float dragAmount = 0.0f;
     static constexpr float dragDecayRate = 0.88f; 

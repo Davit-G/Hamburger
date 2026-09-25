@@ -9,7 +9,7 @@
 class PhaseDistPanel : public Panel
 {
 public:
-    PhaseDistPanel(AudioPluginAudioProcessor &p, SlotId slot = SlotId{ModuleId::main, 0}) : Panel(p, "PHASE", Palette::colours[3]), 
+    PhaseDistPanel(AudioPluginAudioProcessor &p, SlotId slot = SlotId{ModuleId::main, 0}) : Panel(p, "PHASE", Palette::colours[3], slot), 
         satKnob(p, "SATURATION", slot, ParamIDs::phaseAmount, ScopeContextType::IN_OUT),
         toneKnob(p, "TONE", slot, ParamIDs::phaseDistTone, ScopeContextType::IN_OUT),
         normKnob(p, "STEREO", slot, ParamIDs::phaseDistStereo, ScopeContextType::IN_OUT),
@@ -23,17 +23,23 @@ public:
         addAndMakeVisible(shiftKnob);
         addAndMakeVisible(rectKnob);
         addAndMakeVisible(wave);
+        
+        const auto colour = Palette::colours[3];
+        Palette::setKnobColoursOfComponent(this, colour);
 
-        Palette::setKnobColoursOfComponent(&satKnob, Palette::colours[3]);
-        Palette::setKnobColoursOfComponent(&toneKnob, Palette::colours[3]);
-        Palette::setKnobColoursOfComponent(&normKnob, Palette::colours[3]);
-        Palette::setKnobColoursOfComponent(&rectKnob, Palette::colours[3]);
-        Palette::setKnobColoursOfComponent(&shiftKnob, Palette::colours[3]);
+        Palette::setKnobColoursOfComponent(&satKnob, colour);
+        Palette::setKnobColoursOfComponent(&toneKnob, colour);
+        Palette::setKnobColoursOfComponent(&normKnob, colour);
+        Palette::setKnobColoursOfComponent(&rectKnob, colour);
+        Palette::setKnobColoursOfComponent(&shiftKnob, colour);
     }
 
     void resized() override
     {
-        fiveKnobLayout(satKnob, wave, rectKnob, normKnob, shiftKnob, toneKnob);
+        if (usesCompactLayout())
+            compactLayout(satKnob, wave, {&rectKnob, &normKnob, &shiftKnob, &toneKnob});
+        else
+            fiveKnobLayout(satKnob, wave, rectKnob, normKnob, shiftKnob, toneKnob);
     }
 
 private:

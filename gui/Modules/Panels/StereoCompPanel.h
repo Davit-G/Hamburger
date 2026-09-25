@@ -7,7 +7,7 @@
 class StereoCompPanel : public Panel
 {
 public:
-    StereoCompPanel(AudioPluginAudioProcessor &p, SlotId slot = SlotId{ModuleId::dynamics, 0}) : Panel(p, ""),
+    StereoCompPanel(AudioPluginAudioProcessor &p, SlotId slot = SlotId{ModuleId::dynamics, 0}) : Panel(p, "STEREO", Palette::colours[3]),
                                                    threshold(p, "THRES", slot, ParamIDs::stereoCompThreshold, ScopeContextType::COMPRESSION),
                                                    ratio(p, "RATIO", slot, ParamIDs::compRatio, ScopeContextType::COMPRESSION),
                                                 //    tilt(p, "S-LNK", "compStereoLink"),

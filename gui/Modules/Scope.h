@@ -11,6 +11,7 @@
 #include "AudioBufferQueue.h"
 #include "ScopeDataCollector.h"
 #include "ScopeConstants.h"
+#include "SpectrumAnalyser.h"
 
 #include "../LookAndFeel/HamburgerLAF.h"
 #include "../../utils/Params.h"
@@ -20,6 +21,7 @@
 enum ScopeContextType {
     LR_SCOPE, // by default
     IN_OUT, // input against output
+    WAVESHAPE, // input against output, over the curve the waveshape distortion is set to
     // SPECTRUM, // once button press happens?
     SPECTRUM_EMPHASIS, // draw curves for emphasis eq
     CLIPPER, // clipping curve + waveform
@@ -37,6 +39,14 @@ public:
     ~ScopeContext() {}
 
     ScopeContextType getType() { return type; }
+
+    void setFocus(SlotId slot) { focus.store(((int) slot.module << 8) | (slot.sub & 0xff)); }
+
+    SlotId getFocus() const
+    {
+        const auto packed = focus.load();
+        return { (ModuleId) (packed >> 8), packed & 0xff };
+    }
 
     // locks the currently displayed scope and blocks decay
     void setLocked(bool shouldLock)
@@ -101,9 +111,14 @@ private:
     double timeTillReset = 0.0; // when the user presses a knob it stays decayed for some amt of time
     static constexpr double waitTime = 2.0; // two seconds until the default view is returned
 
+    std::atomic<int> focus { (int) ModuleId::main << 8 };
+
     ScopeContextType type = ScopeContextType::LR_SCOPE; // the current type
     static constexpr ScopeContextType defaultType = ScopeContextType::LR_SCOPE; // the default to set after time has elapsed
 };
+
+// the waveshape curve the scope draws, kept between frames so its table is only rebuilt when the curve changes
+struct WaveshapeCurveCache;
 
 template <typename SampleType>
 class Scope : public juce::Component,
@@ -151,19 +166,9 @@ private:
     std::vector<SampleType> sampleDataPreDistortion;
     std::vector<SampleType> sampleDataPostDistortion;
 
-    AudioBufferQueue<SampleType> bufferedFFTInput;
-    std::vector<SampleType> fftHistory;
-    std::array<SampleType, scope_constants::fftBins> averagedSpectrum{};
-    int fftHistoryWritePosition = 0;
+    SpectrumAnalyser spectrum;
 
     std::array<SampleType, 2> originLineData = {SampleType(1), SampleType(1)};
-
-    juce::dsp::FFT fft{static_cast<int>(std::log2(scope_constants::fftSize))};
-    using WindowFun = juce::dsp::WindowingFunction<SampleType>;
-    WindowFun windowFun{scope_constants::fftSize, WindowFun::hann};
-
-    std::array<SampleType, scope_constants::fftInputSize> spectrumData{};
-    std::array<SampleType, scope_constants::fftBins> spectrumTransformed{};
 
     juce::Image inOutFB;
     juce::Colour inOutBackground {juce::Colours::black};
@@ -221,6 +226,10 @@ private:
     void drawTabbedLabel(juce::Graphics &g, juce::Rectangle<float> cell, const juce::String &text,
                          juce::Justification justification, bool hangingFromTop);
     void drawDistortionAmount(juce::Graphics &g, juce::Rectangle<SampleType> scopeRect);
+    
+    bool focusIsWaveshape() const;
+    void drawWaveshapeCurve(juce::Graphics &g, juce::Rectangle<SampleType> scopeRect);
+    std::shared_ptr<WaveshapeCurveCache> waveshapeCurve;
 
     juce::StringArray getDistortionHeaderLabels() const;
     juce::String getDistortionAmountLabel() const;

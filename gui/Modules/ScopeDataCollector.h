@@ -37,6 +37,11 @@ public:
     AudioBufferQueue<SampleType> audioBufferQueuePreDistortion;
     AudioBufferQueue<SampleType> audioBufferQueuePostDistortion;
 
+    AudioBufferQueue<SampleType> audioBufferQueueSpectrum;
+    AudioBufferQueue<SampleType> audioBufferQueueInputSpectrum;
+
+    void captureInput(const SampleType *dataL, size_t numSamples) { audioBufferQueueInputSpectrum.push(dataL, numSamples); }
+
     // two clones cause the frame rate is not the same between them and this updates on gui only (idk whyyy)
     LevelMeter levelMeter {0.1f} ;  // used for actual visualisation on scope screen
     LevelMeter clipIndicator; // used for post clipping dot

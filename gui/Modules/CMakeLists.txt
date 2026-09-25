@@ -7,4 +7,7 @@ target_sources("${BaseTargetName}"
         AudioBufferQueue.cpp
         AudioBufferQueue.h
         ClipIndicator.h
+        MultibandView.h
+        SlotLevels.h
+        SpectrumAnalyser.h
         )

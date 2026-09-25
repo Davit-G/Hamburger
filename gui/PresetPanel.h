@@ -348,6 +348,11 @@ public:
 		setupButton(openPresetFolderButton, "Open Folder");
 
 		closeButton.setVisible(false);
+
+		// these move to the dedicated preset view later
+		saveButton.setVisible(false);
+		deleteButton.setVisible(false);
+		openPresetFolderButton.setVisible(false);
 		closeButton.onClick = [this]
 		{
 			showPresetsList = false;
@@ -416,17 +421,13 @@ public:
 		auto height = 45;
 		auto bounds = getLocalBounds().removeFromTop(height).reduced(4).withTrimmedLeft(4).withTrimmedRight(4);
 
-		saveButton.setBounds(bounds.removeFromLeft(height).reduced(4));
-		deleteButton.setBounds(bounds.removeFromLeft(height).reduced(4));
-		openPresetFolderButton.setBounds(bounds.removeFromLeft(height).reduced(4));
-
-		nextPresetButton.setBounds(bounds.removeFromRight(height).reduced(4));
-		previousPresetButton.setBounds(bounds.removeFromRight(height).reduced(4));
+		nextPresetButton.setBounds(bounds.removeFromRight(switcherWidth).reduced(4));
+		previousPresetButton.setBounds(bounds.removeFromRight(switcherWidth).reduced(4));
 
 		// if (showPresetsList)
 		closeButton.setBounds(bounds.removeFromRight(height).reduced(8));
 
-		currentPresetLabel.setBounds(bounds.reduced(4));
+		currentPresetLabel.setBounds(bounds.removeFromRight(presetNameWidth).reduced(4));
 
 		auto presetListBounds = getLocalBounds().withTrimmedTop(height);
 
@@ -446,14 +447,6 @@ public:
 	}
 
 private:
-	void paint(juce::Graphics &g) override
-	{
-		juce::Path p;
-		p.addRoundedRectangle(getLocalBounds().removeFromTop(45).reduced(4).toFloat(), 15.0f);
-		g.setColour(juce::Colour::fromRGB(0, 0, 0));
-		g.fillPath(p);
-	}
-
 	void buttonClicked(juce::Button *button) override
 	{
 		if (button == &saveButton)
@@ -555,6 +548,9 @@ private:
 	Preset::PresetManager &
 		presetManager;
 	juce::DrawableButton saveButton, deleteButton, previousPresetButton, nextPresetButton, closeButton, openPresetFolderButton;
+
+	static constexpr int switcherWidth = 24;
+	static constexpr int presetNameWidth = 170;
 
 	bool showPresetsList = false;
 
