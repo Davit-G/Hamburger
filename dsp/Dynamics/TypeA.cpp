@@ -13,7 +13,7 @@ void TypeAProcessor::prepareToPlay(double sampleRate, int samplesPerBlock, int n
     tiltParam.prepare(spec);
     speedParam.prepare(spec);
     thresholdParam.prepare(spec);
-    outParam.prepare(spec);
+    ratioParam.prepare(spec);
 
     // Initialize crossover filters with 12 dB/octave (2nd order)
     *lowPassFilter.state = *juce::dsp::IIR::Coefficients<float>::makeLowPass(sampleRate, lowCrossover);
@@ -137,9 +137,7 @@ void TypeAProcessor::updateCompressorParameters()
     const float speed = speedParam.getRaw(0); // ms
     const float tilt = tiltParam.getRaw(0);
 
-    const float outValue = outParam.getRaw(0);
-
-    const float ratio = baseRatio;
+    const float ratio = ratioParam.getRaw(0);
 
     const float atk = attack * (speed * 2.0f);
     const float rel = release * (speed * 1.0f);
@@ -165,7 +163,7 @@ void TypeAProcessor::updateCompressorParameters()
     extraHighCompressor.setAttack(atk);
     extraHighCompressor.setRelease(rel);
 
-    const float makeupGain = calculateMakeupGain(ratio, threshold) + outValue;
+    const float makeupGain = calculateMakeupGain(ratio, threshold) + trimDb;
 
     // Set makeup gains based on compression ratio
     lowMakeupGain.setGainDecibels(makeupGain - tilt);

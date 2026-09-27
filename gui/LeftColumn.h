@@ -8,8 +8,11 @@
 #include "Modules/Panels/EmptyPanel.h"
 #include "Modules/Panels/AllPassPanel.h"
 #include "Modules/Panels/GrungePanel.h"
+#include "Modules/Panels/SubGenPanel.h"
 #include "Modules/Panels/LogoPanel.h"
 #include "Modules/Panels/TypeAPanel.h"
+#include "Modules/Panels/TransientPanel.h"
+#include "Modules/Panels/OptoPanel.h"
 
 class LeftColumn : public juce::Component
 {
@@ -24,7 +27,14 @@ public:
         companderPanels.push_back(std::make_unique<MBCompPanel>(p));
         companderPanels.push_back(std::make_unique<MSCompPanel>(p));
         companderPanels.push_back(std::make_unique<TypeAPanel>(p));
+        companderPanels.push_back(std::make_unique<TransientPanel>(p, false));
+        companderPanels.push_back(std::make_unique<TransientPanel>(p, true));
+        companderPanels.push_back(std::make_unique<OptoCompPanel>(p, false));
+        companderPanels.push_back(std::make_unique<OptoCompPanel>(p, true));
         compander = std::make_unique<Module>(p, "COMP", SlotId{ModuleId::dynamics, 0}.enabled().getParamID().toStdString(), SlotId{ModuleId::dynamics, 0}.type().getParamID().toStdString(), std::move(companderPanels));
+        auto companderLevels = std::make_unique<SlotLevels>(p, SlotId{ModuleId::dynamics, 0}, ScopeContextType::COMPRESSION);
+        companderLevels->hideNames();
+        compander->setFooter(std::move(companderLevels), SlotLevels::height);
         addAndMakeVisible(compander.get());
         
 
@@ -32,7 +42,12 @@ public:
         // ORDERING IS VERY IMPORTANT
         preDistortionPanels.push_back(std::make_unique<AllPassPanel>(p));
         preDistortionPanels.push_back(std::make_unique<GrungePanel>(p));
+        preDistortionPanels.push_back(std::make_unique<SubGenPanel>(p));
+        preDistortionPanels.push_back(std::make_unique<HilbertStackPanel>(p));
         preDistortion = std::make_unique<Module>(p, "", SlotId{ModuleId::module2, 0}.enabled().getParamID().toStdString(), SlotId{ModuleId::module2, 0}.type().getParamID().toStdString(), std::move(preDistortionPanels));
+        auto preDistortionLevels = std::make_unique<SlotLevels>(p, SlotId{ModuleId::module2, 0}, ScopeContextType::LR_SCOPE);
+        preDistortionLevels->hideNames();
+        preDistortion->setFooter(std::move(preDistortionLevels), SlotLevels::height);
         addAndMakeVisible(preDistortion.get());
 
         std::vector<std::unique_ptr<Panel>> logoPanels;
@@ -63,9 +78,20 @@ public:
         juce::ignoreUnused(g);
     }
 
+    // settings keeps the logo, and the tooltips it shows, on its own
+    void setLogoOnly(bool shouldShowLogoOnly) {
+        logoOnly = shouldShowLogoOnly;
+        compander->setVisible(! logoOnly);
+        preDistortion->setVisible(! logoOnly);
+        resized();
+    }
+
     void resized() override{
         auto bounds = getLocalBounds();
         auto height = bounds.getHeight();
+
+        if (logoOnly)
+            return logo->setBounds(bounds);
 
         logo->setBounds(bounds.removeFromTop(height / 4));
         preDistortion->setBounds(bounds.removeFromBottom(height / 4));
@@ -79,6 +105,8 @@ private:
     std::unique_ptr<Module> preDistortion = nullptr;
     std::unique_ptr<Module> logo = nullptr;
     std::unique_ptr<Module> typeA = nullptr;
+
+    bool logoOnly = false;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(LeftColumn)
 };

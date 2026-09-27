@@ -16,8 +16,8 @@ class RoutingPanel : public Panel
 public:
     explicit RoutingPanel (AudioPluginAudioProcessor& p)
         : Panel (p, "ROUTING"),
-          stackGain (p, "GAIN PER STAGE", ParamIDs::stackGain),
-          stackMix (p, "STACK MIX", ParamIDs::stackMix),
+          stackGain (p, "PER-STAGE GAIN", ParamIDs::stackGain),
+          stackMix (p, "PER-STAGE MIX", ParamIDs::stackMix),
           stackFilterFreq (p, "FREQ", ParamIDs::stackFilterFreq),
           stackFilterQ (p, "Q", ParamIDs::stackFilterQ),
           stackRotation (p, "ROTATION", ParamIDs::stackRotation),

@@ -2,6 +2,8 @@
 
 #include "SVFAllPassChain.h"
 #include "Grunge.h"
+#include "SubGen.h"
+#include "HilbertStack.h"
 #include "../../utils/Params.h"
 
 #include "../EffectBase.h"
@@ -15,6 +17,8 @@ public:
 
         svfAllPass = std::make_unique<SVFAllPassChain>(state);
         grungeDSP = std::make_unique<Grunge>(state);
+        subGen = std::make_unique<SubGen>(state);
+        hilbertStack = std::make_unique<HilbertStack>(state);
     }
     ~PreDistortion() {}
 
@@ -37,12 +41,24 @@ public:
                 grungeDSP->processBlock(block);
                 break;
             }
+            case 2:
+            {
+                subGen->processBlock(block);
+                break;
+            }
+            case 3:
+            {
+                hilbertStack->processBlock(block);
+                break;
+            }
         }
     }
 
     void prepare(juce::dsp::ProcessSpec& spec) override {
         svfAllPass->prepare(spec);
         grungeDSP->prepare(spec);
+        subGen->prepare(spec);
+        hilbertStack->prepare(spec);
     }
 
     void setSampleRate(float newSampleRate) { 
@@ -56,6 +72,8 @@ private:
     
     std::unique_ptr<SVFAllPassChain> svfAllPass = nullptr;
     std::unique_ptr<Grunge> grungeDSP = nullptr;
+    std::unique_ptr<SubGen> subGen = nullptr;
+    std::unique_ptr<HilbertStack> hilbertStack = nullptr;
 
     juce::AudioParameterBool* preDistortionEnabled = nullptr;
 

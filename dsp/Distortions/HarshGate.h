@@ -5,61 +5,50 @@
 #include "../EffectBase.h"
 #include "../EffectInfos.h"
 
-//==============================================================================
-/*
- */
 class HarshGate : public MacroEffect
 {
 public:
     HarshGate(juce::AudioProcessorValueTreeState& treeState)
         : MacroEffect(treeState, SlotId{ModuleId::module1, 0}),
           amount(getParam(ParamIDs::gateAmt)),
-          mix(getParam(ParamIDs::gateMix)) {}
+          smooth(getParam(ParamIDs::gateSmooth)) {}
 
     void processBlock(juce::dsp::AudioBlock<float>& block) override {
         amount.update();
-        mix.update();
+        smooth.update();
 
-        auto rightDryData = block.getChannelPointer(1);
-        auto leftDryData = block.getChannelPointer(0);
-
-        for (int sample = 0; sample < block.getNumSamples(); sample++) {
+        for (size_t sample = 0; sample < block.getNumSamples(); sample++) {
             float amt = amount.getNextValue(0) * 0.8f;
             amt = amt * amt * amt * 3.0f;
 
-            float l = leftDryData[sample];
-            float r = rightDryData[sample];
-
-            auto lr = l + r;
+            const float l = block.getSample(0, (int) sample);
+            const float r = block.getSample(1, (int) sample);
+            const float lr = l + r;
             
-            
-            float blend = mix.getNextValue(0);
+            const float halfKnee = amt * smooth.getNextValue(0) * 0.01f;
+            const float lower = amt - halfKnee, upper = amt + halfKnee;
+            const float level = std::abs(lr);
 
-            if (abs(lr) < amt) {
-                block.setSample(0, sample, (0.0f) * blend + l * (1 - blend));
-                block.setSample(1, sample, (0.0f) * blend + r * (1 - blend));
-                continue;
+            float open = level >= upper ? 1.0f : 0.0f;
+
+            if (level > lower && level < upper) {
+                const float through = (level - lower) / (upper - lower);
+                open = through * through * (3.0f - 2.0f * through);
             }
 
-            if (lr > -amt) {
-                block.setSample(0, sample, (l + amt) * blend + l * (1 - blend));
-                block.setSample(1, sample, (r + amt) * blend + r * (1 - blend));
-            } else if (lr < amt) {
-                block.setSample(0, sample, (l - amt) * blend + l * (1 - blend));
-                block.setSample(1, sample, (r - amt) * blend + r * (1 - blend));
-            }
-
-
+            const float push = lr >= 0.0f ? amt : -amt;
+            block.setSample(0, (int) sample, (l + push) * open);
+            block.setSample(1, (int) sample, (r + push) * open);
         }
     }
-    
-    void prepare(juce::dsp::ProcessSpec& spec) {
+
+    void prepare(juce::dsp::ProcessSpec& spec) override {
         amount.prepare(spec);
-        mix.prepare(spec);
+        smooth.prepare(spec);
     }
 private:
     SmoothParam amount;
-    SmoothParam mix;
-    
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(HarshGate);
+    SmoothParam smooth;
+
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(HarshGate)
 };

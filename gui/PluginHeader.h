@@ -11,13 +11,10 @@ class PluginHeader : public juce::Component,
                      public juce::TooltipClient
 {
 public:
-    enum class Tab { pre, main, post, presets, settings };
+    enum class Tab { start, advanced, pre, main, post, mod, presets, settings };
 
     static constexpr int pillInset = 4;
-    static constexpr int totalHeight = 45;
-
-    // what the editor has to keep clear on the right so the gear isn't sat on
-    static constexpr int rightReserved = 14 + 16 * 2 + 12;
+    static constexpr int totalHeight = 41;
 
     std::function<void (Tab)> onTabSelected;
 
@@ -44,53 +41,69 @@ public:
 
     Tab getSelectedTab() const noexcept { return selectedTab; }
 
+    // what the editor keeps clear on the right, so the preset panel stops short of MOD and the gear
+    int getRightReserved() const { return getWidth() - cells[firstRightCell()].getX(); }
+
+    // START | ADVANCED while on the start page, START | PRE | MAIN | POST otherwise, with MOD | gear on the right
     void resized() override
     {
+        tabs = simple ? std::vector<Tab> { Tab::start, Tab::advanced, Tab::mod, Tab::settings }
+                      : std::vector<Tab> { Tab::start, Tab::pre, Tab::main, Tab::post, Tab::mod, Tab::settings };
+        cells.resize (tabs.size());
+
         auto bar = tabRow();
 
         auto x = bar.getX() + edgePad;
 
-        for (int i = 0; i < settingsCell; ++i)
+        for (size_t i = 0; i < firstRightCell(); ++i)
         {
-            const auto width = cellWidthFor (i);
+            const auto width = cellWidthFor (tabs[i]);
 
-            cells[(size_t) i] = { x, bar.getY(), width, bar.getHeight() };
+            cells[i] = { x, bar.getY(), width, bar.getHeight() };
             x += width;
         }
 
-        const auto gear = cellWidthFor (settingsCell);
-        cells[(size_t) settingsCell] = { bar.getRight() - gear, bar.getY(), gear, bar.getHeight() };
+        auto right = bar.getRight();
+
+        for (auto i = tabs.size(); i-- > firstRightCell();)
+        {
+            const auto width = cellWidthFor (tabs[i]);
+
+            right -= width;
+            cells[i] = { right, bar.getY(), width, bar.getHeight() };
+        }
     }
 
     void paint (juce::Graphics& g) override
     {
         g.setColour (theme().box);
-        g.fillRoundedRectangle (pill().toFloat(), 15.0f);
+        g.fillRect (bar());
 
         auto bar = tabRow();
 
         g.setFont (font.withHeight (fontHeight));
 
-        for (int i = 0; i < numCells; ++i)
+        for (size_t i = 0; i < tabs.size(); ++i)
         {
-            const auto cell = cells[(size_t) i];
-            const auto active = tabFor (i) == selectedTab;
+            const auto cell = cells[i];
+            const auto tab = tabs[i];
 
-            g.setColour (active ? theme().textHeader : (i == hoveredCell ? theme().textHeaderHover : theme().textHeaderIdle));
+            g.setColour (tab == selectedTab ? theme().textHeader : ((int) i == hoveredCell ? theme().textHeaderHover : theme().textHeaderIdle));
 
-            if (isSettingsCell (i))
+            if (tab == Tab::settings)
                 g.fillPath (settingsIcon, juce::RectanglePlacement (juce::RectanglePlacement::centred)
                                               .getTransformToFit ({ 0.0f, 0.0f, 24.0f, 24.0f }, cell.toFloat().withSizeKeepingCentre (iconSize, iconSize)));
-            else if (showsMode (i))
+            else if (showsMode (tab))
                 drawMode (g, cell);
             else
-                g.drawText (labels[(size_t) i], cell, juce::Justification::centred, false);
+                g.drawText (labelFor (tab), cell, juce::Justification::centred, false);
 
-            if (i < postCell)
+            // between the tabs on the left, and before each of the two on the right
+            if (i >= firstRightCell())
+                drawDivider (g, bar, (float) cell.getX());
+            else if (i + 1 < firstRightCell())
                 drawDivider (g, bar, (float) cell.getRight());
         }
-
-        drawDivider (g, bar, (float) cells[(size_t) settingsCell].getX());
     }
 
     void drawDivider (juce::Graphics& g, juce::Rectangle<int> bar, float x) const
@@ -106,13 +119,28 @@ public:
         if (i < 0)
             return;
 
-        if (showsMode (i))
+        const auto tab = tabs[(size_t) i];
+
+        if (showsMode (tab))
         {
             showModeMenu();
             return;
         }
 
-        setSelectedTab (tabFor (i));
+        selectTab (tab);
+    }
+
+    // as if it were clicked, for opening on a page
+    void selectTab (Tab tab)
+    {
+        // START swaps in the simpler header, ADVANCED brings back the full one and the main distortion with it
+        if (tab == Tab::start || tab == Tab::advanced)
+        {
+            simple = tab == Tab::start;
+            resized();
+        }
+
+        setSelectedTab (tab == Tab::advanced ? Tab::main : tab);
 
         if (onTabSelected != nullptr)
             onTabSelected (selectedTab);
@@ -122,20 +150,21 @@ public:
     void mouseExit (const juce::MouseEvent&) override    { setHovered (-1); }
 
 private:
-    juce::Rectangle<int> pill() const { return getLocalBounds().reduced (pillInset); }
+    // flush with the top and sides of the window, with the gap under it that the boxes below would otherwise leave
+    juce::Rectangle<int> bar() const { return getLocalBounds().withTrimmedBottom (pillInset); }
 
-    juce::Rectangle<int> tabRow() const { return pill(); }
+    juce::Rectangle<int> tabRow() const { return bar().reduced (pillInset, 0); }
 
-    int cellWidthFor (int i) const
+    int cellWidthFor (Tab tab) const
     {
-        if (isSettingsCell (i))
+        if (tab == Tab::settings)
             return iconSize + cellPad * 2;
 
         const auto f = font.withHeight (fontHeight);
-        auto width = juce::GlyphArrangement::getStringWidth (f, labels[i]);
+        auto width = juce::GlyphArrangement::getStringWidth (f, labelFor (tab));
 
         // widest it can ever hold, so selecting it or changing mode never reflows the bar
-        if (i == mainCell)
+        if (tab == Tab::main)
             for (const auto& mode : modes)
                 width = juce::jmax (width, juce::GlyphArrangement::getStringWidth (f, mode)
                                                + (float) chevronSpace);
@@ -158,30 +187,30 @@ private:
         return juce::Drawable::createFromSVG (*parsed)->getOutlineAsPath();
     }
 
-    // PRE | MAIN | POST packed left, the gear alone on the right
-    static constexpr int numCells = 4;
-    static constexpr int mainCell = 1;
-    static constexpr int postCell = 2;
-    static constexpr int settingsCell = 3;
+    // MOD and the gear, the last two, sit on the right with the preset panel between them and the rest
+    size_t firstRightCell() const noexcept { return tabs.size() - 2; }
 
-    bool showsMode (int i) const noexcept       { return i == mainCell && selectedTab == Tab::main; }
-    static bool isSettingsCell (int i) noexcept { return i == settingsCell; }
+    bool showsMode (Tab tab) const noexcept { return tab == Tab::main && selectedTab == Tab::main; }
 
-    static Tab tabFor (int i) noexcept
+    static juce::String labelFor (Tab tab)
     {
-        switch (i)
+        switch (tab)
         {
-            case 0:  return Tab::pre;
-            case 1:  return Tab::main;
-            case 2:  return Tab::post;
-            default: return Tab::settings;
+            case Tab::start:    return "START";
+            case Tab::advanced: return "ADVANCED";
+            case Tab::pre:      return "PRE";
+            case Tab::main:     return "MAIN";
+            case Tab::post:     return "POST";
+            case Tab::mod:      return "MOD";
+            case Tab::presets:
+            case Tab::settings: break;
         }
+
+        return {};
     }
 
     // the parameter's own list: the index picked here is the index stored, so it can't be a copy
     const juce::StringArray& modes = ParamIDs::routingTypes.categories;
-
-    juce::StringArray labels { "PRE", "MAIN", "POST", "" }; // settings is an icon
 
     int currentMode() const { return routing != nullptr ? routing->getIndex() : 0; }
 
@@ -229,6 +258,8 @@ private:
                     safeThis->routingAttachment->setValueAsCompleteGesture ((float) i);
             });
 
+        const auto mainCell = (size_t) std::distance (tabs.begin(), std::find (tabs.begin(), tabs.end(), Tab::main));
+
         menu.showMenuAsync (juce::PopupMenu::Options()
                                 .withTargetComponent (this)
                                 .withTargetScreenArea (localAreaToGlobal (cells[mainCell])));
@@ -242,16 +273,24 @@ private:
         if (i < 0)
             return {};
 
-        switch (tabFor (i))
+        const auto tab = tabs[(size_t) i];
+
+        switch (tab)
         {
+            case Tab::start:
+                return "A simpler view with just the essentials.";
+            case Tab::advanced:
+                return "Every control Hamburger has.";
             case Tab::pre:
                 return "Distortion before the main one.";
             case Tab::main:
-                return showsMode (i)
+                return showsMode (tab)
                     ? "The main distortion: up to four at once. Click to change how they're arranged."
                     : "The main distortion";
             case Tab::post:
                 return "Distortion after the main one.";
+            case Tab::mod:
+                return "Where modulation gets routed to the controls.";
             case Tab::settings:
                 return "Click to open the Settings page";
             case Tab::presets:
@@ -263,9 +302,9 @@ private:
 
     int cellAt (juce::Point<int> p) const
     {
-        for (int i = 0; i < numCells; ++i)
-            if (cells[(size_t) i].contains (p))
-                return i;
+        for (size_t i = 0; i < cells.size(); ++i)
+            if (cells[i].contains (p))
+                return (int) i;
 
         return -1;
     }
@@ -280,9 +319,11 @@ private:
     }
 
     Tab selectedTab = Tab::main;
+    bool simple = false;
     int hoveredCell = -1;
 
-    std::array<juce::Rectangle<int>, numCells> cells;
+    std::vector<Tab> tabs;
+    std::vector<juce::Rectangle<int>> cells;
 
     const juce::Typeface::Ptr typeface = juce::Typeface::createSystemTypefaceFor (
         BinaryData::QuestrialRegular_ttf, BinaryData::QuestrialRegular_ttfSize);

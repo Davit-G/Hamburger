@@ -28,9 +28,12 @@ struct Theme
     AccentColours tape = accentFrom (juce::Colour (0xffffac4d));
     AccentColours slew = accentFrom (juce::Colour (0xffffda45));
     AccentColours waveshape = accentFrom (juce::Colour (0xff00e58a));
-    AccentColours stack = accentFrom (juce::Colour (0xffff5977));
+    AccentColours opto = accentFrom (juce::Colour (0xff4dc3ff));
+    AccentColours stack = accentFrom (juce::Colours::white);
+    AccentColours start = accentFrom (juce::Colour (0xffff5977));
+    juce::Colour startDriveRing = juce::Colours::grey;
 
-    juce::Colour stackEcho = juce::Colour (0xffff5977).withAlpha (0.6f);
+    juce::Colour stackEcho = juce::Colours::white.withAlpha (0.6f);
     juce::Colour stackArrow = juce::Colours::grey;
     juce::Colour stackArrowHover = juce::Colours::white;
     juce::Colour stackArrowDisabled = juce::Colours::white.withAlpha (0.15f);
@@ -52,8 +55,14 @@ struct Theme
     AccentColours multibandComp = accentFrom (juce::Colour (0xff00e58a));
     AccentColours midSideComp = accentFrom (juce::Colour (0xff00e58a));
     AccentColours typeAComp = accentFrom (juce::Colour (0xff00e58a));
+    AccentColours transient = accentFrom (juce::Colour (0xff00e58a));
+    AccentColours multibandTransient = accentFrom (juce::Colour (0xff00e58a));
+    AccentColours optoComp = accentFrom (juce::Colour (0xff00e58a));
+    AccentColours multibandOptoComp = accentFrom (juce::Colour (0xff00e58a));
     AccentColours allpass = accentFrom (juce::Colour (0xffff924b));
     AccentColours grunge = accentFrom (juce::Colour (0xffff924b));
+    AccentColours subGen = accentFrom (juce::Colour (0xffff924b));
+    AccentColours hilbertStack = accentFrom (juce::Colour (0xffff924b));
     AccentColours sizzle = accentFrom (juce::Colour (0xffffda45));
     AccentColours erosion = accentFrom (juce::Colour (0xffffda45));
     AccentColours bitReduction = accentFrom (juce::Colour (0xffffda45));
@@ -61,6 +70,8 @@ struct Theme
     AccentColours fizz = accentFrom (juce::Colour (0xffffda45));
     AccentColours emphasis = accentFrom (juce::Colour (0xffff924b));
     AccentColours tilt = accentFrom (juce::Colour (0xffff924b));
+
+    AccentColours footer = accentFrom (juce::Colour (0xffff2e97));
 
     juce::Colour clipDotIdle = juce::Colours::darkgrey;
     juce::Colour clipDotKnee = juce::Colours::orange;
@@ -154,6 +165,7 @@ struct Theme
     juce::Colour boxBorderDisabled = juce::Colours::white.withAlpha (0.15f);
 
     juce::Colour knobThumb = juce::Colours::whitesmoke;
+    juce::Colour scaledMarker = juce::Colours::whitesmoke.withAlpha (0.7f);
     juce::Colour sliderTrack = juce::Colours::darkgrey;
     juce::Colour powerOn = juce::Colour (0xff98fd9e);
     juce::Colour powerOff = juce::Colour (0xffe65866);
@@ -166,7 +178,7 @@ struct Theme
     juce::Colour textHeaderHover = juce::Colours::white.withAlpha (0.67f);
     juce::Colour textHeaderIdle = juce::Colours::white.withAlpha (0.43f);
     juce::Colour headerDivider = juce::Colour (0xff4a4a4a);
-    juce::Colour textSettings = juce::Colours::white;
+    AccentColours settings = accentFrom (juce::Colours::white);
     juce::Colour textSettingsDim = juce::Colours::grey;
     juce::Colour textPresets = juce::Colours::white;
     juce::Colour textPresetsAuthor = juce::Colour (0xff646464);
@@ -190,7 +202,7 @@ struct Theme
     juce::Colour alertAccent = juce::Colour (0xffff5977);
     juce::Colour alertAccentText = juce::Colours::black;
 
-    // not themeable, for the utility and clipper boxes that are on their way out
+    // not themeable, for the panels without controls of their own like the logo and the scope
     AccentColours plain = accentFrom (juce::Colours::whitesmoke);
 };
 

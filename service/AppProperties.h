@@ -46,5 +46,21 @@ public:
         return TooltipType::window;
     }
 
+    // the page the plugin opens on: start, pre, main or post
+    juce::String getStartupPage()
+    {
+        auto* userSettings = appProperties.getUserSettings();
+        return userSettings != nullptr ? userSettings->getValue ("startupPage", "main") : juce::String ("main");
+    }
+
+    void setStartupPage (const juce::String& page)
+    {
+        if (auto* userSettings = appProperties.getUserSettings())
+        {
+            userSettings->setValue ("startupPage", page);
+            userSettings->saveIfNeeded();
+        }
+    }
+
     juce::ApplicationProperties appProperties;
 };

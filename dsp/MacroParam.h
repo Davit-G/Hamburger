@@ -25,6 +25,25 @@ public:
 
     const ParamIDs::ParameterInfo& getDescriptor() const noexcept { return *info; }
 
+    // the start page amount scaling this, like global drive, and the value it scales from. set once before any audio runs
+    void setScaler (juce::AudioParameterFloat* newScaler, float neutralValue)
+    {
+        scaler = newScaler;
+        neutral = neutralValue;
+    }
+
+    juce::AudioParameterFloat* getScaler() const noexcept { return scaler; }
+
+    /*  What the audio gets. The knob's distance from neutral times the scaler's percentage, kept within the knob's own
+        range. The knob itself stays where it's set. */
+    float getScaled() const
+    {
+        if (scaler == nullptr)
+            return get();
+
+        return juce::jlimit (range.start, range.end, neutral + (get() - neutral) * scaler->get() * 0.01f);
+    }
+
     // rename the parameter the DAW sees
     // E.G: "LOW BAND DRIVE" rather than "DISTORTION SLOT 1 Drive".
     // message thread only, and use updateHostDisplay (ChangeDetails{}.withParameterInfoChanged (true)) afterwards
@@ -51,5 +70,7 @@ private:
     }
 
     const ParamIDs::ParameterInfo* info = nullptr;
+    juce::AudioParameterFloat* scaler = nullptr;
+    float neutral = 0.0f;
     juce::String nameOverride;
 };

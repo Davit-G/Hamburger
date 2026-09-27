@@ -173,10 +173,11 @@ namespace ParamIDs
 
     /*  The names every type goes by on screen: in its box's type menu, which reads them from here, and in the FX order.
         Only renamed or added to the end, never reordered or removed: a preset stores the index. */
-    static const PanelInfo distortionTypes { juce::StringArray({"GRILL", "TUBE", "PHASE", "RUBIDIUM", "TAPE", "SLEW", "WAVESHAPE"}) };
-    static const PanelInfo compTypes { juce::StringArray({"STEREO", "MB", "MS", "TYPE A"}) };
+    static const PanelInfo distortionTypes { juce::StringArray({"GRILL", "TUBE", "PHASE", "RUBIDIUM", "TAPE", "SLEW", "WAVESHAPE", "OPTO"}) };
+    static const PanelInfo compTypes { juce::StringArray({"STEREO", "MB", "MS", "TYPE A", "TRANSIENT", "MB TRANSIENT", "OPTO", "MB OPTO"}) };
     static const PanelInfo noiseTypes { juce::StringArray({"SIZZLE", "EROSION", "BIT", "GATE", "FIZZ"}) };
-    static const PanelInfo preFxTypes { juce::StringArray({"ALLPASS", "GRUNGE"}) };
+    static const PanelInfo clipTypes { juce::StringArray({"CLIP", "LIMIT"}) };
+    static const PanelInfo preFxTypes { juce::StringArray({"ALLPASS", "GRUNGE", "SUB GEN", "HILBERT"}) };
     // keep in line with EmphasisFilter::Mode
     static const PanelInfo emphasisTypes { juce::StringArray({"EQ", "TILT"}) };
 
@@ -194,9 +195,9 @@ namespace ParamIDs
         case ModuleId::module1: return &noiseTypes;
         case ModuleId::module2: return &preFxTypes;
         case ModuleId::dynamics: return &compTypes;
+        case ModuleId::postClip: return &clipTypes;
         case ModuleId::preEmphasis:
         case ModuleId::postEmphasis:
-        case ModuleId::postClip:
         case ModuleId::count:
         default:
             return nullptr;
@@ -269,11 +270,11 @@ namespace ParamIDs
 
     // these are duplicated for each slot. do not use directly
     static const ParameterInfo slotInGain{"inGain", "In Gain", ParamUnits::db, makeRange(-48.0f, 48.0f), 0.0f,
-                                          "Input gain into this distortion"};
+                                          "Input gain into this module"};
     static const ParameterInfo slotMix{"dryWet", "Dry/Wet", ParamUnits::percent, makeRange(0.0f, 100.0f), 100.0f,
                                        "Dry / wet percentage. 100\\% is fully wet"};
     static const ParameterInfo slotOutGain{"outGain", "Out Gain", ParamUnits::db, makeRange(-48.0f, 48.0f), 0.0f,
-                                           "Makeup gain after distorting"};
+                                           "Makeup gain after this module"};
 
     // inversely control out gain when in gain is turned up.
     static const ParameterInfo gainLink{"gainLink", "In/Out Link", ParamUnits::none, makeSteppedRange(0.0f, 1.0f), 0.0f,
@@ -322,6 +323,18 @@ namespace ParamIDs
     static const ParameterInfo hamburgerEnabled{"hamburgerEnabled", "Hamburger Enabled", ParamUnits::none, makeSteppedRange(0.0f, 1.0f), 1.0f,
                                                 "Bypasses the entire plugin when off"};
 
+    // the start page. these scale other parameters on their way to the audio without moving their knobs, see scaleFor
+    static const ParameterInfo globalDrive{"globalDrive", "Global Drive", ParamUnits::percent, makeRange(0.0f, 200.0f), 100.0f,
+                                           "Scales every distortion's drive, from none at all up to double where its knob is set. The knobs themselves stay put"};
+    static const ParameterInfo compAmount{"compAmount", "Compressor Amount", ParamUnits::percent, makeRange(0.0f, 200.0f), 100.0f,
+                                          "Scales the compressor's threshold and ratio, or the transient attack and sustain, from nothing up to twice as strong. Speed is left alone"};
+    static const ParameterInfo eqStrength{"eqStrength", "EQ Strength", ParamUnits::percent, makeRange(-200.0f, 200.0f), 100.0f,
+                                          "Scales the emphasis gains, or the tilt. Below 0% flips them"};
+    static const ParameterInfo noiseAmount{"noiseAmount", "Noise Amount", ParamUnits::percent, makeRange(0.0f, 200.0f), 100.0f,
+                                           "Scales how much noise the noise box adds, whichever type it is"};
+    static const ParameterInfo preFxAmount{"preFxAmount", "Pre FX Amount", ParamUnits::percent, makeRange(0.0f, 200.0f), 100.0f,
+                                           "Scales how strong the pre fx box is, whichever type it is"};
+
     static const ParameterInfo oversamplingFactor{"oversamplingFactor", "Oversampling Factor", ParamUnits::oversample, makeSteppedRange(0.0f, 2.0f), 0.0f,
                                                   "Upsample signal internally for reduced aliasing. Very CPU expensive at higher values."};
 
@@ -338,11 +351,9 @@ namespace ParamIDs
     static const ParameterInfo compBandTilt{"compBandTilt", "Comp Band Tilt", ParamUnits::db, makeRange(-20.0f, 20.0f), 0.0f,
                                             "Tilts the threshold across bands, compressing lows or highs harder"};
     static const ParameterInfo compStereoLink{"compStereoLink", "Stereo Link", ParamUnits::percent, makeRange(0.0f, 100.0f), 100.0f,
-                                              "How much the left and right channels share gain reduction"};
+                                              "How much the left and right channels share gain reduction. At 0% each side compresses on its own"};
     static const ParameterInfo compRatio{"compRatio", "Comp Ratio", ParamUnits::compressionRatio, makeRange(1.0f, 10.0f), 3.5f,
                                          "How hard the signal is compressed once past the threshold"};
-    static const ParameterInfo compOut{"compOut", "Comp Makeup", ParamUnits::db, makeRange(-24.0f, 24.0f), 0.0f,
-                                       "Makeup gain applied after compression"};
 
     static const ParameterInfo stereoCompThreshold{"stereoCompThreshold", "Stereo Comp Threshold", ParamUnits::db, makeRange(-48.0f, 0.0f), -24.0f,
                                                    "Level at which the stereo compressor starts working"};
@@ -357,14 +368,23 @@ namespace ParamIDs
                                           "How hard the Type-A compander squashes past the threshold"};
     static const ParameterInfo TypeATilt{"TypeATilt", "Type A Tilt", ParamUnits::db, makeRange(-20.0f, 20.0f), -2.0f,
                                          "Tilts the Type-A output gain across bands, favouring lows or highs respectively"};
-    static const ParameterInfo TypeAOut{"TypeAOut", "Type A Out", ParamUnits::db, makeRange(-24.0f, 24.0f), -12.0f,
-                                        "Output gain applied after the Type-A compander"};
+
+    static const ParameterInfo transientAttack{"transientAttack", "Transient Attack", ParamUnits::db, makeRange(-24.0f, 24.0f), 6.0f,
+                                               "Boosts or cuts the start of every hit"};
+    static const ParameterInfo transientSustain{"transientSustain", "Transient Sustain", ParamUnits::db, makeRange(-24.0f, 24.0f), 0.0f,
+                                                "Boosts or cuts what rings out after every hit"};
+    static const ParameterInfo transientSpeed{"transientSpeed", "Transient Speed", ParamUnits::ms, makeSkewedRange(0.0f, 600.0f, 0.25f), 40.0f,
+                                              "How long the start of a hit lasts before the rest of it counts as sustain. At 0ms it shapes every cycle of the waveform instead"};
+    static const ParameterInfo transientLink{"transientLink", "Transient Link", ParamUnits::percent, makeRange(0.0f, 100.0f), 100.0f,
+                                             "How much the left and right channels share their shaping. At 0% each side is shaped on its own"};
+    static const ParameterInfo transientTilt{"transientTilt", "Transient Tilt", ParamUnits::percent, makeRange(-100.0f, 100.0f), 0.0f,
+                                             "Shifts the attack and sustain towards the lows or the highs. At either end one band gets double and the other none"};
 
     // gate (noise distortion)
     static const ParameterInfo gateAmt{"gateAmt", "Gate Amt", ParamUnits::none, makeRange(0.0f, 1.0f), 0.0f,
                                        "The minimum threshold at which gate will let audio pass through"};
-    static const ParameterInfo gateMix{"gateMix", "Gate Mix", ParamUnits::none, makeRange(0.0f, 1.0f), 1.0f,
-                                       "Blends the gated signal with the dry signal"};
+    static const ParameterInfo gateSmooth{"gateSmooth", "Gate Smooth", ParamUnits::percent, makeRange(0.0f, 100.0f), 0.0f,
+                                          "Softens the gate's edge, easing the signal in and out across a knee either side of it instead of snapping"};
 
     // grunge
     static const ParameterInfo grungeAmt{"grungeAmt", "Grunge Amt", ParamUnits::none, makeRange(0.0f, 1.0f), 0.0f,
@@ -372,11 +392,18 @@ namespace ParamIDs
     static const ParameterInfo grungeTone{"grungeTone", "Grunge Tone", ParamUnits::none, makeRange(0.0f, 1.0f), 0.5f,
                                           "Chooses suitable frequency to resonate at"};
 
+    static const ParameterInfo subGenAmount{"subGenAmount", "Sub Gen Amount", ParamUnits::percent, makeRange(0.0f, 100.0f), 50.0f,
+                                            "How loud the sine an octave below the lows comes in. At 100% it's as loud as the lows it follows"};
+    static const ParameterInfo hilbertStacks{"hilbertStacks", "Hilbert Stacks", ParamUnits::none, makeSteppedRange(1.0f, 25.0f), 5.0f,
+                                             "How many times over the Hilbert allpasses are run, each smearing the phase further, the lows most"};
+
     // clipper
     static const ParameterInfo postClipGain{"postClipGain", "SoftClip Gain", ParamUnits::db, makeRange(-18.0f, 18.0f), 0.0f,
                                             "The gain of the audio applied into the clipper"};
-    static const ParameterInfo postClipKnee{"postClipKnee", "SoftClip Knee", ParamUnits::db, makeRange(0.0f, 4.0f), 0.5f,
-                                            "The soft knee width of the clipper before it hits 0db"};
+    static const ParameterInfo postClipKnee{"postClipKnee", "SoftClip Knee", ParamUnits::db, makeRange(0.0f, 24.0f), 2.0f,
+                                            "How wide the knee is, centred on 0db: the clip starts bending half of it below and holds at 0db half of it above"};
+    static const ParameterInfo postClipTime{"postClipTime", "Limiter Time", ParamUnits::ms, makeSkewedRange(1.0f, 1000.0f, 0.3f), 50.0f,
+                                            "How long the limiter takes to let go after a peak. It sees every peak 1.5ms early and is down by the time it arrives, so nothing gets past 0db"};
 
     // grill saturation
     static const ParameterInfo saturationAmount{"saturationAmount", "Grill Saturation", ParamUnits::percent, makeRange(0.0f, 100.0f), 0.0f,
@@ -497,6 +524,22 @@ namespace ParamIDs
 
     static const ParameterInfo waveshapeDrive{"waveshapeDrive", "Waveshape Drive", ParamUnits::db, makeRange(-24.0f, 24.0f), 0.0f,
                                               "Gain into the waveshaper, pushing the signal further along the curve"};
+
+    // opto: audio clipped by LEDs and turned down by the LDR they light as a distortion, or only lighting them as a compressor
+    static const ParameterInfo optoDrive{"optoDrive", "Opto Drive", ParamUnits::db, makeRange(0.0f, 24.0f), 6.0f,
+                                         "How hard the audio is driven into the LEDs, clipping past their forward voltage and lighting the cell that turns it back down"};
+    static const ParameterInfo optoThreshold{"optoThreshold", "Opto Threshold", ParamUnits::db, makeRange(-48.0f, 0.0f), -18.0f,
+                                             "Where the LEDs start to light the cell, and so where the audio starts being turned down"};
+    static const ParameterInfo optoRatio{"optoRatio", "Opto Ratio", ParamUnits::compressionRatio, makeRange(1.0f, 20.0f), 4.0f,
+                                         "How hard the cell turns the audio down once it's lit past the threshold"};
+    static const ParameterInfo optoCompSpeed{"optoCompSpeed", "Opto Speed", ParamUnits::ms, makeSkewedRange(0.0f, 100.0f, 0.4f), 5.0f,
+                                             "How quickly the cell lights up and lets go, letting go ten and a half times slower than it lights, as an LA-2A's does"};
+    static const ParameterInfo optoBias{"optoBias", "Opto DC Bias", ParamUnits::none, makeRange(0.0f, 1.0f), 0.0f,
+                                        "Pushes the LEDs further off their resting point the louder it gets, like grill's bias"};
+    static const ParameterInfo optoDcSpeed{"optoDcSpeed", "Opto DC Speed", ParamUnits::ms, makeSkewedRange(0.0f, 300.0f, 0.25f), 50.0f,
+                                           "How quickly the bias follows the level"};
+    static const ParameterInfo optoDamping{"optoDamping", "Opto Damping", ParamUnits::none, makeSkewedRange(0.1f, 4.0f, 0.5f), 1.0f,
+                                           "How the opto distortion's cell and bias settle. 1 is critically damped, eased in with no overshoot. Lower overshoots and rings back, higher creeps in"};
     static const ParameterInfo waveshapeX{"waveshapeX", "Waveshape X", ParamUnits::none, makeRange(0.0f, 1.0f), 0.5f,
                                           "Across the waveshape map, where shapes with similar harmonics sit together. The pad blends the nearest few"};
     static const ParameterInfo waveshapeY{"waveshapeY", "Waveshape Y", ParamUnits::none, makeRange(0.0f, 1.0f), 0.5f,
@@ -510,6 +553,32 @@ namespace ParamIDs
 
     static const ParameterInfo slewType{"slewType", "Slew Type", ParamUnits::category, makeSteppedRange(0.0f, 2.0f), 0.0f,
                                         "Select a slew limiting algorithm to use. Non-standard slew algorithms are present after the first one."};
+
+    // the start page amount that scales a parameter, nullptr for the rest. by id, since slots hold copies of these
+    inline const ParameterInfo* scaleFor (const ParameterInfo& info)
+    {
+        for (const auto* drive : { &saturationAmount, &tubeAmount, &phaseAmount, &rubidiumAmount, &tapeDrive, &alphaParam, &waveshapeDrive, &optoDrive })
+            if (info.id == drive->id)
+                return &globalDrive;
+
+        for (const auto* compression : { &stereoCompThreshold, &MBCompThreshold, &MSCompThreshold, &TypeAThreshold, &TypeARatio, &compRatio, &transientAttack, &transientSustain, &optoThreshold, &optoRatio })
+            if (info.id == compression->id)
+                return &compAmount;
+
+        for (const auto* emphasis : { &emphasisLowGain, &emphasisHighGain, &emphasisTilt })
+            if (info.id == emphasis->id)
+                return &eqStrength;
+
+        for (const auto* noise : { &sizzleAmount, &fizzAmount, &erosionAmount, &downsampleMix, &gateAmt })
+            if (info.id == noise->id)
+                return &noiseAmount;
+
+        for (const auto* preFx : { &allPassAmount, &grungeAmt, &subGenAmount, &hilbertStacks })
+            if (info.id == preFx->id)
+                return &preFxAmount;
+
+        return nullptr;
+    }
 }
 
 inline juce::ParameterID paramIdFor (SlotId slot, const ParamIDs::ParameterInfo& descriptor)

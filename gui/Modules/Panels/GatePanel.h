@@ -9,21 +9,20 @@ class GatePanel : public Panel
 public:
     GatePanel(AudioPluginAudioProcessor &p, SlotId slot = SlotId{ModuleId::module1, 0}) : Panel(p, "GATE", &Theme::gate),
     gate(p, "GATE", slot, ParamIDs::gateAmt, ScopeContextType::NOISE),
-    gateMix(p, "MIX", slot, ParamIDs::gateMix, ScopeContextType::NOISE)
+    smooth(p, "SMOOTH", slot, ParamIDs::gateSmooth, ScopeContextType::NOISE)
     {
         addAndMakeVisible(gate);
-        addAndMakeVisible(gateMix);
+        addAndMakeVisible(smooth);
     }
 
     void resized() override
     {
         auto bounds = getLocalBounds();
         gate.setBounds(bounds.removeFromLeft(bounds.getWidth() / 2));
-        gateMix.setBounds(bounds);
+        smooth.setBounds(bounds);
     }
 
 private:
-    // ParamKnob knob;
     ParamKnob gate;
-    ParamKnob gateMix;
+    ParamKnob smooth;
 };

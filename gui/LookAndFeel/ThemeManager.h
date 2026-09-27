@@ -26,7 +26,11 @@ public:
                    .getChildFile ("themes");
     }
 
-    ~ThemeManager() override { writeUnsavedIfPending(); }
+    ~ThemeManager() override
+    {
+        theme() = unpulsed();
+        writeUnsavedIfPending();
+    }
 
     ThemeInfo info = defaultInfo();
 
@@ -71,6 +75,7 @@ public:
 
     bool select (const juce::String& id)
     {
+        stopPulse();
         writeUnsavedIfPending();
 
         if (id == defaultId)
@@ -109,7 +114,7 @@ public:
         folder().createDirectory();
 
         const auto file = folder().getChildFile (juce::File::createLegalFileName (labelFor (info)) + ".ini");
-        file.replaceWithText (themeToIni (theme(), info));
+        file.replaceWithText (themeToIni (unpulsed(), info));
 
         folder().getChildFile ("unsaved.ini").deleteFile();
 
@@ -117,7 +122,90 @@ public:
         sendChangeMessage();
     }
 
+    /*  Shows off where a colour is used by flashing it white a few times, or black where it's already near white. Only a handful
+        of changes, one per flash on or off, so the plugin redraws just those times. It only ever changes what's on screen:
+        anything saved, and anything the undo history keeps, gets the colour as it really is. */
+    void pulse (const ThemeColour* colour)
+    {
+        if (colour == hovered)
+            return;
+
+        hovered = colour;
+        stopPulse();
+
+        if (colour == nullptr)
+        {
+            sendChangeMessage();
+            return;
+        }
+
+        pulsing = colour;
+        original = lastShown = colour->in (theme());
+        pulseStart = juce::Time::getMillisecondCounterHiRes();
+        flashedOn = false;
+        pulseTimer.startTimerHz (60);
+        pulseFrame();
+    }
+
+    void stopPulse()
+    {
+        if (pulsing == nullptr)
+            return;
+
+        pulseTimer.stopTimer();
+
+        // unless something's changed it in the meantime, which is what's kept
+        if (auto& shown = pulsing->in (theme()); shown == lastShown)
+            shown = original;
+
+        pulsing = nullptr;
+        sendChangeMessage();
+    }
+
+    // the colour whose row is under the mouse in the customiser, for as long as it is, flashing or not
+    const ThemeColour* getHovered() const noexcept { return hovered; }
+
+    // the theme without the pulse, as it really is
+    Theme unpulsed() const
+    {
+        auto real = theme();
+
+        if (pulsing != nullptr && pulsing->in (real) == lastShown)
+            pulsing->in (real) = original;
+
+        return real;
+    }
+
 private:
+    void pulseFrame()
+    {
+        auto& shown = pulsing->in (theme());
+
+        // changed by something else mid pulse, like an undo, which becomes the colour to pulse
+        if (shown != lastShown)
+            original = shown;
+
+        const auto seconds = (juce::Time::getMillisecondCounterHiRes() - pulseStart) * 0.001;
+
+        if (seconds >= flashLength * flashes)
+        {
+            stopPulse();
+            return;
+        }
+
+        // on for the first half of each flash, off for the second
+        const auto on = std::fmod (seconds, flashLength) < flashLength * 0.5;
+
+        if (on == flashedOn)
+            return;
+
+        flashedOn = on;
+
+        const auto flash = original.getPerceivedBrightness() > 0.85f ? juce::Colours::black : juce::Colours::white;
+        shown = lastShown = on ? flash : original;
+        sendChangeMessage();
+    }
+
     static ThemeInfo defaultInfo() { return { "Default", "Aviary Audio", "The theme Hamburger comes with", {} }; }
 
     static juce::String labelFor (const ThemeInfo& themeInfo)
@@ -158,7 +246,7 @@ private:
         stopTimer();
 
         folder().createDirectory();
-        folder().getChildFile ("unsaved.ini").replaceWithText (themeToIni (theme(), info));
+        folder().getChildFile ("unsaved.ini").replaceWithText (themeToIni (unpulsed(), info));
     }
 
     void writeUnsavedIfPending()
@@ -168,4 +256,14 @@ private:
     }
 
     juce::String selectedId;
+
+    static constexpr double flashLength = 0.3; // seconds
+    static constexpr int flashes = 4;
+
+    const ThemeColour* pulsing = nullptr;
+    const ThemeColour* hovered = nullptr;
+    juce::Colour original, lastShown;
+    double pulseStart = 0.0;
+    bool flashedOn = false;
+    juce::TimedCallback pulseTimer { [this] { pulseFrame(); } };
 };

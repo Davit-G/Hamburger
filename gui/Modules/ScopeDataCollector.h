@@ -40,7 +40,34 @@ public:
     AudioBufferQueue<SampleType> audioBufferQueueSpectrum;
     AudioBufferQueue<SampleType> audioBufferQueueInputSpectrum;
 
-    void captureInput(const SampleType *dataL, size_t numSamples) { audioBufferQueueInputSpectrum.push(dataL, numSamples); }
+    // the lows and the highs metered apart as well, so a hi hat's spike shows even over a loud kick. only while the start
+    // page's drive knob is on screen to show them
+    void captureInput(const SampleType *dataL, size_t numSamples)
+    {
+        audioBufferQueueInputSpectrum.push(dataL, numSamples);
+
+        if (! inputBandsWanted.load(std::memory_order_relaxed))
+            return;
+
+        const auto rate = getSampleRate();
+        const auto lowCoefficient = (SampleType) (1.0 - std::exp(-juce::MathConstants<double>::twoPi * lowSplitHz / rate));
+        const auto highCoefficient = (SampleType) (1.0 - std::exp(-juce::MathConstants<double>::twoPi * highSplitHz / rate));
+
+        SampleType lowPeak {}, highPeak {};
+
+        for (size_t i = 0; i < numSamples; ++i)
+        {
+            lowState += lowCoefficient * (dataL[i] - lowState);
+            highState += highCoefficient * (dataL[i] - highState);
+
+            lowPeak = std::max(lowPeak, std::abs(lowState));
+            highPeak = std::max(highPeak, std::abs(dataL[i] - highState));
+        }
+
+        // once a block, rather than touching the meters every sample
+        inputLows.accumulate((float) lowPeak);
+        inputHighs.accumulate((float) highPeak);
+    }
 
     // two clones cause the frame rate is not the same between them and this updates on gui only (idk whyyy)
     LevelMeter levelMeter {0.1f} ;  // used for actual visualisation on scope screen
@@ -51,8 +78,18 @@ public:
     LevelMeter band3 {0.1f}; // could be high band
     LevelMeter band4 {0.1f}; // could be extra high band for type A
 
+    // the transient shaper's gain per band, furthest from nothing since the scope last took it
+    std::array<std::atomic<float>, 3> transientGainDb {};
+
+    // the loudest coming in, below and above the splits, read and cleared every frame by the start page's drive knob
+    LevelMeter inputLows, inputHighs;
+    std::atomic<bool> inputBandsWanted { false };
+
 private:
     std::atomic<double> currentSampleRate { 44100.0 };
+
+    static constexpr double lowSplitHz = 150.0, highSplitHz = 3000.0;
+    SampleType lowState {}, highState {};
 
     // dataL here is already the oversampled signal, so bringing it back down to base rate
     // for the scope just means keeping every (2^oversamplingFactor)th sample - the main

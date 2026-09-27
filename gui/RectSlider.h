@@ -58,16 +58,28 @@ public:
         juce::Path clipTrack;
         clipTrack.addRoundedRectangle(sliderBounds, rounded);
 
-        g.reduceClipRegion(clipTrack);
+        const auto track = sliderBounds;
 
-        juce::Rectangle<float> centerBounds = sliderBounds;
+        {
+            juce::Graphics::ScopedSaveState clipped(g);
+            g.reduceClipRegion(clipTrack);
 
-        g.setColour(theme().sliderTrack);
-        g.fillRect(sliderBounds);
+            g.setColour(theme().sliderTrack);
+            g.fillRect(sliderBounds);
 
-        g.setColour(colours().slider.interpolatedWith(colours().sliderHeld, dragAmount));
+            g.setColour(colours().slider.interpolatedWith(colours().sliderHeld, dragAmount));
 
-        g.fillRect(sliderBounds.removeFromLeft(valueToProportionOfLength(getValue()) * sliderBounds.getWidth()));
+            g.fillRect(sliderBounds.removeFromLeft(valueToProportionOfLength(getValue()) * sliderBounds.getWidth()));
+        }
+
+        // a dot where the audio really is when global drive or the like scales it, the fill staying where it's set
+        if (auto scaled = scaledProportion())
+        {
+            const auto dotSize = track.getHeight() + 3.0f;
+
+            g.setColour(theme().scaledMarker);
+            g.fillEllipse(juce::Rectangle<float>(dotSize, dotSize).withCentre({ track.getX() + *scaled * track.getWidth(), track.getCentreY() }));
+        }
     }
 
     float visibleHeight() {

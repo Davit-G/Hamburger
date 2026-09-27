@@ -4,6 +4,7 @@
 #include "LookAndFeel/HamburgerLAF.h"
 #include "LookAndFeel/ThemeManager.h"
 #include "Modules/Panel.h"
+#include "TextSlider.h"
 #include "ThemeCustomiser.h"
 
 class FxOrderList : public juce::Component,
@@ -44,7 +45,7 @@ public:
             g.setColour (theme().textSettingsDim);
             g.drawText (juce::String (row + 1), text.removeFromLeft (20.0f), juce::Justification::centredLeft, false);
 
-            g.setColour (colourFor != nullptr ? colourFor (id) : theme().textSettings);
+            g.setColour (colourFor != nullptr ? colourFor (id) : theme().settings.text);
             g.drawText (nameFor (id), text, juce::Justification::centredLeft, false);
         }
     }
@@ -212,7 +213,8 @@ class SettingsPanel : public juce::Component,
                       private juce::ChangeListener
 {
 public:
-    explicit SettingsPanel (AudioPluginAudioProcessor& p) : processorRef (p), fxOrder (p)
+    explicit SettingsPanel (AudioPluginAudioProcessor& p)
+        : processorRef (p), fxOrder (p), oversampling (p, "OVERSAMPLING", ParamIDs::oversamplingFactor)
     {
         for (auto* label : allLabels())
         {
@@ -224,8 +226,11 @@ public:
         HamburgerLAF::setLabelFontScale (title, 1.4f);
 
         tooltipTitle.setText ("TOOLTIPS", juce::dontSendNotification);
+        startupTitle.setText ("OPENS ON", juce::dontSendNotification);
         presetFolderTitle.setText ("PRESET FOLDER", juce::dontSendNotification);
-        crossoverTitle.setText ("CROSSOVER SLOPE", juce::dontSendNotification);
+        crossoverTitle.setText ("CROSSOVERS", juce::dontSendNotification);
+        highpassTitle.setText ("DC BLOCKERS", juce::dontSendNotification);
+        dryPhaseTitle.setText ("DRY PHASE", juce::dontSendNotification);
         fxOrderTitle.setText ("FX ORDER", juce::dontSendNotification);
         themeTitle.setText ("THEME", juce::dontSendNotification);
 
@@ -238,6 +243,19 @@ public:
         };
         addAndMakeVisible (tooltipType);
 
+        // by the ids AppProperties keeps, in the order they're offered
+        for (auto [id, name] : { std::pair { 1, "Start" }, std::pair { 2, "Pre" }, std::pair { 3, "Main" }, std::pair { 4, "Post" } })
+            startupPage.addItem (name, id);
+
+        startupPage.setTooltip ("The page the plugin opens on");
+        startupPage.setSelectedItemIndex (startupPages.indexOf (processorRef.getAppProperties().getStartupPage()), juce::dontSendNotification);
+
+        if (startupPage.getSelectedItemIndex() < 0)
+            startupPage.setSelectedId (3, juce::dontSendNotification);
+
+        startupPage.onChange = [this] { processorRef.getAppProperties().setStartupPage (startupPages[startupPage.getSelectedItemIndex()]); };
+        addAndMakeVisible (startupPage);
+
         changePresetFolder.onClick = [this] { choosePresetFolder(); };
         addAndMakeVisible (changePresetFolder);
 
@@ -245,17 +263,43 @@ public:
         for (const auto slope : { 12, 24, 48 })
             crossoverSlope.addItem (juce::String (slope) + " dB/oct", slope);
 
-        crossoverSlope.setTooltip ("How steep the multiband and exciter band splits are. Saved with the preset");
+        crossoverSlope.addItem ("Linear phase", MainRouting::linearPhase);
+
+        crossoverSlope.setTooltip ("How steep the multiband and exciter band splits are. Linear phase keeps every crossover in the plugin, "
+                                   "the compressor's included, in phase with the dry, for 40ms of latency. Saved with the preset");
         crossoverSlope.onChange = [this] {
             processorRef.treeState.state.setProperty (MainRouting::crossoverSlopeProperty, crossoverSlope.getSelectedId(), nullptr);
         };
         addAndMakeVisible (crossoverSlope);
 
+        linearHighpass.addItem ("IIR", 1);
+        linearHighpass.addItem ("Linear phase", 2);
+        linearHighpass.setTooltip ("The filters that take the DC offset out after each distortion. Linear phase leaves the phase of "
+                                   "everything above 20Hz alone, with no latency. Saved with the preset");
+        linearHighpass.onChange = [this] {
+            processorRef.treeState.state.setProperty (MainRouting::linearHighpassProperty, linearHighpass.getSelectedId() == 2, nullptr);
+        };
+        addAndMakeVisible (linearHighpass);
+
+        dryPhase.addItem ("Matched", 1);
+        dryPhase.addItem ("Off", 2);
+        dryPhase.setTooltip ("Crossovers turn the phase of whatever they split, so mixing the dry back in with a dry/wet knob can comb "
+                             "and hollow out the sound around each split. Matched puts the dry through the same phase turn first, so the "
+                             "two line up. Off leaves the dry untouched, for the combing on purpose. Linear phase crossovers don't turn "
+                             "the phase, so this does nothing with them. Saved with the preset");
+        dryPhase.onChange = [this] {
+            processorRef.treeState.state.setProperty (MainRouting::dryPhaseProperty, dryPhase.getSelectedId() == 1, nullptr);
+        };
+        addAndMakeVisible (dryPhase);
+
         // the state tree gets swapped whole on a preset or project load, which is valueTreeRedirected
         processorRef.treeState.state.addListener (this);
-        showCrossoverSlope();
+        showChainSettings();
 
         addAndMakeVisible (fxOrder);
+
+        oversampling.setAccent (&Theme::settings);
+        addAndMakeVisible (oversampling);
 
         themeSelector.onChange = [this] {
             if (const auto index = themeSelector.getSelectedId() - 1; juce::isPositiveAndBelow (index, themeEntries.size()))
@@ -302,7 +346,7 @@ public:
     void lookAndFeelChanged() override
     {
         for (auto* label : allLabels())
-            label->setColour (juce::Label::textColourId, theme().textSettings);
+            label->setColour (juce::Label::textColourId, theme().settings.text);
     }
 
     // a theme dropped in the folder shows up the next time the page opens
@@ -319,31 +363,29 @@ public:
         title.setBounds (bounds.removeFromTop (30));
         bounds.removeFromTop (8);
 
-        auto tooltipRow = bounds.removeFromTop (rowHeight);
-        tooltipTitle.setBounds (tooltipRow.removeFromLeft (tooltipRow.getWidth() * 2 / 5));
-        tooltipType.setBounds (tooltipRow);
+        // the whole region across: the general settings, then the fx order, then oversampling and the theme
+        const auto columnWidth = (bounds.getWidth() - columnGap * 2) / 3;
+        auto general = bounds.removeFromLeft (columnWidth);
+        bounds.removeFromLeft (columnGap);
+        auto orderColumn = bounds.removeFromLeft (columnWidth);
+        auto themeColumn = bounds.withTrimmedLeft (columnGap);
 
-        bounds.removeFromTop (6);
-
-        auto presetRow = bounds.removeFromTop (rowHeight);
-        presetFolderTitle.setBounds (presetRow.removeFromLeft (presetRow.getWidth() * 2 / 5));
-        changePresetFolder.setBounds (presetRow);
-
-        bounds.removeFromTop (6);
-
-        auto crossoverRow = bounds.removeFromTop (rowHeight);
-        crossoverTitle.setBounds (crossoverRow.removeFromLeft (crossoverRow.getWidth() * 2 / 5));
-        crossoverSlope.setBounds (crossoverRow);
-
-        bounds.removeFromTop (16);
-
-        auto orderColumn = bounds.removeFromLeft (bounds.getWidth() / 2);
+        for (auto [label, control] : std::initializer_list<std::pair<juce::Label*, juce::Component*>> {
+                 { &tooltipTitle, &tooltipType }, { &startupTitle, &startupPage }, { &presetFolderTitle, &changePresetFolder }, { &crossoverTitle, &crossoverSlope },
+                 { &highpassTitle, &linearHighpass }, { &dryPhaseTitle, &dryPhase } })
+        {
+            auto row = general.removeFromTop (rowHeight);
+            label->setBounds (row.removeFromLeft (row.getWidth() * 2 / 5));
+            control->setBounds (row);
+            general.removeFromTop (6);
+        }
 
         fxOrderTitle.setBounds (orderColumn.removeFromTop (rowHeight));
         orderColumn.removeFromTop (4);
         fxOrder.setBounds (orderColumn);
 
-        auto themeColumn = bounds.withTrimmedLeft (16);
+        oversampling.setBounds (themeColumn.removeFromTop (rowHeight));
+        themeColumn.removeFromTop (16);
 
         themeTitle.setBounds (themeColumn.removeFromTop (rowHeight));
         themeColumn.removeFromTop (4);
@@ -353,7 +395,7 @@ public:
     }
 
 private:
-    std::array<juce::Label*, 6> allLabels() { return { &title, &tooltipTitle, &presetFolderTitle, &crossoverTitle, &fxOrderTitle, &themeTitle }; }
+    std::array<juce::Label*, 9> allLabels() { return { &title, &tooltipTitle, &startupTitle, &presetFolderTitle, &crossoverTitle, &highpassTitle, &dryPhaseTitle, &fxOrderTitle, &themeTitle }; }
 
     void showThemes()
     {
@@ -374,6 +416,8 @@ private:
     // colour edits keep the same theme picked, and reading every theme file on each move of a picker drag is slow
     void changeListenerCallback (juce::ChangeBroadcaster*) override
     {
+        showScopeViewFor (themes->getHovered());
+
         if (themes->getSelectedId() == shownThemeId)
             return;
 
@@ -381,6 +425,36 @@ private:
 
         if (auto* settings = processorRef.getAppProperties().appProperties.getUserSettings())
             settings->setValue ("theme", themes->getSelectedId());
+    }
+
+    // hovering a scope colour in the customiser brings up the scope view it's drawn in, until the mouse moves off it
+    void showScopeViewFor (const ThemeColour* colour)
+    {
+        auto& scope = processorRef.getScopeContext();
+
+        if (const auto view = colour != nullptr ? scopeViewFor (colour->id) : std::nullopt)
+        {
+            scope.setType (*view);
+            showingScopeView = true;
+        }
+        else if (showingScopeView)
+        {
+            scope.startDecaying();
+            showingScopeView = false;
+        }
+    }
+
+    static std::optional<ScopeContextType> scopeViewFor (const juce::String& id)
+    {
+        if (id.startsWith ("comp_"))                                          return ScopeContextType::COMPRESSION;
+        if (id.startsWith ("scope_clip_"))                                    return ScopeContextType::CLIPPER;
+        if (id.startsWith ("scope_noise"))                                    return ScopeContextType::NOISE;
+        if (id.startsWith ("scope_spectrum_") || id.startsWith ("scope_curve_")) return ScopeContextType::SPECTRUM_EMPHASIS;
+        if (id == "scope_transfer")                                           return ScopeContextType::IN_OUT;
+        if (id == "scope_waveshape_curve")                                    return ScopeContextType::WAVESHAPE;
+        if (id.startsWith ("scope_"))                                         return ScopeContextType::LR_SCOPE;
+
+        return {};
     }
 
     void choosePresetFolder()
@@ -401,36 +475,43 @@ private:
         });
     }
 
-    void showCrossoverSlope()
+    void showChainSettings()
     {
-        crossoverSlope.setSelectedId (MainRouting::crossoverSlopeFrom (processorRef.treeState.state.getProperty (MainRouting::crossoverSlopeProperty)),
-                                      juce::dontSendNotification);
+        const auto& state = processorRef.treeState.state;
+        crossoverSlope.setSelectedId (MainRouting::crossoverSlopeFrom (state.getProperty (MainRouting::crossoverSlopeProperty)), juce::dontSendNotification);
+        linearHighpass.setSelectedId ((bool) state.getProperty (MainRouting::linearHighpassProperty) ? 2 : 1, juce::dontSendNotification);
+        dryPhase.setSelectedId ((bool) state.getProperty (MainRouting::dryPhaseProperty, true) ? 1 : 2, juce::dontSendNotification);
     }
 
     // a load can come in on any thread, so the menu catches up on the message thread
     void valueTreePropertyChanged (juce::ValueTree& tree, const juce::Identifier& property) override
     {
-        if (tree == processorRef.treeState.state && property == MainRouting::crossoverSlopeProperty)
+        if (tree == processorRef.treeState.state && (property == MainRouting::crossoverSlopeProperty || property == MainRouting::linearHighpassProperty
+                                                        || property == MainRouting::dryPhaseProperty))
             triggerAsyncUpdate();
     }
 
     void valueTreeRedirected (juce::ValueTree&) override { triggerAsyncUpdate(); }
-    void handleAsyncUpdate() override { showCrossoverSlope(); }
+    void handleAsyncUpdate() override { showChainSettings(); }
 
     static constexpr int rowHeight = 24;
+    static constexpr int columnGap = 24;
 
     AudioPluginAudioProcessor& processorRef;
 
-    juce::Label title, tooltipTitle, presetFolderTitle, crossoverTitle, fxOrderTitle, themeTitle;
-    juce::ComboBox tooltipType, crossoverSlope, themeSelector;
+    juce::Label title, tooltipTitle, startupTitle, presetFolderTitle, crossoverTitle, highpassTitle, dryPhaseTitle, fxOrderTitle, themeTitle;
+    juce::ComboBox tooltipType, startupPage, crossoverSlope, linearHighpass, dryPhase, themeSelector;
+    const juce::StringArray startupPages { "start", "pre", "main", "post" };
     juce::TextButton changePresetFolder { "CHANGE FOLDER" }, customiseTheme { "CUSTOMISE" };
     std::unique_ptr<juce::FileChooser> presetFolderChooser;
 
     FxOrderList fxOrder;
+    TextSlider oversampling;
 
     juce::SharedResourcePointer<ThemeManager> themes;
     juce::Array<ThemeManager::Entry> themeEntries;
     juce::String shownThemeId;
+    bool showingScopeView = false;
     std::unique_ptr<ThemeCustomiser> customiser;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SettingsPanel)

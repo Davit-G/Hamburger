@@ -52,6 +52,9 @@ static std::vector<ThemeSection> makeSections()
     addAccent ("tape", "Tape", &Theme::tape, { knob, knobHeld, slider, sliderHeld, icon, text });
     addAccent ("slew", "Slew", &Theme::slew, { knob, knobHeld, slider, sliderHeld, icon, text });
     addAccent ("waveshape", "Waveshape", &Theme::waveshape, { knob, slider, sliderHeld, text });
+    addAccent ("opto", "Opto", &Theme::opto, { knob, knobHeld, slider, sliderHeld, icon, text });
+    addAccent ("start", "Start", &Theme::start, { knob, knobHeld, slider, sliderHeld, text });
+    add ("start_drive_ring", "Start Drive Outer Ring", "The outer ring of the start page's drive knob, around a ring for each distortion", &Theme::startDriveRing);
 
     add ("waveshape_analog", "Waveshape Analog", "Analog shapes on the map and their legend pill", &Theme::waveshapeAnalog);
     add ("waveshape_digital", "Waveshape Digital", "Digital shapes on the map and their legend pill", &Theme::waveshapeDigital);
@@ -72,14 +75,20 @@ static std::vector<ThemeSection> makeSections()
     add ("stack_arrow_hover", "Stack Arrows Hovered", "An arrow under the mouse", &Theme::stackArrowHover);
     add ("stack_arrow_disabled", "Stack Arrows Disabled", "An arrow with no more stages to step to", &Theme::stackArrowDisabled);
 
-    section ("modules", "Other Modules", "Compressors, noise, pre distortion and emphasis. Each type has its own set");
+    section ("modules", "Other Modules", "Compressors, noise, pre distortion, emphasis and the footer. Each type has its own set");
 
     addAccent ("stereo_comp", "Stereo Comp", &Theme::stereoComp, { knob, knobHeld, text }, "Compressor");
     addAccent ("multiband_comp", "Multiband Comp", &Theme::multibandComp, { knob, knobHeld, text }, "Compressor");
     addAccent ("mid_side_comp", "Mid Side Comp", &Theme::midSideComp, { knob, knobHeld, text }, "Compressor");
     addAccent ("type_a_comp", "Type A Comp", &Theme::typeAComp, { knob, knobHeld, text }, "Compressor");
+    addAccent ("transient", "Transient", &Theme::transient, { knob, knobHeld, text }, "Compressor");
+    addAccent ("multiband_transient", "Multiband Transient", &Theme::multibandTransient, { knob, knobHeld, text }, "Compressor");
+    addAccent ("opto_comp", "Opto Comp", &Theme::optoComp, { knob, knobHeld, text }, "Compressor");
+    addAccent ("multiband_opto_comp", "Multiband Opto Comp", &Theme::multibandOptoComp, { knob, knobHeld, text }, "Compressor");
     addAccent ("allpass", "Allpass", &Theme::allpass, { knob, knobHeld, text }, "Pre Distortion");
     addAccent ("grunge", "Grunge", &Theme::grunge, { knob, knobHeld, text }, "Pre Distortion");
+    addAccent ("sub_gen", "Sub Gen", &Theme::subGen, { knob, knobHeld, text }, "Pre Distortion");
+    addAccent ("hilbert_stack", "Hilbert Stack", &Theme::hilbertStack, { knob, knobHeld, text }, "Pre Distortion");
     addAccent ("sizzle", "Sizzle", &Theme::sizzle, { knob, knobHeld, text }, "Noise");
     addAccent ("erosion", "Erosion", &Theme::erosion, { knob, knobHeld, text }, "Noise");
     addAccent ("bit_reduction", "Bit Reduction", &Theme::bitReduction, { knob, knobHeld, text }, "Noise");
@@ -87,6 +96,10 @@ static std::vector<ThemeSection> makeSections()
     addAccent ("fizz", "Fizz", &Theme::fizz, { knob, knobHeld, text }, "Noise");
     addAccent ("emphasis", "Emphasis", &Theme::emphasis, { knob, knobHeld, text }, "Emphasis");
     addAccent ("tilt", "Tilt", &Theme::tilt, { knob, knobHeld, text }, "Emphasis");
+
+    addGetter ("footer_accent", "Footer Accent", "What the footer's IN and OUT readouts lean towards as they turn up",
+               [] (Theme& t) -> juce::Colour& { return t.footer.main; }, "Footer");
+    addAccent ("footer", "Footer", &Theme::footer, { text });
 
     add ("clip_dot_idle", "Clip Dot Idle", "The clipper's dot while nothing is clipping", &Theme::clipDotIdle);
     add ("clip_dot_knee", "Clip Dot Soft", "The clipper's dot while the level is in the knee", &Theme::clipDotKnee, "Clipping");
@@ -186,6 +199,7 @@ static std::vector<ThemeSection> makeSections()
     add ("box_border", "Box Border", "Outline of the boxes, when box_borders is on", &Theme::boxBorder);
     add ("box_border_disabled", "Box Border Off", "Outline of a box whose power button is off", &Theme::boxBorderDisabled);
     add ("knob_thumb", "Knob Pointer", "The line on every knob showing where it is set", &Theme::knobThumb);
+    add ("scaled_marker", "Scaled Value Marker", "The thinner pointer on a knob and the dot on a slider, where global drive, the compressor amount or EQ strength really put it", &Theme::scaledMarker);
     add ("slider_track", "Slider Track", "The empty part of every slider", &Theme::sliderTrack);
     add ("power_on", "Power On", "Power buttons that are on", &Theme::powerOn, "Power and Lock");
     add ("power_off", "Power Off", "Power buttons that are off", &Theme::powerOff, "Power and Lock");
@@ -198,7 +212,7 @@ static std::vector<ThemeSection> makeSections()
     add ("text_header_hover", "Header Text Hovered", "A tab under the mouse", &Theme::textHeaderHover);
     add ("text_header_idle", "Header Text Idle", "The other tabs", &Theme::textHeaderIdle);
     add ("header_divider", "Header Dividers", "The lines between the tabs", &Theme::headerDivider);
-    add ("text_settings", "Settings Text", "Everything written in the settings page", &Theme::textSettings);
+    addGetter ("text_settings", "Settings Text", "Everything written in the settings page", [] (Theme& t) -> juce::Colour& { return t.settings.text; });
     add ("text_settings_dim", "Settings Text Dim", "The numbers in the FX order", &Theme::textSettingsDim);
     add ("text_presets", "Preset Text", "Preset names, folders and buttons", &Theme::textPresets);
     add ("text_presets_author", "Preset Author Text", "Who made each preset", &Theme::textPresetsAuthor);

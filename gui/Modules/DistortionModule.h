@@ -9,6 +9,7 @@
 #include "Panels/TapeSatPanel.h"
 #include "Panels/SlewSaturator.h"
 #include "Panels/WaveshapePanel.h"
+#include "Panels/OptoPanel.h"
 #include "SlotLevels.h"
 
 inline std::vector<std::unique_ptr<Panel>> makeDistortionPanels (AudioPluginAudioProcessor& p, SlotId slot)
@@ -22,6 +23,7 @@ inline std::vector<std::unique_ptr<Panel>> makeDistortionPanels (AudioPluginAudi
     panels.push_back (std::make_unique<TapeSatPanel> (p, slot));
     panels.push_back (std::make_unique<SlewRatePanel> (p, slot));
     panels.push_back (std::make_unique<WaveshapePanel> (p, slot));
+    panels.push_back (std::make_unique<OptoPanel> (p, slot));
 
     return panels;
 }

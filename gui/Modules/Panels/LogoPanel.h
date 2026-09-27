@@ -6,7 +6,7 @@
 
 #include "../Scope.h"
 
-class LogoPanel : public Panel, private juce::Timer, public juce::ChangeListener
+class LogoPanel : public Panel, public juce::SettableTooltipClient, private juce::Timer, public juce::ChangeListener
 {
 public:
     LogoPanel(AudioPluginAudioProcessor &p) : Panel(p, "SETTINGS"), processorRef(p)
@@ -20,6 +20,7 @@ public:
         displayHelpText = p.getAppProperties().getTooltipType() == AppProperties::TooltipType::boxLabel;
 
         setMouseCursor(juce::MouseCursor::PointingHandCursor);
+        setTooltip("Click for info about Hamburger and the credits");
 
         juce::Desktop::getInstance().addGlobalMouseListener(&tooltipHelper);
 
@@ -83,8 +84,11 @@ public:
 
     void resized() override
     {
-        if (drawableLogoString != nullptr)
-            drawableLogoString->setBoundsToFit(getLocalBounds(), juce::Justification::centred, true);
+        // placing the drawing itself: fitting the component instead sticks at the smallest the panel has ever been, with the
+        // drawing still its full size from the component's corner, so it hangs off to the bottom right
+        if (drawableLogoString != nullptr && ! getLocalBounds().isEmpty())
+            drawableLogoString->setTransformToFit(getLocalBounds().toFloat(),
+                                                  juce::RectanglePlacement::centred | juce::RectanglePlacement::onlyReduceInSize);
         helptext.setBounds(getLocalBounds());
     }
     

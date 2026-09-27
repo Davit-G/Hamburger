@@ -106,9 +106,15 @@ juce::String Preset::PresetManager::getCurrentPresetName() const
 	return currentPreset.toString().replaceSection(0, currentPreset.toString().lastIndexOf("/") + 1, "").replaceSection(currentPreset.toString().lastIndexOf("."), currentPreset.toString().length(), "");
 }
 
+// both saved in the state along with the preset, so they come back with it
 juce::String Preset::PresetManager::getCurrentAuthor() const
 {
-	return currentAuthor.toString();
+	return valueTreeState.state.getProperty("author").toString();
+}
+
+juce::String Preset::PresetManager::getCurrentDescription() const
+{
+	return valueTreeState.state.getProperty("description").toString();
 }
 
 juce::String Preset::PresetManager::getLastAuthor()
@@ -163,7 +169,8 @@ bool Preset::PresetManager::savePreset(const juce::String &presetName, const juc
 	auto presetDir = getPresetDirectory();
 
 	currentPreset.setValue(presetName);
-	currentAuthor.setValue(author);
+	valueTreeState.state.setProperty("author", author, nullptr);
+	valueTreeState.state.setProperty("description", description, nullptr);
 
 	if (author.isNotEmpty())
 	{
@@ -219,6 +226,28 @@ bool Preset::PresetManager::savePreset(const juce::String &presetName, const juc
 	return true;
 }
 
+bool Preset::PresetManager::renamePreset(const juce::File &preset, const juce::String &newName, std::function<void(std::string)> cb)
+{
+	const auto renamed = preset.getSiblingFile(juce::File::createLegalFileName(newName) + "." + extension);
+
+	if (newName.isEmpty() || renamed.exists())
+	{
+		cb(std::string("A preset called ") + newName.toStdString() + " is already there");
+		return false;
+	}
+
+	if (!preset.moveFileTo(renamed))
+	{
+		cb(std::string("Preset file ") + preset.getFullPathName().toStdString() + " could not be renamed");
+		return false;
+	}
+
+	if (getCurrentPreset() == preset)
+		currentPreset.setValue(renamed.getRelativePathFrom(getPresetDirectory()));
+
+	return true;
+}
+
 void Preset::PresetManager::deletePreset(const juce::File &presetFile, std::function<void(std::string)> cb)
 {
 	if (!presetFile.existsAsFile())
@@ -238,7 +267,6 @@ void Preset::PresetManager::deletePreset(const juce::File &presetFile, std::func
 	}
 
 	currentPreset.setValue("");
-	currentAuthor.setValue("");
 }
 
 void Preset::PresetManager::loadPreset(const juce::File &presetFile, std::function<void(std::string)> cb)
@@ -353,49 +381,23 @@ juce::Array<juce::File> Preset::PresetManager::getAllPresets() const
 	return fileArray;
 }
 
-/**
- * @brief Recursively traverse a directory and return a sorted list of files.
- * Makes sure that folders are traversed before files.
- * Also filters by extension.
- */
-void Preset::PresetManager::recursiveSortedTraverse(const juce::File &directory, std::shared_ptr<juce::OwnedArray<Preset::PresetFile>> files)
+juce::Array<juce::File> Preset::PresetManager::getFolders() const
 {
+	const auto root = getPresetDirectory();
+	auto folders = root.findChildFiles(juce::File::TypesOfFileToFind::findDirectories, false);
+	folders.sort();
 
-	auto wildcard = juce::WildcardFileFilter("*." + extension, "*", "*");
-	auto dirsFiles = directory.findChildFiles(juce::File::TypesOfFileToFind::findFilesAndDirectories, false);
+	if (!getPresetsIn(root).isEmpty())
+		folders.insert(0, root);
 
-	std::sort(dirsFiles.begin(), dirsFiles.end(), [](const juce::File &a, const juce::File &b)
-			  { return a.isDirectory() && !b.isDirectory(); });
-
-	for (int i = 0; i < dirsFiles.size(); i++)
-	{
-		if (dirsFiles[i].isDirectory())
-		{
-			auto preset = std::make_unique<PresetFile>(dirsFiles[i]);
-
-			files->add(std::move(preset)); // add the directory as well as the children to the 2d array
-
-			recursiveSortedTraverse(dirsFiles[i], files);
-		}
-		else if (wildcard.isFileSuitable(dirsFiles[i]))
-		{
-			auto preset = std::make_unique<PresetFile>(dirsFiles[i]);
-			files->add(std::move(preset));
-		}
-	}
-
-	return;
+	return folders;
 }
 
-std::shared_ptr<juce::OwnedArray<Preset::PresetFile>> Preset::PresetManager::getPresetFileHierarchy()
+juce::Array<juce::File> Preset::PresetManager::getPresetsIn(const juce::File &folder) const
 {
-	auto files = std::make_shared<juce::OwnedArray<Preset::PresetFile>>();
-
-	recursiveSortedTraverse(getPresetDirectory(), files);
-
-	this->presetsCache = files;
-
-	return files;
+	auto presets = folder.findChildFiles(juce::File::TypesOfFileToFind::findFiles, false, "*." + extension);
+	presets.sort();
+	return presets;
 }
 
 juce::File Preset::PresetManager::getCurrentPreset() const
@@ -411,5 +413,4 @@ juce::File Preset::PresetManager::getCurrentPreset() const
 void Preset::PresetManager::valueTreeRedirected(juce::ValueTree &treeWhichHasBeenChanged)
 {
 	currentPreset.referTo(treeWhichHasBeenChanged.getPropertyAsValue(presetPathProperty, nullptr));
-	currentAuthor.referTo(treeWhichHasBeenChanged.getPropertyAsValue("author", nullptr));
 }

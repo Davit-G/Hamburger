@@ -9,7 +9,8 @@
 
 using SmoothedValue = juce::SmoothedValue<float, juce::ValueSmoothingTypes::Linear>;
 
-/* Only for use with floats / knobs, not categorical parameters */
+/* Only for use with floats / knobs, not categorical parameters. Reads the parameter as scaled by the start page, see
+   MacroParam::getScaled */
 class SmoothParam
 {
 public:
@@ -33,7 +34,7 @@ public:
         for (auto& smoother : smoothedParamPerChannel)
         {
             smoother.reset(spec.sampleRate, 0.01);
-            smoother.setCurrentAndTargetValue(param->get());
+            smoother.setCurrentAndTargetValue(param->getScaled());
         }
     }
 
@@ -43,7 +44,7 @@ public:
             return;
 
         for (auto& smoother : smoothedParamPerChannel)
-            smoother.setTargetValue(param->get());
+            smoother.setTargetValue(param->getScaled());
     }
 
     float getNextValue(int channel = 0)
@@ -57,7 +58,7 @@ public:
     }
 
     // straight off the parameter, for values only read once per block
-    float getRaw(int = 0) const { return param != nullptr ? param->get() : 0.0f; }
+    float getRaw(int = 0) const { return param != nullptr ? param->getScaled() : 0.0f; }
 
     // use only if you actually use smoothing or not
     bool isSmoothing(int channel = 0) const

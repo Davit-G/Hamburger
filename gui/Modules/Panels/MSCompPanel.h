@@ -11,14 +11,12 @@ public:
                                                    threshold(p, "THRES", slot, ParamIDs::MSCompThreshold, ScopeContextType::COMPRESSION),
                                                    ratio(p, "RATIO", slot, ParamIDs::compRatio, ScopeContextType::COMPRESSION),
                                                    tilt(p, "TILT", slot, ParamIDs::compBandTilt, ScopeContextType::COMPRESSION),
-                                                   attack(p, "SPEED", slot, ParamIDs::MSCompSpeed, ScopeContextType::COMPRESSION),
-                                                   makeup(p, "GAIN", slot, ParamIDs::compOut, ScopeContextType::COMPRESSION)
+                                                   attack(p, "SPEED", slot, ParamIDs::MSCompSpeed, ScopeContextType::COMPRESSION)
     {
         addAndMakeVisible(threshold);
         addAndMakeVisible(ratio);
         addAndMakeVisible(tilt);
         addAndMakeVisible(attack);
-        addAndMakeVisible(makeup);
     }
 
     void resized() override
@@ -29,14 +27,13 @@ public:
         using Track = juce::Grid::TrackInfo;
 
         grid.templateRows = {Track(fr(1)), Track(fr(1))}; // todo: optimise this
-        grid.templateColumns = {Track(fr(1)), Track(fr(1)), Track(fr(1))};
+        grid.templateColumns = {Track(fr(1)), Track(fr(1))};
 
         grid.items = {
             juce::GridItem(threshold).withArea(1, 1),
-            juce::GridItem(tilt).withArea(1, 2),
-            juce::GridItem(ratio).withArea(1, 3),
+            juce::GridItem(ratio).withArea(1, 2),
             juce::GridItem(attack).withArea(2, 1),
-            juce::GridItem(makeup).withArea(2, 3)};
+            juce::GridItem(tilt).withArea(2, 2)};
 
         grid.performLayout(bounds);
     }
@@ -48,5 +45,4 @@ private:
     ParamKnob ratio;
     ParamKnob tilt;
     ParamKnob attack;
-    ParamKnob makeup;
 };

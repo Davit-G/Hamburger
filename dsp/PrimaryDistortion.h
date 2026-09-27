@@ -10,6 +10,7 @@
 #include "Distortions/nonlinslew/NonlinSlew.h"
 #include "Distortions/preisach/Preisach.h"
 #include "Distortions/waveshape/Waveshape.h"
+#include "Distortions/OptoDistortion.h"
 
 #include "DCBlockingHighPass.h"
 
@@ -22,6 +23,7 @@
 
 #include "EffectBase.h"
 #include "EffectInfos.h"
+#include "LevelStage.h"
 
 // #include <melatonin_perfetto/melatonin_perfetto.h>
 
@@ -30,7 +32,7 @@ class PrimaryDistortion : public EffectBase {
     PrimaryDistortion(juce::AudioProcessorValueTreeState &state,
                       SlotId slot = SlotId{ModuleId::main, 0},
                       std::shared_ptr<Waveshape::SharedCurve> sharedCurve = nullptr)
-        : slot(slot) {
+        : slot(slot), levels(state, slot) {
         distoType = dynamic_cast<juce::AudioParameterChoice *>(
             state.getParameter(slot.type().getParamID()));
         jassert(distoType);
@@ -61,18 +63,7 @@ class PrimaryDistortion : public EffectBase {
         nonlinSlew =
             std::make_unique<NonlinSlew>(state, slot);
         waveshape = std::make_unique<Waveshape>(state, slot, std::move(sharedCurve));
-
-        auto level = [&state, slot](const ParamIDs::ParameterInfo &descriptor) {
-            return &MacroParam::fetch(state, paramIdFor(slot, descriptor).getParamID());
-        };
-
-        inGainParam = level(ParamIDs::slotInGain);
-        mixParam = level(ParamIDs::slotMix);
-        outGainParam = level(ParamIDs::slotOutGain);
-
-        gainLink = dynamic_cast<juce::AudioParameterBool *>(
-            state.getParameter(paramIdFor(slot, ParamIDs::gainLink).getParamID()));
-        jassert(gainLink);
+        opto = std::make_unique<OptoDistortion>(state, slot);
     }
 
     bool isEnabled() const { return distortionEnabled == nullptr || distortionEnabled->get(); }
@@ -92,31 +83,19 @@ class PrimaryDistortion : public EffectBase {
         preisach->prepare(spec);
         nonlinSlew->prepare(spec);
         waveshape->prepare(spec);
+        opto->prepare(spec);
 
         setSampleRate(spec.sampleRate);
 
         previousDistType = -1;
 
-        for (int i = 0; i < 3; i++) {
-            dcBlocker[i].prepare(spec);
-        }
+        for (auto& blocker : dcBlocker)
+            blocker.prepare(spec);
 
         emptyBuffer = juce::AudioBuffer<float>(spec.numChannels, 8192);
         emptyBlock = juce::dsp::AudioBlock<float>(emptyBuffer);
 
-        for (auto *gain : {&inGain, &outGain}) {
-            gain->prepare(spec);
-            gain->setRampDurationSeconds(0.02);
-        }
-
-        inGain.setGainDecibels(inGainParam->get());
-        outGain.setGainDecibels(outGainDb());
-        inGain.reset();
-        outGain.reset();
-
-        dryWet.prepare(spec);
-        dryWet.setWetMixProportion(mixParam->get() * 0.01f);
-        dryWet.reset();
+        levels.prepare(spec);
 
         previousDistType = distoType->getIndex();
         fillEmptyWithZeros();
@@ -138,25 +117,17 @@ class PrimaryDistortion : public EffectBase {
             }
         }
 
-        juce::dsp::ProcessContextReplacing<float> context(block);
-
-        if (isEnabled()) {
-            dryWet.pushDrySamples(block);
-
-            inGain.setGainDecibels(inGainParam->get());
-            inGain.process(context);
-
-            distort(distoTypeIndex, block);
-
-            dryWet.setWetMixProportion(mixParam->get() * 0.01f);
-            dryWet.mixWetSamples(block);
-        }
-
-        outGain.setGainDecibels(outGainDb());
-        outGain.process(context);
+        levels.process(block, [&] { distort(distoTypeIndex, block); });
     }
 
     void setSampleRate(float newSampleRate) { sampleRate = newSampleRate; }
+
+    void setLinearHighpass(bool linear) {
+        for (auto& blocker : dcBlocker)
+            blocker.setLinear(linear);
+
+        waveshape->setLinearHighpass(linear);
+    }
 
   private:
     void distort(int distoTypeIndex, juce::dsp::AudioBlock<float> &block) {
@@ -201,23 +172,15 @@ class PrimaryDistortion : public EffectBase {
             waveshape->processBlock(block); // dc blocking already included in waveshape
             break;
         }
+        case 7: {
+            opto->processBlock(block);
+            dcBlocker[3].processBlock(block);
+            break;
+        }
         default:
             break;
         }
     }
-
-    float outGainDb() const {
-        const auto linked = gainLink != nullptr && gainLink->get() && isEnabled();
-        return outGainParam->get() - (linked ? inGainParam->get() : 0.0f);
-    }
-
-    juce::AudioParameterBool *gainLink = nullptr;
-    MacroParam *inGainParam = nullptr;
-    MacroParam *mixParam = nullptr;
-    MacroParam *outGainParam = nullptr;
-
-    juce::dsp::Gain<float> inGain, outGain;
-    juce::dsp::DryWetMixer<float> dryWet;
 
     juce::AudioBuffer<float> emptyBuffer;
     juce::dsp::AudioBlock<float> emptyBlock;
@@ -237,10 +200,12 @@ class PrimaryDistortion : public EffectBase {
     std::unique_ptr<Preisach> preisach = nullptr;
     std::unique_ptr<NonlinSlew> nonlinSlew = nullptr;
     std::unique_ptr<Waveshape> waveshape = nullptr;
+    std::unique_ptr<OptoDistortion> opto = nullptr;
 
-    DCBlockingHighPass dcBlocker[3];
+    DCBlockingHighPass dcBlocker[4];
 
     SlotId slot;
+    LevelStage levels;
 
     int previousDistType = -1;
 

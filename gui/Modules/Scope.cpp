@@ -40,10 +40,9 @@ Scope<SampleType>::Scope(juce::AudioProcessorValueTreeState& valueTree, ScopeDat
 
     lowFreqParam = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter(ParamIDs::emphasisLowFreq.getParamID()));
     highFreqParam = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter(ParamIDs::emphasisHighFreq.getParamID()));
-    lowGainParam = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter(ParamIDs::emphasisLowGain.getParamID()));
-    highGainParam = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter(ParamIDs::emphasisHighGain.getParamID()));
-    tiltParam = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter(ParamIDs::emphasisTilt.getParamID()));
-    jassert(tiltParam);
+    lowGainParam = &MacroParam::fetch(apvts, ParamIDs::emphasisLowGain.getParamID());
+    highGainParam = &MacroParam::fetch(apvts, ParamIDs::emphasisHighGain.getParamID());
+    tiltParam = &MacroParam::fetch(apvts, ParamIDs::emphasisTilt.getParamID());
     postClipKneeParam = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter(EffectInfos::paramIdForDescriptor(ParamIDs::postClipKnee)));
 
     compressionType = dynamic_cast<juce::AudioParameterChoice*>(apvts.getParameter(SlotId{ModuleId::dynamics, 0}.type().getParamID()));
@@ -151,8 +150,13 @@ void Scope<SampleType>::paint(juce::Graphics &g)
         case ScopeContextType::CLIPPER:
             drawTiledContextLabel(g, area, "CLIPPER");
             drawClipper(g, scopeRect);
-            drawParamHeader(g, scopeRect, { formatDecibels(paramValue(ParamIDs::postClipGain)),
-                                            juce::String(paramValue(ParamIDs::postClipKnee), 1) + " dB" });
+            // the limiter shows its release where the soft clip shows its knee
+            if (auto* type = choiceParamForSlot(SlotId{ModuleId::postClip, 0}); type != nullptr && type->getIndex() > 0)
+                drawParamHeader(g, scopeRect, { formatDecibels(paramValue(ParamIDs::postClipGain)),
+                                                juce::String(paramValue(ParamIDs::postClipTime), 0) + " ms" });
+            else
+                drawParamHeader(g, scopeRect, { formatDecibels(paramValue(ParamIDs::postClipGain)),
+                                                juce::String(paramValue(ParamIDs::postClipKnee), 1) + " dB" });
             break;
         // no watermark on these three - the cells are opaque and cover everything under the header
         case ScopeContextType::COMPRESSION: {
@@ -171,10 +175,26 @@ void Scope<SampleType>::paint(juce::Graphics &g)
                     break;
                 case 3:
                     drawTypeAComp(g, scopeRect);
-                    // the ratio is fixed in the dsp, and tilt only moves the makeup gains
+                    // tilt only moves the makeup gains
                     drawParamHeader(g, scopeRect, { formatDecibels(paramValue(ParamIDs::TypeAThreshold)),
-                                                    juce::String(TypeAProcessor::baseRatio, 1) + ":1",
+                                                    juce::String(paramValue(ParamIDs::TypeARatio), 1) + ":1",
                                                     formatDecibels(paramValue(ParamIDs::TypeATilt)) });
+                    break;
+                case 4:
+                    drawTransient(g, scopeRect, { "LEFT", "RIGHT" });
+                    drawParamHeader(g, scopeRect, { formatDecibels(paramValue(ParamIDs::transientAttack)),
+                                                    formatDecibels(paramValue(ParamIDs::transientSustain)),
+                                                    formatPercent(paramValue(ParamIDs::transientLink) * 0.01f) });
+                    break;
+                case 5:
+                    drawTransient(g, scopeRect, { "LOW", "MID", "HIGH" });
+                    drawParamHeader(g, scopeRect, { formatDecibels(paramValue(ParamIDs::transientAttack)),
+                                                    formatDecibels(paramValue(ParamIDs::transientSustain)),
+                                                    formatPercent(paramValue(ParamIDs::transientTilt) * 0.01f) });
+                    break;
+                case 6:
+                case 7:
+                    drawOptoComp(g, scopeRect, compressionTypeValue == 7);
                     break;
                 default:
                     break;
@@ -480,9 +500,10 @@ void Scope<SampleType>::drawWaveshapeCurve(juce::Graphics &g, juce::Rectangle<Sa
 {
     const auto slot = scopeContext.getFocus();
 
+    // as the audio hears it, so the drive shows global drive's scaling
     auto value = [this, slot](const ParamIDs::ParameterInfo &info) {
-        auto *param = apvts.getParameter(paramIdFor(slot, info).getParamID());
-        return (double) (param != nullptr ? param->convertFrom0to1(param->getValue()) : info.defaultValue);
+        auto *param = dynamic_cast<MacroParam*>(apvts.getParameter(paramIdFor(slot, info).getParamID()));
+        return (double) (param != nullptr ? param->getScaled() : info.defaultValue);
     };
 
     auto flag = [this](const juce::ParameterID &id) {
@@ -605,7 +626,7 @@ void Scope<SampleType>::drawSpectrumTilt(juce::Graphics &g, juce::Rectangle<Samp
     const auto w = (float) scopeRect.getWidth();
     const auto h = (float) scopeRect.getHeight();
     const auto maxHeight = h - (float) headerHeight(scopeRect);
-    const auto tilt = (double) tiltParam->get();
+    const auto tilt = (double) tiltParam->getScaled();
 
     spectrum.paint(g, juce::Rectangle<float>(0.0f, h - maxHeight, w, maxHeight), dataCollector.getSampleRate(), 2.f,
                    theme().scopeSpectrumLine, theme().scopeSpectrumFill);
@@ -657,7 +678,7 @@ void Scope<SampleType>::drawSpectrumTilt(juce::Graphics &g, juce::Rectangle<Samp
     name(pre, "PRE", theme().scopeCurvePre, !postHigher);
     name(post, "POST", theme().scopeCurvePost, postHigher);
 
-    drawParamHeader(g, scopeRect, { formatDecibels(tiltParam->get()) });
+    drawParamHeader(g, scopeRect, { formatDecibels(tiltParam->getScaled()) });
 }
 
 template <typename SampleType>
@@ -666,7 +687,10 @@ void Scope<SampleType>::drawClipper(juce::Graphics &g, juce::Rectangle<SampleTyp
     const auto w = (float) scopeRect.getWidth();
     const auto h = (float) scopeRect.getHeight();
 
-    const auto knee = postClipKneeParam != nullptr ? postClipKneeParam->get() * 0.5f : 0.0f;
+    // the limiter never lets anything past 0db, which is a knee of nothing
+    const auto* clipType = choiceParamForSlot(SlotId{ModuleId::postClip, 0});
+    const auto limiting = clipType != nullptr && clipType->getIndex() > 0;
+    const auto knee = postClipKneeParam != nullptr && ! limiting ? postClipKneeParam->get() : 0.0f;
 
     constexpr float threshold = 1.0f;
     constexpr float maxIn = 2.5f;
@@ -681,8 +705,9 @@ void Scope<SampleType>::drawClipper(juce::Graphics &g, juce::Rectangle<SampleTyp
     // shaded knee region
     if (knee > 0.0f)
     {
-        const auto kneeStart = toX(threshold - knee * 0.5f);
-        const auto kneeEnd = toX(threshold + knee * 0.5f);
+        // the knee is in dB, either side of the threshold
+        const auto kneeStart = toX(threshold * juce::Decibels::decibelsToGain(-knee * 0.5f));
+        const auto kneeEnd = toX(threshold * juce::Decibels::decibelsToGain(knee * 0.5f));
 
         // translucent rather than a solid fill, so the watermark underneath still reads through it -
         // alpha 22 over black lands on the same 22,22,22 the solid version used to paint
@@ -708,7 +733,7 @@ void Scope<SampleType>::drawClipper(juce::Graphics &g, juce::Rectangle<SampleTyp
     {
         const float in = juce::jmap((float) i, 0.0f, (float) numPoints, 0.0f, maxIn);
         const float x = toX(in);
-        const float y = toY(softClipperFunc(in, threshold, knee));
+        const float y = toY(softClipperFunc(in, knee));
 
         if (i == 0)
             curve.startNewSubPath(x, y);
@@ -733,9 +758,9 @@ void Scope<SampleType>::drawClipper(juce::Graphics &g, juce::Rectangle<SampleTyp
     const auto level = juce::jlimit(0.0f, maxIn, dataCollector.levelMeter.getNext());
 
     auto levelColour = theme().scopeClipBelow;
-    if (level > threshold + knee * 0.5f)
+    if (level > threshold * juce::Decibels::decibelsToGain(knee * 0.5f))
         levelColour = theme().scopeClipHard;
-    else if (isSoftClipperKnee(level, threshold, knee))
+    else if (isSoftClipperKnee(level, knee))
         levelColour = theme().scopeClipKnee;
 
     g.setColour(levelColour);
@@ -747,7 +772,7 @@ void Scope<SampleType>::drawClipper(juce::Graphics &g, juce::Rectangle<SampleTyp
         {
             const auto in = juce::jmap((float) i, 0.0f, (float) numPoints, 0.0f, level);
             const auto x = toX(in);
-            const auto y = toY(softClipperFunc(in, threshold, knee));
+            const auto y = toY(softClipperFunc(in, knee));
 
             if (i == 0)
                 active.startNewSubPath(x, y);
@@ -763,7 +788,7 @@ void Scope<SampleType>::drawClipper(juce::Graphics &g, juce::Rectangle<SampleTyp
     }
 
     constexpr auto dotRadius = 3.0f;
-    const auto outAtLevel = softClipperFunc(level, threshold, knee);
+    const auto outAtLevel = softClipperFunc(level, knee);
 
     g.fillEllipse(toX(level) - dotRadius, toY(outAtLevel) - dotRadius, dotRadius * 2.0f, dotRadius * 2.0f);
 }
@@ -998,9 +1023,93 @@ void Scope<SampleType>::drawTypeAComp(juce::Graphics &g, juce::Rectangle<SampleT
         CompBand { thr, bandLevel(dataCollector.band4), "X-HI", true,  tilt * 0.5f }
     };
 
-    drawCompBands(g, scopeRect, bands.data(), (int) bands.size(), TypeAProcessor::baseRatio);
+    drawCompBands(g, scopeRect, bands.data(), (int) bands.size(), paramValue(ParamIDs::TypeARatio));
 }
 
+// one cell per band, with a bar up from the middle for a boost or down for a cut
+template <typename SampleType>
+void Scope<SampleType>::drawTransient(juce::Graphics &g, juce::Rectangle<SampleType> scopeRect, const juce::StringArray &bandNames)
+{
+    constexpr auto rangeDb = 24.0f;
+    constexpr auto easing = 0.85f;
+    const auto numBands = bandNames.size();
+
+    const auto cellArea = juce::Rectangle<float>(0.0f, (float) headerHeight(scopeRect),
+                                                 (float) scopeRect.getWidth(), (float) scopeRect.getHeight() - (float) headerHeight(scopeRect));
+
+    if (cellArea.isEmpty())
+        return;
+
+    const auto cellWidth = cellArea.getWidth() / (float) numBands;
+
+    g.setFont(getLookAndFeel().getPopupMenuFont());
+    g.setFont(readoutFontHeight);
+
+    for (int band = 0; band < numBands; ++band)
+    {
+        const auto db = dataCollector.transientGainDb[(size_t) band].exchange(0.0f, std::memory_order_relaxed);
+        auto& shown = shownTransientDb[(size_t) band];
+        shown = std::abs(db) > std::abs(shown) ? db : shown * easing;
+
+        const auto cell = cellArea.withX(cellArea.getX() + cellWidth * (float) band).withWidth(cellWidth);
+        const auto middle = cell.getCentreY();
+        const auto y = juce::jmap(juce::jlimit(-rangeDb, rangeDb, shown), -rangeDb, rangeDb, cell.getBottom(), cell.getY());
+
+        g.setColour(theme().compCell);
+        g.fillRect(cell);
+
+        g.setColour(shown > 0.0f ? theme().compLevelOver : theme().compLevel);
+        g.fillRect(juce::Rectangle<float>(cell.getX(), juce::jmin(y, middle), cell.getWidth(), std::abs(y - middle))
+                       .reduced(cell.getWidth() * 0.28f, 0.0f));
+
+        constexpr auto lineInset = 6.0f;
+
+        g.setColour(theme().compThreshold);
+        g.drawLine(cell.getX() + lineInset, middle, cell.getRight() - lineInset, middle, 1.5f);
+
+        g.setColour(theme().compText);
+        g.drawText(juce::String(shown, 1) + " dB", cell.withHeight(12.0f).translated(0.0f, 1.0f), juce::Justification::centred, false);
+
+        g.drawText(bandNames[band], cell.withTop(cell.getBottom() - 13.0f).withHeight(12.0f), juce::Justification::centred, false);
+
+        if (band > 0)
+        {
+            g.setColour(theme().compCellEdge);
+            g.drawLine(cell.getX(), cell.getY(), cell.getX(), cell.getBottom(), 1.0f);
+        }
+    }
+}
+
+// each channel's cell, or each band's at its tilted threshold, the way the other compressors show theirs
+template <typename SampleType>
+void Scope<SampleType>::drawOptoComp(juce::Graphics &g, juce::Rectangle<SampleType> scopeRect, bool multiband)
+{
+    const auto thr = paramValue(ParamIDs::optoThreshold);
+    const auto ratio = paramValue(ParamIDs::optoRatio);
+
+    if (multiband)
+    {
+        const auto tilt = paramValue(ParamIDs::compBandTilt);
+        const std::array<CompBand, 3> bands {
+            CompBand { thr - tilt, bandLevel(dataCollector.band1), "LOW" },
+            CompBand { thr,        bandLevel(dataCollector.band2), "MID" },
+            CompBand { thr + tilt, bandLevel(dataCollector.band3), "HIGH" }
+        };
+
+        drawCompBands(g, scopeRect, bands.data(), (int) bands.size(), ratio);
+        drawParamHeader(g, scopeRect, { formatDecibels(thr), juce::String(ratio, 1) + ":1", formatDecibels(tilt) });
+        return;
+    }
+
+    const std::array<CompBand, 2> bands {
+        CompBand { thr, bandLevel(dataCollector.band1), "LEFT" },
+        CompBand { thr, bandLevel(dataCollector.band2), "RIGHT" }
+    };
+
+    drawCompBands(g, scopeRect, bands.data(), (int) bands.size(), ratio);
+    drawParamHeader(g, scopeRect, { formatDecibels(thr), juce::String(ratio, 1) + ":1",
+                                    formatPercent(paramValue(ParamIDs::compStereoLink) * 0.01f) });
+}
 
 template <typename SampleType>
 void Scope<SampleType>::drawStereoComp(juce::Graphics &g, juce::Rectangle<SampleType> scopeRect)
@@ -1133,6 +1242,10 @@ float Scope<SampleType>::paramValue(const ParamIDs::ParameterInfo &paramInfo) co
         entry->second = dynamic_cast<juce::AudioParameterFloat *>(apvts.getParameter(id));
     }
 
+    // as the audio hears it, scaled by the start page where that applies
+    if (auto *macro = dynamic_cast<MacroParam *>(entry->second))
+        return macro->getScaled();
+
     return entry->second != nullptr ? entry->second->get() : 0.0f;
 }
 
@@ -1202,6 +1315,7 @@ juce::String Scope<SampleType>::getDistortionAmountLabel() const
         case 4: return formatPercent(paramValue(ParamIDs::tapeDrive));                // TAPE
         case 5: return formatPercent(paramValue(ParamIDs::alphaParam));               // SLEW
         case 6: return formatDecibels(paramValue(ParamIDs::waveshapeDrive));          // WAVESHAPE
+        case 7: return formatDecibels(paramValue(ParamIDs::optoDrive));               // OPTO
         default: return {};
     }
 }
@@ -1227,9 +1341,9 @@ juce::StringArray Scope<SampleType>::getNoiseHeaderLabels() const
                      juce::String(juce::roundToInt(paramValue(ParamIDs::bitReduction))) + " bit",
                      formatPercent(paramValue(ParamIDs::downsampleMix)) };
 
-        case 3: // JEFF, the gate only has amount and mix
+        case 3: // JEFF, the gate only has amount and smoothing
             return { formatPercent(paramValue(ParamIDs::gateAmt)),
-                     "MIX " + formatPercent(paramValue(ParamIDs::gateMix)) };
+                     "SMOOTH " + formatPercent(paramValue(ParamIDs::gateSmooth) * 0.01f) };
 
         default: // SIZZLE and FIZZ
             return { formatFrequency(paramValue(ParamIDs::sizzleFrequency)),
@@ -1264,8 +1378,8 @@ void Scope<SampleType>::drawResponseCurve(juce::Graphics &g, const SampleType w,
 {
     const auto lowFreq = lowFreqParam->get();
     const auto highFreq = highFreqParam->get();
-    const auto lowGainDb = lowGainParam->get();
-    const auto highGainDb = highGainParam->get();
+    const auto lowGainDb = lowGainParam->getScaled();
+    const auto highGainDb = highGainParam->getScaled();
 
     juce::Path eqPath, eqInversePath;
     bool startedPaths = false;
@@ -1323,6 +1437,20 @@ void Scope<SampleType>::drawResponseCurve(juce::Graphics &g, const SampleType w,
 
         g.fillEllipse(x - dotRadius, y - dotRadius, dotRadius * 2.0f, dotRadius * 2.0f);
     }
+
+    // named in the right hand corners like the tilt view's, the curve ending higher up getting the top one.
+    // the mirrored curve is the one before the distortion
+    const auto postHigher = eqPath.getCurrentPosition().y <= eqInversePath.getCurrentPosition().y;
+    const auto top = juce::Rectangle<float>((float) w - 44.0f, (float) (centerY - maxHeight) + 2.0f, 40.0f, 14.0f);
+    const auto bottom = top.withY((float) centerY - 16.0f);
+
+    g.setFont(getLookAndFeel().getPopupMenuFont().withHeight(12.0f));
+
+    g.setColour(theme().scopeCurvePre);
+    g.drawText("PRE", postHigher ? bottom : top, juce::Justification::centredRight, false);
+
+    g.setColour(theme().scopeCurvePost);
+    g.drawText("POST", postHigher ? top : bottom, juce::Justification::centredRight, false);
 }
 
 

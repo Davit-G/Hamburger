@@ -27,13 +27,10 @@ public:
         : MacroEffect(treeState, SlotId{ModuleId::dynamics, 0}),
         speedParam(getParam(ParamIDs::TypeACompSpeed)),
         thresholdParam(getParam(ParamIDs::TypeAThreshold)),
-        outParam(getParam(ParamIDs::TypeAOut)),
+        ratioParam(getParam(ParamIDs::TypeARatio)),
         tiltParam(getParam(ParamIDs::TypeATilt)),
         scopeDataCollector(dataCollector)
     {}
-
-    // every band is set up with this, the TypeARatio parameter is not read anywhere
-    static constexpr float baseRatio = 2.0f;
 
     void prepareToPlay(double sampleRate, int samplesPerBlock, int numChannels);
 
@@ -49,7 +46,7 @@ private:
 
     SmoothParam speedParam;
     SmoothParam thresholdParam;
-    SmoothParam outParam;
+    SmoothParam ratioParam;
     SmoothParam tiltParam;
 
     ScopeDataCollector<float> &scopeDataCollector;
@@ -90,6 +87,7 @@ private:
     // static constexpr float threshold = -40.0f;
     static constexpr float attack = 20.0f;   // ms
     static constexpr float release = 100.0f; // ms
+    static constexpr float trimDb = -12.0f; // where the old out knob sat, to keep it as loud as it was
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TypeAProcessor)
 };

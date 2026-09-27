@@ -32,12 +32,12 @@ void HamburgerLAF::applyTheme()
     setColour(juce::ComboBox::ColourIds::backgroundColourId, juce::Colours::transparentBlack);
     setColour(juce::ComboBox::ColourIds::buttonColourId, juce::Colours::transparentBlack);
     setColour(juce::ComboBox::ColourIds::outlineColourId, juce::Colours::transparentBlack);
-    setColour(juce::ComboBox::ColourIds::textColourId, theme().textSettings);
-    setColour(juce::ComboBox::arrowColourId, theme().textSettings);
+    setColour(juce::ComboBox::ColourIds::textColourId, theme().settings.text);
+    setColour(juce::ComboBox::arrowColourId, theme().settings.text);
 
     setColour(juce::TextButton::buttonColourId, theme().row);
-    setColour(juce::TextButton::textColourOffId, theme().textSettings);
-    setColour(juce::TextButton::textColourOnId, theme().textSettings);
+    setColour(juce::TextButton::textColourOffId, theme().settings.text);
+    setColour(juce::TextButton::textColourOnId, theme().settings.text);
 
     setColour(juce::PopupMenu::ColourIds::backgroundColourId, theme().popupBackground);
     setColour(juce::PopupMenu::ColourIds::textColourId, theme().popupText);

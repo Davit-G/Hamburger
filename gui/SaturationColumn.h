@@ -4,21 +4,35 @@
 
 #include "Modules/DistortionModule.h"
 #include "PluginHeader.h"
-#include "Modules/Panels/PostClipPanel.h"
-#include "Modules/Panels/ErosionPanel.h"
-#include "Modules/Panels/SizzlePanel.h"
-#include "Modules/Panels/ReductionPanel.h"
-#include "Modules/Panels/GatePanel.h"
 #include "Modules/Panels/SlewSaturator.h"
 
-#include "Modules/ClipIndicator.h"
 #include "Modules/Panels/RoutingPanel.h"
-#include "SettingsPanel.h"
+#include "Modules/Panels/StartPanels.h"
+
+// an empty box for modulation, which has no power button or type of its own. the sources go under the distortion box,
+// and the routing table is the MOD page
+class ModulationArea : public juce::Component
+{
+public:
+    void paint(juce::Graphics &g) override
+    {
+        const auto box = getLocalBounds().reduced(Panel::boxInset).toFloat();
+
+        g.setColour(theme().box);
+        g.fillRoundedRectangle(box, Panel::boxCornerSize);
+
+        if (theme().boxBorders)
+        {
+            g.setColour(theme().boxBorder);
+            g.drawRoundedRectangle(box.reduced(0.5f), Panel::boxCornerSize, 1.0f);
+        }
+    }
+};
 
 class SaturationColumn : public juce::Component
 {
 public:
-    SaturationColumn(AudioPluginAudioProcessor &p) : scopeContext(p.getScopeContext()), clipDot(p.getScopeDataCollector(), p), routingPanel(p), settingsPanel(p) {
+    SaturationColumn(AudioPluginAudioProcessor &p) : scopeContext(p.getScopeContext()), routingPanel(p) {
         setInterceptsMouseClicks(true, true);
 
         for (int i = 0; i < MainRouting::maxSlots; ++i)
@@ -34,27 +48,13 @@ public:
         postModule = makeDistortionModule(p, SlotId{ModuleId::postDistortion, 0}, "POST-DISTORTION");
         addChildComponent(postModule.get());
 
-        std::vector<std::unique_ptr<Panel>> clipPanel;
+        std::vector<std::unique_ptr<Panel>> startPanels;
+        startPanels.push_back(std::make_unique<StartPanel>(p));
+        startModule = std::make_unique<Module>(p, "DISTORTION", "", "", std::move(startPanels));
+        addChildComponent(startModule.get());
 
-        postClipPanel = std::make_unique<PostClipPanel>(p);
-        clipPanel.push_back(std::move(postClipPanel));
-
-        postClip = std::make_unique<Module>(p, "CLIPPER", SlotId{ModuleId::postClip, 0}.enabled().getParamID().toStdString(), "", std::move(clipPanel));
-        addAndMakeVisible(postClip.get());
-
-        std::vector<std::unique_ptr<Panel>> noisePanels;
-        // ORDERING IS VERY IMPORTANT
-        noisePanels.push_back(std::make_unique<SizzlePanel>(p));
-        noisePanels.push_back(std::make_unique<ErosionPanel>(p));
-        noisePanels.push_back(std::make_unique<ReductionPanel>(p));
-        noisePanels.push_back(std::make_unique<GatePanel>(p));
-        noisePanels.push_back(std::make_unique<SizzleOGPanel>(p));
-
-        noise = std::make_unique<Module>(p, "NOISE", SlotId{ModuleId::module1, 0}.enabled().getParamID().toStdString(), SlotId{ModuleId::module1, 0}.type().getParamID().toStdString(), std::move(noisePanels));
-        addAndMakeVisible(noise.get());
-
-        addAndMakeVisible(clipDot);
-        addChildComponent(settingsPanel);
+        addAndMakeVisible(modulationSources);
+        addChildComponent(modulationRouting);
 
         routingPanel.onSlotSelected = [this](int slot) { setActiveSlot(slot); };
 
@@ -75,24 +75,12 @@ public:
     //     scopeContext.setType(ScopeContextType::LR_SCOPE);
     // }
 
-    ~SaturationColumn() {
-        postClip->setLookAndFeel(nullptr);
-        noise->setLookAndFeel(nullptr);
-    }
-
-    // the settings' fx order names each module in its box's colour, and some of those boxes live in other columns
-    void setModuleColours(std::function<juce::Colour(ModuleId)> colourFor) {
-        settingsPanel.getFxOrder().colourFor = std::move(colourFor);
-    }
-
     // the box on screen for a module this column holds, nullptr for the rest
     Module* moduleFor(ModuleId id) {
         switch (id) {
             case ModuleId::main:           return mainModules[(size_t) activeSlot].get();
             case ModuleId::preDistortion:  return preModule.get();
             case ModuleId::postDistortion: return postModule.get();
-            case ModuleId::module1:        return noise.get();
-            case ModuleId::postClip:       return postClip.get();
             default:                       return nullptr;
         }
     }
@@ -124,10 +112,13 @@ public:
         for (int i = 0; i < MainRouting::maxSlots; ++i)
             mainModules[(size_t) i]->setVisible(isMain && i == activeSlot);
 
+        startModule->setVisible(tab == PluginHeader::Tab::start);
+
         preModule->setVisible(tab == PluginHeader::Tab::pre);
         postModule->setVisible(tab == PluginHeader::Tab::post);
-        settingsPanel.setVisible(tab == PluginHeader::Tab::settings);
-        
+        modulationRouting.setVisible(tab == PluginHeader::Tab::mod);
+        modulationSources.setVisible(tab != PluginHeader::Tab::start);
+
         routingPanel.setVisible(isMain);
 
         if (isMain)
@@ -141,23 +132,19 @@ public:
 
     void resized() override{
         auto bounds = getLocalBounds();
-        auto height = bounds.getHeight();
 
-        auto boxBounds = bounds.removeFromTop(height * 3/4);
+        // the start page has no bottom row, the box takes the whole height
+        auto boxBounds = view == PluginHeader::Tab::start ? bounds : bounds.removeFromTop(bounds.getHeight() * 3 / 4);
 
         for (auto& module : mainModules)
             module->setBounds(boxBounds);
 
+        startModule->setBounds(boxBounds);
         preModule->setBounds(boxBounds);
         postModule->setBounds(boxBounds);
-        settingsPanel.setBounds(boxBounds);
+        modulationRouting.setBounds(boxBounds);
 
-        
-        auto postClipBounds = bounds.removeFromRight(bounds.getWidth() / 2);
-        postClip->setBounds(postClipBounds);
-        clipDot.setBounds(postClipBounds.removeFromTop(dotSize).removeFromRight(dotSize).reduced(4).translated(-19, 19));
-        
-        noise->setBounds(bounds);
+        modulationSources.setBounds(bounds);
     }
 
 private:
@@ -168,22 +155,15 @@ private:
     ScopeContext& scopeContext;
 
     RoutingPanel routingPanel;
-    SettingsPanel settingsPanel;
-
-    std::unique_ptr<Panel> postClipPanel = nullptr;
+    ModulationArea modulationSources, modulationRouting;
 
     std::array<std::unique_ptr<Module>, MainRouting::maxSlots> mainModules;
     std::unique_ptr<Module> preModule = nullptr;
     std::unique_ptr<Module> postModule = nullptr;
-
-    std::unique_ptr<Module> noise = nullptr;
-    std::unique_ptr<Module> postClip = nullptr;
+    std::unique_ptr<Module> startModule = nullptr;
 
     int activeSlot = 0;
     PluginHeader::Tab view = PluginHeader::Tab::main;
-
-    static constexpr int dotSize = 16;
-    ClipIndicator clipDot;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SaturationColumn)
 };

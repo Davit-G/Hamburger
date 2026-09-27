@@ -34,11 +34,22 @@ public:
         setLookAndFeel(nullptr);
     }
 
-    void createPresetSaveAlert(juce::String defaultName, juce::String defaultAuthor) {
+    void createPresetSaveAlert(juce::String defaultName, juce::String defaultAuthor, juce::String defaultDescription) {
 
 
         addTextEditor("presetName", defaultName, "Preset Name");
         addTextEditor("author", defaultAuthor, "Author");
+
+        // several lines, so it's its own editor rather than one of the window's single line ones
+        description.setMultiLine(true, true);
+        description.setReturnKeyStartsNewLine(true);
+        description.setText(defaultDescription, false);
+        description.setTextToShowWhenEmpty("Description", theme().textPresetsAuthor);
+        description.setColour(juce::TextEditor::backgroundColourId, theme().row);
+        description.setColour(juce::TextEditor::textColourId, theme().alertText);
+        description.setColour(juce::TextEditor::outlineColourId, juce::Colours::transparentBlack);
+        description.setSize(300, 90);
+        addCustomComponent(&description);
 
 		addButton("Save", 1, juce::KeyPress(juce::KeyPress::returnKey, 0, 0));
 		addButton("Cancel", 0, juce::KeyPress(juce::KeyPress::escapeKey, 0, 0));
@@ -63,6 +74,24 @@ public:
         cancelButton->setColour(juce::TextButton::buttonColourId, theme().row);
         cancelButton->setColour(juce::TextButton::textColourOnId, theme().alertText);
         cancelButton->setColour(juce::TextButton::textColourOffId, theme().alertText);
+    }
+
+    juce::String getDescription() const { return description.getText(); }
+
+    void createPresetRenameAlert(juce::String currentName) {
+        addTextEditor("presetName", currentName, "New Name");
+        addButton("Rename", 1, juce::KeyPress(juce::KeyPress::returnKey, 0, 0));
+        addButton("Cancel", 0, juce::KeyPress(juce::KeyPress::escapeKey, 0, 0));
+
+        getTextEditor("presetName")->setColour(juce::TextEditor::backgroundColourId, theme().row);
+        getTextEditor("presetName")->setColour(juce::TextEditor::ColourIds::outlineColourId, juce::Colours::transparentBlack);
+
+        for (int i = 0; i < 2; ++i)
+        {
+            getButton(i)->setColour(juce::TextButton::buttonColourId, theme().row);
+            getButton(i)->setColour(juce::TextButton::textColourOnId, theme().alertText);
+            getButton(i)->setColour(juce::TextButton::textColourOffId, theme().alertText);
+        }
     }
 
     void createPresetWarning() {
@@ -141,4 +170,5 @@ public:
 private:
 
     HamburgerLAF comboBoxLook;
+    juce::TextEditor description;
 };

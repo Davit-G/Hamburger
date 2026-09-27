@@ -14,6 +14,9 @@ target_sources("${BaseTargetName}"
         MacroParam.h
         EffectBase.h
         EffectInfos.h
+        LevelStage.h
         MainRouting.h
         Crossover.h
+        OptoCell.h
+        LinearPhaseSplit.h
         )

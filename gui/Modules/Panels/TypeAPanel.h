@@ -10,12 +10,12 @@ public:
     TypeAPanel(AudioPluginAudioProcessor &p, SlotId slot = SlotId{ModuleId::dynamics, 0}) : Panel(p, "TYPE A", &Theme::typeAComp),
                                                threshold(p, "THRES", slot, ParamIDs::TypeAThreshold, ScopeContextType::COMPRESSION),
                                                speed(p, "SPEED", slot, ParamIDs::TypeACompSpeed, ScopeContextType::COMPRESSION),
-                                               out(p, "OUT", slot, ParamIDs::TypeAOut, ScopeContextType::COMPRESSION),
+                                               ratio(p, "RATIO", slot, ParamIDs::TypeARatio, ScopeContextType::COMPRESSION),
                                                tilt(p, "TILT", slot, ParamIDs::TypeATilt, ScopeContextType::COMPRESSION)
     {
         addAndMakeVisible(threshold);
         addAndMakeVisible(speed);
-        addAndMakeVisible(out);
+        addAndMakeVisible(ratio);
         addAndMakeVisible(tilt);
     }
 
@@ -31,9 +31,9 @@ public:
 
         grid.items = {
             juce::GridItem(threshold).withArea(1, 1),
-            juce::GridItem(tilt).withArea(1, 2),
+            juce::GridItem(ratio).withArea(1, 2),
             juce::GridItem(speed).withArea(2, 1),
-            juce::GridItem(out).withArea(2, 2)};
+            juce::GridItem(tilt).withArea(2, 2)};
 
         grid.performLayout(bounds);
     }
@@ -43,6 +43,6 @@ private:
 
     ParamKnob threshold;
     ParamKnob speed;
-    ParamKnob out;
+    ParamKnob ratio;
     ParamKnob tilt;
 };

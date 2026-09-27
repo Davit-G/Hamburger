@@ -7,6 +7,7 @@
 #include "dsp/OversamplingStack.h"
 
 #include "dsp/PrimaryDistortion.h"
+#include "dsp/LevelStage.h"
 #include "dsp/MainRouting.h"
 #include "dsp/NoiseDistortions.h"
 #include "dsp/PreDistortions/PreDistortion.h"
@@ -119,8 +120,12 @@ private:
     juce::dsp::Gain<float> outputGain;
 
     juce::dsp::DryWetMixer<float> dryWetMixer { 16384 };
+    DryPhase dryPhase;
+    bool linearCrossovers = false;
+    float latencyTotal = 0.0f;
 
     void updateLatency();
+    float totalLatency();
 
     OversamplingStack oversamplingStack;
 
@@ -149,6 +154,12 @@ private:
     static_assert (std::atomic<juce::uint64>::is_always_lock_free);
 
     std::array<EffectBase*, (size_t) ModuleId::count> slots;
+
+    // in, dry/wet and out around the modules that don't have their own inside them like the distortions do
+    LevelStage dynamicsLevels { treeState, { ModuleId::dynamics, 0 } };
+    LevelStage noiseLevels { treeState, { ModuleId::module1, 0 } };
+    LevelStage preFxLevels { treeState, { ModuleId::module2, 0 } };
+    std::array<LevelStage*, (size_t) ModuleId::count> slotLevels {};
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AudioPluginAudioProcessor)
 };

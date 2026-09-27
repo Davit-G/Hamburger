@@ -311,10 +311,13 @@ private:
         header.justifyContent = juce::FlexBox::JustifyContent::center;
     }
 
-    // a type as the menu shows it, with the module's name after it where it has one
+    // a type as the menu shows it, with the module's name after it where it has one. transients aren't compressors
     juce::String typeLabel(int index) const
     {
-        return moduleName.empty() ? typeNames[index] : typeNames[index] + " " + moduleName;
+        if (moduleName.empty() || typeNames[index].contains("TRANSIENT"))
+            return typeNames[index];
+
+        return typeNames[index] + " " + moduleName;
     }
 
     void setupPanels()
@@ -330,6 +333,7 @@ private:
     void setupTitleLabel(const std::string &moduleName)
     {
         titleLabel.setText(moduleName, juce::dontSendNotification);
+        titleLabel.setJustificationType(juce::Justification::centred);
         
         addAndMakeVisible(titleLabel);
         

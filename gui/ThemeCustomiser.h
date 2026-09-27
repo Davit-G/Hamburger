@@ -6,7 +6,8 @@
 class ColourRow : public juce::Component
 {
 public:
-    ColourRow (const ThemeColour& themeColour, ThemeHistory& themeHistory) : entry (themeColour), history (themeHistory)
+    ColourRow (const ThemeColour& themeColour, ThemeHistory& themeHistory, ThemeManager& manager)
+        : entry (themeColour), history (themeHistory), themes (manager)
     {
         name.setText (entry.name, juce::dontSendNotification);
         name.setTooltip (entry.description);
@@ -45,10 +46,29 @@ public:
         };
         addAndMakeVisible (wheel);
 
-        refresh();
+        refresh (theme());
     }
 
-    void refresh() { swatch.show (entry.in (theme())); }
+    // from the theme as it really is, not a colour pulsing while its row is hovered
+    void refresh (Theme& shown) { swatch.show (entry.in (shown)); }
+
+    // shows off where the colour's used as the mouse comes onto the row, not again as it moves between its parts
+    void mouseEnter (const juce::MouseEvent&) override
+    {
+        if (! hovered)
+            themes.pulse (&entry);
+
+        hovered = true;
+    }
+
+    void mouseExit (const juce::MouseEvent&) override
+    {
+        if (isMouseOver (true))
+            return;
+
+        hovered = false;
+        themes.pulse (nullptr);
+    }
 
     void resized() override
     {
@@ -92,7 +112,7 @@ private:
     void set (juce::Colour colour, bool continuesLastStep = false)
     {
         history.change ([&] (Theme& t) { entry.in (t) = colour; }, continuesLastStep);
-        refresh();
+        refresh (theme());
     }
 
     // the rest of the type or family that shares this colour in the default theme, like every compressor's knob
@@ -111,6 +131,8 @@ private:
 
     const ThemeColour& entry;
     ThemeHistory& history;
+    ThemeManager& themes;
+    bool hovered = false;
 
     juce::Label name;
     ColourSwatch swatch;
@@ -123,7 +145,7 @@ private:
 class ColourList : public juce::Component
 {
 public:
-    explicit ColourList (ThemeHistory& themeHistory) : history (themeHistory)
+    ColourList (ThemeHistory& themeHistory, ThemeManager& manager) : history (themeHistory), themes (manager)
     {
         borders.setTooltip ("Draws an outline around every box, in the box border colours");
         borders.onClick = [this] { history.change ([this] (Theme& t) { t.boxBorders = borders.getToggleState(); }); };
@@ -139,7 +161,7 @@ public:
                 addAndMakeVisible (borders);
 
             for (const auto& colour : section.colours)
-                addAndMakeVisible (rows.add (new ColourRow (colour, history)));
+                addAndMakeVisible (rows.add (new ColourRow (colour, history, themes)));
         }
 
         setSize (400, layOut());
@@ -149,8 +171,10 @@ public:
     {
         borders.setToggleState (theme().boxBorders, juce::dontSendNotification);
 
+        auto shown = themes.unpulsed();
+
         for (auto* row : rows)
-            row->refresh();
+            row->refresh (shown);
     }
 
     void resized() override { layOut(); }
@@ -188,6 +212,7 @@ private:
     static constexpr int rowHeight = 28;
 
     ThemeHistory& history;
+    ThemeManager& themes;
 
     juce::OwnedArray<juce::Label> headings;
     juce::OwnedArray<ColourRow> rows;
@@ -309,7 +334,7 @@ private:
     juce::Label nameLabel { {}, "Name" }, authorLabel { {}, "Author" };
     juce::TextButton save { "SAVE" }, openFolder { "OPEN FOLDER" }, undo { "UNDO" }, redo { "REDO" };
 
-    ColourList list { history };
+    ColourList list { history, *themes };
     juce::Viewport viewport;
     juce::TooltipWindow tooltips { this, 500 };
 };
@@ -334,7 +359,12 @@ public:
         setLookAndFeel (nullptr);
     }
 
-    void closeButtonPressed() override { setVisible (false); }
+    // the row under the mouse doesn't hear it leave when the window goes, so its pulse is stopped here
+    void closeButtonPressed() override
+    {
+        themes->pulse (nullptr);
+        setVisible (false);
+    }
 
     // typing in a field has its own undo, these are for everything else in the window
     bool keyPressed (const juce::KeyPress& key) override

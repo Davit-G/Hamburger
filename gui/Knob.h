@@ -21,13 +21,14 @@ public:
 
     }
 
-    void drawRotarySlider(juce::Graphics &g, int x, int y, int width, int height, float sliderPos,
-                        const float rotaryStartAngle, const float rotaryEndAngle, juce::Slider &slider)
+    // thickness as a share of the knob's radius
+    void drawThumb(juce::Graphics &g, juce::Rectangle<float> bounds, float sliderPos, juce::Colour colour, float thickness)
     {
-        auto bounds = juce::Rectangle<int>(x, y, width, height).toFloat().reduced(5.0f);
+        bounds = bounds.reduced(5.0f);
 
+        auto rotary = getRotaryParameters();
         auto radius = juce::jmin(bounds.getWidth(), bounds.getHeight()) / 2.0f;
-        auto toAngle = rotaryStartAngle + sliderPos * (rotaryEndAngle - rotaryStartAngle);
+        auto toAngle = rotary.startAngleRadians + sliderPos * (rotary.endAngleRadians - rotary.startAngleRadians);
         auto lineW = juce::jmin(8.0f, radius * 0.5f);
         auto arcRadius = radius - lineW * 0.5f;
 
@@ -40,9 +41,9 @@ public:
         marker.setEnd(xOffset + bounds.getCentreX(), yOffset + bounds.getCentreY());
 
         juce::Path p;
-        p.addLineSegment(marker, radius * 0.08f);
-        g.setColour(theme().knobThumb);
-        g.strokePath(p, juce::PathStrokeType(radius * 0.08f, juce::PathStrokeType::JointStyle::curved, juce::PathStrokeType::EndCapStyle::rounded));
+        p.addLineSegment(marker, radius * thickness);
+        g.setColour(colour);
+        g.strokePath(p, juce::PathStrokeType(radius * thickness, juce::PathStrokeType::JointStyle::curved, juce::PathStrokeType::EndCapStyle::rounded));
     }
 
     void paint(juce::Graphics &g) override
@@ -61,10 +62,12 @@ public:
         g.drawEllipse(juce::Rectangle<float>(size, size).reduced(12.0f).withCentre(bounds.getCentre().toFloat()), 2.0f);
         g.drawEllipse(juce::Rectangle<float>(size, size).reduced(20.0f).withCentre(bounds.getCentre().toFloat()), 4.0f + dragAmount * 4.0f);
 
-        auto rotary = getRotaryParameters();
-
         bounds.expand(5.0f, 5.0f);
-        drawRotarySlider(g, bounds.getX(), bounds.getY(), bounds.getWidth(), bounds.getHeight(), valueToProportionOfLength(getValue()), rotary.startAngleRadians, rotary.endAngleRadians, *this);
+        drawThumb(g, bounds.toFloat(), (float) valueToProportionOfLength(getValue()), theme().knobThumb, 0.08f);
+
+        // a thinner one where the audio really is, when global drive or the like scales it
+        if (auto scaled = scaledProportion())
+            drawThumb(g, bounds.toFloat(), *scaled, theme().scaledMarker, 0.04f);
     }
 
     void timerCallback() override

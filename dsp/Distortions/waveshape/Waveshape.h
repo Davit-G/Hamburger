@@ -126,6 +126,8 @@ public:
 
     ~Waveshape() override { apvts.state.removeListener (this); }
 
+    void setLinearHighpass (bool linear) { highpass.setLinear (linear); }
+
     void prepare (juce::dsp::ProcessSpec& spec) override
     {
         drive.prepare (spec);

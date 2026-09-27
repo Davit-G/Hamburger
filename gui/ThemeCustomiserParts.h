@@ -128,6 +128,9 @@ public:
     // a new undo step, unless it carries on the last one like every move of one picker drag does
     void change (const std::function<void (Theme&)>& edit, bool continuesLastStep = false)
     {
+        // so the pulse on a hovered row never ends up in the history
+        themes.stopPulse();
+
         if (! continuesLastStep)
             undoManager.beginNewTransaction();
 

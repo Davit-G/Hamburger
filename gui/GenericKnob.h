@@ -22,6 +22,12 @@ private:
         jassert (processorRef.treeState.getParameter (macroIdentifier.getParamID()) != nullptr); // wrong slot, or never registered
         knobAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(processorRef.treeState, macroIdentifier.getParamID(), *this);
 
+        // a start page amount scaling this moves where the audio really is, which is drawn over the knob
+        macro = dynamic_cast<MacroParam*>(processorRef.treeState.getParameter(macroIdentifier.getParamID()));
+
+        if (macro != nullptr && macro->getScaler() != nullptr)
+            scalerAttachment = std::make_unique<juce::ParameterAttachment>(*macro->getScaler(), [this](float) { repaint(); }, nullptr);
+
 
         setSliderStyle(juce::Slider::RotaryVerticalDrag);
         setTextBoxStyle(juce::Slider::TextBoxBelow, true, 0, 0);
@@ -240,6 +246,18 @@ protected:
     juce::ParameterID identifier;
 
     juce::Label label;
+
+    // where the audio really is as a proportion like the knob's own, when a start page amount scales it to somewhere else
+    std::optional<float> scaledProportion()
+    {
+        if (macro == nullptr || macro->getScaler() == nullptr || juce::approximatelyEqual(macro->getScaled(), macro->get()))
+            return {};
+
+        return (float) valueToProportionOfLength(macro->getScaled());
+    }
+
+    MacroParam* macro = nullptr;
+    std::unique_ptr<juce::ParameterAttachment> scalerAttachment;
 
     AccentColours Theme::* accent = &Theme::plain;
     juce::LookAndFeel* lookAndFeelSeen = nullptr;

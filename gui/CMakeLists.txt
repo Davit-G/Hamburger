@@ -16,4 +16,6 @@ target_sources("${BaseTargetName}"
         SettingsPanel.h
         ThemeCustomiser.h
         ThemeCustomiserParts.h
+        TooltipBar.h
+        PluginFooter.h
         )

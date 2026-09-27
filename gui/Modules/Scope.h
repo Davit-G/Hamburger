@@ -148,9 +148,9 @@ public:
 private:
     juce::AudioParameterFloat* lowFreqParam;
     juce::AudioParameterFloat* highFreqParam;
-    juce::AudioParameterFloat* lowGainParam;
-    juce::AudioParameterFloat* highGainParam;
-    juce::AudioParameterFloat* tiltParam;
+    MacroParam* lowGainParam;
+    MacroParam* highGainParam;
+    MacroParam* tiltParam;
     juce::AudioParameterFloat* postClipKneeParam;
     juce::AudioParameterChoice* compressionType;
 
@@ -214,6 +214,8 @@ private:
     void drawMSComp(juce::Graphics &g, juce::Rectangle<SampleType> scopeRect);
     void drawStereoComp(juce::Graphics &g, juce::Rectangle<SampleType> scopeRect);
     void drawTypeAComp(juce::Graphics &g, juce::Rectangle<SampleType> scopeRect);
+    void drawOptoComp(juce::Graphics &g, juce::Rectangle<SampleType> scopeRect, bool multiband);
+    void drawTransient(juce::Graphics &g, juce::Rectangle<SampleType> scopeRect, const juce::StringArray &bandNames);
     void drawTiledContextLabel(juce::Graphics &g, juce::Rectangle<int> area, const juce::String &text);
     void drawParamHeader(juce::Graphics &g, juce::Rectangle<SampleType> scopeRect, const juce::StringArray &labels);
 
@@ -223,6 +225,9 @@ private:
     float paramValue(const ParamIDs::ParameterInfo &paramInfo) const;
     
     mutable std::map<const ParamIDs::ParameterInfo *, juce::AudioParameterFloat *> paramCache;
+
+    // the transient shaper's gain per band as drawn, easing back once it's been furthest
+    std::array<float, 3> shownTransientDb {};
 
 
     juce::AudioParameterChoice* choiceParam(const ParamIDs::ParameterInfo &id) const;

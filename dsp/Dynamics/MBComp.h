@@ -4,12 +4,13 @@
 #include "../../gui/Modules/ScopeDataCollector.h"
 #include "../EffectBase.h"
 #include "../EffectInfos.h"
+#include "ThreeBands.h"
  
 
 class MBComp : public MacroEffect
 {
 public:
-    MBComp(juce::AudioProcessorValueTreeState &state, ScopeDataCollector<float> &dataCollector)
+    MBComp(juce::AudioProcessorValueTreeState &state, ScopeDataCollector<float> &dataCollector, ThreeBands &threeBands)
                                                       : MacroEffect(state, SlotId{ModuleId::dynamics, 0}),
                                                         compressor1(CompressionType::COMPRESSOR),
                                                         compressor2(CompressionType::COMPRESSOR),
@@ -18,68 +19,48 @@ public:
                                                         ratio(getParam(ParamIDs::compRatio)),
                                                         tilt(getParam(ParamIDs::compBandTilt)),
                                                         speed(getParam(ParamIDs::MBCompSpeed)),
-                                                        makeup(getParam(ParamIDs::compOut)),
-                                                        scopeDataCollector(dataCollector) {}
+                                                        scopeDataCollector(dataCollector),
+                                                        bands(threeBands) {}
     ~MBComp() {}
 
     void processBlock(juce::dsp::AudioBlock<float> &block) override
     {
-
-        speed.update();
-        makeup.update();
-        tilt.update();
-        ratio.update();
-        threshold.update();
-
         float spd = speed.getRaw(0);
-        float mkp = makeup.getRaw(0);
         float rat = ratio.getRaw(0);
         float tlt = tilt.getRaw(0);
         float thr = threshold.getRaw(0);
 
         // float atk, float rel, float mkp, float ratioLow, float ratioUp, float thresholdLow, float thresholdUp, float kneeW, float mkpDB)
-        compressor1.updateUpDown(spd, spd * 0.8f, mkp, rat, rat, thr - tlt, thr + 2.0f - tlt, Compressor::standardKneeDb, 0.f);
-        compressor2.updateUpDown(spd, spd * 0.8f, mkp, rat, rat, thr, thr + 2.0f, Compressor::standardKneeDb, 0.f);
-        compressor3.updateUpDown(spd, spd * 0.8f, mkp, rat, rat, thr + tlt, thr + 2.0f - tlt, Compressor::standardKneeDb, 0.f);
+        compressor1.updateUpDown(spd, spd * 0.8f, 0.0f, rat, rat, thr - tlt, thr + 2.0f - tlt, Compressor::standardKneeDb, 0.f);
+        compressor2.updateUpDown(spd, spd * 0.8f, 0.0f, rat, rat, thr, thr + 2.0f, Compressor::standardKneeDb, 0.f);
+        compressor3.updateUpDown(spd, spd * 0.8f, 0.0f, rat, rat, thr + tlt, thr + 2.0f - tlt, Compressor::standardKneeDb, 0.f);
 
         float autoGain = juce::Decibels::decibelsToGain(-thr * powf((rat - 1.0f) * 0.09f, 0.4f) * 0.45);
 
-        for (int sample = 0; sample < block.getNumSamples(); sample++)
+        bands.split(block);
+
+        auto &low = bands.bands[0], &mid = bands.bands[1], &high = bands.bands[2];
+
+        for (int sample = 0; sample < (int) block.getNumSamples(); sample++)
         {
-            float leftSample = block.getSample(0, sample);
-            float rightSample = block.getSample(1, sample);
-            
-            lowCrossOver.processSample(0, leftSample, lowResultL, notLowL);
-            highCrossOver.processSample(0, notLowL, midResultL, highResultL);
-
-            lowCrossOver.processSample(1, rightSample, lowResultR, notLowR);
-            highCrossOver.processSample(1, notLowR, midResultR, highResultR);
-
-            float lowGain = compressor1.processOneSampleGainStereo(lowResultL, lowResultR);
-            float midGain = compressor2.processOneSampleGainStereo(midResultL, midResultR);
-            float highGain = compressor3.processOneSampleGainStereo(highResultL, highResultR);
+            float lowGain = compressor1.processOneSampleGainStereo(low.getSample(0, sample), low.getSample(1, sample));
+            float midGain = compressor2.processOneSampleGainStereo(mid.getSample(0, sample), mid.getSample(1, sample));
+            float highGain = compressor3.processOneSampleGainStereo(high.getSample(0, sample), high.getSample(1, sample));
 
             scopeDataCollector.band1.accumulateDb(compressor1.lastEnvelopeDb);
             scopeDataCollector.band2.accumulateDb(compressor2.lastEnvelopeDb);
             scopeDataCollector.band3.accumulateDb(compressor3.lastEnvelopeDb);
 
-            block.setSample(0, sample, (lowResultL * lowGain + midResultL * midGain + highResultL * highGain) * autoGain);
-            block.setSample(1, sample, (lowResultR * lowGain + midResultR * midGain + highResultR * highGain) * autoGain);
+            for (int ch = 0; ch < 2; ++ch)
+                block.setSample(ch, sample, (low.getSample(ch, sample) * lowGain + mid.getSample(ch, sample) * midGain + high.getSample(ch, sample) * highGain) * autoGain);
         }
     }
 
-    void prepare(juce::dsp::ProcessSpec &spec)
+    void prepare(juce::dsp::ProcessSpec &spec) override
     {
         compressor1.prepare(spec);
         compressor2.prepare(spec);
         compressor3.prepare(spec);
-
-        lowCrossOver.setCutoffFrequency(200.0f);
-        highCrossOver.setCutoffFrequency(3000.0f);
-        lowCrossOver.setType(juce::dsp::LinkwitzRileyFilterType::lowpass);
-        highCrossOver.setType(juce::dsp::LinkwitzRileyFilterType::highpass);
-        lowCrossOver.prepare(spec);
-        highCrossOver.prepare(spec);
     }
 
 private:
@@ -91,19 +72,7 @@ private:
     SmoothParam ratio;
     SmoothParam tilt;
     SmoothParam speed;
-    SmoothParam makeup;
-
-    float lowResultL = 0.0f;
-    float notLowL = 0.0f;
-    float midResultL = 0.0f;
-    float highResultL = 0.0f;
-    float lowResultR = 0.0f;
-    float notLowR = 0.0f;
-    float midResultR = 0.0f;
-    float highResultR = 0.0f;
 
     ScopeDataCollector<float> &scopeDataCollector;
-
-    juce::dsp::LinkwitzRileyFilter<float> lowCrossOver;
-    juce::dsp::LinkwitzRileyFilter<float> highCrossOver;
+    ThreeBands &bands;
 };

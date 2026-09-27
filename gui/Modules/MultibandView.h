@@ -523,7 +523,10 @@ private:
 
     float highpassDb (double freq) const
     {
-        const auto slope = MainRouting::crossoverSlopeFrom (apvts.state.getProperty (MainRouting::crossoverSlopeProperty));
+        const auto stored = MainRouting::crossoverSlopeFrom (apvts.state.getProperty (MainRouting::crossoverSlopeProperty));
+
+        // the linear phase split is steeper than any of the slopes, drawn as the steepest
+        const auto slope = stored == MainRouting::linearPhase ? 48 : stored;
         const auto ratio = std::pow (freq / (double) crossovers[0]->get(), slope / 6.0);
         return juce::Decibels::gainToDecibels ((float) (ratio / (1.0 + ratio)), -100.0f);
     }

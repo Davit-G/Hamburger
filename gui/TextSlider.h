@@ -32,6 +32,27 @@ public:
 
     void refreshText() { updateText(); }
 
+    // just the value, where there's no room for the name in front of it
+    void hideName() { showsName = false; updateText(); }
+
+    // just the name, swapped for the value while hovered or dragged, and back a moment after the mouse has gone
+    void showValueOnHover() { valueOnHover = true; updateText(); }
+
+    void mouseEnter (const juce::MouseEvent& e) override
+    {
+        GenericKnob::mouseEnter (e);
+        hideValueSoon.stopTimer();
+        setShowingValue (true);
+    }
+
+    void mouseExit (const juce::MouseEvent& e) override
+    {
+        GenericKnob::mouseExit (e);
+
+        if (! isDragging)
+            hideValueSoon.startTimer (valueHoldMs);
+    }
+
     void editorHidden (juce::Label* labelThatWasHidden, juce::TextEditor& editor) override
     {
         GenericKnob::editorHidden (labelThatWasHidden, editor);
@@ -65,7 +86,14 @@ private:
 
         onDragStart = [this] { isDragging = true; processorRef.getScopeContext().setType (preferredScopeContextType); };
         onValueChange = [this] { updateText(); };
-        onDragEnd = [this] { isDragging = false; processorRef.getScopeContext().startDecaying(); };
+        onDragEnd = [this]
+        {
+            isDragging = false;
+            processorRef.getScopeContext().startDecaying();
+
+            if (! isMouseOver())
+                hideValueSoon.startTimer (valueHoldMs);
+        };
 
         updateText();
     }
@@ -82,9 +110,18 @@ private:
         }
     }
 
+    void setShowingValue (bool shouldShow)
+    {
+        showingValue = shouldShow;
+        updateText();
+    }
+
     void updateText()
     {
-        label.setText (kName + ": " + valueText(), juce::dontSendNotification);
+        if (valueOnHover)
+            label.setText (showingValue ? valueText() : kName, juce::dontSendNotification);
+        else
+            label.setText ((showsName ? kName + ": " : juce::String()) + valueText(), juce::dontSendNotification);
 
         if (colourByGain)
             label.setColour (juce::Label::textColourId, gainColour());
@@ -103,5 +140,15 @@ private:
     static constexpr float dbGrayThres = 24.0f;
     static constexpr float dbColorThres = 12.0f;
 
+    static constexpr int valueHoldMs = 2000;
+
     bool colourByGain = false;
+    bool showsName = true;
+    bool valueOnHover = false, showingValue = false;
+
+    juce::TimedCallback hideValueSoon { [this]
+    {
+        hideValueSoon.stopTimer();
+        setShowingValue (false);
+    } };
 };

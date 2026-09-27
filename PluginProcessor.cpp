@@ -18,7 +18,6 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor() : AudioProcessor(BusesPro
                                                          treeState(*this, nullptr, "PARAMETER", createParameterLayout()),
                                                          dynamics(treeState, scopeDataCollector),
                                                          postClip(treeState, scopeDataCollector),
-                                                         dryWetMixer(30),
                                                          noiseDistortionSelection(treeState),
                                                          preDistortionSelection(treeState),
                                                          emphasisFilter(treeState),
@@ -38,6 +37,27 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor() : AudioProcessor(BusesPro
     slots[(size_t) ModuleId::postClip] = &postClip;
     slots[(size_t) ModuleId::preDistortion] = &preDistortion;
     slots[(size_t) ModuleId::postDistortion] = &postDistortion;
+
+    /*  The start page's amounts scale the parameters they cover everywhere those are read through SmoothParam. A drive
+        scales up from the bottom of its knob, no drive at all, even where that's -24 dB. The rest scale from 0, or the
+        end of their range nearest it: a threshold from 0 dB, a ratio from 1:1. */
+    for (auto* parameter : getParameters())
+    {
+        if (auto* macro = dynamic_cast<MacroParam*>(parameter))
+        {
+            if (const auto* scale = ParamIDs::scaleFor(macro->getDescriptor()))
+            {
+                const auto& range = macro->getNormalisableRange();
+                const auto neutral = scale->id == ParamIDs::globalDrive.id ? range.start : juce::jlimit(range.start, range.end, 0.0f);
+
+                macro->setScaler(&MacroParam::fetch(treeState, scale->getParamID()), neutral);
+            }
+        }
+    }
+
+    slotLevels[(size_t) ModuleId::dynamics] = &dynamicsLevels;
+    slotLevels[(size_t) ModuleId::module1] = &noiseLevels;
+    slotLevels[(size_t) ModuleId::module2] = &preFxLevels;
 
     inputGainKnob = dynamic_cast<juce::AudioParameterFloat *>(treeState.getParameter(ParamIDs::inputGain.getParamID()));
     if (inputGainKnob == nullptr)
@@ -141,6 +161,9 @@ juce::AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::c
     collected.push_back(std::make_unique<MacroParam>(ParamIDs::outputGain));
     collected.push_back(std::make_unique<juce::AudioParameterBool>(ParamIDs::gainLink.getParameterID(), ParamIDs::gainLink.displayName, false));
     collected.push_back(std::make_unique<MacroParam>(ParamIDs::mix));
+
+    for (const auto* startPage : { &ParamIDs::globalDrive, &ParamIDs::compAmount, &ParamIDs::eqStrength, &ParamIDs::noiseAmount, &ParamIDs::preFxAmount })
+        collected.push_back(std::make_unique<MacroParam>(*startPage));
     collected.push_back(std::make_unique<juce::AudioParameterInt>(ParamIDs::oversamplingFactor.getParameterID(), "Oversampling Factor", 0, 2, 0));
     
     for (int i = 0; i < ParamIDs::numGlobalMacros; ++i)
@@ -201,8 +224,8 @@ juce::AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::c
                 collected.push_back (std::make_unique<juce::AudioParameterChoice> (
                     slot.type(), slot.displayNamePrefix() + " TYPE", ParamIDs::withReservedSlots (types->categories), 0));
 
-            // every distortion slot's own in, dry/wet and out, whichever type it is running
-            if (ParamIDs::categoriesFor (m.id) == &ParamIDs::distortionTypes)
+            // every slot with types to pick from but the clipper has its own in, dry/wet and out, whichever type it is running
+            if (ParamIDs::categoriesFor (m.id) != nullptr && m.id != ModuleId::postClip)
             {
                 for (const auto* level : { &ParamIDs::slotInGain, &ParamIDs::slotMix, &ParamIDs::slotOutGain })
                     collected.push_back (std::make_unique<MacroParam> (slot, *level));
@@ -299,14 +322,36 @@ void AudioPluginAudioProcessor::prepareToPlay(double sampleRate, int samplesPerB
     for (size_t i = 0; i < (size_t) ModuleId::count; i++)
         slots[i]->prepare(oversampledSpec);
 
+    for (auto* levels : slotLevels)
+        if (levels != nullptr)
+            levels->prepare(oversampledSpec);
+
     dryWetMixer.reset();
     dryWetMixer.prepare(spec);
+    dryPhase.prepare(spec);
     updateLatency();
 
     scopeDataCollector.prepare(spec);
 }
 
 void AudioPluginAudioProcessor::updateLatency()
+{
+    linearCrossovers = distortionTypeSelection.linearCrossovers();
+    dynamics.setLinearCrossovers(linearCrossovers);
+
+    const auto total = totalLatency();
+    latencyTotal = total;
+
+    const auto rounded = (int) std::ceil(total);
+
+    if (rounded != getLatencySamples())
+        setLatencySamples(rounded);
+
+    dryWetMixer.setWetLatency(total);
+}
+
+// in base rate samples: the oversampling's own, and whatever each module delays by at the oversampled rate
+float AudioPluginAudioProcessor::totalLatency()
 {
     const auto oversampledRatio = std::pow(2.0f, (float) oversamplingStack.getOversamplingFactor());
 
@@ -315,12 +360,7 @@ void AudioPluginAudioProcessor::updateLatency()
     for (auto* slot : slots)
         total += (float) slot->getLatencySamples() / oversampledRatio;
 
-    const auto rounded = (int) std::ceil(total);
-
-    if (rounded != getLatencySamples())
-        setLatencySamples(rounded);
-
-    dryWetMixer.setWetLatency(total);
+    return total;
 }
 
 void AudioPluginAudioProcessor::releaseResources()
@@ -385,7 +425,21 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
 
     scopeDataCollector.captureInput(buffer.getReadPointer(0), (size_t)buffer.getNumSamples());
 
-    dryWetMixer.pushDrySamples(block);
+    // the linear phase crossovers come with a preset, and the limiter's lookahead with its type, both delaying the wet
+    if (distortionTypeSelection.linearCrossovers() != linearCrossovers || ! juce::exactlyEqual(totalLatency(), latencyTotal))
+        updateLatency();
+
+    for (auto* distortion : { &preDistortion, &postDistortion })
+        distortion->setLinearHighpass(distortionTypeSelection.linearHighpasses());
+
+    // otherwise the dry goes through every crossover's allpass, to stay in phase with the wet
+    const auto compensate = distortionTypeSelection.compensatesDryPhase();
+    dryPhase.clear();
+
+    for (auto* slot : slots)
+        dryPhase.add(compensate ? slot->getCrossovers() : Crossovers {});
+
+    dryPhase.pushDry(dryWetMixer, block);
 
     juce::dsp::AudioBlock<float> oversampledBlock = oversamplingStack.processSamplesUp(block);
 
@@ -409,7 +463,14 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
                                                    oversampleAmount);
 
         slot->updateParamsEveryBlock();
-        slot->processBlock(oversampledBlock);
+
+        if (auto* levels = slotLevels[(size_t) moduleId])
+        {
+            levels->matchDry(compensate ? slot->getCrossovers() : Crossovers {}, slot->getLatencySamples());
+            levels->process(oversampledBlock, [&] { slot->processBlock(oversampledBlock); });
+        }
+        else
+            slot->processBlock(oversampledBlock);
 
         if (tapHere)
             scopeDataCollector.capturePostDistortion(oversampledBlock.getChannelPointer(0),

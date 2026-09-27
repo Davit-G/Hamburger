@@ -12,9 +12,12 @@
 #include "LeftColumn.h"
 #include "SaturationColumn.h"
 #include "UtilColumn.h"
+#include "SettingsPanel.h"
 
 #include "PresetPanel.h"
 #include "PluginHeader.h"
+#include "PluginFooter.h"
+#include "TooltipBar.h"
 #include "UpdateChecker.h"
 
 #include "LookAndFeel/HamburgerLAF.h"
@@ -23,13 +26,42 @@
 class EditorV2 : public juce::Component, public juce::ChangeListener
 {
 public:
+    // every module's size comes from the columns' height. the start page has fewer and simpler boxes, so it's shorter
+    static constexpr int baseWidth = 800;
+    static constexpr int columnsHeight = 500;
+    static constexpr int startColumnsHeight = 300;
+    static constexpr int fullHeight = PluginHeader::totalHeight + columnsHeight + PluginFooter::totalHeight;
+    static constexpr int startHeight = PluginHeader::totalHeight + startColumnsHeight + TooltipBar::height + PluginFooter::totalHeight;
+
+    // the start page's scope sits over a row of amounts, as wide as it needs to keep the shape of what it draws in the full view
+    static constexpr int scopeMargin = Panel::boxPadding * 2;
+    static constexpr int startScopeHeight = startColumnsHeight - UtilColumn::startAmountsHeight;
+    static constexpr int startScopeWidth = scopeMargin + (startScopeHeight - scopeMargin) * (baseWidth / 4 - scopeMargin) / (columnsHeight / 4 - scopeMargin);
+    static constexpr int startMiddleWidth = 320;
+    static constexpr int startWidth = startMiddleWidth + startScopeWidth;
+
+    // when a page needs the window a different size
+    std::function<void (int, int)> onSizeChanged;
+
+    // the page picked in the settings, once the window can follow its size
+    void openStartupPage()
+    {
+        const auto page = audioProcessorRef.getAppProperties().getStartupPage();
+        header.selectTab(page == "start" ? PluginHeader::Tab::start
+                         : page == "pre" ? PluginHeader::Tab::pre
+                         : page == "post" ? PluginHeader::Tab::post
+                                          : PluginHeader::Tab::main);
+    }
+
     EditorV2(AudioPluginAudioProcessor &p) : audioProcessorRef(p),
                                              leftColumn(p),
                                              saturationColumn(p),
                                              utilColumn(p),
+                                             settingsPanel(p),
                                              infoPanel(p)
                                              ,presetPanel(p.getPresetManager()),
-                                             header(p)
+                                             header(p),
+                                             footer(p)
     {   
         // the first editor opened picks up the theme from last time, any others share it
         if (themes->getSelectedId().isEmpty() && ! themes->select(p.getAppProperties().appProperties.getUserSettings()->getValue("theme", ThemeManager::defaultId)))
@@ -42,22 +74,50 @@ public:
         leftColumn.setLookAndFeel(&hamburgerLAF);
         saturationColumn.setLookAndFeel(&hamburgerLAF);
         utilColumn.setLookAndFeel(&hamburgerLAF);
+        settingsPanel.setLookAndFeel(&hamburgerLAF);
         presetPanel.setLookAndFeel(&hamburgerLAF);
+        footer.setLookAndFeel(&hamburgerLAF);
 
         addAndMakeVisible(leftColumn);
         addAndMakeVisible(saturationColumn);
         addAndMakeVisible(utilColumn);
+        addChildComponent(settingsPanel);
+        addChildComponent(settingsSpare);
         addAndMakeVisible(infoPanel);
         addAndMakeVisible(header);
-        header.onTabSelected = [this] (PluginHeader::Tab tab) { this->saturationColumn.setView (tab); };
+        addAndMakeVisible(footer);
+        addChildComponent(tooltipBar);
+        header.onTabSelected = [this] (PluginHeader::Tab tab)
+        {
+            startPage = tab == PluginHeader::Tab::start;
+            settingsOpen = tab == PluginHeader::Tab::settings;
 
-        saturationColumn.setModuleColours ([this] (ModuleId id) {
+            // settings keeps the logo's tooltips and the scope, and takes everything under them in place of the columns
+            leftColumn.setVisible (! startPage);
+            leftColumn.setLogoOnly (settingsOpen);
+            saturationColumn.setVisible (! settingsOpen);
+            settingsPanel.setVisible (settingsOpen);
+            settingsSpare.setVisible (settingsOpen);
+            tooltipBar.setVisible (startPage);
+            utilColumn.setLayout (startPage ? UtilColumn::Layout::start : settingsOpen ? UtilColumn::Layout::scopeOnly : UtilColumn::Layout::full);
+            saturationColumn.setView (tab);
+
+            if (onSizeChanged != nullptr)
+                onSizeChanged (startPage ? startWidth : baseWidth, startPage ? startHeight : fullHeight);
+
+            // settings and the other full size views share a window size, so nothing else would lay them out again
+            resized();
+        };
+
+        // the fx order names each module in its box's colour
+        settingsPanel.getFxOrder().colourFor = [this] (ModuleId id) {
             for (auto* module : { leftColumn.moduleFor (id), saturationColumn.moduleFor (id), utilColumn.moduleFor (id) })
                 if (module != nullptr)
                     return (theme().*module->getAccent()).main;
 
-            return theme().plain.main;
-        });
+            // the clipper lives in the footer rather than a box
+            return id == ModuleId::postClip ? theme().footer.main : theme().plain.main;
+        };
         addAndMakeVisible(presetPanel);
 
         if (audioProcessorRef.getAppProperties().getTooltipType() == AppProperties::TooltipType::window) {
@@ -135,7 +195,9 @@ public:
         leftColumn.setLookAndFeel(nullptr);
         saturationColumn.setLookAndFeel(nullptr);
         utilColumn.setLookAndFeel(nullptr);
+        settingsPanel.setLookAndFeel(nullptr);
         presetPanel.setLookAndFeel(nullptr);
+        footer.setLookAndFeel(nullptr);
         if (tooltipWindow != nullptr) {
             tooltipWindow->setLookAndFeel(nullptr);
         }
@@ -203,8 +265,10 @@ public:
 
     void resized() override
     {
+        // drawn at the editor's size, which the start page changes
+        background = {};
+
         auto bounds = getLocalBounds();
-        auto totalWidth = bounds.getWidth() / 4;
 
         if (tooltipWindow != nullptr) {
             tooltipWindow->setBounds(bounds);
@@ -213,11 +277,28 @@ public:
         infoPanel.setBounds(bounds);
 
         header.setBounds(bounds.removeFromTop(PluginHeader::totalHeight));
-        
-        presetPanel.setBounds(getLocalBounds().withTrimmedRight(PluginHeader::rightReserved));
+        footer.setBounds(bounds.removeFromBottom(PluginFooter::totalHeight));
 
-        auto left = bounds.removeFromLeft(totalWidth);
-        auto right = bounds.removeFromRight(totalWidth);
+        // the start page's tooltips run between the header and the boxes, the whole width
+        if (startPage)
+            tooltipBar.setBounds(bounds.removeFromTop(TooltipBar::height));
+
+        presetPanel.setBounds(getLocalBounds());
+        presetPanel.setReservedRight(header.getRightReserved());
+
+        // the logo and the scope where they always are with the spare box between them, and settings across everything under them
+        if (settingsOpen)
+        {
+            auto top = bounds.removeFromTop(columnsHeight / 4);
+            leftColumn.setBounds(top.removeFromLeft(baseWidth / 4));
+            utilColumn.setBounds(top.removeFromRight(baseWidth / 4));
+            settingsSpare.setBounds(top);
+            settingsPanel.setBounds(bounds);
+            return;
+        }
+
+        auto left = bounds.removeFromLeft(startPage ? 0 : baseWidth / 4);
+        auto right = bounds.removeFromRight(startPage ? startScopeWidth : baseWidth / 4);
 
         leftColumn.setBounds(left);
         saturationColumn.setBounds(bounds);
@@ -230,14 +311,28 @@ public:
 
         infoPanel.setVisible(!show);
         
-        leftColumn.setVisible(show);
-        saturationColumn.setVisible(show);
+        leftColumn.setVisible(show && ! startPage);
+        saturationColumn.setVisible(show && ! settingsOpen);
         utilColumn.setVisible(show);
+        settingsPanel.setVisible(show && settingsOpen);
+        settingsSpare.setVisible(show && settingsOpen);
         header.setVisible(show);
+        footer.setVisible(show);
+        tooltipBar.setVisible(show && startPage);
         presetPanel.setVisible(show);
     }
 
 private:
+    // an empty black box beside the scope on the settings page, kept for whatever goes there
+    struct SpareBox : juce::Component
+    {
+        void paint(juce::Graphics& g) override
+        {
+            g.setColour(juce::Colours::black);
+            g.fillRoundedRectangle(getLocalBounds().reduced(Panel::boxInset).toFloat(), Panel::boxCornerSize);
+        }
+    };
+
     static juce::Image makeBackground(const juce::String& svg, int width, int height)
     {
         auto drawable = juce::Drawable::createFromSVG(*juce::parseXML(svg));
@@ -258,6 +353,8 @@ private:
     LeftColumn leftColumn;
     SaturationColumn saturationColumn;
     UtilColumn utilColumn;
+    SettingsPanel settingsPanel;
+    SpareBox settingsSpare;
 
     HamburgerLAF hamburgerLAF;
 
@@ -265,9 +362,14 @@ private:
 
     PresetPanel presetPanel;
     PluginHeader header;
+    PluginFooter footer;
+    TooltipBar tooltipBar;
     std::unique_ptr<UpdateChecker> updater;
 
     Info infoPanel;
+
+    bool startPage = false;
+    bool settingsOpen = false;
 
     juce::Image background;
     float backgroundScale = 0.0f;

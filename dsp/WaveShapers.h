@@ -2,6 +2,8 @@
 
 #include <cmath>
 
+#include "juce_audio_basics/juce_audio_basics.h"
+
 template <typename T>
 int sgn(T val)
 {
@@ -37,47 +39,32 @@ inline float fuzzExp1WaveShaper(float xn, float saturation, float asymmetry)
 	return sgn(xn) * (1.0f - exp(-fabs(wsGain * xn))) / (1.0f - exp(-wsGain));
 }
 
-inline float softClipperFunc(float x, float threshold, float knee)
+/*	A soft clip at 0db with a knee kneeDb wide centred on it, worked in dB like the compressor's soft knee: straight through
+	below the knee, held at 0db above it, and bending between. A knee of nothing is a hard clip. */
+inline float softClipperFunc(float x, float kneeDb)
 {
-	// this is the soft-clip function from the compressor
-	// https://www.desmos.com/calculator/f8zazgtwpe
+	const float level = std::abs(x);
 
-	float sign = sgn(x); // rectify it so we stay in the positive domain
-	x = sign * x;
+	if (level <= 0.0f)
+		return x;
 
-	float output = 0.0;
+	const float halfKnee = kneeDb * 0.5f;
+	const float db = juce::Decibels::gainToDecibels(level);
 
-	float twoXMinusThreshold = 2 * (x - threshold);
+	if (db <= -halfKnee)
+		return x;
 
-	if (twoXMinusThreshold < -knee)
-	{
-		output = x;
-	}
-	else if (twoXMinusThreshold > knee)
-	{
-		output = threshold;
-	}
-	else
-	{
-		auto temp = (x - threshold + knee * 0.5);
-		output = x - ((temp * temp) / (2.0f * knee));
-	}
+	if (db >= halfKnee)
+		return sgn(x);
 
-	return output * sign; // return it to the original sign afterwards
+	const float over = db + halfKnee;
+	return sgn(x) * juce::Decibels::decibelsToGain(db - over * over / (2.0f * kneeDb));
 }
 
-inline bool isSoftClipperKnee(float x, float threshold, float knee)
+inline bool isSoftClipperKnee(float x, float kneeDb)
 {
-	float sign = sgn(x); // rectify it so we stay in the positive domain
-	x = sign * x;
-
-	float twoXMinusThreshold = 2 * (x - threshold);
-
-	if (twoXMinusThreshold < -knee || twoXMinusThreshold > knee) {
-		return false;
-	} else {
-		return true;
-	};
+	const float db = juce::Decibels::gainToDecibels(std::abs(x));
+	return db > -kneeDb * 0.5f && db < kneeDb * 0.5f;
 }
 
 inline float tanhApprox1(float x)

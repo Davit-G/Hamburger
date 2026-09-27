@@ -72,7 +72,7 @@ namespace Preset
 
 			const auto valueTreeToLoad = juce::ValueTree::fromXml(*xmlDocument.getDocumentElement());
 			author = valueTreeToLoad.getProperty("author");
-			// description = valueTreeToLoad.getProperty("description");
+			description = valueTreeToLoad.getProperty("description");
 		}
 
 		juce::String getDescription() const
@@ -85,12 +85,7 @@ namespace Preset
 			return author;
 		}
 
-		juce::String getId() const
-		{
-			return id;
-		}
-
-		juce::File getFile()
+		juce::File getFile() const
 		{
 			return file;
 		}
@@ -100,7 +95,6 @@ namespace Preset
 
 		juce::String author;
 		juce::String description;
-		juce::String id;
 	};
 
 	class PresetManager : juce::ValueTree::Listener
@@ -109,6 +103,7 @@ namespace Preset
 		PresetManager(juce::AudioProcessorValueTreeState &, AppProperties &);
 
 		bool savePreset(const juce::String &preset, const juce::String &author, const juce::String &description, std::function<void(std::string)> cb);
+		bool renamePreset(const juce::File &preset, const juce::String &newName, std::function<void(std::string)> cb);
 		void deletePreset(const juce::File &preset, std::function<void(std::string)> cb);
 		void loadPreset(const juce::File &preset, std::function<void(std::string)> cb);
 
@@ -116,6 +111,7 @@ namespace Preset
 
 		juce::String getCurrentPresetName() const;
 		juce::String getCurrentAuthor() const;
+		juce::String getCurrentDescription() const;
 		juce::String getLastAuthor();
 
 		void setPresetDirectory(const juce::File &directory);
@@ -126,19 +122,17 @@ namespace Preset
 		juce::Array<juce::File> getAllPresets() const;
 		juce::File getCurrentPreset() const;
 
-		void recursiveSortedTraverse(const juce::File &directory, std::shared_ptr<juce::OwnedArray<Preset::PresetFile>> presets);
-
-		std::shared_ptr<juce::OwnedArray<Preset::PresetFile>> getPresetFileHierarchy();
+		// the preset folder's own folders, one level deep, with the preset folder itself first when it holds presets too
+		juce::Array<juce::File> getFolders() const;
+		// the presets straight inside a folder, by name
+		juce::Array<juce::File> getPresetsIn(const juce::File &folder) const;
 	private:
 		void valueTreeRedirected(juce::ValueTree &treeWhichHasBeenChanged) override;
 
 		AppProperties& appProperties;
 
-		std::shared_ptr<juce::OwnedArray<Preset::PresetFile>> presetsCache = nullptr;
-
 		juce::AudioProcessorValueTreeState &valueTreeState;
 		juce::Value currentPreset;
-		juce::Value currentAuthor;
 
 		juce::PropertiesFile::Options options;
 

@@ -10,15 +10,13 @@ public:
     StereoCompPanel(AudioPluginAudioProcessor &p, SlotId slot = SlotId{ModuleId::dynamics, 0}) : Panel(p, "STEREO", &Theme::stereoComp),
                                                    threshold(p, "THRES", slot, ParamIDs::stereoCompThreshold, ScopeContextType::COMPRESSION),
                                                    ratio(p, "RATIO", slot, ParamIDs::compRatio, ScopeContextType::COMPRESSION),
-                                                //    tilt(p, "S-LNK", "compStereoLink"),
                                                    attack(p, "SPEED", slot, ParamIDs::compSpeed, ScopeContextType::COMPRESSION),
-                                                   makeup(p, "GAIN", slot, ParamIDs::compOut, ScopeContextType::COMPRESSION)
+                                                   link(p, "LINK", slot, ParamIDs::compStereoLink, ScopeContextType::COMPRESSION)
     {
         addAndMakeVisible(threshold);
         addAndMakeVisible(ratio);
-        // addAndMakeVisible(tilt);
         addAndMakeVisible(attack);
-        addAndMakeVisible(makeup);
+        addAndMakeVisible(link);
     }
 
     void resized() override
@@ -33,10 +31,9 @@ public:
 
         grid.items = {
             juce::GridItem(threshold).withArea(1, 1),
-            // juce::GridItem(tilt).withArea(1, 2),
             juce::GridItem(ratio).withArea(1, 2),
             juce::GridItem(attack).withArea(2, 1),
-            juce::GridItem(makeup).withArea(2, 2)};
+            juce::GridItem(link).withArea(2, 2)};
 
         grid.performLayout(bounds);
     }
@@ -46,7 +43,6 @@ private:
 
     ParamKnob threshold;
     ParamKnob ratio;
-    // ParamKnob tilt;
     ParamKnob attack;
-    ParamKnob makeup;
+    ParamKnob link;
 };

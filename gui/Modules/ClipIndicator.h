@@ -30,7 +30,7 @@ public:
         auto dotColour = theme().clipDotIdle;
         if (level >= hardClipLevel)
             dotColour = theme().clipDotHard;
-        else if (isSoftClipperKnee(level, 1.0f, *p.treeState.getRawParameterValue(kneeId)))
+        else if (isSoftClipperKnee(level, *p.treeState.getRawParameterValue(kneeId)))
             dotColour = theme().clipDotKnee;
 
         g.setColour(dotColour);

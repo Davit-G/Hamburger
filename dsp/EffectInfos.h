@@ -79,13 +79,38 @@ namespace EffectInfos
         }
     };
 
+    static const ParamIDs::EffectInfo opto {
+        {
+            ParamIDs::optoDrive,
+            ParamIDs::optoBias,
+            ParamIDs::optoDcSpeed,
+            ParamIDs::optoDamping
+        }
+    };
+
+    static const ParamIDs::EffectInfo optoComp {
+        {
+            ParamIDs::optoThreshold,
+            ParamIDs::optoRatio,
+            ParamIDs::optoCompSpeed,
+            ParamIDs::compStereoLink
+        }
+    };
+
+    static const ParamIDs::EffectInfo mbOptoComp {
+        {
+            ParamIDs::optoThreshold,
+            ParamIDs::optoRatio,
+            ParamIDs::optoCompSpeed,
+            ParamIDs::compBandTilt
+        }
+    };
+
     static const ParamIDs::EffectInfo stereoComp {
         {
             ParamIDs::stereoCompThreshold,
             ParamIDs::compRatio,
-            ParamIDs::compBandTilt,
             ParamIDs::compSpeed,
-            ParamIDs::compOut,
             ParamIDs::compStereoLink
         }
     };
@@ -95,8 +120,7 @@ namespace EffectInfos
             ParamIDs::MBCompThreshold,
             ParamIDs::compRatio,
             ParamIDs::compBandTilt,
-            ParamIDs::MBCompSpeed,
-            ParamIDs::compOut
+            ParamIDs::MBCompSpeed
         }
     };
 
@@ -105,8 +129,7 @@ namespace EffectInfos
             ParamIDs::MSCompThreshold,
             ParamIDs::compRatio,
             ParamIDs::compBandTilt,
-            ParamIDs::MSCompSpeed,
-            ParamIDs::compOut
+            ParamIDs::MSCompSpeed
         }
     };
 
@@ -115,8 +138,25 @@ namespace EffectInfos
             ParamIDs::TypeAThreshold,
             ParamIDs::TypeARatio,
             ParamIDs::TypeATilt,
-            ParamIDs::TypeACompSpeed,
-            ParamIDs::TypeAOut
+            ParamIDs::TypeACompSpeed
+        }
+    };
+
+    static const ParamIDs::EffectInfo transient {
+        {
+            ParamIDs::transientAttack,
+            ParamIDs::transientSustain,
+            ParamIDs::transientSpeed,
+            ParamIDs::transientLink
+        }
+    };
+
+    static const ParamIDs::EffectInfo mbTransient {
+        {
+            ParamIDs::transientAttack,
+            ParamIDs::transientSustain,
+            ParamIDs::transientTilt,
+            ParamIDs::transientSpeed
         }
     };
 
@@ -148,7 +188,7 @@ namespace EffectInfos
     static const ParamIDs::EffectInfo gate {
         {
             ParamIDs::gateAmt,
-            ParamIDs::gateMix
+            ParamIDs::gateSmooth
         }
     };
 
@@ -164,6 +204,26 @@ namespace EffectInfos
         {
             ParamIDs::grungeAmt,
             ParamIDs::grungeTone
+        }
+    };
+
+    static const ParamIDs::EffectInfo subGen {
+        {
+            ParamIDs::subGenAmount
+        }
+    };
+
+    static const ParamIDs::EffectInfo hilbertStack {
+        {
+            ParamIDs::hilbertStacks
+        }
+    };
+
+    // the limiter keeps the gain and swaps the knee for its release time
+    static const ParamIDs::EffectInfo limiter {
+        {
+            ParamIDs::postClipGain,
+            ParamIDs::postClipTime
         }
     };
 
@@ -185,11 +245,11 @@ namespace EffectInfos
 
     inline LayoutList layoutsFor (ModuleId id)
     {
-        static const ParamIDs::EffectInfo* const mainTypes[]     { &grill, &tube, &phase, &rubidium, &tape, &slew, &waveshape };
-        static const ParamIDs::EffectInfo* const dynamicsTypes[] { &stereoComp, &mbComp, &msComp, &typeA };
+        static const ParamIDs::EffectInfo* const mainTypes[]     { &grill, &tube, &phase, &rubidium, &tape, &slew, &waveshape, &opto };
+        static const ParamIDs::EffectInfo* const dynamicsTypes[] { &stereoComp, &mbComp, &msComp, &typeA, &transient, &mbTransient, &optoComp, &mbOptoComp };
         static const ParamIDs::EffectInfo* const noiseTypes[]    { &sizzle, &erosion, &redux, &gate, &sizzle }; // FIZZ reuses sizzle
-        static const ParamIDs::EffectInfo* const preDistTypes[]  { &disperser, &grunge };
-        static const ParamIDs::EffectInfo* const postClipTypes[] { &postClip };
+        static const ParamIDs::EffectInfo* const preDistTypes[]  { &disperser, &grunge, &subGen, &hilbertStack };
+        static const ParamIDs::EffectInfo* const postClipTypes[] { &postClip, &limiter };
 
         switch (id)
         {

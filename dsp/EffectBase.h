@@ -1,6 +1,7 @@
 #pragma once
 
 #include "MacroParam.h"
+#include "Crossover.h"
 #include "juce_dsp/juce_dsp.h"
 #include "juce_gui_basics/juce_gui_basics.h"
 
@@ -22,6 +23,9 @@ public:
 
     // sum latencies together and report to DAW
     virtual int getLatencySamples() const { return 0; }
+
+    // what a dry mixed back with this effect has to go through to stay in phase with it
+    virtual Crossovers getCrossovers() const { return {}; }
 
 private:
     // juce::ValueTree paramStorage;

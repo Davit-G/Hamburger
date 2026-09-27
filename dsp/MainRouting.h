@@ -3,6 +3,7 @@
 #include "EffectBase.h"
 #include "EffectInfos.h"
 #include "Crossover.h"
+#include "LinearPhaseSplit.h"
 #include "DCBlockingHighPass.h"
 #include "PrimaryDistortion.h"
 #include "SmoothParam.h"
@@ -14,15 +15,24 @@ class MainRouting : public EffectBase,
                     private juce::ValueTree::Listener
 {
 public:
-    /*  The band splits' slope, 12, 24 or 48 dB/oct. Kept in the plugin state rather than as a parameter, so it saves
-        with presets and projects but isn't automatable. */
+    /*  The band splits' slope, 12, 24 or 48 dB/oct, or linear phase for every crossover in the plugin. With the linear
+        highpass, which swaps every DC blocker in the distortion chain for one that leaves the phase alone, and whether dry
+        signals are put through the crossovers' allpasses to mix back in phase. Kept in the plugin state rather than as
+        parameters, so they save with presets and projects but aren't automatable. */
     static inline const juce::Identifier crossoverSlopeProperty { "crossoverSlope" };
+    static inline const juce::Identifier linearHighpassProperty { "linearHighpass" };
+    static inline const juce::Identifier dryPhaseProperty { "dryPhaseCompensation" };
+    static constexpr int linearPhase = 1; // stored in place of a slope
 
     static int crossoverSlopeFrom (const juce::var& stored)
     {
         const auto slope = (int) stored;
-        return slope == 12 || slope == 48 ? slope : 24;
+        return slope == 12 || slope == 48 || slope == linearPhase ? slope : 24;
     }
+
+    bool linearCrossovers() const { return crossoverSlope.load (std::memory_order_relaxed) == linearPhase; }
+    bool linearHighpasses() const { return linearHighpass.load (std::memory_order_relaxed); }
+    bool compensatesDryPhase() const { return dryPhase.load (std::memory_order_relaxed); }
 
     // keep in line with ParamIDs::routingTypes. multiband's band count is a parameter of its own, ParamIDs::bandCount
     enum Routing { stack, multiband, midSide, exciter };
@@ -139,7 +149,7 @@ public:
 
         // the state tree gets swapped whole on a preset or project load, which is valueTreeRedirected
         apvts.state.addListener (this);
-        syncCrossoverSlope();
+        syncSettings();
     }
 
     ~MainRouting() override { apvts.state.removeListener (this); }
@@ -196,6 +206,8 @@ public:
         for (auto& split : splits)
             split.prepare (spec);
 
+        linearSplit.prepare (spec);
+
         for (auto& row : allpasses)
             for (auto& compensator : row)
                 compensator.prepare (spec);
@@ -219,7 +231,7 @@ public:
 
     void processBlock (juce::dsp::AudioBlock<float>& block) override
     {
-        const auto slope = crossoverSlope.load (std::memory_order_relaxed);
+        const auto slope = linearCrossovers() ? 24 : crossoverSlope.load (std::memory_order_relaxed);
 
         for (auto& split : splits)
             split.setSlope (slope);
@@ -227,6 +239,18 @@ public:
         for (auto& row : allpasses)
             for (auto& compensator : row)
                 compensator.setSlope (slope);
+
+        const auto linear = linearHighpasses();
+
+        for (auto& slot : slots)
+            slot->setLinearHighpass (linear);
+
+        for (auto& stage : extraStackStages)
+            stage->setLinearHighpass (linear);
+
+        for (auto* blockers : { &pathBlockers, &dryBlockers })
+            for (auto& blocker : *blockers)
+                blocker.setLinear (linear);
 
         crossoverLow.update();
         crossoverMid.update();
@@ -238,14 +262,20 @@ public:
         stackRotation.update();
         msBalance.update();
 
-        switch (routing != nullptr ? routing->getIndex() : stack)
+        switch (currentRouting())
         {
-            case multiband: processBands (block, multibandLayout (bandCount != nullptr ? bandCount->get() : 2)); break;
+            case multiband: processBands (block, multibandLayout (currentBandCount())); break;
             case midSide:   processMidSide (block);       break;
             case exciter:   processExciter (block);       break;
             case stack:
             default:        processStack (block);         break;
         }
+
+        // the routings without a split are delayed as much as the ones with, so the latency never moves
+        const auto split = currentRouting() == multiband || currentRouting() == exciter;
+
+        if (linearCrossovers() && ! split)
+            linearSplit.delayBy (block);
     }
 
     void updateParamsEveryBlock() override
@@ -269,10 +299,29 @@ public:
         for (const auto& slot : slots)
             total = juce::jmax (total, slot->getLatencySamples());
 
-        return total;
+        return total + (linearCrossovers() ? linearSplit.getLatency() : 0);
+    }
+
+    Crossovers getCrossovers() const override
+    {
+        if (linearCrossovers())
+            return {};
+
+        const auto layout = bandLayout (currentRouting(), currentBandCount());
+        const float hz[] { crossoverLow.getRaw (0), crossoverMid.getRaw (0), crossoverHigh.getRaw (0) };
+
+        Crossovers crossovers { crossoverSlope.load (std::memory_order_relaxed), juce::jmax (0, layout.numBands - 1) };
+
+        for (int i = 0; i < crossovers.count; ++i)
+            crossovers.hz[(size_t) i] = hz[layout.crossovers[(size_t) i]];
+
+        return crossovers;
     }
 
 private:
+    int currentRouting() const { return routing != nullptr ? routing->getIndex() : stack; }
+    int currentBandCount() const { return bandCount != nullptr ? bandCount->get() : 2; }
+
     struct StackPath
     {
         std::array<juce::dsp::FirstOrderTPTFilter<float>, maxSlots - 1> allpasses;
@@ -316,8 +365,9 @@ private:
 
             stageFor (stage).processBlock (block);
 
-            // per stage, so each one keeps its own filter state across blocks
-            pathBlockers[(size_t) juce::jmin (stage, maxSlots - 1)].processBlock (block);
+            // per stage, so each one keeps its own filter state across blocks. with slot 1 off nothing's made any DC to take out
+            if (slots[0]->isEnabled())
+                pathBlockers[(size_t) juce::jmin (stage, maxSlots - 1)].processBlock (block);
         }
 
         // an even number of flips leaves the signal inverted against everything else in the chain
@@ -345,7 +395,9 @@ private:
             if (stage > 0 && ! stackFilterShapesLevel())
                 filterGap (dryPath, stage - 1, dry);
 
-            dryBlockers[(size_t) juce::jmin (stage, maxSlots - 1)].processBlock (dry);
+            // skipped with the wet's, to stay in step with it
+            if (slots[0]->isEnabled())
+                dryBlockers[(size_t) juce::jmin (stage, maxSlots - 1)].processBlock (dry);
         }
 
         stackDryWet.pushDrySamples (dry);
@@ -432,42 +484,14 @@ private:
         for (int i = 0; i < numBands - 1; ++i)
             cutoffs[i] = crossoverFreqs[layout.crossovers[(size_t) i]];
 
-        for (int i = 0; i < numBands - 1; ++i)
+        if (linearCrossovers())
         {
-            splits[(size_t) i].setCutoffFrequency (cutoffs[i]);
-
-            /*  A band that came off crossover i never passed through the crossovers after it, so
-                it is missing their phase shift and won't sum flat with the bands that did. An
-                allpass at each later crossover gives every band the same phase history. */
-            for (int later = i + 1; later < numBands - 1; ++later)
-            {
-                allpasses[(size_t) i][(size_t) later].setCutoffFrequency (cutoffs[later]);
-            }
+            linearSplit.setCutoffs (cutoffs, numBands - 1);
+            linearSplit.split (block, bandBuffers.data(), numBands - 1);
         }
-
-        for (int ch = 0; ch < numChannels; ++ch)
+        else
         {
-            const auto* in = block.getChannelPointer ((size_t) ch);
-
-            for (int n = 0; n < numSamples; ++n)
-            {
-                auto remaining = in[n];
-
-                for (int band = 0; band < numBands - 1; ++band)
-                {
-                    float low = 0.0f, high = 0.0f;
-
-                    splits[(size_t) band].processSample (ch, remaining, low, high);
-
-                    for (int later = band + 1; later < numBands - 1; ++later)
-                        low = allpasses[(size_t) band][(size_t) later].allpass (ch, low);
-
-                    bandBuffers[(size_t) band].setSample (ch, n, low);
-                    remaining = high;
-                }
-
-                bandBuffers[(size_t) (numBands - 1)].setSample (ch, n, remaining);
-            }
+            splitBands (block, numBands, cutoffs);
         }
 
         block.clear();
@@ -493,6 +517,55 @@ private:
             bandLevels[(size_t) slot].applyGain (bandBuffers[(size_t) band], numSamples);
 
             block.add (bandBlock);
+        }
+    }
+
+    void splitBands (const juce::dsp::AudioBlock<float>& block, int numBands, const float* cutoffs)
+    {
+        const auto numSamples = (int) block.getNumSamples();
+        const auto numChannels = (int) block.getNumChannels();
+
+        for (int i = 0; i < numBands - 1; ++i)
+        {
+            splits[(size_t) i].setCutoffFrequency (cutoffs[i]);
+
+            /*  A band that came off crossover i never passed through the crossovers after it, so
+                it is missing their phase shift and won't sum flat with the bands that did. An
+                allpass at each later crossover gives every band the same phase history. */
+            for (int later = i + 1; later < numBands - 1; ++later)
+            {
+                allpasses[(size_t) i][(size_t) later].setCutoffFrequency (cutoffs[later]);
+            }
+        }
+
+        std::array<std::array<float*, Crossover::maxChannels>, maxSlots> out {};
+
+        for (int band = 0; band < numBands; ++band)
+            for (int ch = 0; ch < numChannels; ++ch)
+                out[(size_t) band][(size_t) ch] = bandBuffers[(size_t) band].getWritePointer (ch);
+
+        // both channels inside the sample loop, see Crossover::processSample
+        for (int n = 0; n < numSamples; ++n)
+        {
+            for (int ch = 0; ch < numChannels; ++ch)
+            {
+                auto remaining = block.getSample (ch, n);
+
+                for (int band = 0; band < numBands - 1; ++band)
+                {
+                    float low = 0.0f, high = 0.0f;
+
+                    splits[(size_t) band].processSample (ch, remaining, low, high);
+
+                    for (int later = band + 1; later < numBands - 1; ++later)
+                        low = allpasses[(size_t) band][(size_t) later].allpass (ch, low);
+
+                    out[(size_t) band][(size_t) ch][n] = low;
+                    remaining = high;
+                }
+
+                out[(size_t) (numBands - 1)][(size_t) ch][n] = remaining;
+            }
         }
     }
 
@@ -540,23 +613,7 @@ private:
     {
         const auto numSamples = (int) block.getNumSamples();
         const auto numChannels = (int) block.getNumChannels();
-
-        splits[0].setCutoffFrequency (crossoverLow.getRaw (0));
-
-        for (int ch = 0; ch < numChannels; ++ch)
-        {
-            const auto* in = block.getChannelPointer ((size_t) ch);
-
-            for (int n = 0; n < numSamples; ++n)
-            {
-                float low = 0.0f, high = 0.0f;
-
-                splits[0].processSample (ch, in[n], low, high);
-
-                bandBuffers[0].setSample (ch, n, low + high);
-                bandBuffers[1].setSample (ch, n, high);
-            }
-        }
+        const auto cutoff = crossoverLow.getRaw (0);
 
         auto dryBlock = juce::dsp::AudioBlock<float> (bandBuffers[0])
                             .getSubBlock (0, (size_t) numSamples)
@@ -565,6 +622,30 @@ private:
         auto highBlock = juce::dsp::AudioBlock<float> (bandBuffers[1])
                              .getSubBlock (0, (size_t) numSamples)
                              .getSubsetChannelBlock (0, (size_t) numChannels);
+
+        if (linearCrossovers())
+        {
+            linearSplit.setCutoffs (&cutoff, 1);
+            linearSplit.split (block, bandBuffers.data(), 1);
+        }
+        else
+        {
+            splits[0].setCutoffFrequency (cutoff);
+
+            for (int n = 0; n < numSamples; ++n)
+            {
+                for (int ch = 0; ch < numChannels; ++ch)
+                {
+                    float low = 0.0f, high = 0.0f;
+                    splits[0].processSample (ch, block.getSample (ch, n), low, high);
+                    dryBlock.setSample (ch, n, low);
+                    highBlock.setSample (ch, n, high);
+                }
+            }
+        }
+
+        // the full range path is the split summed back
+        dryBlock.add (highBlock);
 
         // the buffers are the paths, full range then high; everything run on them belongs to the path's slot
         const auto layout = bandLayout (exciter, 2);
@@ -652,24 +733,32 @@ private:
     std::array<DCBlockingHighPass, maxSlots> dryBlockers;
 
     std::array<Crossover, maxSlots - 1> splits;
+    LinearPhaseSplit linearSplit;
 
     // [band][crossover]: only entries where crossover > band are ever used
     std::array<std::array<Crossover, maxSlots - 1>, maxSlots - 1> allpasses;
     std::array<juce::AudioBuffer<float>, maxSlots> bandBuffers;
 
-    // may come from whichever thread loads the state, hence the atomic the audio thread reads
-    void syncCrossoverSlope() { crossoverSlope.store (crossoverSlopeFrom (apvts.state.getProperty (crossoverSlopeProperty)), std::memory_order_relaxed); }
+    // may come from whichever thread loads the state, hence the atomics the audio thread reads
+    void syncSettings()
+    {
+        crossoverSlope.store (crossoverSlopeFrom (apvts.state.getProperty (crossoverSlopeProperty)), std::memory_order_relaxed);
+        linearHighpass.store ((bool) apvts.state.getProperty (linearHighpassProperty), std::memory_order_relaxed);
+        dryPhase.store ((bool) apvts.state.getProperty (dryPhaseProperty, true), std::memory_order_relaxed);
+    }
 
     void valueTreePropertyChanged (juce::ValueTree& tree, const juce::Identifier& property) override
     {
-        if (tree == apvts.state && property == crossoverSlopeProperty)
-            syncCrossoverSlope();
+        if (tree == apvts.state && (property == crossoverSlopeProperty || property == linearHighpassProperty || property == dryPhaseProperty))
+            syncSettings();
     }
 
-    void valueTreeRedirected (juce::ValueTree&) override { syncCrossoverSlope(); }
+    void valueTreeRedirected (juce::ValueTree&) override { syncSettings(); }
 
     juce::AudioProcessorValueTreeState& apvts;
     std::atomic<int> crossoverSlope { 24 };
+    std::atomic<bool> linearHighpass { false };
+    std::atomic<bool> dryPhase { true };
 
     ScopeDataCollector<float>& scope;
     int tapSlot = -1, tapOversampling = 0;

@@ -188,6 +188,7 @@ juce_add_binary_data("${BaseTargetName}BinaryData" HEADER_NAME BinaryData.h NAME
     Assets/Icons/Slew.svg
     Assets/Icons/Tube.svg
     Assets/Icons/Waves.svg
+    Assets/Icons/Opto.svg
     ${BuiltInThemes}
 )
 set_target_properties("${BaseTargetName}BinaryData" PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
