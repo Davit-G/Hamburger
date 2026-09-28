@@ -73,7 +73,6 @@ public:
     void setLayout(Layout newLayout) {
         layout = newLayout;
         eq->setVisible(layout == Layout::full);
-        noise->setVisible(layout == Layout::full);
         amounts->setVisible(layout == Layout::start);
         resized();
     }
@@ -90,12 +89,12 @@ public:
             return;
         }
 
-        const auto row = bounds.getHeight() / 4;
-
-        settings->setBounds(bounds.removeFromTop(row));
-        noise->setBounds(bounds.removeFromBottom(row));
+        settings->setBounds(bounds.removeFromTop(bounds.getHeight() / 3));
         eq->setBounds(bounds);
     }
+
+    // the noise box, which the editor lays out along the bottom with the pre fx, under the modulation
+    Module& getNoise() { return *noise; }
 
 private:
     std::unique_ptr<Module> eq = nullptr;

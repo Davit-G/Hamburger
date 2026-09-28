@@ -30,6 +30,10 @@ void PhaseDist::prepare(juce::dsp::ProcessSpec& spec) noexcept {
 	hilbertTransformL.prepare(spec);
 	hilbertTransformR.prepare(spec);
 
+	foldbackL.reset();
+	foldbackR.reset();
+	foldbackCutoff = 0.0;
+
 	delayLine.setMaximumDelayInSamples(spec.sampleRate);
 	delayLine.prepare(spec);
 };
@@ -52,6 +56,18 @@ void PhaseDist::processBlock(juce::dsp::AudioBlock<float>& block) noexcept {
 	*filter.state = juce::dsp::IIR::ArrayCoefficients<float>::makeLowPass(sampleRate, tone.getRaw(0), 1.1f);
 	filter.process(juce::dsp::ProcessContextReplacing<float>(block));
 
+	/*  The shift is in cycles per sample at 44.1kHz, see HilbertBiquadShifter, so its cube times 0.1 times 44100 is how
+		far it shifts in hz. Shifting up, the highpass sits out of the way. */
+	const auto shiftHz = std::pow((double) shift.getRaw(0), 3.0) * 0.1 * 44100.0;
+	const auto cutoff = juce::jlimit(minFoldbackHz, sampleRate * 0.25, -shiftHz);
+
+	if (cutoff != foldbackCutoff)
+	{
+		foldbackCutoff = cutoff;
+		foldbackL.setCutoff(cutoff, sampleRate);
+		foldbackR.setCutoff(cutoff, sampleRate);
+	}
+
 	// apply the distortion
 	for (int i = 0; i < block.getNumSamples(); i++) {
 
@@ -59,7 +75,7 @@ void PhaseDist::processBlock(juce::dsp::AudioBlock<float>& block) noexcept {
 		const float nextAmt = amount.getRaw(0) * 0.01f;
 		auto amt = nextAmt * nextAmt * nextAmt * 1200.f;
 		const float nextStereo = stereo.getRaw(0) * 2.0f;
-		const float nextShift = powf(shift.getRaw(0), 3.f) * 0.1f;
+		const float nextShift = powf(shift.getNextValue(0), 3.f) * 0.1f;
 
 		float l = block.getSample(0, i);
 		float r = block.getSample(1, i);
@@ -76,6 +92,9 @@ void PhaseDist::processBlock(juce::dsp::AudioBlock<float>& block) noexcept {
 		auto rRect = weirdRectify(right, rectAmt);
 
 		// perform phase shift
+		lRect = (float) foldbackL.processSample(lRect);
+		rRect = (float) foldbackR.processSample(rRect);
+
 		lRect = hilbertTransformL.processSample(lRect, nextShift);
 		rRect = hilbertTransformR.processSample(rRect, nextShift);
 

@@ -49,6 +49,7 @@ public:
     void paint (juce::Graphics &g) override {
         auto bounds = getLocalBounds().toFloat();
 
+        auto modArea = bounds.removeFromBottom(modSpace());
         auto sliderBounds = bounds.removeFromBottom(sliderHeight);
         sliderBounds.reduce(15, 0);
         sliderBounds.setSize(sliderBounds.getWidth(), sliderBounds.getHeight() + dragAmount);
@@ -80,6 +81,25 @@ public:
             g.setColour(theme().scaledMarker);
             g.fillEllipse(juce::Rectangle<float>(dotSize, dotSize).withCentre({ track.getX() + *scaled * track.getWidth(), track.getCentreY() }));
         }
+
+        // a thin line under the bar for each modulation routed here, like the knobs' rings
+        const auto x = [&] (float proportion) { return track.getX() + proportion * track.getWidth(); };
+        auto y = modArea.getY() + modLineGap - 2.0f;
+
+        for (const auto& arc : modArcs())
+        {
+            if (y > modArea.getBottom())
+                break;
+
+            g.setColour(theme().modulationHighlight.withMultipliedAlpha(0.4f));
+            g.drawLine(x(arc.from), y, x(arc.to), y, 1.0f);
+
+            g.setColour(arc.colour);
+            g.drawLine(x(arc.base), y, x(arc.at), y, 2.0f);
+            g.fillEllipse(juce::Rectangle<float>(3.0f, 3.0f).withCentre({ x(arc.at), y }));
+
+            y += modLineGap;
+        }
     }
 
     float visibleHeight() {
@@ -87,7 +107,7 @@ public:
     }
 
     void resized() override {
-        auto bounds = getLocalBounds().withTrimmedBottom(sliderHeight);
+        auto bounds = getLocalBounds().withTrimmedBottom((int) (sliderHeight + modSpace()));
         bounds.reduce(10, 0);
         bounds.setHeight(bounds.getHeight() - (int) labelGap);
         label.setBounds(bounds);
@@ -95,6 +115,10 @@ public:
     
 private:
     const float sliderHeight = 4.0f;
+
+    // room under the bar for up to three modulation lines
+    static constexpr float modLineGap = 3.0f;
+    float modSpace() const { return (float) juce::jmin(3, (int) mods.size()) * modLineGap; }
     static constexpr float labelGap = 2.0f;
 
     RectSliderType sliderType = RectSliderType::CenterJustifified;

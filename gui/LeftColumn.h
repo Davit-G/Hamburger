@@ -32,6 +32,14 @@ public:
         companderPanels.push_back(std::make_unique<OptoCompPanel>(p, false));
         companderPanels.push_back(std::make_unique<OptoCompPanel>(p, true));
         compander = std::make_unique<Module>(p, "COMP", SlotId{ModuleId::dynamics, 0}.enabled().getParamID().toStdString(), SlotId{ModuleId::dynamics, 0}.type().getParamID().toStdString(), std::move(companderPanels));
+
+        // by what they work across, by their index in the type menu
+        const auto& comp = ParamIDs::compTypes.categories;
+        compander->categorySelector.groups = {
+            { "SINGLE BAND", { { 0, comp[0] }, { 2, comp[2] }, { 6, comp[6] } } },
+            { "MULTIBAND", { { 1, comp[1] }, { 3, comp[3] }, { 7, comp[7] } } },
+            { "TRANSIENT", { { 4, comp[4] }, { 5, comp[5] } } },
+        };
         auto companderLevels = std::make_unique<SlotLevels>(p, SlotId{ModuleId::dynamics, 0}, ScopeContextType::COMPRESSION);
         companderLevels->hideNames();
         compander->setFooter(std::move(companderLevels), SlotLevels::height);
@@ -82,21 +90,21 @@ public:
     void setLogoOnly(bool shouldShowLogoOnly) {
         logoOnly = shouldShowLogoOnly;
         compander->setVisible(! logoOnly);
-        preDistortion->setVisible(! logoOnly);
         resized();
     }
 
     void resized() override{
         auto bounds = getLocalBounds();
-        auto height = bounds.getHeight();
 
         if (logoOnly)
             return logo->setBounds(bounds);
 
-        logo->setBounds(bounds.removeFromTop(height / 4));
-        preDistortion->setBounds(bounds.removeFromBottom(height / 4));
+        logo->setBounds(bounds.removeFromTop(bounds.getHeight() / 3));
         compander->setBounds(bounds);
     }
+
+    // the pre fx box, which the editor lays out along the bottom with the noise, under the modulation
+    Module& getPreFx() { return *preDistortion; }
 
 private:
     std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> enableButtonAttachment = nullptr;

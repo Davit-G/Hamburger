@@ -23,14 +23,19 @@
 #include "LookAndFeel/HamburgerLAF.h"
 #include "LookAndFeel/ThemeManager.h"
 
-class EditorV2 : public juce::Component, public juce::ChangeListener
+// the drag container for dragging mod sources onto knobs, see ModSourceButton
+class EditorV2 : public juce::Component, public juce::ChangeListener, public juce::DragAndDropContainer
 {
 public:
     // every module's size comes from the columns' height. the start page has fewer and simpler boxes, so it's shorter
     static constexpr int baseWidth = 800;
     static constexpr int columnsHeight = 500;
     static constexpr int startColumnsHeight = 300;
-    static constexpr int fullHeight = PluginHeader::totalHeight + columnsHeight + PluginFooter::totalHeight;
+    // the columns take the top three quarters of columnsHeight, and the pre fx and noise the bottom quarter across the
+    // whole width. between them the modulation bar, and the modulation row under it while that's open
+    static constexpr int modulationToggleHeight = 22;
+    static constexpr int modulationHeight = columnsHeight / 4;
+    static constexpr int fullHeight = PluginHeader::totalHeight + columnsHeight + modulationToggleHeight + PluginFooter::totalHeight;
     static constexpr int startHeight = PluginHeader::totalHeight + startColumnsHeight + TooltipBar::height + PluginFooter::totalHeight;
 
     // the start page's scope sits over a row of amounts, as wide as it needs to keep the shape of what it draws in the full view
@@ -61,7 +66,8 @@ public:
                                              infoPanel(p)
                                              ,presetPanel(p.getPresetManager()),
                                              header(p),
-                                             footer(p)
+                                             footer(p),
+                                             modulationStrip(p)
     {   
         // the first editor opened picks up the theme from last time, any others share it
         if (themes->getSelectedId().isEmpty() && ! themes->select(p.getAppProperties().appProperties.getUserSettings()->getValue("theme", ThemeManager::defaultId)))
@@ -87,6 +93,23 @@ public:
         addAndMakeVisible(header);
         addAndMakeVisible(footer);
         addChildComponent(tooltipBar);
+
+        // shut to start with, modulation's a lot to take in and most of the time it isn't wanted
+        addChildComponent(modulationToggle);
+        addChildComponent(modulationStrip);
+        addChildComponent(leftColumn.getPreFx());
+        addChildComponent(utilColumn.getNoise());
+
+        modulationToggle.onClick = [this]
+        {
+            modulationOpen = modulationToggle.getToggleState();
+            showFullViewRows();
+
+            if (onSizeChanged != nullptr)
+                onSizeChanged (baseWidth, fullViewHeight());
+
+            resized();
+        };
         header.onTabSelected = [this] (PluginHeader::Tab tab)
         {
             startPage = tab == PluginHeader::Tab::start;
@@ -101,9 +124,10 @@ public:
             tooltipBar.setVisible (startPage);
             utilColumn.setLayout (startPage ? UtilColumn::Layout::start : settingsOpen ? UtilColumn::Layout::scopeOnly : UtilColumn::Layout::full);
             saturationColumn.setView (tab);
+            showFullViewRows();
 
             if (onSizeChanged != nullptr)
-                onSizeChanged (startPage ? startWidth : baseWidth, startPage ? startHeight : fullHeight);
+                onSizeChanged (startPage ? startWidth : baseWidth, startPage ? startHeight : fullViewHeight());
 
             // settings and the other full size views share a window size, so nothing else would lay them out again
             resized();
@@ -297,6 +321,20 @@ public:
             return;
         }
 
+        if (! startPage)
+        {
+            auto columns = bounds.removeFromTop(columnsHeight * 3 / 4);
+            auto bottomRow = bounds.removeFromBottom(columnsHeight / 4);
+
+            modulationToggle.setBounds(bounds.removeFromTop(modulationToggleHeight));
+            modulationStrip.setBounds(bounds);
+
+            leftColumn.getPreFx().setBounds(bottomRow.removeFromLeft(bottomRow.getWidth() / 2));
+            utilColumn.getNoise().setBounds(bottomRow);
+
+            bounds = columns;
+        }
+
         auto left = bounds.removeFromLeft(startPage ? 0 : baseWidth / 4);
         auto right = bounds.removeFromRight(startPage ? startScopeWidth : baseWidth / 4);
 
@@ -320,9 +358,28 @@ public:
         footer.setVisible(show);
         tooltipBar.setVisible(show && startPage);
         presetPanel.setVisible(show);
+
+        if (show)
+            showFullViewRows();
+        else
+            for (auto* row : std::initializer_list<juce::Component*> { &modulationToggle, &modulationStrip, &leftColumn.getPreFx(), &utilColumn.getNoise() })
+                row->setVisible(false);
     }
 
 private:
+    int fullViewHeight() const { return fullHeight + (modulationOpen ? modulationHeight : 0); }
+
+    // the rows across the whole width, only on the pages with every box
+    void showFullViewRows()
+    {
+        const auto full = ! startPage && ! settingsOpen;
+
+        modulationToggle.setVisible(full);
+        modulationStrip.setVisible(full && modulationOpen);
+        leftColumn.getPreFx().setVisible(full);
+        utilColumn.getNoise().setVisible(full);
+    }
+
     // an empty black box beside the scope on the settings page, kept for whatever goes there
     struct SpareBox : juce::Component
     {
@@ -364,6 +421,10 @@ private:
     PluginHeader header;
     PluginFooter footer;
     TooltipBar tooltipBar;
+
+    ModulationToggle modulationToggle;
+    ModulationStrip modulationStrip;
+    bool modulationOpen = false;
     std::unique_ptr<UpdateChecker> updater;
 
     Info infoPanel;

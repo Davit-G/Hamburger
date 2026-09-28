@@ -98,10 +98,8 @@ private:
         updateText();
     }
 
-    juce::String valueText() const
+    juce::String valueText (float value) const
     {
-        const auto value = (float) getValue();
-
         switch (unit)
         {
             case ParamUnits::db:      return formatDecibels (value);
@@ -116,16 +114,22 @@ private:
         updateText();
     }
 
+    // modulated, the value's where the modulation has it right now, and it's all in the modulation colour
     void updateText()
     {
-        if (valueOnHover)
-            label.setText (showingValue ? valueText() : kName, juce::dontSendNotification);
-        else
-            label.setText ((showsName ? kName + ": " : juce::String()) + valueText(), juce::dontSendNotification);
+        const auto modulated = modulatedValue();
+        const auto value = modulated.value_or ((float) getValue());
 
-        if (colourByGain)
-            label.setColour (juce::Label::textColourId, gainColour());
+        if (valueOnHover)
+            label.setText (showingValue ? valueText (value) : kName, juce::dontSendNotification);
+        else
+            label.setText ((showsName ? kName + ": " : juce::String()) + valueText (value), juce::dontSendNotification);
+
+        label.setColour (juce::Label::textColourId, modulated ? theme().modulationHighlight : colourByGain ? gainColour() : colours().text);
     }
+
+    void modulationMoved() override { updateText(); }
+    void modulationChanged() override { updateText(); }
 
     juce::Colour gainColour() const
     {

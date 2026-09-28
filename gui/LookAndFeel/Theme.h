@@ -145,6 +145,7 @@ struct Theme
     juce::Colour multibandCrossover = juce::Colours::white.withAlpha (0.45f);
     juce::Colour multibandCrossoverHot = juce::Colours::white.withAlpha (0.9f);
     juce::Colour multibandCrossoverHighlight = juce::Colours::white.withAlpha (0.1f);
+    juce::Colour multibandCrossoverModulated = juce::Colour (0xff4ef7ff).withAlpha (0.35f);
     juce::Colour multibandCrossoverText = juce::Colours::grey;
     juce::Colour multibandCrossoverTextHot = juce::Colours::white;
 
@@ -173,6 +174,12 @@ struct Theme
     juce::Colour lockOff = juce::Colour (0xffe65866);
     juce::Colour gainTextLow = juce::Colour (0xff8c8c8c);
     juce::Colour modulationHighlight = juce::Colour (0xff4ef7ff);
+
+    // one per mod source, in the order of ModSources: drive, the macros, then the modulators
+    std::array<juce::Colour, 10> modSources { juce::Colour (0xffff5977), juce::Colour (0xffffa746), juce::Colour (0xffffda45),
+                                              juce::Colour (0xff99ff80), juce::Colour (0xff00e58a), juce::Colour (0xff4ef7ff),
+                                              juce::Colour (0xff3b78ff), juce::Colour (0xff9d6bff), juce::Colour (0xffff6bd6),
+                                              juce::Colour (0xffff2e97) };
 
     juce::Colour textHeader = juce::Colours::white;
     juce::Colour textHeaderHover = juce::Colours::white.withAlpha (0.67f);

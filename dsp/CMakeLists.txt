@@ -12,6 +12,7 @@ target_sources("${BaseTargetName}"
         SVTPTFilter.cpp
         SVTPTFilter.h
         MacroParam.h
+        ModMatrix.h
         EffectBase.h
         EffectInfos.h
         LevelStage.h

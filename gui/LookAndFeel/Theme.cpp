@@ -175,6 +175,7 @@ static std::vector<ThemeSection> makeSections()
     add ("multiband_crossover", "Dividers", "The frequency dividers between bands", &Theme::multibandCrossover);
     add ("multiband_crossover_hot", "Dividers Hovered", "A divider under the mouse or being dragged", &Theme::multibandCrossoverHot);
     add ("multiband_crossover_highlight", "Divider Grab Strip", "The strip a hovered divider can be grabbed by", &Theme::multibandCrossoverHighlight);
+    add ("multiband_crossover_modulated", "Divider Modulated", "Where modulation has moved a divider to, the divider itself staying where it's set", &Theme::multibandCrossoverModulated);
     add ("multiband_crossover_text", "Divider Frequency", "The frequency beside each divider", &Theme::multibandCrossoverText);
     add ("multiband_crossover_text_hot", "Divider Frequency Hovered", "The frequency of a hovered divider", &Theme::multibandCrossoverTextHot);
 
@@ -206,7 +207,17 @@ static std::vector<ThemeSection> makeSections()
     add ("lock_on", "Lock On", "The scope lock and gain link locks while locked", &Theme::lockOn, "Power and Lock");
     add ("lock_off", "Lock Off", "The scope lock while unlocked", &Theme::lockOff, "Power and Lock");
     add ("gain_text_low", "Gain Readout Quiet", "What the IN and OUT readouts fade to as they turn down", &Theme::gainTextLow);
-    add ("modulation_highlight", "Modulation", "Anything being modulated", &Theme::modulationHighlight);
+    add ("modulation_highlight", "Modulation", "Anything being modulated, and how far each modulation can move it", &Theme::modulationHighlight);
+
+    {
+        const char* const names[] { "Drive", "Macro 1", "Macro 2", "Macro 3", "Macro 4", "Mod 1", "Mod 2", "Mod 3", "Mod 4", "Mod 5" };
+        static_assert (std::size (names) == std::tuple_size_v<decltype (Theme::modSources)>);
+
+        for (int i = 0; i < (int) std::size (names); ++i)
+            addGetter ("mod_source_" + juce::String (names[i]).toLowerCase().replace (" ", "_"), "Mod Source " + juce::String (names[i]),
+                       "This source's name, and where it's moving whatever it modulates",
+                       [i] (Theme& t) -> juce::Colour& { return t.modSources[(size_t) i]; }, {}, "Mod Source");
+    }
 
     add ("text_header", "Header Text", "The selected PRE MAIN or POST tab", &Theme::textHeader);
     add ("text_header_hover", "Header Text Hovered", "A tab under the mouse", &Theme::textHeaderHover);

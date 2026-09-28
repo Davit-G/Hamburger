@@ -230,6 +230,71 @@ namespace ParamIDs
 
     static_assert(sizeof(globalMacros) / sizeof(ParameterInfo*) == numGlobalMacros);
 
+    // a macro's name once renamed, kept on the state so it's saved with the preset. unset, it goes by its own
+    inline juce::Identifier macroNameProperty (int macro) { return globalMacros[macro]->getParamID() + "Name"; }
+
+    // which macro a parameter is, -1 for the rest
+    inline int macroIndexOf (const ParameterInfo& info)
+    {
+        for (int i = 0; i < numGlobalMacros; ++i)
+            if (info.id == globalMacros[i]->id)
+                return i;
+
+        return -1;
+    }
+
+    /*  The mod matrix's modulators, each any of the types, with every type's settings kept whichever one it is. Types
+        are only ever added to the end, the reserved slots after them are for the likes of random generators. */
+    static constexpr int numModulators = 5;
+    static const PanelInfo modulatorTypes { juce::StringArray({"LFO", "ENVELOPE", "AUDIO", "VELOCITY", "KEYTRACK", "STAGE"}) };
+    enum ModulatorType { lfo, envelope, audio, velocity, keytrack, stage };
+    enum ModulatorParam { modRate, modShape, modAttack, modRelease, modGain, modRectify, numModulatorParams };
+
+    // modulator slot 0 to 4
+    inline const ParameterInfo& modulatorParam (int slot, int which)
+    {
+        static const auto table = []
+        {
+            std::array<std::array<ParameterInfo, numModulatorParams>, numModulators> built;
+
+            for (int s = 0; s < numModulators; ++s)
+            {
+                const auto id = "mod" + juce::String (s + 1), name = "Mod " + juce::String (s + 1);
+
+                built[(size_t) s] = {{
+                    { id + "Rate", name + " Rate", ParamUnits::hz, makeSkewedRange (0.01f, 40.0f, 0.3f), 1.0f, "How fast the LFO cycles" },
+                    { id + "Shape", name + " Shape", ParamUnits::none, makeRange (0.0f, 1.0f), 0.0f, "Morphs the LFO from sine to triangle to saw to square" },
+                    { id + "Attack", name + " Attack", ParamUnits::ms, makeSkewedRange (0.0f, 500.0f, 0.3f), 10.0f, "How quickly the envelope rises with the input. At 0ms it jumps straight there" },
+                    { id + "Release", name + " Release", ParamUnits::ms, makeSkewedRange (0.0f, 2000.0f, 0.3f), 150.0f, "How quickly the envelope falls once the input does. At 0ms it drops straight there" },
+                    { id + "Gain", name + " Gain", ParamUnits::db, makeRange (-24.0f, 24.0f), 0.0f, "Gain on the input before it's followed or used as the modulation" },
+                    { id + "Rectify", name + " Rectify", ParamUnits::percent, makeRange (0.0f, 100.0f), 0.0f,
+                      "Folds the audio's negative half up. At 100% the modulation is the audio's level, from nothing at silence to all the way at full scale" },
+                }};
+            }
+
+            return built;
+        }();
+
+        return table[(size_t) slot][(size_t) which];
+    }
+
+    // three envelopes then two LFOs by default
+    inline const ParameterInfo& modulatorType (int slot)
+    {
+        static const auto table = []
+        {
+            std::array<ParameterInfo, numModulators> built;
+
+            for (int s = 0; s < numModulators; ++s)
+                built[(size_t) s] = { "mod" + juce::String (s + 1) + "Type", "Mod " + juce::String (s + 1) + " Type", ParamUnits::category,
+                                      makeSteppedRange (0.0f, choiceSlots - 1.0f), (float) (s < 3 ? envelope : lfo), "What this modulator is" };
+
+            return built;
+        }();
+
+        return table[(size_t) slot];
+    }
+
     // how the main stage arranges its slots, plus the controls the individual routings need
     static const ParameterInfo mainRouting{"mainRouting", "Routing", ParamUnits::category, makeSteppedRange(0.0f, choiceSlots - 1.0f), 0.0f,
                                            "How the distortion slots are arranged"};
@@ -500,8 +565,6 @@ namespace ParamIDs
 
     static const ParameterInfo downsampleFreq{"downsampleFreq", "Dwnsmpl Freq", ParamUnits::hz, makeSkewedRange(200.0f, 40000.0f, 0.25f), 40000.0f,
                                               "The new sample rate the signal is crushed to"};
-    static const ParameterInfo downsampleMix{"downsampleMix", "Dwnsmpl Mix", ParamUnits::none, makeRange(0.0f, 1.0f), 1.0f,
-                                             "Dry / Wet blend the digitised and original signal"};
     static const ParameterInfo bitReduction{"bitReduction", "Dwnsmpl Bits", ParamUnits::none, makeRange(1.0f, 32.0f), 32.0f,
                                             "Bit depth the signal is quantised to"};
 
@@ -569,7 +632,7 @@ namespace ParamIDs
             if (info.id == emphasis->id)
                 return &eqStrength;
 
-        for (const auto* noise : { &sizzleAmount, &fizzAmount, &erosionAmount, &downsampleMix, &gateAmt })
+        for (const auto* noise : { &sizzleAmount, &fizzAmount, &erosionAmount, &gateAmt })
             if (info.id == noise->id)
                 return &noiseAmount;
 

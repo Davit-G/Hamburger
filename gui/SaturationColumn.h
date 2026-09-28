@@ -8,31 +8,12 @@
 
 #include "Modules/Panels/RoutingPanel.h"
 #include "Modules/Panels/StartPanels.h"
-
-// an empty box for modulation, which has no power button or type of its own. the sources go under the distortion box,
-// and the routing table is the MOD page
-class ModulationArea : public juce::Component
-{
-public:
-    void paint(juce::Graphics &g) override
-    {
-        const auto box = getLocalBounds().reduced(Panel::boxInset).toFloat();
-
-        g.setColour(theme().box);
-        g.fillRoundedRectangle(box, Panel::boxCornerSize);
-
-        if (theme().boxBorders)
-        {
-            g.setColour(theme().boxBorder);
-            g.drawRoundedRectangle(box.reduced(0.5f), Panel::boxCornerSize, 1.0f);
-        }
-    }
-};
+#include "ModulationPanels.h"
 
 class SaturationColumn : public juce::Component
 {
 public:
-    SaturationColumn(AudioPluginAudioProcessor &p) : scopeContext(p.getScopeContext()), routingPanel(p) {
+    SaturationColumn(AudioPluginAudioProcessor &p) : scopeContext(p.getScopeContext()), routingPanel(p), modulationRouting(p) {
         setInterceptsMouseClicks(true, true);
 
         for (int i = 0; i < MainRouting::maxSlots; ++i)
@@ -53,7 +34,6 @@ public:
         startModule = std::make_unique<Module>(p, "DISTORTION", "", "", std::move(startPanels));
         addChildComponent(startModule.get());
 
-        addAndMakeVisible(modulationSources);
         addChildComponent(modulationRouting);
 
         routingPanel.onSlotSelected = [this](int slot) { setActiveSlot(slot); };
@@ -117,7 +97,6 @@ public:
         preModule->setVisible(tab == PluginHeader::Tab::pre);
         postModule->setVisible(tab == PluginHeader::Tab::post);
         modulationRouting.setVisible(tab == PluginHeader::Tab::mod);
-        modulationSources.setVisible(tab != PluginHeader::Tab::start);
 
         routingPanel.setVisible(isMain);
 
@@ -131,10 +110,8 @@ public:
     }
 
     void resized() override{
-        auto bounds = getLocalBounds();
-
-        // the start page has no bottom row, the box takes the whole height
-        auto boxBounds = view == PluginHeader::Tab::start ? bounds : bounds.removeFromTop(bounds.getHeight() * 3 / 4);
+        // the modulation row and the boxes under it are the editor's, across the whole width
+        const auto boxBounds = getLocalBounds();
 
         for (auto& module : mainModules)
             module->setBounds(boxBounds);
@@ -143,8 +120,6 @@ public:
         preModule->setBounds(boxBounds);
         postModule->setBounds(boxBounds);
         modulationRouting.setBounds(boxBounds);
-
-        modulationSources.setBounds(bounds);
     }
 
 private:
@@ -155,7 +130,8 @@ private:
     ScopeContext& scopeContext;
 
     RoutingPanel routingPanel;
-    ModulationArea modulationSources, modulationRouting;
+    // the routing table is the MOD page. the sources are the editor's, in the row it opens and shuts
+    ModulationPage modulationRouting;
 
     std::array<std::unique_ptr<Module>, MainRouting::maxSlots> mainModules;
     std::unique_ptr<Module> preModule = nullptr;

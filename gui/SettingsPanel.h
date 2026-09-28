@@ -231,6 +231,7 @@ public:
         crossoverTitle.setText ("CROSSOVERS", juce::dontSendNotification);
         highpassTitle.setText ("DC BLOCKERS", juce::dontSendNotification);
         dryPhaseTitle.setText ("DRY PHASE", juce::dontSendNotification);
+        smoothingTitle.setText ("SMOOTHING", juce::dontSendNotification);
         fxOrderTitle.setText ("FX ORDER", juce::dontSendNotification);
         themeTitle.setText ("THEME", juce::dontSendNotification);
 
@@ -255,6 +256,18 @@ public:
 
         startupPage.onChange = [this] { processorRef.getAppProperties().setStartupPage (startupPages[startupPage.getSelectedItemIndex()]); };
         addAndMakeVisible (startupPage);
+
+        smoothing.addItem ("On", 1);
+        smoothing.addItem ("Off", 2);
+        smoothing.setTooltip ("Knobs glide over 10ms to wherever they're moved or automated to, so they don't click. Turn it off in hosts "
+                              "that already send sample accurate automation, and changes land within 64 samples. The modulation is never smoothed");
+        smoothing.setSelectedId (processorRef.getAppProperties().getParamSmoothing() ? 1 : 2, juce::dontSendNotification);
+        smoothing.onChange = [this] {
+            const auto on = smoothing.getSelectedId() == 1;
+            processorRef.getAppProperties().setParamSmoothing (on);
+            SmoothParam::smoothingEnabled = on;
+        };
+        addAndMakeVisible (smoothing);
 
         changePresetFolder.onClick = [this] { choosePresetFolder(); };
         addAndMakeVisible (changePresetFolder);
@@ -372,7 +385,7 @@ public:
 
         for (auto [label, control] : std::initializer_list<std::pair<juce::Label*, juce::Component*>> {
                  { &tooltipTitle, &tooltipType }, { &startupTitle, &startupPage }, { &presetFolderTitle, &changePresetFolder }, { &crossoverTitle, &crossoverSlope },
-                 { &highpassTitle, &linearHighpass }, { &dryPhaseTitle, &dryPhase } })
+                 { &highpassTitle, &linearHighpass }, { &dryPhaseTitle, &dryPhase }, { &smoothingTitle, &smoothing } })
         {
             auto row = general.removeFromTop (rowHeight);
             label->setBounds (row.removeFromLeft (row.getWidth() * 2 / 5));
@@ -395,7 +408,7 @@ public:
     }
 
 private:
-    std::array<juce::Label*, 9> allLabels() { return { &title, &tooltipTitle, &startupTitle, &presetFolderTitle, &crossoverTitle, &highpassTitle, &dryPhaseTitle, &fxOrderTitle, &themeTitle }; }
+    std::array<juce::Label*, 10> allLabels() { return { &title, &tooltipTitle, &startupTitle, &presetFolderTitle, &crossoverTitle, &highpassTitle, &dryPhaseTitle, &smoothingTitle, &fxOrderTitle, &themeTitle }; }
 
     void showThemes()
     {
@@ -499,8 +512,8 @@ private:
 
     AudioPluginAudioProcessor& processorRef;
 
-    juce::Label title, tooltipTitle, startupTitle, presetFolderTitle, crossoverTitle, highpassTitle, dryPhaseTitle, fxOrderTitle, themeTitle;
-    juce::ComboBox tooltipType, startupPage, crossoverSlope, linearHighpass, dryPhase, themeSelector;
+    juce::Label title, tooltipTitle, startupTitle, presetFolderTitle, crossoverTitle, highpassTitle, dryPhaseTitle, smoothingTitle, fxOrderTitle, themeTitle;
+    juce::ComboBox tooltipType, startupPage, crossoverSlope, linearHighpass, dryPhase, smoothing, themeSelector;
     const juce::StringArray startupPages { "start", "pre", "main", "post" };
     juce::TextButton changePresetFolder { "CHANGE FOLDER" }, customiseTheme { "CUSTOMISE" };
     std::unique_ptr<juce::FileChooser> presetFolderChooser;

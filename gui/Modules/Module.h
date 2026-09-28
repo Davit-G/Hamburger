@@ -6,6 +6,165 @@
 #include "Panel.h"
 #include "SlotLevels.h"
 
+/*  A type menu that opens as a grid of boxes, each with its type's icon over its name, once it's been given tiles, or
+    as a column of names under each heading, once it's been given groups. Otherwise it's an ordinary menu. */
+class TypeSelector : public juce::ComboBox
+{
+public:
+    struct Tile
+    {
+        juce::String name;
+        const char* svg = nullptr; // nothing to draw, it gets a curve instead
+        int svgSize = 0;
+        AccentColours Theme::* accent = &Theme::plain;
+    };
+
+    std::vector<Tile> tiles;
+
+    struct Group
+    {
+        juce::String title;
+        std::vector<std::pair<int, juce::String>> types; // index in the type menu, and the name it's listed by
+    };
+
+    std::vector<Group> groups;
+
+    void showPopup() override
+    {
+        if (! groups.empty())
+            return showGroups();
+
+        if (tiles.empty())
+            return juce::ComboBox::showPopup();
+
+        const auto count = (int) tiles.size();
+        const auto rows = (count + columns - 1) / columns;
+
+        // a menu fills its columns top to bottom, so they're filled a column at a time to read across in rows
+        juce::PopupMenu menu;
+        menu.setLookAndFeel (&getLookAndFeel());
+
+        for (int column = 0; column < columns; ++column)
+        {
+            for (int row = 0; row < rows; ++row)
+                if (const auto index = row * columns + column; index < count)
+                    menu.addCustomItem (index + 1, std::make_unique<TileItem> (tiles[(size_t) index], index == getSelectedItemIndex()), nullptr, tiles[(size_t) index].name);
+
+            if (column < columns - 1)
+                menu.addColumnBreak();
+        }
+
+        show (menu);
+    }
+
+private:
+    static constexpr int columns = 4;
+
+    void showGroups()
+    {
+        juce::PopupMenu menu;
+        menu.setLookAndFeel (&getLookAndFeel());
+
+        for (size_t g = 0; g < groups.size(); ++g)
+        {
+            menu.addSectionHeader (groups[g].title);
+
+            for (const auto& [index, name] : groups[g].types)
+                menu.addItem (index + 1, name, true, index == getSelectedItemIndex());
+
+            if (g + 1 < groups.size())
+                menu.addColumnBreak();
+        }
+
+        show (menu);
+    }
+
+    void show (juce::PopupMenu& menu)
+    {
+        menu.showMenuAsync (juce::PopupMenu::Options().withTargetComponent (this),
+                            [safe = juce::Component::SafePointer<TypeSelector> (this)] (int result)
+                            {
+                                if (safe == nullptr)
+                                    return;
+
+                                // the box marks its menu open before showing it, and only its own menu marks it shut again
+                                safe->hidePopup();
+
+                                if (result > 0)
+                                    safe->setSelectedId (result);
+                            });
+    }
+
+    struct TileItem : juce::PopupMenu::CustomComponent
+    {
+        TileItem (const Tile& t, bool isCurrent) : tile (t), current (isCurrent)
+        {
+            // drawn in the default theme's icon colour, which is swapped for the current one, like CentredSVGIcon
+            if (tile.svg != nullptr)
+                if ((icon = juce::Drawable::createFromImageData (tile.svg, (size_t) tile.svgSize)))
+                    icon->replaceColour ((Theme().*tile.accent).icon, (theme().*tile.accent).icon);
+        }
+
+        void getIdealSize (int& width, int& height) override
+        {
+            width = height = 100;
+        }
+
+        void paint (juce::Graphics& g) override
+        {
+            const auto& colours = theme().*tile.accent;
+            auto box = getLocalBounds().toFloat().reduced (4.0f);
+            const auto lit = isItemHighlighted() || current;
+
+            if (isItemHighlighted())
+            {
+                g.setColour (colours.main.withAlpha (0.12f));
+                g.fillRoundedRectangle (box, 6.0f);
+            }
+
+            g.setColour (lit ? colours.main : colours.main.withMultipliedAlpha (0.4f));
+            g.drawRoundedRectangle (box.reduced (0.5f), 6.0f, current ? 2.0f : 1.0f);
+
+            auto inside = box.reduced (6.0f);
+            const auto text = inside.removeFromBottom (16.0f);
+            const auto iconArea = inside.reduced (4.0f);
+
+            g.setColour (colours.text);
+            g.setFont (getLookAndFeel().getPopupMenuFont().withHeight (13.0f));
+            g.drawFittedText (tile.name, text.toNearestInt(), juce::Justification::centred, 1, 0.8f);
+
+            if (icon != nullptr)
+            {
+                icon->drawWithin (g, iconArea, juce::RectanglePlacement::centred, 1.0f);
+                return;
+            }
+
+            // a soft clipping curve for a type with no icon of its own
+            const auto size = juce::jmin (iconArea.getWidth(), iconArea.getHeight());
+            const auto square = iconArea.withSizeKeepingCentre (size, size);
+            juce::Path curve;
+
+            for (int i = 0; i <= 32; ++i)
+            {
+                const auto x = (float) i / 32.0f * 2.0f - 1.0f;
+                const juce::Point<float> point { square.getX() + (x + 1.0f) * 0.5f * size, square.getCentreY() - std::tanh (x * 3.0f) * size * 0.45f };
+
+                if (i == 0)
+                    curve.startNewSubPath (point);
+                else
+                    curve.lineTo (point);
+            }
+
+            g.setColour (colours.icon);
+            g.strokePath (curve, juce::PathStrokeType (2.0f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
+        }
+
+        Tile tile;
+        bool current;
+        std::unique_ptr<juce::Drawable> icon;
+    };
+};
+
 class Module : public juce::Component
 {
 public:
@@ -268,7 +427,7 @@ public:
     }
 
     std::unique_ptr<LightButton> enabledButton = nullptr;
-    juce::ComboBox categorySelector;
+    TypeSelector categorySelector;
 
 private:
     // disabling isn't quite the same for every box

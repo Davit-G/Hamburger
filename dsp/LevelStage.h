@@ -74,12 +74,12 @@ public:
         {
             dryPhase.pushDry (dryWet, block);
 
-            inGain.setGainDecibels (inGainParam->get());
+            inGain.setGainDecibels (inGainParam->getModulated());
             inGain.process (context);
 
             processSlot();
 
-            dryWet.setWetMixProportion (mixParam->get() * 0.01f);
+            dryWet.setWetMixProportion (mixParam->getModulated() * 0.01f);
             dryWet.mixWetSamples (block);
         }
         else if (latency > 0)
@@ -99,7 +99,7 @@ private:
     float outGainDb() const
     {
         const auto linked = gainLink != nullptr && gainLink->get() && isEnabled();
-        return outGainParam->get() - (linked ? inGainParam->get() : 0.0f);
+        return outGainParam->getModulated() - (linked ? inGainParam->getModulated() : 0.0f);
     }
 
     MacroParam* inGainParam = nullptr;

@@ -107,7 +107,7 @@ juce_add_plugin("${BaseTargetName}"
     COMPANY_WEBSITE "https://aviaryaudio.com"
     COMPANY_EMAIL "dave@aviaryaudio.com"
     IS_SYNTH FALSE                       # Is this a synth or an effect?
-    NEEDS_MIDI_INPUT FALSE               # Does the plugin need midi input?
+    NEEDS_MIDI_INPUT TRUE                # for the keytracking and velocity mod sources
     NEEDS_MIDI_OUTPUT FALSE              # Does the plugin need midi output?
     IS_MIDI_EFFECT FALSE                 # Is this plugin a MIDI effect?
     # EDITOR_WANTS_KEYBOARD_FOCUS TRUE/FALSE    # Does the editor need keyboard focus?

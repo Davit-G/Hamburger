@@ -62,5 +62,21 @@ public:
         }
     }
 
+    // whether knobs glide to where they're set, off for hosts that already send sample accurate automation
+    bool getParamSmoothing()
+    {
+        auto* userSettings = appProperties.getUserSettings();
+        return userSettings == nullptr || userSettings->getBoolValue ("paramSmoothing", true);
+    }
+
+    void setParamSmoothing (bool shouldSmooth)
+    {
+        if (auto* userSettings = appProperties.getUserSettings())
+        {
+            userSettings->setValue ("paramSmoothing", shouldSmooth);
+            userSettings->saveIfNeeded();
+        }
+    }
+
     juce::ApplicationProperties appProperties;
 };

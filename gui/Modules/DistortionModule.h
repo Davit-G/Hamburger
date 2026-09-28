@@ -38,5 +38,18 @@ inline std::unique_ptr<Module> makeDistortionModule (AudioPluginAudioProcessor& 
 
     module->setFooter (std::make_unique<SlotLevels> (p, slot), SlotLevels::height);
 
+    // in the order of the type menu
+    const auto& names = ParamIDs::distortionTypes.categories;
+    module->categorySelector.tiles = {
+        { names[0], BinaryData::Grill_svg, BinaryData::Grill_svgSize, &Theme::grill },
+        { names[1], BinaryData::Tube_svg, BinaryData::Tube_svgSize, &Theme::tube },
+        { names[2], BinaryData::Waves_svg, BinaryData::Waves_svgSize, &Theme::phase },
+        { names[3], BinaryData::Flask_svg, BinaryData::Flask_svgSize, &Theme::rubidium },
+        { names[4], BinaryData::FilmReel_svg, BinaryData::FilmReel_svgSize, &Theme::tape },
+        { names[5], BinaryData::Slew_svg, BinaryData::Slew_svgSize, &Theme::slew },
+        { names[6], nullptr, 0, &Theme::waveshape },
+        { names[7], BinaryData::Opto_svg, BinaryData::Opto_svgSize, &Theme::opto },
+    };
+
     return module;
 }

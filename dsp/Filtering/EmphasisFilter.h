@@ -166,10 +166,15 @@ public:
 
         const auto numChannels = block.getNumChannels();
         const auto numSamples = block.getNumSamples();
-        const auto eqCompensation = juce::Decibels::decibelsToGain(-(emphasisLowSmooth.getRaw(0) + emphasisHighSmooth.getRaw(0)) * 0.133f);
+        // follows the same smoothed gains as the bells, a jump straight to the knob's target each block zippers
+        const auto compensationFor = [](float lowDb, float highDb) { return juce::Decibels::decibelsToGain(-(lowDb + highDb) * 0.133f); };
+        auto eqCompensation = compensationFor(emphasisLowSmooth.getRaw(0), emphasisHighSmooth.getRaw(0));
 
         for (size_t sample = 0; sample < numSamples; ++sample)
         {
+            if (parametersNeedUpdates)
+                eqCompensation = compensationFor(emphasisLowBuffer[sample], emphasisHighBuffer[sample]);
+
             if (parametersNeedUpdates && (sample % samplesToSkip == 0)) {
                 const auto nextEmphasisLow = emphasisLowBuffer[sample];
                 const auto nextEmphasisHigh = emphasisHighBuffer[sample];

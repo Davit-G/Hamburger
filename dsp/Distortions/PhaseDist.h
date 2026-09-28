@@ -36,6 +36,11 @@ private:
     HilbertBiquadShifter hilbertTransformL;
     HilbertBiquadShifter hilbertTransformR;
 
+    // under a downward shift, whatever's below it would fold back off 0 Hz, so it's taken out first
+    static constexpr double minFoldbackHz = 5.0;
+    ChebyshevHighpass foldbackL, foldbackR;
+    double foldbackCutoff = 0.0;
+
     float sampleRate;
     float sampleRateMult;
 

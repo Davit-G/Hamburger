@@ -180,8 +180,7 @@ namespace EffectInfos
     static const ParamIDs::EffectInfo redux {
         {
             ParamIDs::downsampleFreq,
-            ParamIDs::bitReduction,
-            ParamIDs::downsampleMix
+            ParamIDs::bitReduction
         }
     };
 

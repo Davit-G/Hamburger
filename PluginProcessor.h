@@ -30,11 +30,12 @@
 #include "clap-juce-extensions/clap-juce-extensions.h"
 
 #include "dsp/EffectBase.h"
+#include "dsp/ModMatrix.h"
 #include "utils/Params.h"
 
 //==============================================================================
 class AudioPluginAudioProcessor : public juce::AudioProcessor, public clap_juce_extensions::clap_properties,
-                                  private juce::ValueTree::Listener
+                                  private juce::ValueTree::Listener, private juce::AsyncUpdater
 
 {
 public:
@@ -90,11 +91,12 @@ public:
     ScopeContext& getScopeContext() { return scopeContext; };
     Preset::PresetManager& getPresetManager() { return *presetManager; }
     AppProperties& getAppProperties() { return appProperties; }
+    ModMatrix& getModMatrix() { return modMatrix; }
 
 private:
-    juce::AudioParameterFloat *inputGainKnob = nullptr;
-    juce::AudioParameterFloat *mixKnob = nullptr;
-    juce::AudioParameterFloat *outputGainKnob = nullptr;
+    MacroParam *inputGainKnob = nullptr;
+    MacroParam *mixKnob = nullptr;
+    MacroParam *outputGainKnob = nullptr;
     juce::AudioParameterBool *gainLink = nullptr;
 
     juce::AudioParameterInt *hq = nullptr;
@@ -124,6 +126,11 @@ private:
     bool linearCrossovers = false;
     float latencyTotal = 0.0f;
 
+    // everything runs this many samples at a time, with the modulation worked out fresh for each
+    void processChunk(juce::AudioBuffer<float>& buffer, const juce::AudioBuffer<float>& whole, int start, const juce::MidiBuffer& midi);
+
+    ModMatrix modMatrix { treeState };
+
     void updateLatency();
     float totalLatency();
 
@@ -149,6 +156,10 @@ private:
     void syncRoutingOrder();
     void valueTreePropertyChanged (juce::ValueTree& tree, const juce::Identifier& property) override;
     void valueTreeRedirected (juce::ValueTree& tree) override;
+
+    // the macros' names from the state onto their parameters, and the host told. on the message thread, whichever
+    // thread the state changed on
+    void handleAsyncUpdate() override;
 
     // makes sure that routingOrder doesnt get converted into a mutex under the hood
     static_assert (std::atomic<juce::uint64>::is_always_lock_free);

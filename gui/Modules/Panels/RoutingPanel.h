@@ -271,8 +271,8 @@ private:
             c->setBounds (row.removeFromLeft (cellWidth).reduced (cellInset));
     }
 
-    /*  Stage count over flip on the left, gain, mix and the filter between stages stacked on the right. The filter's
-        type button takes a third of its row, its one control whichever type is on the rest. */
+    /*  Stage count over flip on the left. On the right, gain and mix side by side, the filter between stages' type button
+        on its own row under them, and that type's controls under it. */
     void layOutStack (juce::Rectangle<int> bounds)
     {
         const auto rowHeight = juce::jmin (compactRowHeight, bounds.getHeight() / 3);
@@ -288,13 +288,13 @@ private:
         // lined up with the start of the bars on the right
         stackFlip.setBounds (left.withTrimmedLeft (sliderInset));
 
-        for (auto* slider : { &stackGain, &stackMix })
-        {
-            slider->setJustification (RectSliderType::LeftJustifified);
-            slider->setBounds (right.removeFromTop (rowHeight));
-        }
+        auto levels = right.removeFromTop (rowHeight);
+        stackGain.setJustification (RectSliderType::LeftJustifified);
+        stackMix.setJustification (RectSliderType::LeftJustifified);
+        stackGain.setBounds (levels.removeFromLeft (levels.getWidth() / 2));
+        stackMix.setBounds (levels);
 
-        stackFilterButton.setBounds (right.removeFromLeft (right.getWidth() / 3).withTrimmedLeft (sliderInset).reduced (0, cellInset / 2));
+        stackFilterButton.setBounds (right.removeFromTop (rowHeight).withTrimmedLeft (sliderInset).reduced (0, cellInset / 2));
 
         // freq and Q share what's left of the row, otherwise the one control takes it all
         for (auto* slider : { &stackFilterFreq, &stackFilterQ, &stackRotation })

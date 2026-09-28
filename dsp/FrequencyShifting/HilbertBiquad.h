@@ -95,3 +95,65 @@ private:
 
     double sampleRate = 44100;
 };
+
+/*  A 6th order chebyshev type 1 highpass with 1 dB of ripple, as three biquads, each the RBJ highpass at one pole pair's
+    frequency and Q. In doubles: at the lowest cutoffs the poles sit so close to the unit circle that floats go unstable. */
+class ChebyshevHighpass
+{
+public:
+    void setCutoff (double hz, double sampleRate)
+    {
+        constexpr double rippleDb = 1.0;
+        constexpr int order = sections * 2;
+
+        const auto epsilon = std::sqrt (std::pow (10.0, rippleDb / 10.0) - 1.0);
+        const auto v = std::asinh (1.0 / epsilon) / order;
+
+        for (int k = 0; k < sections; ++k)
+        {
+            // the lowpass prototype's pole pair, which the highpass mirrors to cutoff / |pole| with the same Q
+            const auto theta = juce::MathConstants<double>::pi * (2 * k + 1) / (2 * order);
+            const auto re = -std::sinh (v) * std::sin (theta);
+            const auto im = std::cosh (v) * std::cos (theta);
+            const auto magnitude = std::hypot (re, im);
+
+            const auto w = juce::MathConstants<double>::twoPi * juce::jmin (hz / magnitude, sampleRate * 0.49) / sampleRate;
+            const auto alpha = std::sin (w) * -re / magnitude;
+            const auto cosW = std::cos (w);
+            const auto a0 = 1.0 + alpha;
+
+            // an even order peaks a ripple above unity, so the first section takes it back down
+            const auto gain = (k == 0 ? std::pow (10.0, -rippleDb / 20.0) : 1.0) / a0;
+
+            auto& c = coefficients[(size_t) k];
+            c = { (1.0 + cosW) * 0.5 * gain, -(1.0 + cosW) * gain, (1.0 + cosW) * 0.5 * gain, -2.0 * cosW / a0, (1.0 - alpha) / a0 };
+        }
+    }
+
+    double processSample (double x)
+    {
+        for (int k = 0; k < sections; ++k)
+        {
+            const auto& [b0, b1, b2, a1, a2] = coefficients[(size_t) k];
+            auto& [z1, z2] = state[(size_t) k];
+
+            const auto y = b0 * x + z1;
+            z1 = b1 * x - a1 * y + z2;
+            z2 = b2 * x - a2 * y;
+            x = y;
+        }
+
+        return x;
+    }
+
+    void reset() { state = {}; }
+
+private:
+    static constexpr int sections = 3;
+
+    struct Coefficients { double b0, b1, b2, a1, a2; };
+    struct State { double z1, z2; };
+
+    std::array<Coefficients, sections> coefficients {};
+    std::array<State, sections> state {};
+};

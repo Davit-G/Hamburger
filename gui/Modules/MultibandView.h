@@ -8,11 +8,12 @@
 
 class MultibandView : public juce::Component,
                       public juce::TooltipClient,
+                      public juce::DragAndDropTarget,
                       private juce::Timer
 {
 public:
     explicit MultibandView (AudioPluginAudioProcessor& p)
-        : collector (p.getScopeDataCollector()), apvts (p.treeState)
+        : collector (p.getScopeDataCollector()), apvts (p.treeState), matrix (p.getModMatrix())
     {
         auto find = [&p] (const ParamIDs::ParameterInfo& info) { return p.treeState.getParameter (info.getParamID()); };
 
@@ -45,6 +46,41 @@ public:
         setLayout (MainRouting::multibandLayout (2), false);
 
         startTimerHz (30);
+    }
+
+    // a mod source dropped on a divider modulates that crossover, see ModSourceButton
+    bool isInterestedInDragSource (const SourceDetails& details) override
+    {
+        return details.description.toString().startsWith (GenericKnob::modDragPrefix);
+    }
+
+    void itemDragMove (const SourceDetails& details) override
+    {
+        const auto target = findTarget (details.localPosition.toFloat());
+        const auto onDivider = target.kind == Kind::crossover ? target : Target {};
+
+        if (onDivider != hover)
+        {
+            hover = onDivider;
+            repaint();
+        }
+    }
+
+    void itemDragExit (const SourceDetails&) override
+    {
+        hover = {};
+        repaint();
+    }
+
+    void itemDropped (const SourceDetails& details) override
+    {
+        const auto target = findTarget (details.localPosition.toFloat());
+        hover = {};
+        repaint();
+
+        if (target.kind == Kind::crossover)
+            matrix.connect (details.description.toString().fromFirstOccurrenceOf (GenericKnob::modDragPrefix, false, false).getIntValue(),
+                            crossovers[(size_t) target.index]->getParameterID());
     }
 
     // one component with many controls, so the tip is for whichever of them is under the mouse right now
@@ -544,20 +580,17 @@ private:
         return curve;
     }
 
-    /*  Power, mute, solo in the band's top corner: in a row, or a column once the band is too narrow for
-        the row, or nothing once it can't fit even one. */
+    /*  Power, mute, solo down the band's top left corner, always there. A band too narrow for the column has it
+        centred on the band instead, kept inside the view. */
     juce::Rectangle<float> toggleArea (int band, int which) const
     {
         const auto area = bandArea (band);
-        const auto step = (float) which * (toggleSize + toggleGap);
+        const auto y = toggleInset + (float) which * (toggleSize + toggleGap);
 
-        if (area.getWidth() >= toggleSize * 3.0f + toggleGap * 2.0f + toggleInset * 2.0f)
-            return { area.getX() + toggleInset + step, toggleInset, toggleSize, toggleSize };
+        auto x = area.getWidth() >= toggleSize + toggleInset * 2.0f ? area.getX() + toggleInset : area.getCentreX() - toggleSize * 0.5f;
+        x = juce::jlimit (0.0f, juce::jmax (0.0f, (float) getWidth() - toggleSize), x);
 
-        if (area.getWidth() >= toggleSize + toggleInset * 2.0f)
-            return { area.getX() + toggleInset, toggleInset + step, toggleSize, toggleSize };
-
-        return {};
+        return { x, y, toggleSize, toggleSize };
     }
 
     Target findTarget (juce::Point<float> pos) const
@@ -586,6 +619,10 @@ private:
 
         for (int band = 0; band < numBands; ++band)
         {
+            // the exciter's full band line is drawn the whole way across, but past the split it's the high path's to grab
+            if (exciter && band == 0 && pos.x > edgeX (1))
+                continue;
+
             const auto span = levelSpan (band);
             const auto distance = std::abs (pos.y - levelY (band, pos.x));
 
@@ -1037,6 +1074,23 @@ private:
         g.setColour (hot ? theme().multibandCrossoverHot : theme().multibandCrossover);
         g.drawLine (x, 0.0f, x, (float) getHeight(), hot ? 2.0f : 1.0f);
 
+        // where modulation has it right now, beside the divider that stays put to be grabbed
+        const auto& param = *crossovers[(size_t) edge];
+        const auto mods = matrix.connectionsTo (param.getParameterID());
+
+        if (! mods.empty())
+        {
+            auto proportion = param.convertTo0to1 (param.get());
+
+            for (const auto& mod : mods)
+                proportion += matrix.shownValue (mod.index);
+
+            const auto modulatedX = SpectrumAnalyser::freqToX (param.convertFrom0to1 (juce::jlimit (0.0f, 1.0f, proportion)), (float) getWidth());
+
+            g.setColour (theme().multibandCrossoverModulated);
+            g.drawLine (modulatedX, 0.0f, modulatedX, (float) getHeight(), 1.5f);
+        }
+
         const auto freq = crossovers[(size_t) edge]->get();
         const auto label = freq >= 1000.0f ? juce::String (freq / 1000.0f, 1) + "k" : juce::String (juce::roundToInt (freq));
 
@@ -1107,6 +1161,7 @@ private:
 
     MainRouting::BandLayout layout;
     juce::AudioProcessorValueTreeState& apvts;
+    ModMatrix& matrix;
     std::array<juce::AudioParameterChoice*, ParamIDs::numBands> slotTypes {};
 
     // each slot's in gain, and the same lined up band by band, for the reference line behind the spectrum

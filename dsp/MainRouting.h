@@ -7,6 +7,7 @@
 #include "DCBlockingHighPass.h"
 #include "PrimaryDistortion.h"
 #include "SmoothParam.h"
+#include "ModMatrix.h"
 #include "FrequencyShifting/HilbertBiquad.h"
 #include "../gui/Modules/ScopeDataCollector.h"
 
@@ -315,12 +316,26 @@ public:
         for (int i = 0; i < crossovers.count; ++i)
             crossovers.hz[(size_t) i] = hz[layout.crossovers[(size_t) i]];
 
+        keepInOrder (crossovers.hz.data(), crossovers.count);
         return crossovers;
     }
 
 private:
+    // dragging keeps the splits in order, but modulation can push one past the next, which then goes along with it
+    static void keepInOrder (float* cutoffs, int count)
+    {
+        for (int i = 1; i < count; ++i)
+            cutoffs[i] = juce::jmax (cutoffs[i], cutoffs[i - 1]);
+    }
+
     int currentRouting() const { return routing != nullptr ? routing->getIndex() : stack; }
     int currentBandCount() const { return bandCount != nullptr ? bandCount->get() : 2; }
+
+public:
+    // told which stack stage is running, for stage modulators. set once before any audio runs
+    void setModMatrix (ModMatrix* matrix) { modMatrix = matrix; }
+
+private:
 
     struct StackPath
     {
@@ -342,7 +357,6 @@ private:
     {
         const auto count = stackCount != nullptr ? stackCount->get() : 1;
         const auto flip = stackFlip != nullptr && stackFlip->get();
-        const auto gain = juce::Decibels::decibelsToGain (stackGain.getRaw (0)) * (flip ? -1.0f : 1.0f);
 
         // the stack only ever runs slot 0's settings, so it's traced whole whichever main box is on screen.
         const auto tapping = tapSlot >= 0;
@@ -357,9 +371,13 @@ private:
 
         for (int stage = 0; stage < count; ++stage)
         {
+            // a stage modulator moves whatever it's on differently for each stage, the gain and filter going into it too
+            if (modMatrix != nullptr)
+                modMatrix->setStage (stage);
+
             if (stage > 0)
             {
-                block.multiplyBy (gain);
+                block.multiplyBy (juce::Decibels::decibelsToGain (stackGain.getRaw (0)) * (flip ? -1.0f : 1.0f));
                 filterGap (wetPath, stage - 1, block);
             }
 
@@ -369,6 +387,9 @@ private:
             if (slots[0]->isEnabled())
                 pathBlockers[(size_t) juce::jmin (stage, maxSlots - 1)].processBlock (block);
         }
+
+        if (modMatrix != nullptr)
+            modMatrix->setStage (0);
 
         // an even number of flips leaves the signal inverted against everything else in the chain
         if (flip && count % 2 == 0)
@@ -483,6 +504,8 @@ private:
 
         for (int i = 0; i < numBands - 1; ++i)
             cutoffs[i] = crossoverFreqs[layout.crossovers[(size_t) i]];
+
+        keepInOrder (cutoffs, numBands - 1);
 
         if (linearCrossovers())
         {
@@ -698,6 +721,8 @@ private:
 
         return muted || (anySolo && !soloed) ? 0.0f : 1.0f;
     }
+
+    ModMatrix* modMatrix = nullptr;
 
     PrimaryDistortion& stageFor (int stage)
     {

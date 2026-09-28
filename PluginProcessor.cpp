@@ -34,6 +34,7 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor() : AudioProcessor(BusesPro
     slots[(size_t) ModuleId::module1] = &noiseDistortionSelection;
     slots[(size_t) ModuleId::module2] = &preDistortionSelection;
     slots[(size_t) ModuleId::main] = &distortionTypeSelection;
+    distortionTypeSelection.setModMatrix(&modMatrix);
     slots[(size_t) ModuleId::postClip] = &postClip;
     slots[(size_t) ModuleId::preDistortion] = &preDistortion;
     slots[(size_t) ModuleId::postDistortion] = &postDistortion;
@@ -59,17 +60,17 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor() : AudioProcessor(BusesPro
     slotLevels[(size_t) ModuleId::module1] = &noiseLevels;
     slotLevels[(size_t) ModuleId::module2] = &preFxLevels;
 
-    inputGainKnob = dynamic_cast<juce::AudioParameterFloat *>(treeState.getParameter(ParamIDs::inputGain.getParamID()));
+    inputGainKnob = dynamic_cast<MacroParam *>(treeState.getParameter(ParamIDs::inputGain.getParamID()));
     if (inputGainKnob == nullptr)
         jassertfalse;
 
-    outputGainKnob = dynamic_cast<juce::AudioParameterFloat *>(treeState.getParameter(ParamIDs::outputGain.getParamID()));
+    outputGainKnob = dynamic_cast<MacroParam *>(treeState.getParameter(ParamIDs::outputGain.getParamID()));
     gainLink = dynamic_cast<juce::AudioParameterBool *>(treeState.getParameter(ParamIDs::gainLink.getParamID()));
     jassert(gainLink);
     if (outputGainKnob == nullptr)
         jassertfalse;
 
-    mixKnob = dynamic_cast<juce::AudioParameterFloat *>(treeState.getParameter(ParamIDs::mix.getParamID()));
+    mixKnob = dynamic_cast<MacroParam *>(treeState.getParameter(ParamIDs::mix.getParamID()));
     if (mixKnob == nullptr)
         jassertfalse;
 
@@ -85,6 +86,8 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor() : AudioProcessor(BusesPro
 
     presetManager = std::make_unique<Preset::PresetManager>(treeState, appProperties);
 
+    SmoothParam::smoothingEnabled = appProperties.getParamSmoothing();
+
     // replaceState() swaps the tree out from under its listeners, which is valueTreeRedirected
     treeState.state.addListener(this);
 
@@ -95,6 +98,7 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor() : AudioProcessor(BusesPro
 
 AudioPluginAudioProcessor::~AudioPluginAudioProcessor()
 {
+    cancelPendingUpdate();
     treeState.state.removeListener(this);
 
 #if PERFETTO
@@ -139,14 +143,40 @@ void AudioPluginAudioProcessor::syncRoutingOrder()
 
 void AudioPluginAudioProcessor::valueTreePropertyChanged(juce::ValueTree& tree, const juce::Identifier& property)
 {
-    if (tree == treeState.state && property == routingOrderProperty)
+    if (tree != treeState.state)
+        return;
+
+    if (property == routingOrderProperty)
         syncRoutingOrder();
+
+    for (int i = 0; i < ParamIDs::numGlobalMacros; ++i)
+        if (property == ParamIDs::macroNameProperty(i))
+            triggerAsyncUpdate();
 }
 
 void AudioPluginAudioProcessor::valueTreeRedirected(juce::ValueTree& tree)
 {
     if (tree == treeState.state)
+    {
         syncRoutingOrder();
+        triggerAsyncUpdate();
+    }
+}
+
+void AudioPluginAudioProcessor::handleAsyncUpdate()
+{
+    for (int i = 0; i < ParamIDs::numGlobalMacros; ++i)
+    {
+        auto& macro = MacroParam::fetch(treeState, ParamIDs::globalMacros[i]->getParamID());
+        const auto name = treeState.state[ParamIDs::macroNameProperty(i)].toString();
+
+        if (name.isEmpty())
+            macro.clearNameOverride();
+        else
+            macro.setNameOverride(name);
+    }
+
+    updateHostDisplay(ChangeDetails{}.withParameterInfoChanged(true));
 }
 
 juce::AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::createParameterLayout()
@@ -168,6 +198,16 @@ juce::AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::c
     
     for (int i = 0; i < ParamIDs::numGlobalMacros; ++i)
         collected.push_back (std::make_unique<MacroParam> (*ParamIDs::globalMacros[(size_t) i]));
+
+    for (int m = 0; m < ParamIDs::numModulators; ++m)
+    {
+        const auto& type = ParamIDs::modulatorType (m);
+        collected.push_back (std::make_unique<juce::AudioParameterChoice> (type.getParameterID(), type.displayName,
+                                                                           ParamIDs::withReservedSlots (ParamIDs::modulatorTypes.categories), (int) type.defaultValue));
+
+        for (int p = 0; p < ParamIDs::numModulatorParams; ++p)
+            collected.push_back (std::make_unique<MacroParam> (ParamIDs::modulatorParam (m, p)));
+    }
     
     collected.push_back(std::make_unique<juce::AudioParameterChoice>(ParamIDs::mainRouting.getParameterID(), "Routing", ParamIDs::withReservedSlots (ParamIDs::routingTypes.categories), 0));
     collected.push_back(std::make_unique<juce::AudioParameterInt>(ParamIDs::bandCount.getParameterID(), ParamIDs::bandCount.displayName,
@@ -279,7 +319,7 @@ const juce::String AudioPluginAudioProcessor::getName() const
     return JucePlugin_Name;
 }
 
-bool AudioPluginAudioProcessor::acceptsMidi() const { return false; }
+bool AudioPluginAudioProcessor::acceptsMidi() const { return true; } // for the keytracking and velocity mod sources
 bool AudioPluginAudioProcessor::producesMidi() const { return false; }
 bool AudioPluginAudioProcessor::isMidiEffect() const { return false; }
 double AudioPluginAudioProcessor::getTailLengthSeconds() const { return 0.0; }
@@ -325,6 +365,8 @@ void AudioPluginAudioProcessor::prepareToPlay(double sampleRate, int samplesPerB
     for (auto* levels : slotLevels)
         if (levels != nullptr)
             levels->prepare(oversampledSpec);
+
+    modMatrix.prepare(sampleRate);
 
     dryWetMixer.reset();
     dryWetMixer.prepare(spec);
@@ -386,8 +428,6 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
     if (hamburgerEnabledButton != nullptr && hamburgerEnabledButton->get() == false)
         return;
 
-    juce::ignoreUnused(midiMessages);
-
     juce::ScopedNoDenormals noDenormals;
     auto totalNumInputChannels = getTotalNumInputChannels();
     auto totalNumOutputChannels = getTotalNumOutputChannels();
@@ -416,10 +456,27 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear(i, 0, buffer.getNumSamples());
 
+    // a block shorter than a chunk is just a shorter chunk
+    for (int start = 0; start < buffer.getNumSamples(); start += ModMatrix::chunkSize)
+    {
+        juce::AudioBuffer<float> chunk(buffer.getArrayOfWritePointers(), buffer.getNumChannels(), start,
+                                       juce::jmin(ModMatrix::chunkSize, buffer.getNumSamples() - start));
+        processChunk(chunk, buffer, start, midiMessages);
+    }
+}
+
+void AudioPluginAudioProcessor::processChunk(juce::AudioBuffer<float>& buffer, const juce::AudioBuffer<float>& whole, int start,
+                                             const juce::MidiBuffer& midi)
+{
+    const int oversampleAmount = oversamplingStack.getOversamplingFactor();
+
     juce::dsp::AudioBlock<float> block(buffer);
     juce::dsp::ProcessContextReplacing<float> context(block);
 
-    const auto gainAmount = (inputGainKnob != nullptr) ? inputGainKnob->get() : 0.0f;
+    // the sources follow the audio as it comes in, before the input gain, and everything below reads what they make of this chunk
+    modMatrix.process(whole, start, buffer.getNumSamples(), midi, oversampleAmount);
+
+    const auto gainAmount = (inputGainKnob != nullptr) ? inputGainKnob->getModulated() : 0.0f;
     inputGain.setGainDecibels(gainAmount);
     inputGain.process(context);
 
@@ -484,10 +541,10 @@ void AudioPluginAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer,
 
     // linked, the output takes back whatever the input added
     const auto linkedInDb = (gainLink != nullptr && gainLink->get()) ? gainAmount : 0.0f;
-    outputGain.setGainDecibels(((outputGainKnob != nullptr) ? outputGainKnob->get() : 0.0f) - linkedInDb);
+    outputGain.setGainDecibels(((outputGainKnob != nullptr) ? outputGainKnob->getModulated() : 0.0f) - linkedInDb);
     outputGain.process(context);
 
-    dryWetMixer.setWetMixProportion((mixKnob != nullptr) ? (mixKnob->get() * 0.01f) : 1.0f);
+    dryWetMixer.setWetMixProportion((mixKnob != nullptr) ? (mixKnob->getModulated() * 0.01f) : 1.0f);
 
     dryWetMixer.mixWetSamples(block);
 }

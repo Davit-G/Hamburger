@@ -1338,8 +1338,7 @@ juce::StringArray Scope<SampleType>::getNoiseHeaderLabels() const
 
         case 2: // BIT, no q - the bit depth is the interesting middle value instead
             return { formatFrequency(paramValue(ParamIDs::downsampleFreq)),
-                     juce::String(juce::roundToInt(paramValue(ParamIDs::bitReduction))) + " bit",
-                     formatPercent(paramValue(ParamIDs::downsampleMix)) };
+                     juce::String(juce::roundToInt(paramValue(ParamIDs::bitReduction))) + " bit" };
 
         case 3: // JEFF, the gate only has amount and smoothing
             return { formatPercent(paramValue(ParamIDs::gateAmt)),
