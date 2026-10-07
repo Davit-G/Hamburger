@@ -1,26 +1,28 @@
 #pragma once
 
+#include "../EffectBase.h"
+
 #include "../EnvelopeFollower.h"
 #include "../../gui/Modules/ScopeDataCollector.h"
 
  
 
-class StereoComp
+class StereoComp : public MacroEffect
 {
 public:
-    StereoComp(juce::AudioProcessorValueTreeState &state, ScopeDataCollector<float> &dataCollector) : 
+    StereoComp(juce::AudioProcessorValueTreeState& state, ScopeDataCollector<float> &dataCollector) : MacroEffect(state, SlotId{ModuleId::dynamics, 0}), 
                                                         detectorL(CompressionType::COMPRESSOR),
                                                         detectorR(CompressionType::COMPRESSOR),
                                                         compressorBoth(CompressionType::COMPRESSOR),
-                                                        threshold(state, ParamIDs::stereoCompThreshold),
-                                                        ratio(state, ParamIDs::compRatio),
-                                                        sLink(state, ParamIDs::compStereoLink), // should be stereo link
-                                                        speed(state, ParamIDs::compSpeed),
-                                                        makeup(state, ParamIDs::compOut),
+                                                        threshold(getParam(ParamIDs::stereoCompThreshold)),
+                                                        ratio(getParam(ParamIDs::compRatio)),
+                                                        sLink(getParam(ParamIDs::compStereoLink)), // should be stereo link
+                                                        speed(getParam(ParamIDs::compSpeed)),
+                                                        makeup(getParam(ParamIDs::compOut)),
                                                         scopeDataCollector(dataCollector) {}
     ~StereoComp() {}
 
-    void processBlock(juce::dsp::AudioBlock<float> &block)
+    void processBlock(juce::dsp::AudioBlock<float> &block) override
     {
         speed.update();
         makeup.update();
@@ -59,7 +61,7 @@ public:
         }
     }
 
-    void prepare(juce::dsp::ProcessSpec &spec)
+    void prepare(juce::dsp::ProcessSpec &spec) override
     {
         detectorL.prepare(spec);
         detectorR.prepare(spec);

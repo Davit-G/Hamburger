@@ -7,8 +7,9 @@
 #include "./Distortions/HarshGate.h"
 
 #include "SmoothParam.h"
+#include "EffectBase.h"
 
-class NoiseDistortions
+class NoiseDistortions : public EffectBase
 {
 public:
     NoiseDistortions(juce::AudioProcessorValueTreeState &state)
@@ -27,7 +28,7 @@ public:
     }
     ~NoiseDistortions(){}
 
-    void processBlock(juce::dsp::AudioBlock<float> &block)
+    void processBlock(juce::dsp::AudioBlock<float> &block) override
     {
         int distoTypeIndex = distoType->getIndex();
 
@@ -36,22 +37,22 @@ public:
         switch (distoTypeIndex)
         {
         case 0: // sizzle
-            { // TRACE_EVENT("dsp", "sizzle");
+            {
             sizzle->processBlock(block);
             break;
             }
         case 1: // erosion
-            { // TRACE_EVENT("dsp", "erosion");
+            {
             erosion->processBlock(block);
             break;
             }
         case 2: // downsampling
-            { // TRACE_EVENT("dsp", "redux");
+            {
             redux->processBlock(block);
             break;
             }
         case 3: // jeff
-            { // TRACE_EVENT("dsp", "gate");
+            {
             gate->processBlock(block);
             break;
             }
@@ -63,7 +64,7 @@ public:
         }
     }
 
-    void prepare(juce::dsp::ProcessSpec& spec)
+    void prepare(juce::dsp::ProcessSpec& spec) override
     {
         sizzle->prepare(spec);
         erosion->prepare(spec);
@@ -77,7 +78,6 @@ public:
     }
 
 private:
-    // juce::AudioProcessorValueTreeState &treeStateRef;
     juce::AudioParameterChoice *distoType = nullptr;
 
     juce::AudioParameterBool* noiseEnabled;

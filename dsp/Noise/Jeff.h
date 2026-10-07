@@ -1,5 +1,7 @@
 #pragma once
 
+#include "../EffectBase.h"
+
 #include "../../utils/Params.h"
 
 #include "juce_core/juce_core.h"
@@ -14,14 +16,14 @@
 //==============================================================================
 /*
 */
-class Jeff
+class Jeff : public MacroEffect
 {
 public:
-	Jeff(juce::AudioProcessorValueTreeState& treeState);
+	Jeff(juce::AudioProcessorValueTreeState& treeState, SlotId slot);
 	~Jeff();
 
-	void processBlock(juce::dsp::AudioBlock<float>& block);
-	void prepare(juce::dsp::ProcessSpec& spec);
+	void processBlock(juce::dsp::AudioBlock<float>& block) override;
+	void prepare(juce::dsp::ProcessSpec& spec) override;
 
 private:
 	SmoothParam amount;

@@ -277,9 +277,17 @@ void Preset::PresetManager::loadPreset(const juce::File &presetFile, std::functi
 		// Do not call the callback here — don't complain when opening old presets.
 	}
 
-	valueTreeState.replaceState(valueTreeToLoad);
+	loadState(valueTreeState, valueTreeToLoad);
 	// currentPreset.setValue(relativePath);
 	// currentAuthor.setValue(valueTreeToLoad.getChildWithName("author").getProperty("author", ""));
+}
+
+void Preset::loadState(juce::AudioProcessorValueTreeState &state, const juce::ValueTree &saved)
+{
+	for (auto *param : state.processor.getParameters())
+		param->setValueNotifyingHost(param->getDefaultValue());
+
+	state.replaceState(saved);
 }
 
 juce::File Preset::PresetManager::loadNextPreset(std::function<void(std::string)> cb)

@@ -37,6 +37,14 @@ public:
 
     ScopeContextType getType() { return type; }
 
+    void setFocus(SlotId slot) { focus.store(((int) slot.module << 8) | (slot.sub & 0xff)); }
+    
+    SlotId getFocus() const
+    {
+        const auto packed = focus.load();
+        return { (ModuleId) (packed >> 8), packed & 0xff };
+    }
+
     // locks the currently displayed scope and blocks decay
     void setLocked(bool shouldLock)
     {
@@ -96,6 +104,8 @@ private:
     double lastTime = 0.0; // last measured time from millisecond counter
     bool decaying = false;
     bool locked = false;
+
+    std::atomic<int> focus { (int) ModuleId::main << 8 };
 
     double timeTillReset = 0.0; // when the user presses a knob it stays decayed for some amt of time
     static constexpr double waitTime = 2.0; // two seconds until the default view is returned

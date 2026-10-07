@@ -16,6 +16,8 @@
 #include "./Noise/Jeff.h"
 #include "Distortions/tube/Amp.h"
 
+#include "EffectBase.h"
+
 #include "juce_core/juce_core.h"
 #include "juce_dsp/juce_dsp.h"
 #include "juce_audio_processors/juce_audio_processors.h"
@@ -23,34 +25,34 @@
 
 // #include <melatonin_perfetto/melatonin_perfetto.h>
 
-class PrimaryDistortion
+class PrimaryDistortion : public EffectBase
 {
 public:
-    PrimaryDistortion(juce::AudioProcessorValueTreeState &state)
+    PrimaryDistortion(juce::AudioProcessorValueTreeState &state, SlotId slot = SlotId{ModuleId::main, 0})
     {
-        distoType = dynamic_cast<juce::AudioParameterChoice *>(state.getParameter("primaryDistortionType"));
+        distoType = dynamic_cast<juce::AudioParameterChoice *>(state.getParameter(slot.type().getParamID()));
         jassert(distoType);
 
-        distortionEnabled = dynamic_cast<juce::AudioParameterBool *>(state.getParameter("primaryDistortionEnabled"));
+        distortionEnabled = dynamic_cast<juce::AudioParameterBool *>(state.getParameter(slot.enabled().getParamID()));
         jassert(distortionEnabled);
 
-        softClipper = std::make_unique<SoftClip>(state);
-        fold = std::make_unique<Cooked>(state);
-        patty = std::make_unique<PattyFuzz>(state);
-        jeff = std::make_unique<Jeff>(state);
-        fuzz = std::make_unique<Fuzz>(state);
-        tubeAmp = std::make_unique<Amp>(state);
-        phaseDist = std::make_unique<PhaseDist>(state);
-        diodeWaveshape = std::make_unique<DiodeWaveshape>(state);
-        rubidium = std::make_unique<RubidiumDistortion>(state);
-        matrix = std::make_unique<MatrixWaveshaper>(state);
-        preisach = std::make_unique<Preisach>(state);
-        nonlinSlew = std::make_unique<NonlinSlew>(state);
+        softClipper = std::make_unique<SoftClip>(state, slot);
+        fold = std::make_unique<Cooked>(state, slot);
+        patty = std::make_unique<PattyFuzz>(state, slot);
+        jeff = std::make_unique<Jeff>(state, slot);
+        fuzz = std::make_unique<Fuzz>(state, slot);
+        tubeAmp = std::make_unique<Amp>(state, slot);
+        phaseDist = std::make_unique<PhaseDist>(state, slot);
+        diodeWaveshape = std::make_unique<DiodeWaveshape>(state, slot);
+        rubidium = std::make_unique<RubidiumDistortion>(state, slot);
+        matrix = std::make_unique<MatrixWaveshaper>(state, slot);
+        preisach = std::make_unique<Preisach>(state, slot);
+        nonlinSlew = std::make_unique<NonlinSlew>(state, slot);
     }
 
     ~PrimaryDistortion() {}
 
-    void prepare(juce::dsp::ProcessSpec &spec)
+    void prepare(juce::dsp::ProcessSpec &spec) override
     {
         softClipper->prepare(spec);
         fold->prepare(spec);
@@ -84,7 +86,7 @@ public:
         emptyBlock.fill(0.0f);
     }
 
-    void processBlock(juce::dsp::AudioBlock<float> &block)
+    void processBlock(juce::dsp::AudioBlock<float> &block) override
     {
         int distoTypeIndex = distoType->getIndex();
 

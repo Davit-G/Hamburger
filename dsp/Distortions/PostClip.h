@@ -1,4 +1,6 @@
 #pragma once
+
+#include "../EffectBase.h"
 #include "../SmoothParam.h"
 
 #if PERFETTO
@@ -8,15 +10,15 @@
 
 #include "../../gui/Modules/ScopeDataCollector.h"
 
-class PostClip
+class PostClip : public MacroEffect
 {
 public:
     PostClip(juce::AudioProcessorValueTreeState& treeState, ScopeDataCollector<float>& scopeDataCollector);
 
     ~PostClip();
 
-    void processBlock(juce::dsp::AudioBlock<float>& block);
-    void prepare(juce::dsp::ProcessSpec& spec);
+    void processBlock(juce::dsp::AudioBlock<float>& block) override;
+    void prepare(juce::dsp::ProcessSpec& spec) override;
 
 private:
     SmoothParam gainKnob;

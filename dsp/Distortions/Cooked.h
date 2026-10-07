@@ -1,5 +1,7 @@
 #pragma once
 
+#include "../EffectBase.h"
+
 #include "juce_core/juce_core.h"
 #include "juce_dsp/juce_dsp.h"
 #include "juce_audio_processors/juce_audio_processors.h"
@@ -13,14 +15,14 @@
 //==============================================================================
 /*
  */
-class Cooked
+class Cooked : public MacroEffect
 {
 public:
-    Cooked(juce::AudioProcessorValueTreeState& treeState);
+    Cooked(juce::AudioProcessorValueTreeState& treeState, SlotId slot);
     ~Cooked();
 
-    void processBlock(juce::dsp::AudioBlock<float> &block) noexcept;
-    void prepare(juce::dsp::ProcessSpec& spec) noexcept;
+    void processBlock(juce::dsp::AudioBlock<float> &block) noexcept override;
+    void prepare(juce::dsp::ProcessSpec& spec) noexcept override;
 
 private:
     // SmoothParam stages;

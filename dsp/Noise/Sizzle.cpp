@@ -11,12 +11,12 @@
 #include "Sizzle.h"
 
 //==============================================================================
-Sizzle::Sizzle(juce::AudioProcessorValueTreeState &treeState)
-	: envelopeDetector(true),
-	  noiseAmount(treeState, ParamIDs::sizzleAmount),
-	  filterTone(treeState, ParamIDs::sizzleFrequency),
-	  fizzAmount(treeState, ParamIDs::fizzAmount),
-	  filterQ(treeState, ParamIDs::sizzleQ) {}
+Sizzle::Sizzle(juce::AudioProcessorValueTreeState& treeState)
+	: MacroEffect(treeState, SlotId{ModuleId::module1, 0}), envelopeDetector(true),
+	  noiseAmount(getParam(ParamIDs::sizzleAmount)),
+	  filterTone(getParam(ParamIDs::sizzleFrequency)),
+	  fizzAmount(getParam(ParamIDs::fizzAmount)),
+	  filterQ(getParam(ParamIDs::sizzleQ)) {}
 
 Sizzle::~Sizzle()
 {

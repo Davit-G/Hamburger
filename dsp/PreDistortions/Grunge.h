@@ -1,5 +1,7 @@
 #pragma once
 
+#include "../EffectBase.h"
+
 #include "juce_core/juce_core.h"
 #include "juce_dsp/juce_dsp.h"
 #include "juce_audio_processors/juce_audio_processors.h"
@@ -8,14 +10,14 @@
 
 // #include <melatonin_perfetto/melatonin_perfetto.h>
 
-class Grunge
+class Grunge : public MacroEffect
 {
 public:
 	Grunge(juce::AudioProcessorValueTreeState& treeState);
 	~Grunge() {}
 
-	void processBlock(juce::dsp::AudioBlock<float>& block);
-	void prepare(juce::dsp::ProcessSpec& spec);
+	void processBlock(juce::dsp::AudioBlock<float>& block) override;
+	void prepare(juce::dsp::ProcessSpec& spec) override;
 
 private:
 	SmoothParam amount;

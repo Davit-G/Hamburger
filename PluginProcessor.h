@@ -28,6 +28,8 @@
 #include "clap-juce-extensions/clap-juce-extensions.h"
 
 #include "./utils/Module.h"
+#include "./dsp/EffectBase.h"
+#include "dsp/LevelStage.h"
 
 //==============================================================================
 class AudioPluginAudioProcessor : public juce::AudioProcessor, public clap_juce_extensions::clap_properties
@@ -90,15 +92,19 @@ private:
     juce::AudioParameterBool *clipEnabled = nullptr;
     juce::AudioParameterInt *hq = nullptr;
     juce::AudioParameterBool *hamburgerEnabledButton = nullptr;
-    juce::AudioParameterInt *stages = nullptr;
 
     juce::AudioParameterChoice *oversamplingFactor = nullptr;
 
-    PreDistortion preDistortionSelection;
-    
-    std::vector<std::unique_ptr<PrimaryDistortion>> distortionTypeSelection {};
+    EmphasisEffectFilter emphasisPreFilter { emphasisFilter, false };
+    EmphasisEffectFilter emphasisPostFilter { emphasisFilter, true };
 
-    NoiseDistortions noiseDistortionSelection;
+    PreDistortion prefxSelection;
+    
+    PrimaryDistortion mainDistortion;
+    PrimaryDistortion preDistortion;
+    PrimaryDistortion postDistortion;
+
+    NoiseDistortions noiseSelection;
     Dynamics dynamics;
     PostClip postClip;
 
@@ -125,6 +131,17 @@ private:
 
     // effect order related stuff
     std::atomic<PackedOrdering> order { defaultOrdering };
+
+    static_assert (std::atomic<PackedOrdering>::is_always_lock_free);
+
+    std::array<EffectBase*, (size_t) ModuleId::count> slots;
+
+
+    // in, dry/wet and out around the modules that don't have their own inside them like the distortions do
+    InOutMix dynamicsInOutMix { treeState, { ModuleId::dynamics, 0 } };
+    InOutMix noiseInOutMix { treeState, { ModuleId::module1, 0 } };
+    InOutMix preFxInOutMix { treeState, { ModuleId::module2, 0 } };
+    std::array<InOutMix*, (size_t) ModuleId::count> slotLevels {};
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AudioPluginAudioProcessor)
 };

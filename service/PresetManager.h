@@ -16,6 +16,8 @@ namespace Preset
 												 .getChildFile("./presets/")};
 	static const juce::String extension{"borgir"};
 	static const juce::String presetPathProperty{"presetPath"};
+	
+	void loadState(juce::AudioProcessorValueTreeState &state, const juce::ValueTree &saved);
 
 	class PresetFile
 	{

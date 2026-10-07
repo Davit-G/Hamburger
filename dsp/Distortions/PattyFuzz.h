@@ -1,5 +1,7 @@
 #pragma once
 
+#include "../EffectBase.h"
+
  
 #include "../SmoothParam.h"
 #include "../../utils/Params.h"
@@ -10,13 +12,13 @@
 #include <melatonin_perfetto/melatonin_perfetto.h>
 #endif // PERFETTO
 
-class PattyFuzz
+class PattyFuzz : public MacroEffect
 {
 public:
-	PattyFuzz(juce::AudioProcessorValueTreeState& treeState);
+	PattyFuzz(juce::AudioProcessorValueTreeState& treeState, SlotId slot);
 
-	void processBlock(juce::dsp::AudioBlock<float>& block);
-	void prepare(juce::dsp::ProcessSpec& spec);
+	void processBlock(juce::dsp::AudioBlock<float>& block) override;
+	void prepare(juce::dsp::ProcessSpec& spec) override;
 
 private:
 	SmoothParam amount;

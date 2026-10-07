@@ -1,5 +1,7 @@
 #pragma once
 
+#include "../EffectBase.h"
+
 #include "juce_core/juce_core.h"
 #include "juce_audio_processors/juce_audio_processors.h"
 
@@ -41,22 +43,22 @@ inline float bounceShape(float x, float c) noexcept
     return sign(x) * c * 0.1f * interm * interm - 0.02f * c;
 }
 
-class MatrixWaveshaper
+class MatrixWaveshaper : public MacroEffect
 {
 public:
-    MatrixWaveshaper(juce::AudioProcessorValueTreeState &treeState) : mat1Param(treeState, ParamIDs::matrix1),
-                                                                      mat2Param(treeState, ParamIDs::matrix2),
-                                                                      mat3Param(treeState, ParamIDs::matrix3),
-                                                                      mat4Param(treeState, ParamIDs::matrix4),
-                                                                      mat5Param(treeState, ParamIDs::matrix5),
-                                                                      mat6Param(treeState, ParamIDs::matrix6),
-                                                                      mat7Param(treeState, ParamIDs::matrix7),
-                                                                      mat8Param(treeState, ParamIDs::matrix8),
-                                                                      mat9Param(treeState, ParamIDs::matrix9)
+    MatrixWaveshaper(juce::AudioProcessorValueTreeState& treeState, SlotId slot) : MacroEffect(treeState, slot), mat1Param(getParam(ParamIDs::matrix1)),
+                                                                      mat2Param(getParam(ParamIDs::matrix2)),
+                                                                      mat3Param(getParam(ParamIDs::matrix3)),
+                                                                      mat4Param(getParam(ParamIDs::matrix4)),
+                                                                      mat5Param(getParam(ParamIDs::matrix5)),
+                                                                      mat6Param(getParam(ParamIDs::matrix6)),
+                                                                      mat7Param(getParam(ParamIDs::matrix7)),
+                                                                      mat8Param(getParam(ParamIDs::matrix8)),
+                                                                      mat9Param(getParam(ParamIDs::matrix9))
     {
     }
 
-    void prepare(juce::dsp::ProcessSpec &spec)
+    void prepare(juce::dsp::ProcessSpec &spec) override
     {
         mat1Param.prepare(spec);
         mat2Param.prepare(spec);
@@ -80,7 +82,7 @@ public:
         hpFilter.setType(juce::dsp::StateVariableTPTFilterType::highpass);
     }
 
-    void processBlock(juce::dsp::AudioBlock<float> &block)
+    void processBlock(juce::dsp::AudioBlock<float> &block) override
     {
         mat1Param.update();
         mat2Param.update();

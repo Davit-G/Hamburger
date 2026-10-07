@@ -1,5 +1,7 @@
 #pragma once
 
+#include "../EffectBase.h"
+
 #include "../SmoothParam.h"
 #include <cmath>
 
@@ -10,12 +12,12 @@ static T *toBasePointer(juce::dsp::SIMDRegister<T> *r) noexcept { return reinter
 constexpr auto simdRegSize = juce::dsp::SIMDRegister<float>::size();
 using Format = juce::AudioData::Format<juce::AudioData::Float32, juce::AudioData::NativeEndian>;
 
-class SVFAllPassChain
+class SVFAllPassChain : public MacroEffect
 {
 public:
-    SVFAllPassChain(juce::AudioProcessorValueTreeState &treeState) : allPassFrequency(treeState, ParamIDs::allPassFreq),
-                                                                     allPassQ(treeState, ParamIDs::allPassQ),
-                                                                     allPassAmount(treeState, ParamIDs::allPassAmount)
+    SVFAllPassChain(juce::AudioProcessorValueTreeState& treeState) : MacroEffect(treeState, SlotId{ModuleId::module2, 0}), allPassFrequency(getParam(ParamIDs::allPassFreq)),
+                                                                     allPassQ(getParam(ParamIDs::allPassQ)),
+                                                                     allPassAmount(getParam(ParamIDs::allPassAmount))
     {
         for (size_t i = 0; i < 50; ++i)
         {
@@ -36,7 +38,7 @@ public:
         return result;
     }
 
-    void processBlock(juce::dsp::AudioBlock<float> block)
+    void processBlock(juce::dsp::AudioBlock<float>& block) override
     {
         allPassAmount.update();
         allPassFrequency.update();
@@ -87,7 +89,7 @@ public:
                                        numSamples);
     }
 
-    void prepare(juce::dsp::ProcessSpec &spec)
+    void prepare(juce::dsp::ProcessSpec &spec) override
     {
         allPassFrequency.prepare(spec);
         allPassQ.prepare(spec);

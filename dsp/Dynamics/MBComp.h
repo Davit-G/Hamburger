@@ -1,24 +1,26 @@
 #pragma once
 
+#include "../EffectBase.h"
+
 #include "../EnvelopeFollower.h"
 #include "../../gui/Modules/ScopeDataCollector.h"
  
 
-class MBComp
+class MBComp : public MacroEffect
 {
 public:
-    MBComp(juce::AudioProcessorValueTreeState &state, ScopeDataCollector<float> &dataCollector) : compressor1(CompressionType::COMPRESSOR),
+    MBComp(juce::AudioProcessorValueTreeState& state, ScopeDataCollector<float> &dataCollector) : MacroEffect(state, SlotId{ModuleId::dynamics, 0}), compressor1(CompressionType::COMPRESSOR),
                                                         compressor2(CompressionType::COMPRESSOR),
                                                         compressor3(CompressionType::COMPRESSOR),
-                                                        threshold(state, ParamIDs::MBCompThreshold),
-                                                        ratio(state, ParamIDs::compRatio),
-                                                        tilt(state, ParamIDs::compBandTilt),
-                                                        speed(state, ParamIDs::MBCompSpeed),
-                                                        makeup(state, ParamIDs::compOut),
+                                                        threshold(getParam(ParamIDs::MBCompThreshold)),
+                                                        ratio(getParam(ParamIDs::compRatio)),
+                                                        tilt(getParam(ParamIDs::compBandTilt)),
+                                                        speed(getParam(ParamIDs::MBCompSpeed)),
+                                                        makeup(getParam(ParamIDs::compOut)),
                                                         scopeDataCollector(dataCollector) {}
     ~MBComp() {}
 
-    void processBlock(juce::dsp::AudioBlock<float> &block)
+    void processBlock(juce::dsp::AudioBlock<float> &block) override
     {
 
         speed.update();
@@ -64,7 +66,7 @@ public:
         }
     }
 
-    void prepare(juce::dsp::ProcessSpec &spec)
+    void prepare(juce::dsp::ProcessSpec &spec) override
     {
         compressor1.prepare(spec);
         compressor2.prepare(spec);

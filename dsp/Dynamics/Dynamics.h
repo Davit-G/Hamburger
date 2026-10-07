@@ -4,6 +4,7 @@
 #include "Compressor.h"
 
 #include "../SmoothParam.h"
+#include "../EffectBase.h"
 #include "MBComp.h"
 #include "MSComp.h"
 #include "StereoComp.h"
@@ -12,7 +13,7 @@
 // todo: add compander class, omfg imagine multiband compander
 // todo: add gate?
 
-class Dynamics
+class Dynamics : public EffectBase
 {
 public:
     Dynamics(juce::AudioProcessorValueTreeState &state, ScopeDataCollector<float> &dataCollector) :
@@ -26,7 +27,7 @@ public:
     }
     ~Dynamics() {}
 
-    void processBlock(juce::dsp::AudioBlock<float>& block) {
+    void processBlock(juce::dsp::AudioBlock<float>& block) override {
         if (!enabled->get()) return;
         int distoTypeIndex = distoType->getIndex();
 
@@ -55,7 +56,7 @@ public:
 
     }
 
-    void prepare(juce::dsp::ProcessSpec& spec) {
+    void prepare(juce::dsp::ProcessSpec& spec) override {
         mbComp.prepare(spec);
         msComp.prepare(spec);
         stereoComp.prepare(spec);

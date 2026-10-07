@@ -1,5 +1,7 @@
 #pragma once
 
+#include "../EffectBase.h"
+
  
 #include "../SmoothParam.h"
 #include "../../utils/Params.h"
@@ -10,13 +12,13 @@
 #include <melatonin_perfetto/melatonin_perfetto.h>
 #endif // PERFETTO
 
-class DiodeWaveshape
+class DiodeWaveshape : public MacroEffect
 {
 public:
-	DiodeWaveshape(juce::AudioProcessorValueTreeState& treeState);
+	DiodeWaveshape(juce::AudioProcessorValueTreeState& treeState, SlotId slot);
 
-	void processBlock(juce::dsp::AudioBlock<float>& block) noexcept;
-	void prepare(juce::dsp::ProcessSpec& spec) noexcept;
+	void processBlock(juce::dsp::AudioBlock<float>& block) noexcept override;
+	void prepare(juce::dsp::ProcessSpec& spec) noexcept override;
 
 private:
 	SmoothParam amount;

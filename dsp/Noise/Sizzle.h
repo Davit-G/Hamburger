@@ -1,5 +1,7 @@
 #pragma once
 
+#include "../EffectBase.h"
+
 #include "../../utils/Params.h"
 #include "../WaveShapers.h"
 
@@ -14,15 +16,15 @@
 #endif // PERFETTO
 
 
-class Sizzle
+class Sizzle : public MacroEffect
 {
 public:
 	Sizzle(juce::AudioProcessorValueTreeState& treeState);
 	~Sizzle();
 
-	void processBlock(juce::dsp::AudioBlock<float>& block);
+	void processBlock(juce::dsp::AudioBlock<float>& block) override;
 	void processBlockOG(juce::dsp::AudioBlock<float>& block);
-	void prepare(juce::dsp::ProcessSpec& spec);
+	void prepare(juce::dsp::ProcessSpec& spec) override;
 
 	void setSampleRate(float sampleRate) { envelopeDetector.setSampleRate(sampleRate);}
 

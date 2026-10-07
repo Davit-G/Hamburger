@@ -1,4 +1,5 @@
 
+#include "../../EffectBase.h"
 #include "Valve.h"
 #include "juce_core/juce_core.h"
 #include "juce_dsp/juce_dsp.h"
@@ -7,13 +8,13 @@
 #include "../../../utils/Params.h"
 #include "../../SmoothParam.h"
 
-class Amp
+class Amp : public MacroEffect
 {
 public:
-    Amp(juce::AudioProcessorValueTreeState &treeState) : 
-        tubeTone(treeState, ParamIDs::tubeTone),
-        drive(treeState, ParamIDs::tubeAmount),
-        bias(treeState, ParamIDs::tubeBias)
+    Amp(juce::AudioProcessorValueTreeState& treeState, SlotId slot) : MacroEffect(treeState, slot), 
+        tubeTone(getParam(ParamIDs::tubeTone)),
+        drive(getParam(ParamIDs::tubeAmount)),
+        bias(getParam(ParamIDs::tubeBias))
         {}
 
     ~Amp() {}
@@ -22,8 +23,8 @@ public:
     void calcCoefficientsPerSample();
     void calcCoefficients2();
 
-    void prepare(juce::dsp::ProcessSpec& spec);
-    void processBlock(juce::dsp::AudioBlock<float> &block);
+    void prepare(juce::dsp::ProcessSpec& spec) override;
+    void processBlock(juce::dsp::AudioBlock<float> &block) override;
 
     float inputGain = 0.5f;
     float driveGain = 1.0f;

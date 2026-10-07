@@ -2,9 +2,10 @@
 
 #include "SVFAllPassChain.h"
 #include "Grunge.h"
+#include "../EffectBase.h"
 #include "../../utils/Params.h"
 
-class PreDistortion
+class PreDistortion : public EffectBase
 {
 public:
     PreDistortion(juce::AudioProcessorValueTreeState &state) : treeStateRef(state) {
@@ -16,7 +17,7 @@ public:
     }
     ~PreDistortion() {}
 
-    void processBlock(juce::dsp::AudioBlock<float>& block) {
+    void processBlock(juce::dsp::AudioBlock<float>& block) override {
         int typeSetting = type->getIndex();
         
         if (preDistortionEnabled->get() == false)
@@ -36,7 +37,7 @@ public:
         }
     }
 
-    void prepare(juce::dsp::ProcessSpec& spec) {
+    void prepare(juce::dsp::ProcessSpec& spec) override {
         svfAllPass->prepare(spec);
         grungeDSP->prepare(spec);
     }

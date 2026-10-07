@@ -1,5 +1,7 @@
 #pragma once
 
+#include "../EffectBase.h"
+
 #include "juce_dsp/juce_dsp.h"
 #include "juce_audio_processors/juce_audio_processors.h"
 
@@ -18,14 +20,14 @@
  * 
  * Each band has a compressor with threshold -40 dB and ratio affected by brightness.
  */
-class TypeAProcessor
+class TypeAProcessor : public MacroEffect
 {
 public:
-    TypeAProcessor(juce::AudioProcessorValueTreeState &treeState, ScopeDataCollector<float> &dataCollector) : 
-        speedParam(treeState, ParamIDs::TypeACompSpeed),
-        thresholdParam(treeState, ParamIDs::TypeAThreshold),
-        outParam(treeState, ParamIDs::TypeAOut),
-        tiltParam(treeState, ParamIDs::TypeATilt),
+    TypeAProcessor(juce::AudioProcessorValueTreeState& treeState, ScopeDataCollector<float> &dataCollector) : MacroEffect(treeState, SlotId{ModuleId::dynamics, 0}), 
+        speedParam(getParam(ParamIDs::TypeACompSpeed)),
+        thresholdParam(getParam(ParamIDs::TypeAThreshold)),
+        outParam(getParam(ParamIDs::TypeAOut)),
+        tiltParam(getParam(ParamIDs::TypeATilt)),
         scopeDataCollector(dataCollector)
     {}
 
@@ -33,7 +35,8 @@ public:
     static constexpr float baseRatio = 2.0f;
 
     void prepareToPlay(double sampleRate, int samplesPerBlock, int numChannels);
-    void processBlock(juce::dsp::AudioBlock<float>& buffer);
+    void prepare(juce::dsp::ProcessSpec& spec) override { prepareToPlay(spec.sampleRate, (int) spec.maximumBlockSize, (int) spec.numChannels); }
+    void processBlock(juce::dsp::AudioBlock<float>& buffer) override;
 
 private:
     void updateCompressorParameters();

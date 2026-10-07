@@ -2,8 +2,8 @@
 #include "../WaveShapers.h"
 
 
-PostClip::PostClip(juce::AudioProcessorValueTreeState &treeState, ScopeDataCollector<float>& scopeDataCollector) : gainKnob(treeState, ParamIDs::postClipGain),
-                                                                    kneeKnob(treeState, ParamIDs::postClipKnee),
+PostClip::PostClip(juce::AudioProcessorValueTreeState& treeState, ScopeDataCollector<float>& scopeDataCollector) : MacroEffect(treeState, SlotId{ModuleId::postClip, 0}), gainKnob(getParam(ParamIDs::postClipGain)),
+                                                                    kneeKnob(getParam(ParamIDs::postClipKnee)),
                                                                     scopeData(scopeDataCollector)
 {
     clipEnabled = dynamic_cast<juce::AudioParameterBool *>(treeState.getParameter(ParamIDs::postClipEnabled.getParamID()));

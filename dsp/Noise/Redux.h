@@ -1,5 +1,7 @@
 #pragma once
 
+#include "../EffectBase.h"
+
 #include "../../utils/Params.h"
 
 #include "juce_core/juce_core.h"
@@ -12,14 +14,14 @@
 
 #include "../SmoothParam.h"
 
-class Redux
+class Redux : public MacroEffect
 {
 public:
     Redux(juce::AudioProcessorValueTreeState& treeState);
     ~Redux();
 
-    void processBlock(juce::dsp::AudioBlock<float>& block);
-    void prepare(juce::dsp::ProcessSpec& spec);
+    void processBlock(juce::dsp::AudioBlock<float>& block) override;
+    void prepare(juce::dsp::ProcessSpec& spec) override;
     void antiAliasingStep(juce::dsp::AudioBlock<float>& block);
 
 private:
