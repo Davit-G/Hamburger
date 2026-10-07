@@ -7,7 +7,7 @@
 class ParamKnob : public GenericKnob
 {
 public:
-    ParamKnob(AudioPluginAudioProcessor &p, juce::String knobName, const ParamIDs::ParameterInfo& attachmentInfo, ParamUnits knobUnit = ParamUnits::none, ScopeContextType scopeContextType = ScopeContextType::LR_SCOPE) : 
+    ParamKnob(AudioPluginAudioProcessor &p, juce::String knobName, const ParamIDs::ParameterInfo& attachmentInfo, ParamType knobUnit = ParamType::none, ScopeContextType scopeContextType = ScopeContextType::LR_SCOPE) : 
     GenericKnob(p, knobName, attachmentInfo, knobUnit, scopeContextType) {
         
     }

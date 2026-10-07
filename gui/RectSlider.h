@@ -14,7 +14,7 @@ enum RectSliderType {
 
 class RectSlider : public GenericKnob {
 public:
-    RectSlider(AudioPluginAudioProcessor &p, juce::String knobName, const ParamIDs::ParameterInfo& attachmentParam, ParamUnits knobUnit = ParamUnits::none, ScopeContextType scopeContextType = ScopeContextType::LR_SCOPE) 
+    RectSlider(AudioPluginAudioProcessor &p, juce::String knobName, const ParamIDs::ParameterInfo& attachmentParam, ParamType knobUnit = ParamType::none, ScopeContextType scopeContextType = ScopeContextType::LR_SCOPE) 
     : GenericKnob(p, knobName, attachmentParam, knobUnit, scopeContextType) {
         // can't use linear bar or linear horizontal
         // cause some weird stuff happens and it immediately snaps to max. might be cause default text box flattens the pixel range?

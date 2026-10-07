@@ -122,17 +122,11 @@ juce::AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::c
     params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::tapeBias.id, "Tape Bias", makeRange(0.0f, 1.0f), 0.f));
     params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::tapeWidth.id, "Tape Age", makeRange(0.0f, 1.0f), 0.3f));
 
-    // categoricaljuce::
-    params.add(std::make_unique<juce::AudioParameterChoice>(ParamIDs::primaryDistortionType.id, "Distortion Type", ParamIDs::distortion.categories, 0));
-    params.add(std::make_unique<juce::AudioParameterChoice>(ParamIDs::noiseDistortionType.id, "Noise Type", ParamIDs::noiseTypes.categories, 0));
-    params.add(std::make_unique<juce::AudioParameterChoice>(ParamIDs::compressionType.id, "Compression Type", ParamIDs::dynamics.categories, 0));
-
     // compressorjuce::
     params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::compSpeed.id, "Comp Speed", juce::NormalisableRange<float>(0.0f, 400.0f, 0.f, 0.25f), 100.f));
     params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::compBandTilt.id, "Comp Band Tilt", makeRange(-20.0f, 20.0f), 0.f));
     params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::compStereoLink.id, "Stereo Link", makeRange(0.0f, 100.0f), 100.f));
     params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::compRatio.id, "Comp Ratio", makeRange(1.0f, 10.0f), 3.5f));
-    params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::compOut.id, "Comp Makeup", makeRange(-24.0f, 24.0f), 0.f));
 
     params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::stereoCompThreshold.id, "Stereo Comp Threshold", makeRange(-48.0f, 0.0f), -24.f));
     params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::MBCompThreshold.id, "MB Comp Threshold", makeRange(-48.0f, 0.0f), -24.f));
@@ -141,7 +135,6 @@ juce::AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::c
     params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::TypeAThreshold.id, "Type A Threshold", makeRange(-48.0f, 0.0f), -40.f));
     params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::TypeARatio.id, "Type A Ratio", makeRange(1.0f, 4.0f), 2.0f));
     params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::TypeATilt.id, "Type A Tilt", makeRange(-20.0f, 20.0f), -2.f));
-    params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::TypeAOut.id, "Type A Out", makeRange(-24.0f, 24.0f), -12.0f));
 
     // noise distortionsjuce::
     params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::sizzleAmount.id, "Sizzle Amt", makeRange(0.0f, 100.0f), 5.f));
@@ -153,10 +146,8 @@ juce::AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::c
     params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::erosionQ.id, "Erosion Q", makeRange(0.1f, 1.5f), 1.f));
 
     params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::gateAmt.id, "Gate Amt", makeRange(0.0f, 1.0f), 0.f));
-    params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::gateMix.id, "Gate Mix", makeRange(0.0f, 1.0f), 1.f));
 
     params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::downsampleFreq.id, "Dwnsmpl Freq", juce::NormalisableRange<float>(200.0f, 40000.0f, 0.f, 0.25f), 40000.0f));
-    params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::downsampleMix.id, "Dwnsmpl Mix", makeRange(0.0f, 1.0f), 1.f));
     params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::bitReduction.id, "Dwnsmpl Bits", makeRange(1.0f, 32.0f), 32.f));
 
     params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::fizzAmount.id, "Fizz Amt", makeRange(0.0f, 100.0f), 5.f));
@@ -178,15 +169,9 @@ juce::AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::c
 
     // togglesjuce::
     params.add(std::make_unique<juce::AudioParameterBool>(ParamIDs::hamburgerEnabled.id, "Hamburger Enabled", true));
-    params.add(std::make_unique<juce::AudioParameterBool>(ParamIDs::compressionOn.id, "Compressor On", false));
-    params.add(std::make_unique<juce::AudioParameterBool>(ParamIDs::primaryDistortionEnabled.id, "Dist Enabled", true));
     params.add(std::make_unique<juce::AudioParameterBool>(ParamIDs::emphasisOn.id, "Emphasis EQ On", true));
-    params.add(std::make_unique<juce::AudioParameterBool>(ParamIDs::preDistortionEnabled.id, "Pre-Dist Enabled", false));
-    params.add(std::make_unique<juce::AudioParameterBool>(ParamIDs::noiseDistortionEnabled.id, "Noise Enabled", false));
-    params.add(std::make_unique<juce::AudioParameterBool>(ParamIDs::postClipEnabled.id, "SoftClip Enabled", true));
 
     params.add(std::make_unique<juce::AudioParameterInt>(ParamIDs::oversamplingFactor.id, "Oversampling Factor", 0, 2, 0));
-    params.add(std::make_unique<juce::AudioParameterInt>(ParamIDs::stages.id, "Stages", 1, ParamIDs::maxStages, 1));
 
     // utilityjuce::
     params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::postClipGain.id, "SoftClip Gain", makeRange(-18.0f, 18.0f), 0.f));
@@ -196,8 +181,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::c
     params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::slewSpeed.id, "Slew Tone", makeRange(0.0f, 1.0f), 0.5f));
     params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::directionality.id, "Slew Bias", makeRange(-1.0f, 1.0f), 0.f));
     params.add(std::make_unique<juce::AudioParameterInt>(ParamIDs::slewType.id, "Slew Type", 0, 2, 0));
-    
-    params.add(std::make_unique<juce::AudioParameterChoice>(ParamIDs::preDistortionType.id, "Pre-Distortion Type", ParamIDs::preDistortionTypes.categories, 0));
+
 
     params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::MBCompSpeed.id, "Multiband Comp Speed", juce::NormalisableRange<float>(0.0f, 400.0f, 0.f, 0.25f), 100.f));
     params.add(std::make_unique<juce::AudioParameterFloat>(ParamIDs::MSCompSpeed.id, "Mid Side Comp Speed", juce::NormalisableRange<float>(0.0f, 400.0f, 0.f, 0.25f), 100.f));

@@ -18,3 +18,5 @@ build_linux
 
 .env
 env.cmake
+
+.cache

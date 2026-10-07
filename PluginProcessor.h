@@ -27,6 +27,7 @@
 
 #include "clap-juce-extensions/clap-juce-extensions.h"
 
+#include "./utils/Module.h"
 
 //==============================================================================
 class AudioPluginAudioProcessor : public juce::AudioProcessor, public clap_juce_extensions::clap_properties
@@ -111,7 +112,6 @@ private:
     OversamplingStack oversamplingStack;
 
     int oldOversamplingFactor = 0;
-
     ScopeDataCollector<float> scopeDataCollector;
 
     ScopeContext scopeContext; // keep on audio thread cause uhh idk its easier to access via reference from pluginprocessor
@@ -123,6 +123,8 @@ private:
         std::unique_ptr<perfetto::TracingSession> tracingSession;
     #endif
 
+    // effect order related stuff
+    std::atomic<PackedOrdering> order { defaultOrdering };
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AudioPluginAudioProcessor)
 };

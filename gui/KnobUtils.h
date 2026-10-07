@@ -6,7 +6,7 @@
 #include <optional>
 
 // enum of units, with strings attached to them
-enum class ParamUnits {
+enum class ValueType {
     none,
     hz,
     ms,
@@ -20,13 +20,13 @@ enum class ParamUnits {
     numUnits
 };
 
-struct ParamUnitFormat {
+struct ValueFormat {
     const char *suffix;
     int decimalPlaces;
 };
 
 // keep in the same order as the enum
-inline constexpr ParamUnitFormat paramUnitFormats[] = {
+inline constexpr ValueFormat valueFormats[] = {
     {"", 2},    // none
     {" Hz", 1}, // hz
     {" ms", 1}, // ms
@@ -38,42 +38,42 @@ inline constexpr ParamUnitFormat paramUnitFormats[] = {
     {"x", 0},   // oversample
 };
 
-static_assert(std::size(paramUnitFormats) == static_cast<size_t>(ParamUnits::numUnits),
+static_assert(std::size(valueFormats) == static_cast<size_t>(ValueType::numUnits),
               "every ParamUnits entry needs a format in paramUnitFormats");
 
-inline const ParamUnitFormat &getParamUnitFormat(ParamUnits unit) noexcept {
-    jassert(unit < ParamUnits::numUnits);
-    return paramUnitFormats[static_cast<size_t>(unit)];
+inline const ValueFormat &getParamUnitFormat(ValueType unit) noexcept {
+    jassert(unit < ValueType::numUnits);
+    return valueFormats[static_cast<size_t>(unit)];
 }
 
-inline juce::String getParamUnitSuffix(ParamUnits unit) noexcept {
+inline juce::String getParamUnitSuffix(ValueType unit) noexcept {
     return getParamUnitFormat(unit).suffix;
 }
 
 
-inline float paramValueToDisplay(float value, ParamUnits unit) noexcept {
+inline float paramValueToDisplay(float value, ValueType unit) noexcept {
     // oversampling is stored as an exponent, but shown as the factor it works out to
-    if (unit == ParamUnits::oversample)
+    if (unit == ValueType::oversample)
         return std::pow(2.0f, std::round(value));
 
     return value;
 }
 
-inline float displayToParamValue(float display, ParamUnits unit) noexcept {
-    if (unit == ParamUnits::oversample)
+inline float displayToParamValue(float display, ValueType unit) noexcept {
+    if (unit == ValueType::oversample)
         return std::round(std::log2(juce::jmax(display, 1.0f)));
 
     return display;
 }
 
-inline juce::String createParamString(float value, ParamUnits unit) noexcept {
+inline juce::String floatToValueString(float value, ValueType unit) noexcept {
     const auto &format = getParamUnitFormat(unit);
 
     return juce::String(paramValueToDisplay(value, unit), format.decimalPlaces, false) + format.suffix;
 }
 
 // removes unit from end of string that contains unit in it
-inline juce::String stripParamUnitSuffix(const juce::String &text, ParamUnits unit) noexcept {
+inline juce::String stripParamUnitSuffix(const juce::String &text, ValueType unit) noexcept {
     auto suffix = getParamUnitSuffix(unit);
 
     if (suffix.isNotEmpty() && text.endsWithIgnoreCase(suffix))
@@ -82,7 +82,7 @@ inline juce::String stripParamUnitSuffix(const juce::String &text, ParamUnits un
     return text.trim();
 }
 
-inline std::optional<float> parseParamString(const juce::String &text, ParamUnits unit) noexcept {
+inline std::optional<float> valueStringToFloat(const juce::String &text, ValueType unit) noexcept {
     auto stripped = stripParamUnitSuffix(text, unit);
 
     auto s = text.trimStart();

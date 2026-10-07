@@ -6,7 +6,7 @@
 class GenericKnob : public juce::Slider, public juce::Timer, public juce::Label::Listener
 {
 public:
-    GenericKnob(AudioPluginAudioProcessor &p, juce::String knobName, const ParamIDs::ParameterInfo& attachmentInfo, ParamUnits knobUnit = ParamUnits::none, ScopeContextType scopeContextType = ScopeContextType::LR_SCOPE)
+    GenericKnob(AudioPluginAudioProcessor &p, juce::String knobName, const ParamIDs::ParameterInfo& attachmentInfo, ParamType knobUnit = ParamType::none, ScopeContextType scopeContextType = ScopeContextType::LR_SCOPE)
     : processorRef(p), kName(knobName), unit(knobUnit), paramInfo(attachmentInfo) {
         knobAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(processorRef.treeState, attachmentInfo.getParamID(), *this);
         jassert(knobAttachment);
@@ -21,7 +21,7 @@ public:
         setTooltip(paramInfo.paramTooltip);
         setName(knobName);
 
-        if (knobUnit == ParamUnits::x || knobUnit == ParamUnits::category) {
+        if (knobUnit == ParamType::x || knobUnit == ParamType::category) {
             setRange(knobParamRange.start, knobParamRange.end, 1.0);
         } else {
             setRange(knobParamRange.start, knobParamRange.end, 0.001);
@@ -32,7 +32,7 @@ public:
         onDragStart = [this] { 
             // display the parameter value as the text instead of the parameter name
             this->isDragging = true;
-            this->label.setText(createParamString(this->getValue(), this->unit), juce::dontSendNotification);
+            this->label.setText(paramValueasString(this->getValue(), this->unit), juce::dontSendNotification);
             processorRef.getScopeContext().setType(preferredScopeContextType);
 
             this->dragAmount = 1.0f;
@@ -44,7 +44,7 @@ public:
         onValueChange = [this] {
             if (this->isDragging) {
                 auto value = this->getValue();
-                this->label.setText(createParamString(value, this->unit), juce::dontSendNotification);
+                this->label.setText(paramValueasString(value, this->unit), juce::dontSendNotification);
             } else {
                 this->label.setText(this->kName, juce::dontSendNotification);
             }
@@ -98,7 +98,7 @@ public:
         if (labelThatWasShown != &label)
             return;
 
-        editorStartText = createParamString(getValue(), unit);
+        editorStartText = paramValueasString(getValue(), unit);
 
         ed.setText(editorStartText, false);
         ed.selectAll();
@@ -179,7 +179,7 @@ protected:
     juce::String editorStartText;
 
     juce::String kName;
-    ParamUnits unit;
+    ParamType unit;
 
     const ParamIDs::ParameterInfo& paramInfo;
 
