@@ -12,7 +12,6 @@
 
 #include "DCBlockingHighPass.h"
 
-#include "Distortions/MatrixWaveshaper.h"
 #include "./Noise/Jeff.h"
 #include "Distortions/tube/Amp.h"
 
@@ -45,7 +44,6 @@ public:
         phaseDist = std::make_unique<PhaseDist>(state, slot);
         diodeWaveshape = std::make_unique<DiodeWaveshape>(state, slot);
         rubidium = std::make_unique<RubidiumDistortion>(state, slot);
-        matrix = std::make_unique<MatrixWaveshaper>(state, slot);
         preisach = std::make_unique<Preisach>(state, slot);
         nonlinSlew = std::make_unique<NonlinSlew>(state, slot);
     }
@@ -63,7 +61,6 @@ public:
         jeff->prepare(spec);
         diodeWaveshape->prepare(spec);
         rubidium->prepare(spec);
-        matrix->prepare(spec);
         preisach->prepare(spec);
         nonlinSlew->prepare(spec);
 
@@ -133,19 +130,13 @@ public:
             break;
         }
         case 4:
-        {// waveshaping matrix distortion
-            // TRACE_EVENT("dsp", "matrix");
-            matrix->processBlock(block);
-            break;
-        }
-        case 5:
         {// tape hysteresis
             // TRACE_EVENT("dsp", "tape");
             preisach->processBlock(block);
             dcBlocker[1].processBlock(block);
             break;
         }
-        case 6:
+        case 5:
         {
             nonlinSlew->processBlock(block);
             dcBlocker[2].processBlock(block);
@@ -179,7 +170,6 @@ private:
     std::unique_ptr<Amp> tubeAmp = nullptr;
     std::unique_ptr<PhaseDist> phaseDist = nullptr;
     std::unique_ptr<RubidiumDistortion> rubidium = nullptr;
-    std::unique_ptr<MatrixWaveshaper> matrix = nullptr;
     std::unique_ptr<Preisach> preisach = nullptr;
     std::unique_ptr<NonlinSlew> nonlinSlew = nullptr;
 

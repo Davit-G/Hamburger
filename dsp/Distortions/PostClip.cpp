@@ -6,7 +6,7 @@ PostClip::PostClip(juce::AudioProcessorValueTreeState& treeState, ScopeDataColle
                                                                     kneeKnob(getParam(ParamIDs::postClipKnee)),
                                                                     scopeData(scopeDataCollector)
 {
-    clipEnabled = dynamic_cast<juce::AudioParameterBool *>(treeState.getParameter(ParamIDs::postClipEnabled.getParamID()));
+    clipEnabled = dynamic_cast<juce::AudioParameterBool *>(treeState.getParameter(SlotId{ModuleId::postClip, 0}.enabled().getParamID()));
     jassert(clipEnabled);
 }
 

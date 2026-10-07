@@ -6,24 +6,21 @@
 class StereoCompPanel : public Panel
 {
 public:
-    StereoCompPanel(AudioPluginAudioProcessor &p) : Panel(p, ""),
-                                                   threshold(p, "THRES", ParamIDs::stereoCompThreshold, ParamUnits::db, ScopeContextType::COMPRESSION),
-                                                   ratio(p, "RATIO", ParamIDs::compRatio, ParamUnits::compressionRatio, ScopeContextType::COMPRESSION),
-                                                //    tilt(p, "S-LNK", "compStereoLink", ParamUnits::percent),
-                                                   attack(p, "SPEED", ParamIDs::compSpeed, ParamUnits::ms, ScopeContextType::COMPRESSION),
-                                                   makeup(p, "GAIN", ParamIDs::compOut, ParamUnits::db, ScopeContextType::COMPRESSION)
+    StereoCompPanel(AudioPluginAudioProcessor &p, SlotId slot = SlotId{ModuleId::dynamics, 0}) : Panel(p, ""),
+                                                   threshold(p, "THRES", slot, ParamIDs::stereoCompThreshold, ValueType::db, ScopeContextType::COMPRESSION),
+                                                   ratio(p, "RATIO", slot, ParamIDs::compRatio, ValueType::compressionRatio, ScopeContextType::COMPRESSION),
+                                                //    tilt(p, "S-LNK", "compStereoLink", ValueType::percent),
+                                                   attack(p, "SPEED", slot, ParamIDs::compSpeed, ValueType::ms, ScopeContextType::COMPRESSION)
     {
         addAndMakeVisible(threshold);
         addAndMakeVisible(ratio);
         // addAndMakeVisible(tilt);
         addAndMakeVisible(attack);
-        addAndMakeVisible(makeup);
 
         Palette::setKnobColoursOfComponent(&threshold, Palette::colours[3]);
         Palette::setKnobColoursOfComponent(&ratio, Palette::colours[3]);
         // Palette::setKnobColoursOfComponent(&tilt, Palette::colours[3]);
         Palette::setKnobColoursOfComponent(&attack, Palette::colours[3]);
-        Palette::setKnobColoursOfComponent(&makeup, Palette::colours[3]);
     }
 
     void resized() override
@@ -40,8 +37,7 @@ public:
             juce::GridItem(threshold).withArea(1, 1),
             // juce::GridItem(tilt).withArea(1, 2),
             juce::GridItem(ratio).withArea(1, 2),
-            juce::GridItem(attack).withArea(2, 1),
-            juce::GridItem(makeup).withArea(2, 2)};
+            juce::GridItem(attack).withArea(2, 1)};
 
         grid.performLayout(bounds);
     }
@@ -53,5 +49,4 @@ private:
     ParamKnob ratio;
     // ParamKnob tilt;
     ParamKnob attack;
-    ParamKnob makeup;
 };

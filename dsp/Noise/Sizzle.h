@@ -72,7 +72,7 @@ private:
 	// filter to filter out sizzle tone
 	juce::dsp::IIR::Filter<float> filter;
 
-	bool filterComputed = false;
+	float lastSizzleFreq = -1.0f;
 
 	double sampleRate;
 };

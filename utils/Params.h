@@ -13,6 +13,27 @@ namespace ParamIDs
     // number of reserved param slots in the case where it's unused
     static constexpr int choiceSlots = 16;
 
+    // a type menu's names padded out to choiceSlots, so types can be added later without changing the parameter
+    inline juce::StringArray withReservedSlots (juce::StringArray names)
+    {
+        jassert (names.size() <= choiceSlots);
+
+        for (int i = names.size(); i < choiceSlots; ++i)
+            names.add ("RESERVED " + juce::String (i + 1));
+
+        return names;
+    }
+
+    /*  VERSION HINTS. Audio Units hand hosts the parameters sorted by version hint, then by ID, and Logic and GarageBand
+        keep automation by that order: a parameter that sorts in among the released ones moves their automation onto
+        the wrong parameters. So every parameter added after a release needs a higher hint than anything released.
+
+        When a version ships, set releasedVersionHint to the highest hint in it and releasedParameterCount to its total
+        parameter count, printed in a debug build. After that a debug build asserts on start up if a parameter at a
+        released hint was added, or one removed. */
+    static constexpr int releasedVersionHint = 1;
+    static constexpr int releasedParameterCount = 0; // 0 until the slotted version ships, which leaves the check off
+
     static const juce::StringArray distortionTypes {"GRILL", "TUBE", "PHASE", "RUBIDIUM", "TAPE", "SLEW", "WAVESHAPE",
 #if JUCE_DEBUG
  "DLL" // debug only, always last. hot reloads a dylib, see hotdsp/HotDsp.h

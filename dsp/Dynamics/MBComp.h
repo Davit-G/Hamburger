@@ -16,7 +16,6 @@ public:
                                                         ratio(getParam(ParamIDs::compRatio)),
                                                         tilt(getParam(ParamIDs::compBandTilt)),
                                                         speed(getParam(ParamIDs::MBCompSpeed)),
-                                                        makeup(getParam(ParamIDs::compOut)),
                                                         scopeDataCollector(dataCollector) {}
     ~MBComp() {}
 
@@ -24,21 +23,19 @@ public:
     {
 
         speed.update();
-        makeup.update();
         tilt.update();
         ratio.update();
         threshold.update();
 
         float spd = speed.getRaw(0);
-        float mkp = makeup.getRaw(0);
         float rat = ratio.getRaw(0);
         float tlt = tilt.getRaw(0);
         float thr = threshold.getRaw(0);
 
         // float atk, float rel, float mkp, float ratioLow, float ratioUp, float thresholdLow, float thresholdUp, float kneeW, float mkpDB)
-        compressor1.updateUpDown(spd, spd * 0.8f, mkp, rat, rat, thr - tlt, thr + 2.0f - tlt, Compressor::standardKneeDb, 0.f);
-        compressor2.updateUpDown(spd, spd * 0.8f, mkp, rat, rat, thr, thr + 2.0f, Compressor::standardKneeDb, 0.f);
-        compressor3.updateUpDown(spd, spd * 0.8f, mkp, rat, rat, thr + tlt, thr + 2.0f - tlt, Compressor::standardKneeDb, 0.f);
+        compressor1.updateUpDown(spd, spd * 0.8f, 0.0f, rat, rat, thr - tlt, thr + 2.0f - tlt, Compressor::standardKneeDb, 0.f);
+        compressor2.updateUpDown(spd, spd * 0.8f, 0.0f, rat, rat, thr, thr + 2.0f, Compressor::standardKneeDb, 0.f);
+        compressor3.updateUpDown(spd, spd * 0.8f, 0.0f, rat, rat, thr + tlt, thr + 2.0f - tlt, Compressor::standardKneeDb, 0.f);
 
         float autoGain = juce::Decibels::decibelsToGain(-thr * powf((rat - 1.0f) * 0.09f, 0.4f) * 0.45);
 
@@ -89,7 +86,6 @@ private:
     SmoothParam ratio;
     SmoothParam tilt;
     SmoothParam speed;
-    SmoothParam makeup;
 
     float lowResultL = 0.0f;
     float notLowL = 0.0f;

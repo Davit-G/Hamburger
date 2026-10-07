@@ -17,7 +17,6 @@ public:
                                                         ratio(getParam(ParamIDs::compRatio)),
                                                         tilt(getParam(ParamIDs::compBandTilt)),
                                                         speed(getParam(ParamIDs::MSCompSpeed)),
-                                                        makeup(getParam(ParamIDs::compOut)),
                                                         scopeDataCollector(dataCollector) {}
     ~MSComp() {}
 
@@ -25,20 +24,18 @@ public:
     {
 
         speed.update();
-        makeup.update();
         tilt.update();
         ratio.update();
         threshold.update();
 
         float spd = speed.getRaw(0);
-        float mkp = makeup.getRaw(0);
         float rat = ratio.getRaw(0);
         float tlt = tilt.getRaw(0);
         float thr = threshold.getRaw(0);
 
         // float atk, float rel, float mkp, float ratioLow, float ratioUp, float thresholdLow, float thresholdUp, float kneeW, float mkpDB)
-        compressorMid.updateUpDown(spd, spd * 0.8f, mkp, rat, rat, thr - tlt, thr + 2.0f - tlt, Compressor::standardKneeDb, 0.f);
-        compressorSide.updateUpDown(spd, spd * 0.8f, mkp, rat, rat, thr + tlt, thr + 2.0f + tlt, Compressor::standardKneeDb, 0.f);
+        compressorMid.updateUpDown(spd, spd * 0.8f, 0.0f, rat, rat, thr - tlt, thr + 2.0f - tlt, Compressor::standardKneeDb, 0.f);
+        compressorSide.updateUpDown(spd, spd * 0.8f, 0.0f, rat, rat, thr + tlt, thr + 2.0f + tlt, Compressor::standardKneeDb, 0.f);
 
         float autoGain = juce::Decibels::decibelsToGain(-thr * powf((rat - 1.0f) * 0.09f, 0.4f) * 0.45); // kinda borked
 
@@ -80,7 +77,6 @@ private:
     SmoothParam ratio;
     SmoothParam tilt;
     SmoothParam speed;
-    SmoothParam makeup;
 
     Compressor compressorMid;
     Compressor compressorSide;

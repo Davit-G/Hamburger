@@ -6,26 +6,21 @@
 class GatePanel : public Panel
 {
 public:
-    GatePanel(AudioPluginAudioProcessor &p) : Panel(p, "GATE", Palette::colours[1]),
-    gate(p, "GATE", ParamIDs::gateAmt, ParamUnits::none, ScopeContextType::NOISE),
-    gateMix(p, "MIX", ParamIDs::gateMix, ParamUnits::none, ScopeContextType::NOISE)
+    GatePanel(AudioPluginAudioProcessor &p, SlotId slot = SlotId{ModuleId::module1, 0}) : Panel(p, "GATE", Palette::colours[1]),
+    gate(p, "GATE", slot, ParamIDs::gateAmt, ValueType::none, ScopeContextType::NOISE)
     {
         addAndMakeVisible(gate);
-        addAndMakeVisible(gateMix);
 
         Palette::setKnobColoursOfComponent(&gate, Palette::colours[1]);
-        Palette::setKnobColoursOfComponent(&gateMix, Palette::colours[1]);
     }
 
     void resized() override
     {
         auto bounds = getLocalBounds();
-        gate.setBounds(bounds.removeFromLeft(bounds.getWidth() / 2));
-        gateMix.setBounds(bounds);
+        gate.setBounds(bounds);
     }
 
 private:
     // ParamKnob knob;
     ParamKnob gate;
-    ParamKnob gateMix;
 };

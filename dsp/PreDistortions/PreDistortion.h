@@ -9,8 +9,8 @@ class PreDistortion : public EffectBase
 {
 public:
     PreDistortion(juce::AudioProcessorValueTreeState &state) : treeStateRef(state) {
-        type = dynamic_cast<juce::AudioParameterChoice *>(state.getParameter(ParamIDs::preDistortionType.getParamID())); jassert(type);
-        preDistortionEnabled = dynamic_cast<juce::AudioParameterBool *>(state.getParameter(ParamIDs::preDistortionEnabled.getParamID())); jassert(preDistortionEnabled);
+        type = dynamic_cast<juce::AudioParameterChoice *>(state.getParameter(SlotId{ModuleId::module2, 0}.type().getParamID())); jassert(type);
+        preDistortionEnabled = dynamic_cast<juce::AudioParameterBool *>(state.getParameter(SlotId{ModuleId::module2, 0}.enabled().getParamID())); jassert(preDistortionEnabled);
 
         svfAllPass = std::make_unique<SVFAllPassChain>(state);
         grungeDSP = std::make_unique<Grunge>(state);

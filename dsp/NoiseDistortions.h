@@ -14,10 +14,10 @@ class NoiseDistortions : public EffectBase
 public:
     NoiseDistortions(juce::AudioProcessorValueTreeState &state)
     {
-        distoType = dynamic_cast<juce::AudioParameterChoice *>(state.getParameter("noiseDistortionType"));
+        distoType = dynamic_cast<juce::AudioParameterChoice *>(state.getParameter(SlotId{ModuleId::module1, 0}.type().getParamID()));
         jassert(distoType);
 
-        noiseEnabled = dynamic_cast<juce::AudioParameterBool *>(state.getParameter("noiseDistortionEnabled"));
+        noiseEnabled = dynamic_cast<juce::AudioParameterBool *>(state.getParameter(SlotId{ModuleId::module1, 0}.enabled().getParamID()));
         jassert(noiseEnabled);
 
         sizzle = std::make_unique<Sizzle>(state);

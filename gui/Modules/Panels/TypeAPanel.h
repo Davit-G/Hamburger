@@ -6,20 +6,17 @@
 class TypeAPanel : public Panel
 {
 public:
-    TypeAPanel(AudioPluginAudioProcessor &p) : Panel(p, "TYPE A"),
-                                               threshold(p, "THRES", ParamIDs::TypeAThreshold, ParamUnits::db, ScopeContextType::COMPRESSION),
-                                               speed(p, "SPEED", ParamIDs::compSpeed, ParamUnits::ms, ScopeContextType::COMPRESSION),
-                                               out(p, "OUT", ParamIDs::TypeAOut, ParamUnits::db, ScopeContextType::COMPRESSION),
-                                               tilt(p, "TILT", ParamIDs::TypeATilt, ParamUnits::db, ScopeContextType::COMPRESSION)
+    TypeAPanel(AudioPluginAudioProcessor &p, SlotId slot = SlotId{ModuleId::dynamics, 0}) : Panel(p, "TYPE A"),
+                                               threshold(p, "THRES", slot, ParamIDs::TypeAThreshold, ValueType::db, ScopeContextType::COMPRESSION),
+                                               speed(p, "SPEED", slot, ParamIDs::compSpeed, ValueType::ms, ScopeContextType::COMPRESSION),
+                                               tilt(p, "TILT", slot, ParamIDs::TypeATilt, ValueType::db, ScopeContextType::COMPRESSION)
     {
         addAndMakeVisible(threshold);
         addAndMakeVisible(speed);
-        addAndMakeVisible(out);
         addAndMakeVisible(tilt);
 
         Palette::setKnobColoursOfComponent(&threshold, Palette::colours[3]);
         Palette::setKnobColoursOfComponent(&speed, Palette::colours[3]);
-        Palette::setKnobColoursOfComponent(&out, Palette::colours[3]);
         Palette::setKnobColoursOfComponent(&tilt, Palette::colours[3]);
     }
 
@@ -36,8 +33,7 @@ public:
         grid.items = {
             juce::GridItem(threshold).withArea(1, 1),
             juce::GridItem(tilt).withArea(1, 2),
-            juce::GridItem(speed).withArea(2, 1),
-            juce::GridItem(out).withArea(2, 2)};
+            juce::GridItem(speed).withArea(2, 1)};
 
         grid.performLayout(bounds);
     }
@@ -47,6 +43,5 @@ private:
 
     ParamKnob threshold;
     ParamKnob speed;
-    ParamKnob out;
     ParamKnob tilt;
 };

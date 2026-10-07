@@ -6,10 +6,10 @@ class EQPanel : public Panel
 {
 public:
     EQPanel(AudioPluginAudioProcessor &p) : Panel(p, "EMPHASIS"),
-                                            lowFreq(p, "FREQ", ParamIDs::emphasisLowFreq, ParamUnits::hz, ScopeContextType::SPECTRUM_EMPHASIS),
-                                            highFreq(p, "FREQ", ParamIDs::emphasisHighFreq, ParamUnits::hz, ScopeContextType::SPECTRUM_EMPHASIS),
-                                            lowGain(p, "GAIN", ParamIDs::emphasisLowGain, ParamUnits::db, ScopeContextType::SPECTRUM_EMPHASIS),
-                                            highGain(p, "GAIN", ParamIDs::emphasisHighGain, ParamUnits::db, ScopeContextType::SPECTRUM_EMPHASIS)
+                                            lowFreq(p, "FREQ", ParamIDs::emphasisLowFreq, ValueType::hz, ScopeContextType::SPECTRUM_EMPHASIS),
+                                            highFreq(p, "FREQ", ParamIDs::emphasisHighFreq, ValueType::hz, ScopeContextType::SPECTRUM_EMPHASIS),
+                                            lowGain(p, "GAIN", ParamIDs::emphasisLowGain, ValueType::db, ScopeContextType::SPECTRUM_EMPHASIS),
+                                            highGain(p, "GAIN", ParamIDs::emphasisHighGain, ValueType::db, ScopeContextType::SPECTRUM_EMPHASIS)
     {
 
         addAndMakeVisible(lowFreq);

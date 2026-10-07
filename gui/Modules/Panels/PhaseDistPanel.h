@@ -8,12 +8,12 @@
 class PhaseDistPanel : public Panel
 {
 public:
-    PhaseDistPanel(AudioPluginAudioProcessor &p) : Panel(p, "PHASE", Palette::colours[3]), 
-        satKnob(p, "SATURATION", ParamIDs::phaseAmount, ParamUnits::percent, ScopeContextType::IN_OUT),
-        toneKnob(p, "TONE", ParamIDs::phaseDistTone, ParamUnits::hz, ScopeContextType::IN_OUT),
-        normKnob(p, "STEREO", ParamIDs::phaseDistStereo, ParamUnits::none, ScopeContextType::IN_OUT),
-        rectKnob(p, "RECTIFY", ParamIDs::phaseRectify, ParamUnits::none, ScopeContextType::IN_OUT),
-        shiftKnob(p, "SHIFT", ParamIDs::phaseShift, ParamUnits::none, ScopeContextType::IN_OUT),
+    PhaseDistPanel(AudioPluginAudioProcessor &p, SlotId slot = SlotId{ModuleId::main, 0}) : Panel(p, "PHASE", Palette::colours[3]), 
+        satKnob(p, "SATURATION", slot, ParamIDs::phaseAmount, ValueType::percent, ScopeContextType::IN_OUT),
+        toneKnob(p, "TONE", slot, ParamIDs::phaseDistTone, ValueType::hz, ScopeContextType::IN_OUT),
+        normKnob(p, "STEREO", slot, ParamIDs::phaseDistStereo, ValueType::none, ScopeContextType::IN_OUT),
+        rectKnob(p, "RECTIFY", slot, ParamIDs::phaseRectify, ValueType::none, ScopeContextType::IN_OUT),
+        shiftKnob(p, "SHIFT", slot, ParamIDs::phaseShift, ValueType::none, ScopeContextType::IN_OUT),
         wave(BinaryData::Waves_svg, BinaryData::Waves_svgSize)
     {
         addAndMakeVisible(satKnob);

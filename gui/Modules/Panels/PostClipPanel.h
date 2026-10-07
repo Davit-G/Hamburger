@@ -5,9 +5,9 @@
 class PostClipPanel : public Panel
 {
 public:
-    PostClipPanel(AudioPluginAudioProcessor &p) : Panel(p, "CLIPPER", Palette::colours[4]),
-    gain(p, "GAIN", ParamIDs::postClipGain, ParamUnits::db, ScopeContextType::CLIPPER),
-    knee(p, "KNEE", ParamIDs::postClipKnee, ParamUnits::db, ScopeContextType::CLIPPER) {
+    PostClipPanel(AudioPluginAudioProcessor &p, SlotId slot = SlotId{ModuleId::postClip, 0}) : Panel(p, "CLIPPER", Palette::colours[4]),
+    gain(p, "GAIN", slot, ParamIDs::postClipGain, ValueType::db, ScopeContextType::CLIPPER),
+    knee(p, "KNEE", slot, ParamIDs::postClipKnee, ValueType::db, ScopeContextType::CLIPPER) {
         addAndMakeVisible(gain);
         addAndMakeVisible(knee);
 

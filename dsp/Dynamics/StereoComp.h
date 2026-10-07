@@ -18,20 +18,17 @@ public:
                                                         ratio(getParam(ParamIDs::compRatio)),
                                                         sLink(getParam(ParamIDs::compStereoLink)), // should be stereo link
                                                         speed(getParam(ParamIDs::compSpeed)),
-                                                        makeup(getParam(ParamIDs::compOut)),
                                                         scopeDataCollector(dataCollector) {}
     ~StereoComp() {}
 
     void processBlock(juce::dsp::AudioBlock<float> &block) override
     {
         speed.update();
-        makeup.update();
         // sLink.update();
         ratio.update();
         threshold.update();
 
         float spd = speed.getRaw(0);
-        float mkp = makeup.getRaw(0);
         float rat = ratio.getRaw(0);
         // float stereoLink = sLink.getRaw() * 0.01f; // used to be a percentage
         float thr = threshold.getRaw(0);
@@ -39,7 +36,7 @@ public:
         // float atk, float rel, float mkp, float ratioLow, float ratioUp, float thresholdLow, float thresholdUp, float kneeW, float mkpDB)
         // the detectors need the same setup as the audio path so their meters agree with it
         for (auto *comp : { &compressorBoth, &detectorL, &detectorR })
-            comp->updateUpDown(spd, spd * 0.8f, mkp, rat, rat, thr, thr + 2.0f, Compressor::standardKneeDb, 0.f);
+            comp->updateUpDown(spd, spd * 0.8f, 0.0f, rat, rat, thr, thr + 2.0f, Compressor::standardKneeDb, 0.f);
 
         float autoGain = juce::Decibels::decibelsToGain(-thr * powf((rat - 1.0f) * 0.09f, 0.4f) * 0.45); // kinda borked
 
@@ -75,7 +72,6 @@ private:
     SmoothParam ratio;
     SmoothParam sLink;
     SmoothParam speed;
-    SmoothParam makeup;
 
     // metering only, the audio never goes through these
     Compressor detectorL;

@@ -1,4 +1,5 @@
 #include "Scope.h"
+#include "../../utils/EffectInfo.h"
 
 #include "../../dsp/WaveShapers.h"
 #include "../../dsp/Dynamics/Compressor.h"
@@ -32,17 +33,6 @@ static juce::String formatFrequency(float freq)
     return juce::String(juce::roundToInt(freq)) + " Hz";
 }
 
-static juce::String formatDecibels(float db)
-{
-    return juce::String(db > 0.0f ? "+" : "") + juce::String(db, 1) + " dB";
-}
-
-static juce::String formatPercent(float normalised)
-{
-    return juce::String(juce::roundToInt(normalised * 100.0f)) + "%";
-}
-
-
 template <typename SampleType>
 Scope<SampleType>::Scope(juce::AudioProcessorValueTreeState& valueTree, ScopeDataCollector<SampleType>& scopeDataCollector, ScopeContext &newScopeContext)
     : apvts(valueTree),
@@ -67,9 +57,9 @@ Scope<SampleType>::Scope(juce::AudioProcessorValueTreeState& valueTree, ScopeDat
     highFreqParam = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter(ParamIDs::emphasisHighFreq.getParamID()));
     lowGainParam = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter(ParamIDs::emphasisLowGain.getParamID()));
     highGainParam = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter(ParamIDs::emphasisHighGain.getParamID()));
-    postClipKneeParam = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter(ParamIDs::postClipKnee.getParamID()));
+    postClipKneeParam = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter(paramIdFor(SlotId{ModuleId::postClip, 0}, ParamIDs::postClipKnee).getParamID()));
 
-    compressionType = dynamic_cast<juce::AudioParameterChoice*>(apvts.getParameter(ParamIDs::compressionType.getParamID()));
+    compressionType = dynamic_cast<juce::AudioParameterChoice*>(apvts.getParameter(SlotId{ModuleId::dynamics, 0}.type().getParamID()));
 
     juce::dsp::ProcessSpec spec; // this is not realtime so whatever
     spec.maximumBlockSize = 128;
@@ -993,9 +983,21 @@ void Scope<SampleType>::drawDistortionAmount(juce::Graphics &g, juce::Rectangle<
 }
 
 template <typename SampleType>
+float Scope<SampleType>::paramValue(const ParamIDs::ParameterInfo &paramInfo, SlotId slot) const
+{
+    if (auto *param = dynamic_cast<juce::AudioParameterFloat *>(apvts.getParameter(paramIdFor(slot, paramInfo).getParamID())))
+        return param->get();
+
+    return 0.0f;
+}
+
+// the one module's first slot that has it, which for every one read here is the only module that does
+template <typename SampleType>
 float Scope<SampleType>::paramValue(const ParamIDs::ParameterInfo &paramInfo) const
 {
-    if (auto *param = dynamic_cast<juce::AudioParameterFloat *>(apvts.getParameter(paramInfo.getParamID())))
+    const auto slotted = EffectInfos::paramIdForDescriptor(paramInfo);
+
+    if (auto *param = dynamic_cast<juce::AudioParameterFloat *>(apvts.getParameter(slotted.isNotEmpty() ? slotted : paramInfo.getParamID())))
         return param->get();
 
     return 0.0f;
@@ -1033,9 +1035,15 @@ juce::AudioParameterChoice* Scope<SampleType>::choiceParam(const ParamIDs::Param
 }
 
 template <typename SampleType>
+juce::AudioParameterChoice* Scope<SampleType>::choiceParamForSlot(SlotId slot) const
+{
+    return dynamic_cast<juce::AudioParameterChoice *>(apvts.getParameter(slot.type().getParamID()));
+}
+
+template <typename SampleType>
 juce::StringArray Scope<SampleType>::getDistortionHeaderLabels() const
 {
-    auto *type = choiceParam(ParamIDs::primaryDistortionType);
+    auto *type = choiceParamForSlot(SlotId{ModuleId::main, 0});
 
     if (type == nullptr)
         return {};
@@ -1047,20 +1055,23 @@ juce::StringArray Scope<SampleType>::getDistortionHeaderLabels() const
 template <typename SampleType>
 juce::String Scope<SampleType>::getDistortionAmountLabel() const
 {
-    auto *type = choiceParam(ParamIDs::primaryDistortionType);
+    auto *type = choiceParamForSlot(SlotId{ModuleId::main, 0});
 
     if (type == nullptr)
         return {};
 
     switch (type->getIndex())
     {
-        case 0: return formatPercent(paramValue(ParamIDs::saturationAmount) * 0.01f); // GRILL
-        case 1: return formatPercent(paramValue(ParamIDs::tubeAmount) * 0.01f);       // TUBE
-        case 2: return formatPercent(paramValue(ParamIDs::phaseAmount) * 0.01f);      // PHASE
-        case 3: return formatPercent(paramValue(ParamIDs::rubidiumAmount) * 0.01f);   // RUBIDIUM
-        case 5: return formatPercent(paramValue(ParamIDs::tapeDrive));                // TAPE
-        case 6: return formatPercent(paramValue(ParamIDs::alphaParam));               // SLEW
-        default: return {};                                                            // MATRIX
+        case 0: return formatPercent(paramValue(ParamIDs::saturationAmount, SlotId{ModuleId::main, 0}) * 0.01f); // GRILL
+        case 1: return formatPercent(paramValue(ParamIDs::tubeAmount, SlotId{ModuleId::main, 0}) * 0.01f);       // TUBE
+        case 2: return formatPercent(paramValue(ParamIDs::phaseAmount, SlotId{ModuleId::main, 0}) * 0.01f);      // PHASE
+        case 3: return formatPercent(paramValue(ParamIDs::rubidiumAmount, SlotId{ModuleId::main, 0}) * 0.01f);   // RUBIDIUM
+        case 4: return formatPercent(paramValue(ParamIDs::tapeDrive, SlotId{ModuleId::main, 0}));                // TAPE
+        case 5: return formatPercent(paramValue(ParamIDs::alphaParam, SlotId{ModuleId::main, 0}));               // SLEW
+        case 6: return formatDecibels(paramValue(ParamIDs::waveshapeDrive, SlotId{ModuleId::main, 0}));          // WAVESHAPE
+        case 7: return formatDecibels(paramValue(ParamIDs::optoDrive, SlotId{ModuleId::main, 0}));               // OPTO
+        case 8: return formatDecibels(paramValue(ParamIDs::dllDrive, SlotId{ModuleId::main, 0}));                // DLL, debug only
+        default: return {};
     }
 }
 
@@ -1068,7 +1079,7 @@ juce::String Scope<SampleType>::getDistortionAmountLabel() const
 template <typename SampleType>
 juce::StringArray Scope<SampleType>::getNoiseHeaderLabels() const
 {
-    auto *type = choiceParam(ParamIDs::noiseDistortionType);
+    auto *type = choiceParamForSlot(SlotId{ModuleId::module1, 0});
 
     if (type == nullptr)
         return {};
@@ -1082,12 +1093,11 @@ juce::StringArray Scope<SampleType>::getNoiseHeaderLabels() const
 
         case 2: // BIT, no q - the bit depth is the interesting middle value instead
             return { formatFrequency(paramValue(ParamIDs::downsampleFreq)),
-                     juce::String(juce::roundToInt(paramValue(ParamIDs::bitReduction))) + " bit",
-                     formatPercent(paramValue(ParamIDs::downsampleMix)) };
+                     juce::String(juce::roundToInt(paramValue(ParamIDs::bitReduction))) + " bit"};
 
         case 3: // JEFF, the gate only has amount and mix
             return { formatPercent(paramValue(ParamIDs::gateAmt)),
-                     "MIX " + formatPercent(paramValue(ParamIDs::gateMix)) };
+                     "MIX " + formatPercent(paramValue(ParamIDs::gateSmooth)) };
 
         default: // SIZZLE and SIZZLE_OG
             return { formatFrequency(paramValue(ParamIDs::sizzleFrequency)),

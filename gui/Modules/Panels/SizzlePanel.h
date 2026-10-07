@@ -6,10 +6,10 @@
 class SizzlePanel : public Panel
 {
 public:
-    SizzlePanel(AudioPluginAudioProcessor &p) : Panel(p, "SIZZLE"),
-    sizzleKnob(p, "SIZZLE", ParamIDs::sizzleAmount, ParamUnits::none, ScopeContextType::NOISE),
-    sizzleFreq(p, "FREQ", ParamIDs::sizzleFrequency, ParamUnits::none, ScopeContextType::NOISE),
-    sizzleQ(p, "Q", ParamIDs::sizzleQ, ParamUnits::none, ScopeContextType::NOISE) {
+    SizzlePanel(AudioPluginAudioProcessor &p, SlotId slot = SlotId{ModuleId::module1, 0}) : Panel(p, "SIZZLE"),
+    sizzleKnob(p, "SIZZLE", slot, ParamIDs::sizzleAmount, ValueType::none, ScopeContextType::NOISE),
+    sizzleFreq(p, "FREQ", slot, ParamIDs::sizzleFrequency, ValueType::none, ScopeContextType::NOISE),
+    sizzleQ(p, "Q", slot, ParamIDs::sizzleQ, ValueType::none, ScopeContextType::NOISE) {
         addAndMakeVisible(sizzleKnob);
         addAndMakeVisible(sizzleFreq);
         addAndMakeVisible(sizzleQ);
@@ -38,8 +38,8 @@ private:
 class SizzleOGPanel : public Panel
 {
 public:
-    SizzleOGPanel(AudioPluginAudioProcessor &p) : Panel(p, "FIZZ"),
-    sizzleKnob(p, "FIZZLE", ParamIDs::fizzAmount, ParamUnits::none, ScopeContextType::NOISE)
+    SizzleOGPanel(AudioPluginAudioProcessor &p, SlotId slot = SlotId{ModuleId::module1, 0}) : Panel(p, "FIZZ"),
+    sizzleKnob(p, "FIZZLE", slot, ParamIDs::fizzAmount, ValueType::none, ScopeContextType::NOISE)
     {
         addAndMakeVisible(sizzleKnob);
     }

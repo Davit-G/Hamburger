@@ -26,7 +26,6 @@ public:
 
 private:
     SmoothParam downsample;
-    SmoothParam downsampleMix;
     SmoothParam bitReduction;
 
     juce::dsp::ProcessorDuplicator<juce::dsp::IIR::Filter<float>, juce::dsp::IIR::Coefficients<float>> antialiasingFilter[4];

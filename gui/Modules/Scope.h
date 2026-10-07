@@ -38,7 +38,7 @@ public:
     ScopeContextType getType() { return type; }
 
     void setFocus(SlotId slot) { focus.store(((int) slot.module << 8) | (slot.sub & 0xff)); }
-    
+
     SlotId getFocus() const
     {
         const auto packed = focus.load();
@@ -219,10 +219,15 @@ private:
     // strip every view keeps clear at the top for its readouts
     SampleType headerHeight(juce::Rectangle<SampleType> scopeRect) const;
 
+    // a slot's copy of the parameter where it has one, otherwise the fixed parameter by its own id
+    float paramValue(const ParamIDs::ParameterInfo &paramInfo, SlotId slot) const;
     float paramValue(const ParamIDs::ParameterInfo &paramInfo) const;
 
 
     juce::AudioParameterChoice* choiceParam(const ParamIDs::ParameterInfo &id) const;
+    juce::AudioParameterChoice* choiceParamForSlot(SlotId slot) const;
+
+    
     // black tab sized to its text, grown past the top or bottom edge so only the inner corners round
     void drawTabbedLabel(juce::Graphics &g, juce::Rectangle<float> cell, const juce::String &text,
                          juce::Justification justification, bool hangingFromTop);

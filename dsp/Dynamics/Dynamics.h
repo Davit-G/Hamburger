@@ -22,8 +22,8 @@ public:
         stereoComp(state, dataCollector),
         typeA(state, dataCollector)
     {
-        distoType = dynamic_cast<juce::AudioParameterChoice *>(state.getParameter(ParamIDs::compressionType.getParamID())); jassert(distoType);
-        enabled = dynamic_cast<juce::AudioParameterBool *>(state.getParameter(ParamIDs::compressionOn.getParamID())); jassert(enabled);
+        distoType = dynamic_cast<juce::AudioParameterChoice *>(state.getParameter(SlotId{ModuleId::dynamics, 0}.type().getParamID())); jassert(distoType);
+        enabled = dynamic_cast<juce::AudioParameterBool *>(state.getParameter(SlotId{ModuleId::dynamics, 0}.enabled().getParamID())); jassert(enabled);
     }
     ~Dynamics() {}
 

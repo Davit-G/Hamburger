@@ -17,7 +17,7 @@ public:
     void paint(juce::Graphics& g) override
     {
         // the clipper is bypassed, so there's nothing meaningful to report
-        if (*p.treeState.getRawParameterValue(ParamIDs::postClipEnabled.getParamID()) < 0.5f)
+        if (*p.treeState.getRawParameterValue(SlotId{ModuleId::postClip, 0}.enabled().getParamID()) < 0.5f)
             return;
 
         const auto level = collector.clipIndicator.getNext();
@@ -25,7 +25,7 @@ public:
         auto dotColour = juce::Colours::darkgrey;
         if (level >= hardClipLevel)
             dotColour = juce::Colours::red;
-        else if (isSoftClipperKnee(level, 1.0f, *p.treeState.getRawParameterValue(ParamIDs::postClipKnee.getParamID())))
+        else if (isSoftClipperKnee(level, 1.0f, *p.treeState.getRawParameterValue(paramIdFor(SlotId{ModuleId::postClip, 0}, ParamIDs::postClipKnee).getParamID())))
             dotColour = juce::Colours::orange;
 
         g.setColour(dotColour);

@@ -1,17 +1,27 @@
 #pragma once
 
 #include "../PluginProcessor.h"
-#include "KnobUtils.h"
+#include "../utils/ValueType.h"
 
 class GenericKnob : public juce::Slider, public juce::Timer, public juce::Label::Listener
 {
 public:
-    GenericKnob(AudioPluginAudioProcessor &p, juce::String knobName, const ParamIDs::ParameterInfo& attachmentInfo, ParamType knobUnit = ParamType::none, ScopeContextType scopeContextType = ScopeContextType::LR_SCOPE)
-    : processorRef(p), kName(knobName), unit(knobUnit), paramInfo(attachmentInfo) {
-        knobAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(processorRef.treeState, attachmentInfo.getParamID(), *this);
+    // a parameter that belongs to no slot, like the input gain
+    GenericKnob(AudioPluginAudioProcessor &p, juce::String knobName, const ParamIDs::ParameterInfo& attachmentInfo, ValueType knobUnit = ValueType::none, ScopeContextType scopeContextType = ScopeContextType::LR_SCOPE)
+    : GenericKnob(p, knobName, attachmentInfo.getParamID(), attachmentInfo, knobUnit, scopeContextType) {}
+
+    // a slot's own copy of a parameter, like main_phaseAmount
+    GenericKnob(AudioPluginAudioProcessor &p, juce::String knobName, SlotId slot, const ParamIDs::ParameterInfo& attachmentInfo, ValueType knobUnit = ValueType::none, ScopeContextType scopeContextType = ScopeContextType::LR_SCOPE)
+    : GenericKnob(p, knobName, paramIdFor(slot, attachmentInfo).getParamID(), attachmentInfo, knobUnit, scopeContextType) {}
+
+private:
+    GenericKnob(AudioPluginAudioProcessor &p, juce::String knobName, const juce::String& attachedID, const ParamIDs::ParameterInfo& attachmentInfo, ValueType knobUnit, ScopeContextType scopeContextType)
+    : processorRef(p), kName(knobName), unit(knobUnit), paramInfo(attachmentInfo), paramID(attachedID) {
+        jassert(p.treeState.getParameter(paramID) != nullptr); // wrong slot, or never registered
+        knobAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(processorRef.treeState, paramID, *this);
         jassert(knobAttachment);
 
-        auto knobParamRange = p.treeState.getParameterRange(attachmentInfo.getParamID());
+        auto knobParamRange = p.treeState.getParameterRange(paramID);
 
         setSliderStyle(juce::Slider::RotaryVerticalDrag);
         setTextBoxStyle(juce::Slider::TextBoxBelow, true, 0, 0);
@@ -21,7 +31,7 @@ public:
         setTooltip(paramInfo.paramTooltip);
         setName(knobName);
 
-        if (knobUnit == ParamType::x || knobUnit == ParamType::category) {
+        if (knobUnit == ValueType::x || knobUnit == ValueType::category) {
             setRange(knobParamRange.start, knobParamRange.end, 1.0);
         } else {
             setRange(knobParamRange.start, knobParamRange.end, 0.001);
@@ -32,7 +42,7 @@ public:
         onDragStart = [this] { 
             // display the parameter value as the text instead of the parameter name
             this->isDragging = true;
-            this->label.setText(paramValueasString(this->getValue(), this->unit), juce::dontSendNotification);
+            this->label.setText(floatToValueString(this->getValue(), this->unit), juce::dontSendNotification);
             processorRef.getScopeContext().setType(preferredScopeContextType);
 
             this->dragAmount = 1.0f;
@@ -44,7 +54,7 @@ public:
         onValueChange = [this] {
             if (this->isDragging) {
                 auto value = this->getValue();
-                this->label.setText(paramValueasString(value, this->unit), juce::dontSendNotification);
+                this->label.setText(floatToValueString(value, this->unit), juce::dontSendNotification);
             } else {
                 this->label.setText(this->kName, juce::dontSendNotification);
             }
@@ -73,6 +83,7 @@ public:
         startTimerHz(60);
     }
 
+public:
     void mouseDoubleClick(const juce::MouseEvent & e) override {
         // double click triggers label edit
         label.showEditor();
@@ -98,7 +109,7 @@ public:
         if (labelThatWasShown != &label)
             return;
 
-        editorStartText = paramValueasString(getValue(), unit);
+        editorStartText = floatToValueString(getValue(), unit);
 
         ed.setText(editorStartText, false);
         ed.selectAll();
@@ -113,7 +124,7 @@ public:
         const bool cancelled = typed == editorStartText || typed == kName;
 
         if (!cancelled)
-            if (auto value = parseParamString(typed, unit))
+            if (auto value = valueStringToFloat(typed, unit))
                 setValue(*value, juce::sendNotificationSync);
 
         label.setText(kName, juce::dontSendNotification);
@@ -122,7 +133,7 @@ public:
     void labelTextChanged(juce::Label *) override {}
 
     void resetToDefault() {
-        auto *param = processorRef.treeState.getParameter(paramInfo.getParamID());
+        auto *param = processorRef.treeState.getParameter(paramID);
 
         if (param == nullptr)
             return;
@@ -179,9 +190,10 @@ protected:
     juce::String editorStartText;
 
     juce::String kName;
-    ParamType unit;
+    ValueType unit;
 
     const ParamIDs::ParameterInfo& paramInfo;
+    const juce::String paramID; // the parameter actually attached, the slot's own copy for a slotted one
 
     bool isDragging = false;
 

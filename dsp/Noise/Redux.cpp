@@ -4,7 +4,6 @@
 
 //==============================================================================
 Redux::Redux(juce::AudioProcessorValueTreeState& treeState) : MacroEffect(treeState, SlotId{ModuleId::module1, 0}), downsample(getParam(ParamIDs::downsampleFreq)),
-															  downsampleMix(getParam(ParamIDs::downsampleMix)),
 															  bitReduction(getParam(ParamIDs::bitReduction))
 {
 }
@@ -16,7 +15,6 @@ Redux::~Redux()
 void Redux::prepare(juce::dsp::ProcessSpec &spec)
 {
 	downsample.prepare(spec);
-	downsampleMix.prepare(spec);
 	bitReduction.prepare(spec);
 	this->sampleRate = spec.sampleRate;
 
@@ -54,7 +52,6 @@ void Redux::processBlock(juce::dsp::AudioBlock<float> &block)
 
 	downsample.update();
 	bitReduction.update();
-	downsampleMix.update();
 
 	for (int sample = 0; sample < block.getNumSamples(); sample++)
 	{
@@ -62,7 +59,6 @@ void Redux::processBlock(juce::dsp::AudioBlock<float> &block)
 		float downsamplingValue = sampleRate * 0.5f / dsmplFreq;
 
 		float bitReductionValue = bitReduction.getNextValue(0);
-		float mixAmount = downsampleMix.getNextValue(0);
 
 		// sample and hold process L channel
 		if (floor(fmodf(sample, downsamplingValue)) == 0)
@@ -96,7 +92,7 @@ void Redux::processBlock(juce::dsp::AudioBlock<float> &block)
 			heldSampleR = xR;
 		}
 
-		leftDryData[sample] = heldSampleL * mixAmount + leftDryData[sample] * (1 - mixAmount);
-		rightDryData[sample] = heldSampleR * mixAmount + rightDryData[sample] * (1 - mixAmount);
+		leftDryData[sample] = heldSampleL;
+		rightDryData[sample] = heldSampleR;
 	}
 }

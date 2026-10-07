@@ -1,16 +1,19 @@
 #pragma once
 
 #include "../PluginProcessor.h"
-#include "KnobUtils.h"
+#include "../utils/ValueType.h"
 #include "GenericKnob.h"
 
 class ParamKnob : public GenericKnob
 {
 public:
-    ParamKnob(AudioPluginAudioProcessor &p, juce::String knobName, const ParamIDs::ParameterInfo& attachmentInfo, ParamType knobUnit = ParamType::none, ScopeContextType scopeContextType = ScopeContextType::LR_SCOPE) : 
+    ParamKnob(AudioPluginAudioProcessor &p, juce::String knobName, const ParamIDs::ParameterInfo& attachmentInfo, ValueType knobUnit = ValueType::none, ScopeContextType scopeContextType = ScopeContextType::LR_SCOPE) : 
     GenericKnob(p, knobName, attachmentInfo, knobUnit, scopeContextType) {
         
     }
+
+    ParamKnob(AudioPluginAudioProcessor &p, juce::String knobName, SlotId slot, const ParamIDs::ParameterInfo& attachmentInfo, ValueType knobUnit = ValueType::none, ScopeContextType scopeContextType = ScopeContextType::LR_SCOPE) :
+    GenericKnob(p, knobName, slot, attachmentInfo, knobUnit, scopeContextType) {}
 
     void drawRotarySlider(juce::Graphics &g, int x, int y, int width, int height, float sliderPos,
                         const float rotaryStartAngle, const float rotaryEndAngle, juce::Slider &slider)

@@ -26,7 +26,6 @@ public:
     TypeAProcessor(juce::AudioProcessorValueTreeState& treeState, ScopeDataCollector<float> &dataCollector) : MacroEffect(treeState, SlotId{ModuleId::dynamics, 0}), 
         speedParam(getParam(ParamIDs::TypeACompSpeed)),
         thresholdParam(getParam(ParamIDs::TypeAThreshold)),
-        outParam(getParam(ParamIDs::TypeAOut)),
         tiltParam(getParam(ParamIDs::TypeATilt)),
         scopeDataCollector(dataCollector)
     {}
@@ -44,7 +43,7 @@ private:
 
     SmoothParam speedParam;
     SmoothParam thresholdParam;
-    SmoothParam outParam;
+    static constexpr float trimDb = -12.0f; // where the old out knob sat, to keep it as loud as it was
     SmoothParam tiltParam;
 
     ScopeDataCollector<float> &scopeDataCollector;

@@ -35,7 +35,7 @@ void Sizzle::prepare(juce::dsp::ProcessSpec &spec)
 	envelopeDetector.setReleaseTime(2);
 	envelopeDetector.prepare(spec);
 
-	filterComputed = false;
+	lastSizzleFreq = -1.0f;
 
 	filter.prepare(spec);
 }
@@ -55,8 +55,11 @@ void Sizzle::processBlock(juce::dsp::AudioBlock<float> &block)
 
 	auto sizzleFreq = filterTone.getRaw(0);
 
-	if (filterTone.isChanged() || !filterComputed)
+	if (! juce::approximatelyEqual(sizzleFreq, lastSizzleFreq))
+	{
 		*filter.coefficients = juce::dsp::IIR::ArrayCoefficients<float>::makeLowPass(sampleRate, sizzleFreq, 0.707f);
+		lastSizzleFreq = sizzleFreq;
+	}
 
 	for (int sample = 0; sample < block.getNumSamples(); sample++)
 	{

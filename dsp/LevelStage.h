@@ -31,7 +31,7 @@ public:
         }
 
         inGain.setGainDecibels (inGainParam->get());
-        outGain.setGainDecibels (outGainDb());
+        outGain.setGainDecibels (getOutGain());
         inGain.reset();
         outGain.reset();
 
@@ -65,14 +65,17 @@ public:
             dryWet.mixWetSamples (block);
         }
 
-        const auto linked = gainLink != nullptr && gainLink->get() && isEnabled();
-        auto outGainDb = outGainParam->get() - (linked ? inGainParam->get() : 0.0f);
-        outGain.setGainDecibels (outGainDb);
+        
+        outGain.setGainDecibels (getOutGain());
 
         outGain.process (context);
     }
 
 private:
+    inline const float getOutGain() {
+        const auto linked = gainLink != nullptr && gainLink->get() && isEnabled();
+        return outGainParam->get() - (linked ? inGainParam->get() : 0.0f);
+    }
 
     MacroParam* inGainParam = nullptr;
     MacroParam* mixParam = nullptr;

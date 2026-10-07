@@ -27,24 +27,18 @@ public:
 
         setPaintingIsUnclipped(true);
 
-        if (categoryAttachmentId.length() > 0)
+        /*  By index, not a ComboBoxAttachment: that spreads the parameter's 0 to 1 over the menu's items, and the menu
+            has fewer items than the parameter has choices, the rest being reserved for types to come. */
+        if (auto* type = dynamic_cast<juce::AudioParameterChoice*>(processor.treeState.getParameter(categoryAttachmentId)))
         {
-            // on some linux based OSes, the category selector element overrides the parameter value, causing it to reset to default when opening the GUI.
-            // the below two lines of code fixes that.
-            auto existingCategoryParam = dynamic_cast<juce::AudioParameterChoice *>(processor.treeState.getParameter(categoryAttachmentId));
-            if (existingCategoryParam != nullptr)
+            categoryAttachment = std::make_unique<juce::ParameterAttachment>(*type, [this](float index)
             {
-                categorySelector.setSelectedItemIndex(existingCategoryParam->getIndex(), juce::dontSendNotification);
-                DBG("not nullptr");
-            }
-            else
-            {
-                categorySelector.setSelectedItemIndex(0);
-                DBG("nullptr");
-            }
-            
-            categoryAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment>(processor.treeState, categoryAttachmentId, categorySelector);
-            setScreen(categorySelector.getSelectedItemIndex());
+                categorySelector.setSelectedItemIndex((int) index, juce::dontSendNotification);
+                setScreen((int) index);
+                resized();
+            }, nullptr);
+
+            categoryAttachment->sendInitialUpdate();
         }
         else
         {
@@ -240,6 +234,9 @@ private:
             auto selection = categorySelector.getSelectedItemIndex();
             if (selection != -1)
             {
+                if (categoryAttachment != nullptr)
+                    categoryAttachment->setValueAsCompleteGesture((float) selection);
+
                 setScreen(selection);
                 this->resized();
             }
@@ -266,7 +263,7 @@ private:
 
     ScopeContext& scopeContext;
 
-    std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment> categoryAttachment = nullptr;
+    std::unique_ptr<juce::ParameterAttachment> categoryAttachment = nullptr;
     std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> attachment = nullptr;
 
     juce::AudioParameterBool* hamburgerEnabled;

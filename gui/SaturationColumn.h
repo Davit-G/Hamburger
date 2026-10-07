@@ -3,7 +3,6 @@
 #include "Modules/Module.h"
 
 #include "Modules/Panels/ClassicSatPanel.h"
-#include "Modules/Panels/MatrixSatPanel.h"
 #include "Modules/Panels/TubeSatPanel.h"
 #include "Modules/Panels/TapeSatPanel.h"
 #include "Modules/Panels/RubidiumSatPanel.h" 
@@ -49,16 +48,13 @@ public:
         rubidium = std::make_unique<RubidiumSatPanel>(p);
         panels.push_back(std::move(rubidium));
 
-        matrixSat = std::make_unique<MatrixSatPanel>(p);
-        panels.push_back(std::move(matrixSat));
-
         tape = std::make_unique<TapeSatPanel>(p);
         panels.push_back(std::move(tape));
         
         slew = std::make_unique<SlewRatePanel>(p);
         panels.push_back(std::move(slew));
 
-        saturation = std::make_unique<Module>(p, "DISTORTION", "primaryDistortionEnabled", "primaryDistortionType", std::move(panels));
+        saturation = std::make_unique<Module>(p, "DISTORTION", SlotId{ModuleId::main, 0}.enabled().getParamID().toStdString(), SlotId{ModuleId::main, 0}.type().getParamID().toStdString(), std::move(panels));
         addAndMakeVisible(saturation.get());
 
         std::vector<std::unique_ptr<Panel>> clipPanel;
@@ -66,7 +62,7 @@ public:
         postClipPanel = std::make_unique<PostClipPanel>(p);
         clipPanel.push_back(std::move(postClipPanel));
 
-        postClip = std::make_unique<Module>(p, "CLIPPER", "postClipEnabled", "", std::move(clipPanel));
+        postClip = std::make_unique<Module>(p, "CLIPPER", SlotId{ModuleId::postClip, 0}.enabled().getParamID().toStdString(), "", std::move(clipPanel));
         addAndMakeVisible(postClip.get());
 
         std::vector<std::unique_ptr<Panel>> noisePanels;
@@ -77,7 +73,7 @@ public:
         noisePanels.push_back(std::make_unique<GatePanel>(p));
         noisePanels.push_back(std::make_unique<SizzleOGPanel>(p));
 
-        noise = std::make_unique<Module>(p, "NOISE", "noiseDistortionEnabled", "noiseDistortionType", std::move(noisePanels));
+        noise = std::make_unique<Module>(p, "NOISE", SlotId{ModuleId::module1, 0}.enabled().getParamID().toStdString(), SlotId{ModuleId::module1, 0}.type().getParamID().toStdString(), std::move(noisePanels));
         addAndMakeVisible(noise.get());
 
         addAndMakeVisible(clipDot);
@@ -117,7 +113,6 @@ private:
     std::unique_ptr<Panel> tube = nullptr;
     std::unique_ptr<Panel> phase = nullptr;
     std::unique_ptr<Panel> rubidium = nullptr;
-    std::unique_ptr<Panel> matrixSat = nullptr;
     std::unique_ptr<Panel> tape = nullptr;
     std::unique_ptr<Panel> preisach = nullptr;
     std::unique_ptr<Panel> slew = nullptr;

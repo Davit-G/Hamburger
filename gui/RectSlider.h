@@ -2,7 +2,7 @@
 
 #include "../PluginProcessor.h"
 #include "juce_gui_basics/juce_gui_basics.h"
-#include "KnobUtils.h"
+#include "../utils/ValueType.h"
 
 #include "GenericKnob.h"
 
@@ -14,11 +14,16 @@ enum RectSliderType {
 
 class RectSlider : public GenericKnob {
 public:
-    RectSlider(AudioPluginAudioProcessor &p, juce::String knobName, const ParamIDs::ParameterInfo& attachmentParam, ParamType knobUnit = ParamType::none, ScopeContextType scopeContextType = ScopeContextType::LR_SCOPE) 
+    RectSlider(AudioPluginAudioProcessor &p, juce::String knobName, const ParamIDs::ParameterInfo& attachmentParam, ValueType knobUnit = ValueType::none, ScopeContextType scopeContextType = ScopeContextType::LR_SCOPE) 
     : GenericKnob(p, knobName, attachmentParam, knobUnit, scopeContextType) {
         // can't use linear bar or linear horizontal
         // cause some weird stuff happens and it immediately snaps to max. might be cause default text box flattens the pixel range?
         setSliderStyle(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag); 
+    }
+
+    RectSlider(AudioPluginAudioProcessor &p, juce::String knobName, SlotId slot, const ParamIDs::ParameterInfo& attachmentParam, ValueType knobUnit = ValueType::none, ScopeContextType scopeContextType = ScopeContextType::LR_SCOPE)
+    : GenericKnob(p, knobName, slot, attachmentParam, knobUnit, scopeContextType) {
+        setSliderStyle(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag);
     }
 
     void setJustification(const RectSliderType type) {
