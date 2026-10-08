@@ -76,7 +76,7 @@ private:
     float lockNormalAlpha = 0.3f;
     bool wasHovered = false;
 
-    Scope<float> scope;
+    Scope scope;
     std::unique_ptr<LightButton> lockedButton;
     juce::Image lockOffImage;
     juce::Image lockOnImage;

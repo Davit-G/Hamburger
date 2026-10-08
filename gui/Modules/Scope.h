@@ -114,23 +114,22 @@ private:
     static constexpr ScopeContextType defaultType = ScopeContextType::LR_SCOPE; // the default to set after time has elapsed
 };
 
-template <typename SampleType>
 class Scope : public juce::Component,
               private juce::Timer
 {
 public:
-    using Queue = AudioBufferQueue<SampleType>;
-    Scope(juce::AudioProcessorValueTreeState& valueTree, ScopeDataCollector<SampleType>& scopeDataCollector, ScopeContext &newScopeContext);
+    using Queue = AudioBufferQueue<float>;
+    Scope(juce::AudioProcessorValueTreeState& valueTree, ScopeDataCollector<float>& scopeDataCollector, ScopeContext &newScopeContext);
 
     void mouseDown(const juce::MouseEvent &event) override;
     void setFramesPerSecond(int framesPerSecond);
     void paint(juce::Graphics &g) override;
 
     // single source of truth for the x axis, everything drawn over the spectrum has to go through this
-    SampleType freqToX(double freq, SampleType w) const;
+    float freqToX(double freq, float w) const;
 
     float getBandResponse(double freq, double centerFreq, double gainDb);
-    void drawResponseCurve(juce::Graphics &g, const SampleType w, const SampleType centerY, const SampleType maxHeight);
+    void drawResponseCurve(juce::Graphics &g, const float w, const float centerY, const float maxHeight);
     
     void resized() override;
 
@@ -147,32 +146,32 @@ private:
     juce::AudioProcessorValueTreeState& apvts;
 
     ScopeContext& scopeContext;
-    ScopeDataCollector<SampleType>& dataCollector;
+    ScopeDataCollector<float>& dataCollector;
 
     // two hops each: the newest hop plus the one before it, so the trigger has somewhere to search
-    std::vector<SampleType> sampleDataL;
-    std::vector<SampleType> sampleDataR;
-    std::vector<SampleType> triggerSignal;    // low passed copy of L, only ever used to find the trigger
-    std::vector<SampleType> triggerDecimated; // the same copy at a fraction of the rate, to search
-    std::vector<SampleType> triggerReference; // the shape locked onto last frame, to match against
+    std::vector<float> sampleDataL;
+    std::vector<float> sampleDataR;
+    std::vector<float> triggerSignal;    // low passed copy of L, only ever used to find the trigger
+    std::vector<float> triggerDecimated; // the same copy at a fraction of the rate, to search
+    std::vector<float> triggerReference; // the shape locked onto last frame, to match against
     bool hasTriggerReference = false;
     size_t triggerOffset = 0;
-    std::vector<SampleType> sampleDataPreDistortion;
-    std::vector<SampleType> sampleDataPostDistortion;
+    std::vector<float> sampleDataPreDistortion;
+    std::vector<float> sampleDataPostDistortion;
 
-    AudioBufferQueue<SampleType> bufferedFFTInput;
-    std::vector<SampleType> fftHistory;
-    std::array<SampleType, scope_constants::fftBins> averagedSpectrum{};
+    AudioBufferQueue<float> bufferedFFTInput;
+    std::vector<float> fftHistory;
+    std::array<float, scope_constants::fftBins> averagedSpectrum{};
     int fftHistoryWritePosition = 0;
 
-    std::array<SampleType, 2> originLineData = {SampleType(1), SampleType(1)};
+    std::array<float, 2> originLineData = {1.0f, 1.0f};
 
     juce::dsp::FFT fft{static_cast<int>(std::log2(scope_constants::fftSize))};
-    using WindowFun = juce::dsp::WindowingFunction<SampleType>;
+    using WindowFun = juce::dsp::WindowingFunction<float>;
     WindowFun windowFun{scope_constants::fftSize, WindowFun::hann};
 
-    std::array<SampleType, scope_constants::fftInputSize> spectrumData{};
-    std::array<SampleType, scope_constants::fftBins> spectrumTransformed{};
+    std::array<float, scope_constants::fftInputSize> spectrumData{};
+    std::array<float, scope_constants::fftBins> spectrumTransformed{};
 
     juce::Image inOutFB;
     juce::Colour inOutBackground {juce::Colours::black};
@@ -191,12 +190,12 @@ private:
 
     void updateHopSize();
     void updateTriggerOffset();
-    void drawLRScope(juce::Graphics &g, juce::Rectangle<SampleType> scopeRect);
-    void drawInOut(juce::Graphics &g, juce::Rectangle<SampleType> scopeRect);
-    void drawInOutAxes(juce::Graphics &g, juce::Rectangle<SampleType> scopeRect);
+    void drawLRScope(juce::Graphics &g, juce::Rectangle<float> scopeRect);
+    void drawInOut(juce::Graphics &g, juce::Rectangle<float> scopeRect);
+    void drawInOutAxes(juce::Graphics &g, juce::Rectangle<float> scopeRect);
     void renderInOutFrame(bool stampNewTrace);
-    void drawSpectrumEmphasis(juce::Graphics &g, juce::Rectangle<SampleType> scopeRect);
-    void drawClipper(juce::Graphics &g, juce::Rectangle<SampleType> scopeRect);
+    void drawSpectrumEmphasis(juce::Graphics &g, juce::Rectangle<float> scopeRect);
+    void drawClipper(juce::Graphics &g, juce::Rectangle<float> scopeRect);
     // one cell per band of whichever compressor is on screen
     struct CompBand
     {
@@ -207,17 +206,17 @@ private:
         float gainOffsetDb = 0.0f; // what this band's makeup is trimmed by relative to the others
     };
 
-    void drawCompBands(juce::Graphics &g, juce::Rectangle<SampleType> scopeRect,
+    void drawCompBands(juce::Graphics &g, juce::Rectangle<float> scopeRect,
                        const CompBand *bands, int numBands, float ratio);
-    void drawMBComp(juce::Graphics &g, juce::Rectangle<SampleType> scopeRect);
-    void drawMSComp(juce::Graphics &g, juce::Rectangle<SampleType> scopeRect);
-    void drawStereoComp(juce::Graphics &g, juce::Rectangle<SampleType> scopeRect);
-    void drawTypeAComp(juce::Graphics &g, juce::Rectangle<SampleType> scopeRect);
+    void drawMBComp(juce::Graphics &g, juce::Rectangle<float> scopeRect);
+    void drawMSComp(juce::Graphics &g, juce::Rectangle<float> scopeRect);
+    void drawStereoComp(juce::Graphics &g, juce::Rectangle<float> scopeRect);
+    void drawTypeAComp(juce::Graphics &g, juce::Rectangle<float> scopeRect);
     void drawTiledContextLabel(juce::Graphics &g, juce::Rectangle<int> area, const juce::String &text);
-    void drawParamHeader(juce::Graphics &g, juce::Rectangle<SampleType> scopeRect, const juce::StringArray &labels);
+    void drawParamHeader(juce::Graphics &g, juce::Rectangle<float> scopeRect, const juce::StringArray &labels);
 
     // strip every view keeps clear at the top for its readouts
-    SampleType headerHeight(juce::Rectangle<SampleType> scopeRect) const;
+    float headerHeight(juce::Rectangle<float> scopeRect) const;
 
     // a slot's copy of the parameter where it has one, otherwise the fixed parameter by its own id
     float paramValue(const ParamIDs::ParameterInfo &paramInfo, SlotId slot) const;
@@ -231,7 +230,7 @@ private:
     // black tab sized to its text, grown past the top or bottom edge so only the inner corners round
     void drawTabbedLabel(juce::Graphics &g, juce::Rectangle<float> cell, const juce::String &text,
                          juce::Justification justification, bool hangingFromTop);
-    void drawDistortionAmount(juce::Graphics &g, juce::Rectangle<SampleType> scopeRect);
+    void drawDistortionAmount(juce::Graphics &g, juce::Rectangle<float> scopeRect);
 
     juce::StringArray getDistortionHeaderLabels() const;
     juce::String getDistortionAmountLabel() const;
@@ -244,10 +243,10 @@ private:
 
     void timerCallback() override;
 
-    static void plotStraightLine(const SampleType *data,
+    static void plotStraightLine(const float *data,
                      size_t numSamples,
                      juce::Graphics &g,
-                     juce::Rectangle<SampleType> rect,
-                     SampleType scaler = SampleType(1),
-                     SampleType offset = SampleType(0));
+                     juce::Rectangle<float> rect,
+                     float scaler = 1.0f,
+                     float offset = 0.0f);
 };

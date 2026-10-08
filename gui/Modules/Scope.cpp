@@ -12,17 +12,15 @@ static constexpr juce::uint8 contextLabelAlpha = 20; // brightness of background
 static constexpr float readoutFontHeight = 11.0f; // font height for info / stats on scope
 
 // midpoint and half range of a block, so trigger levels sit relative to the signal rather than to zero
-template <typename SampleType>
 struct SignalRange
 {
-    SampleType mid;
-    SampleType amplitude;
+    float mid;
+    float amplitude;
 };
 
-template <typename SampleType>
-static SignalRange<SampleType> midAndAmplitude(SampleType lo, SampleType hi)
+static SignalRange midAndAmplitude(float lo, float hi)
 {
-    return { (hi + lo) * SampleType(0.5), (hi - lo) * SampleType(0.5) };
+    return { (hi + lo) * 0.5f, (hi - lo) * 0.5f };
 }
 
 static juce::String formatFrequency(float freq)
@@ -33,25 +31,24 @@ static juce::String formatFrequency(float freq)
     return juce::String(juce::roundToInt(freq)) + " Hz";
 }
 
-template <typename SampleType>
-Scope<SampleType>::Scope(juce::AudioProcessorValueTreeState& valueTree, ScopeDataCollector<SampleType>& scopeDataCollector, ScopeContext &newScopeContext)
+Scope::Scope(juce::AudioProcessorValueTreeState& valueTree, ScopeDataCollector<float>& scopeDataCollector, ScopeContext &newScopeContext)
     : apvts(valueTree),
     dataCollector(scopeDataCollector),
       scopeContext(newScopeContext),
       noiseDist(valueTree)
 {
     int fps = scope_constants::defaultFrameRate;
-    sampleDataL.resize(scope_constants::defaultHopSize * 3, SampleType(0));
-    sampleDataR.resize(scope_constants::defaultHopSize * 3, SampleType(0));
-    triggerSignal.resize(sampleDataL.size(), SampleType(0));
-    triggerDecimated.resize(sampleDataL.size() / triggerDecimation, SampleType(0));
-    triggerReference.resize(triggerMatchLength, SampleType(0));
+    sampleDataL.resize(scope_constants::defaultHopSize * 3, 0.0f);
+    sampleDataR.resize(scope_constants::defaultHopSize * 3, 0.0f);
+    triggerSignal.resize(sampleDataL.size(), 0.0f);
+    triggerDecimated.resize(sampleDataL.size() / triggerDecimation, 0.0f);
+    triggerReference.resize(triggerMatchLength, 0.0f);
     sampleDataPreDistortion.resize(scope_constants::defaultHopSize);
     sampleDataPostDistortion.resize(scope_constants::defaultHopSize);
     setFramesPerSecond(fps);
 
     bufferedFFTInput.resize(scope_constants::fftSize);
-    fftHistory.resize(scope_constants::fftSize, SampleType(0));
+    fftHistory.resize(scope_constants::fftSize, 0.0f);
 
     lowFreqParam = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter(ParamIDs::emphasisLowFreq.getParamID()));
     highFreqParam = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter(ParamIDs::emphasisHighFreq.getParamID()));
@@ -70,8 +67,7 @@ Scope<SampleType>::Scope(juce::AudioProcessorValueTreeState& valueTree, ScopeDat
     noiseDistBuf.setSize(2, 512, false, true, false);
 }
 
-template <typename SampleType>
-void Scope<SampleType>::resized() {
+void Scope::resized() {
     if (getWidth() <= 0 || getHeight() <= 0) {
         inOutFB = juce::Image();
         return;
@@ -89,30 +85,27 @@ void Scope<SampleType>::resized() {
     imgG.fillAll(inOutBackground);
 }
 
-template <typename SampleType>
-void Scope<SampleType>::mouseDown(const juce::MouseEvent &event)
+void Scope::mouseDown(const juce::MouseEvent &event)
 {
     juce::ignoreUnused(event);
     this->viewSpectrum = !this->viewSpectrum;
 }
 
 
-template <typename SampleType>
-void Scope<SampleType>::setFramesPerSecond(int framesPerSecond)
+void Scope::setFramesPerSecond(int framesPerSecond)
 {
     jassert(framesPerSecond > 0 && framesPerSecond < 1000);
     startTimerHz(framesPerSecond);
 }
 
 
-template <typename SampleType>
-void Scope<SampleType>::paint(juce::Graphics &g)
+void Scope::paint(juce::Graphics &g)
 {
     auto area = getLocalBounds();
-    auto h = (SampleType)area.getHeight();
-    auto w = (SampleType)area.getWidth();
+    auto h = (float)area.getHeight();
+    auto w = (float)area.getWidth();
 
-    auto scopeRect = juce::Rectangle<SampleType>{SampleType(0), SampleType(0), w, h};
+    auto scopeRect = juce::Rectangle<float>{0.0f, 0.0f, w, h};
 
     auto currentType = scopeContext.getType();
 
@@ -186,11 +179,11 @@ void Scope<SampleType>::paint(juce::Graphics &g)
 
             // draw line halfway
             g.setColour(juce::Colours::darkgrey);
-            g.drawLine(SampleType(0), noiseRect.getCentreY(), w, noiseRect.getCentreY());
+            g.drawLine(0.0f, noiseRect.getCentreY(), w, noiseRect.getCentreY());
 
             // draw wave
             g.setColour(juce::Colours::yellow);
-            plotStraightLine(noiseDistBuf.getReadPointer(0) + 32, noiseDistBuf.getNumSamples() - 32, g, noiseRect, SampleType(0.5), noiseRect.getHeight() / 2);
+            plotStraightLine(noiseDistBuf.getReadPointer(0) + 32, noiseDistBuf.getNumSamples() - 32, g, noiseRect, 0.5f, noiseRect.getHeight() / 2);
 
             drawParamHeader(g, scopeRect, getNoiseHeaderLabels());
             break;
@@ -200,8 +193,7 @@ void Scope<SampleType>::paint(juce::Graphics &g)
     }
 }
 
-template <typename SampleType>
-void Scope<SampleType>::updateHopSize()
+void Scope::updateHopSize()
 {
     const auto sampleRate = dataCollector.getSampleRate();
     
@@ -211,12 +203,12 @@ void Scope<SampleType>::updateHopSize()
     preparedSampleRate = sampleRate;
     hopSize = (size_t) juce::jmax(64, juce::roundToInt(sampleRate / (double) scope_constants::defaultFrameRate));
     
-    sampleDataL.assign(hopSize * 3, SampleType(0));
-    sampleDataR.assign(hopSize * 3, SampleType(0));
-    triggerSignal.assign(sampleDataL.size(), SampleType(0));
-    triggerDecimated.assign(sampleDataL.size() / triggerDecimation, SampleType(0));
-    sampleDataPreDistortion.assign(hopSize, SampleType(0));
-    sampleDataPostDistortion.assign(hopSize, SampleType(0));
+    sampleDataL.assign(hopSize * 3, 0.0f);
+    sampleDataR.assign(hopSize * 3, 0.0f);
+    triggerSignal.assign(sampleDataL.size(), 0.0f);
+    triggerDecimated.assign(sampleDataL.size() / triggerDecimation, 0.0f);
+    sampleDataPreDistortion.assign(hopSize, 0.0f);
+    sampleDataPostDistortion.assign(hopSize, 0.0f);
     
     triggerOffset = 0;
     hasTriggerReference = false;
@@ -228,15 +220,14 @@ void Scope<SampleType>::updateHopSize()
 // - levels are derived from min max values of all the samples in our window rather than from a fixed value
 // - it looks at a low passed copy which reduces noise / jitter when scanning
 // - once it detects a rising edge, it picks the trigger offset that has the least sum of squared difference in our samples to our previous capture
-template <typename SampleType>
-void Scope<SampleType>::updateTriggerOffset()
+void Scope::updateTriggerOffset()
 {
     auto searchEnd = sampleDataL.size() - hopSize;
 
     constexpr auto cutoffHz = 800.0;
     
     auto sampleRate = juce::jmax(8000.0, dataCollector.getSampleRate());
-    auto coeff = (SampleType) (1.0 - std::exp(-2.0 * juce::MathConstants<double>::pi * cutoffHz / sampleRate));
+    auto coeff = (float) (1.0 - std::exp(-2.0 * juce::MathConstants<double>::pi * cutoffHz / sampleRate));
 
     auto smoothed = sampleDataL[0];
     auto rawLo = sampleDataL[0];
@@ -244,7 +235,7 @@ void Scope<SampleType>::updateTriggerOffset()
 
     auto lowLo = sampleDataL[0];
     auto lowHi = sampleDataL[0];
-    auto blockSum = SampleType(0);
+    auto blockSum = 0.0f;
     size_t decimatedIndex = 0;
 
     // filter and decimate audio
@@ -262,10 +253,10 @@ void Scope<SampleType>::updateTriggerOffset()
         if ((i + 1) % triggerDecimation != 0 || decimatedIndex >= triggerDecimated.size())
             continue;
 
-        const auto blockMean = blockSum / (SampleType) triggerDecimation;
+        const auto blockMean = blockSum / (float) triggerDecimation;
 
         triggerDecimated[decimatedIndex++] = blockMean;
-        blockSum = SampleType(0);
+        blockSum = 0.0f;
 
         lowLo = std::min(lowLo, blockMean);
         lowHi = std::max(lowHi, blockMean);
@@ -275,16 +266,16 @@ void Scope<SampleType>::updateTriggerOffset()
     const auto lowPassed = midAndAmplitude(lowLo, lowHi);
 
     // ignore detection (and preserve current trigger offset)
-    if (juce::jmax(raw.amplitude, lowPassed.amplitude) < SampleType(0.0005))
+    if (juce::jmax(raw.amplitude, lowPassed.amplitude) < 0.0005f)
         return;
 
     // all the content sits above the cutoff, so the filtered copy has nothing left to lock onto
-    if (lowPassed.amplitude < raw.amplitude * SampleType(0.25))
+    if (lowPassed.amplitude < raw.amplitude * 0.25f)
     {
         // somehow the lowpassed audio is so quiet / we don't have a lot of lowpassed info. it barely makes a dent compared to the raw waveform.
         // take the first clean rising edge
-        auto armLevel = raw.mid - raw.amplitude * SampleType(0.2);
-        auto fireLevel = raw.mid + raw.amplitude * SampleType(0.2);
+        auto armLevel = raw.mid - raw.amplitude * 0.2f;
+        auto fireLevel = raw.mid + raw.amplitude * 0.2f;
         
         // arming in this case means that 
         bool armed = false;
@@ -303,13 +294,13 @@ void Scope<SampleType>::updateTriggerOffset()
         return;
     }
 
-    auto armLevel = lowPassed.mid - lowPassed.amplitude * SampleType(0.2);
-    auto fireLevel = lowPassed.mid + lowPassed.amplitude * SampleType(0.2);
+    auto armLevel = lowPassed.mid - lowPassed.amplitude * 0.2f;
+    auto fireLevel = lowPassed.mid + lowPassed.amplitude * 0.2f;
     
     auto searchEndDecimated = searchEnd / triggerDecimation;
 
     size_t best = 0;
-    SampleType bestError = 0;
+    float bestError = 0;
     bool found = false;
     bool armed = false;
 
@@ -335,7 +326,7 @@ void Scope<SampleType>::updateTriggerOffset()
             break;
         }
 
-        SampleType error = 0;
+        float error = 0;
 
         // sum of squared differences
         for (size_t k = 0; k < triggerMatchLength; ++k)
@@ -377,26 +368,24 @@ void Scope<SampleType>::updateTriggerOffset()
     }
 }
 
-template <typename SampleType>
-void Scope<SampleType>::drawLRScope(juce::Graphics &g, juce::Rectangle<SampleType> scopeRect)
+void Scope::drawLRScope(juce::Graphics &g, juce::Rectangle<float> scopeRect)
 {
     const auto h = scopeRect.getHeight();
     const auto hop = hopSize;
 
     g.setColour(juce::Colours::grey);
-    plotStraightLine(originLineData.data(), 2, g, scopeRect, SampleType(0.5), h / 2);
-    plotStraightLine(originLineData.data(), 2, g, scopeRect, SampleType(-0.5), h / 2);
+    plotStraightLine(originLineData.data(), 2, g, scopeRect, 0.5f, h / 2);
+    plotStraightLine(originLineData.data(), 2, g, scopeRect, -0.5f, h / 2);
 
     // trigger offset is position where trigger was detected
     g.setColour(juce::Colours::yellow);
-    plotStraightLine(sampleDataL.data() + triggerOffset, hop, g, scopeRect, SampleType(0.5), h / 2);
+    plotStraightLine(sampleDataL.data() + triggerOffset, hop, g, scopeRect, 0.5f, h / 2);
     g.setColour(juce::Colours::lime);
-    plotStraightLine(sampleDataR.data() + triggerOffset, hop, g, scopeRect, SampleType(0.5), h / 2);
+    plotStraightLine(sampleDataR.data() + triggerOffset, hop, g, scopeRect, 0.5f, h / 2);
 }
 
 
-template <typename SampleType>
-void Scope<SampleType>::drawInOut(juce::Graphics &g, juce::Rectangle<SampleType> scopeRect)
+void Scope::drawInOut(juce::Graphics &g, juce::Rectangle<float> scopeRect)
 {
     if (sampleDataPreDistortion.size() > 1 && sampleDataPostDistortion.size() > 1)
     {
@@ -405,8 +394,8 @@ void Scope<SampleType>::drawInOut(juce::Graphics &g, juce::Rectangle<SampleType>
 
         const auto centerX = plot.getCentreX();
         const auto centerY = plot.getCentreY();
-        const auto halfW = plot.getHeight() * SampleType(0.95);
-        const auto halfH = plot.getHeight() * SampleType(0.46);
+        const auto halfW = plot.getHeight() * 0.95f;
+        const auto halfH = plot.getHeight() * 0.46f;
 
         g.setColour(juce::Colours::yellow);
         const auto count = juce::jmin(sampleDataPreDistortion.size(), sampleDataPostDistortion.size());
@@ -428,24 +417,22 @@ void Scope<SampleType>::drawInOut(juce::Graphics &g, juce::Rectangle<SampleType>
 }
 
 // kept out of the framebuffer so the axes stay crisp instead of being stamped and faded every frame
-template <typename SampleType>
-void Scope<SampleType>::drawInOutAxes(juce::Graphics &g, juce::Rectangle<SampleType> scopeRect)
+void Scope::drawInOutAxes(juce::Graphics &g, juce::Rectangle<float> scopeRect)
 {
     const auto w = scopeRect.getWidth();
     const auto h = scopeRect.getHeight();
 
-    const auto centerX = w * SampleType(0.5);
-    const auto centerY = h * SampleType(0.5);
+    const auto centerX = w * 0.5f;
+    const auto centerY = h * 0.5f;
 
     g.setColour(juce::Colours::grey);
-    g.drawLine(centerX, SampleType(0), centerX, h);
-    g.drawLine(SampleType(0), centerY, w, centerY);
+    g.drawLine(centerX, 0.0f, centerX, h);
+    g.drawLine(0.0f, centerY, w, centerY);
 }
 
 // accumulates one frame of the trace into the framebuffer, called from the timer so trail
 // density follows the frame rate rather than however often the os asks us to repaint
-template <typename SampleType>
-void Scope<SampleType>::renderInOutFrame(bool stampNewTrace)
+void Scope::renderInOutFrame(bool stampNewTrace)
 {
     juce::Graphics imgG(inOutFB);
 
@@ -457,13 +444,12 @@ void Scope<SampleType>::renderInOutFrame(bool stampNewTrace)
         return;
 
     imgG.addTransform(juce::AffineTransform::scale(inOutRenderScale));
-    drawInOut(imgG, juce::Rectangle<SampleType>{SampleType(0), SampleType(0),
-                                                (SampleType) getWidth(), (SampleType) getHeight()});
+    drawInOut(imgG, juce::Rectangle<float>{0.0f, 0.0f,
+                                                (float) getWidth(), (float) getHeight()});
 }
 
 
-template <typename SampleType>
-void Scope<SampleType>::drawSpectrumEmphasis(juce::Graphics &g, juce::Rectangle<SampleType> scopeRect)
+void Scope::drawSpectrumEmphasis(juce::Graphics &g, juce::Rectangle<float> scopeRect)
 {
     if (spectrumTransformed.size() > 1)
     {
@@ -476,9 +462,9 @@ void Scope<SampleType>::drawSpectrumEmphasis(juce::Graphics &g, juce::Rectangle<
         const auto binCount = static_cast<double>(spectrumTransformed.size());
         const auto binToHz = dataCollector.getSampleRate() / static_cast<double>(scope_constants::fftSize);
         const auto nyquist = binToHz * (binCount - 1.0);
-        constexpr auto tiltDbPerOctave = SampleType(4.5);
-        constexpr auto mindB = SampleType(-70);
-        constexpr auto maxdB = SampleType(18);
+        constexpr auto tiltDbPerOctave = 4.5f;
+        constexpr auto mindB = -70.0f;
+        constexpr auto maxdB = 18.0f;
 
         juce::Path spectrumPath;
         bool startedSpectrumPath = false;
@@ -492,16 +478,16 @@ void Scope<SampleType>::drawSpectrumEmphasis(juce::Graphics &g, juce::Rectangle<
 
             const auto x = freqToX(freq, w);
 
-            const auto dbValue = juce::jmap(spectrumTransformed[i], SampleType(0), SampleType(1), mindB, maxdB);
-            const auto octaveIndex = std::max(SampleType(0), std::log2(static_cast<SampleType>(nyquist / freq)));
+            const auto dbValue = juce::jmap(spectrumTransformed[i], 0.0f, 1.0f, mindB, maxdB);
+            const auto octaveIndex = std::max(0.0f, std::log2(static_cast<float>(nyquist / freq)));
             const auto tiltDb = -tiltDbPerOctave * octaveIndex;
             const auto adjustedDb = dbValue + tiltDb;
-            const auto magnitude = juce::jlimit(SampleType(0), SampleType(1), juce::jmap(
+            const auto magnitude = juce::jlimit(0.0f, 1.0f, juce::jmap(
                 juce::jlimit(mindB, maxdB, adjustedDb),
                 mindB,
                 maxdB,
-                SampleType(0),
-                SampleType(1)));
+                0.0f,
+                1.0f));
             const auto y = centerY - magnitude * maxHeight;
 
             if (!startedSpectrumPath)
@@ -528,8 +514,7 @@ void Scope<SampleType>::drawSpectrumEmphasis(juce::Graphics &g, juce::Rectangle<
 }
 
 
-template <typename SampleType>
-void Scope<SampleType>::drawClipper(juce::Graphics &g, juce::Rectangle<SampleType> scopeRect)
+void Scope::drawClipper(juce::Graphics &g, juce::Rectangle<float> scopeRect)
 {
     const auto w = (float) scopeRect.getWidth();
     const auto h = (float) scopeRect.getHeight();
@@ -638,8 +623,7 @@ void Scope<SampleType>::drawClipper(juce::Graphics &g, juce::Rectangle<SampleTyp
 
 // watermark naming the current context, tiled over the whole view with odd rows staggered and
 // every row started off screen so the pattern runs past the edges
-template <typename SampleType>
-void Scope<SampleType>::drawTiledContextLabel(juce::Graphics &g, juce::Rectangle<int> area, const juce::String &text)
+void Scope::drawTiledContextLabel(juce::Graphics &g, juce::Rectangle<int> area, const juce::String &text)
 {
     const auto w = (float) area.getWidth();
     const auto h = (float) area.getHeight();
@@ -677,8 +661,7 @@ void Scope<SampleType>::drawTiledContextLabel(juce::Graphics &g, juce::Rectangle
 }
 
 // one cell per band
-template <typename SampleType>
-void Scope<SampleType>::drawCompBands(juce::Graphics &g, juce::Rectangle<SampleType> scopeRect,
+void Scope::drawCompBands(juce::Graphics &g, juce::Rectangle<float> scopeRect,
                                       const CompBand *bands, int numBands, float ratio)
 {
     if (bands == nullptr || numBands <= 0)
@@ -822,8 +805,7 @@ void Scope<SampleType>::drawCompBands(juce::Graphics &g, juce::Rectangle<SampleT
     }
 }
 
-template <typename SampleType>
-void Scope<SampleType>::drawMBComp(juce::Graphics &g, juce::Rectangle<SampleType> scopeRect)
+void Scope::drawMBComp(juce::Graphics &g, juce::Rectangle<float> scopeRect)
 {
     const auto thr = paramValue(ParamIDs::MBCompThreshold);
     const auto tilt = paramValue(ParamIDs::compBandTilt);
@@ -837,8 +819,7 @@ void Scope<SampleType>::drawMBComp(juce::Graphics &g, juce::Rectangle<SampleType
     drawCompBands(g, scopeRect, bands.data(), (int) bands.size(), compRatio());
 }
 
-template <typename SampleType>
-void Scope<SampleType>::drawMSComp(juce::Graphics &g, juce::Rectangle<SampleType> scopeRect)
+void Scope::drawMSComp(juce::Graphics &g, juce::Rectangle<float> scopeRect)
 {
     const auto thr = paramValue(ParamIDs::MSCompThreshold);
     const auto tilt = paramValue(ParamIDs::compBandTilt);
@@ -851,8 +832,7 @@ void Scope<SampleType>::drawMSComp(juce::Graphics &g, juce::Rectangle<SampleType
     drawCompBands(g, scopeRect, bands.data(), (int) bands.size(), compRatio());
 }
 
-template <typename SampleType>
-void Scope<SampleType>::drawTypeAComp(juce::Graphics &g, juce::Rectangle<SampleType> scopeRect)
+void Scope::drawTypeAComp(juce::Graphics &g, juce::Rectangle<float> scopeRect)
 {
     const auto thr = paramValue(ParamIDs::TypeAThreshold);
     const auto tilt = paramValue(ParamIDs::TypeATilt);
@@ -868,8 +848,7 @@ void Scope<SampleType>::drawTypeAComp(juce::Graphics &g, juce::Rectangle<SampleT
 }
 
 
-template <typename SampleType>
-void Scope<SampleType>::drawStereoComp(juce::Graphics &g, juce::Rectangle<SampleType> scopeRect)
+void Scope::drawStereoComp(juce::Graphics &g, juce::Rectangle<float> scopeRect)
 {
     const auto thr = paramValue(ParamIDs::stereoCompThreshold);
 
@@ -881,16 +860,14 @@ void Scope<SampleType>::drawStereoComp(juce::Graphics &g, juce::Rectangle<Sample
     drawCompBands(g, scopeRect, bands.data(), (int) bands.size(), compRatio());
 }
 
-template <typename SampleType>
-SampleType Scope<SampleType>::headerHeight(juce::Rectangle<SampleType> scopeRect) const
+float Scope::headerHeight(juce::Rectangle<float> scopeRect) const
 {
-    return (SampleType) juce::jmin(16.0f, (float) scopeRect.getHeight() * 0.2f);
+    return (float) juce::jmin(16.0f, (float) scopeRect.getHeight() * 0.2f);
 }
 
 // readouts across the top of a view, ends hugging the corners. three already fill the strip so they
 // get one solid bar, fewer than that get a tab each and leave the gaps open
-template <typename SampleType>
-void Scope<SampleType>::drawParamHeader(juce::Graphics &g, juce::Rectangle<SampleType> scopeRect, const juce::StringArray &labels)
+void Scope::drawParamHeader(juce::Graphics &g, juce::Rectangle<float> scopeRect, const juce::StringArray &labels)
 {
     if (labels.isEmpty())
         return;
@@ -933,8 +910,7 @@ void Scope<SampleType>::drawParamHeader(juce::Graphics &g, juce::Rectangle<Sampl
     }
 }
 
-template <typename SampleType>
-void Scope<SampleType>::drawTabbedLabel(juce::Graphics &g, juce::Rectangle<float> cell, const juce::String &text,
+void Scope::drawTabbedLabel(juce::Graphics &g, juce::Rectangle<float> cell, const juce::String &text,
                                         juce::Justification justification, bool hangingFromTop)
 {
     if (text.isEmpty())
@@ -964,8 +940,7 @@ void Scope<SampleType>::drawTabbedLabel(juce::Graphics &g, juce::Rectangle<float
 }
 
 // bottom right corner rather than the header, since that corner of the transfer plot stays empty
-template <typename SampleType>
-void Scope<SampleType>::drawDistortionAmount(juce::Graphics &g, juce::Rectangle<SampleType> scopeRect)
+void Scope::drawDistortionAmount(juce::Graphics &g, juce::Rectangle<float> scopeRect)
 {
     const auto label = getDistortionAmountLabel();
 
@@ -982,8 +957,7 @@ void Scope<SampleType>::drawDistortionAmount(juce::Graphics &g, juce::Rectangle<
     drawTabbedLabel(g, row, label, juce::Justification::centredRight, false);
 }
 
-template <typename SampleType>
-float Scope<SampleType>::paramValue(const ParamIDs::ParameterInfo &paramInfo, SlotId slot) const
+float Scope::paramValue(const ParamIDs::ParameterInfo &paramInfo, SlotId slot) const
 {
     if (auto *param = dynamic_cast<juce::AudioParameterFloat *>(apvts.getParameter(paramIdFor(slot, paramInfo).getParamID())))
         return param->get();
@@ -992,8 +966,7 @@ float Scope<SampleType>::paramValue(const ParamIDs::ParameterInfo &paramInfo, Sl
 }
 
 // the one module's first slot that has it, which for every one read here is the only module that does
-template <typename SampleType>
-float Scope<SampleType>::paramValue(const ParamIDs::ParameterInfo &paramInfo) const
+float Scope::paramValue(const ParamIDs::ParameterInfo &paramInfo) const
 {
     const auto slotted = EffectInfos::paramIdForDescriptor(paramInfo);
 
@@ -1003,21 +976,18 @@ float Scope<SampleType>::paramValue(const ParamIDs::ParameterInfo &paramInfo) co
     return 0.0f;
 }
 
-template <typename SampleType>
-float Scope<SampleType>::compRatio() const
+float Scope::compRatio() const
 {
     return juce::jmax(1.0f, paramValue(ParamIDs::compRatio));
 }
 
-template <typename SampleType>
-float Scope<SampleType>::bandLevel(LevelMeter &meter) const
+float Scope::bandLevel(LevelMeter &meter) const
 {
     return meter.getNext();
 }
 
 // only the threshold differs between the three compressor views, and the stereo one has no tilt
-template <typename SampleType>
-juce::StringArray Scope<SampleType>::getCompHeaderLabels(const ParamIDs::ParameterInfo &thresholdParam, bool withTilt) const
+juce::StringArray Scope::getCompHeaderLabels(const ParamIDs::ParameterInfo &thresholdParam, bool withTilt) const
 {
     juce::StringArray labels { formatDecibels(paramValue(thresholdParam)),
                                juce::String(compRatio(), 1) + ":1" };
@@ -1028,20 +998,17 @@ juce::StringArray Scope<SampleType>::getCompHeaderLabels(const ParamIDs::Paramet
     return labels;
 }
 
-template <typename SampleType>
-juce::AudioParameterChoice* Scope<SampleType>::choiceParam(const ParamIDs::ParameterInfo &id) const
+juce::AudioParameterChoice* Scope::choiceParam(const ParamIDs::ParameterInfo &id) const
 {
     return dynamic_cast<juce::AudioParameterChoice *>(apvts.getParameter(id.getParamID()));
 }
 
-template <typename SampleType>
-juce::AudioParameterChoice* Scope<SampleType>::choiceParamForSlot(SlotId slot) const
+juce::AudioParameterChoice* Scope::choiceParamForSlot(SlotId slot) const
 {
     return dynamic_cast<juce::AudioParameterChoice *>(apvts.getParameter(slot.type().getParamID()));
 }
 
-template <typename SampleType>
-juce::StringArray Scope<SampleType>::getDistortionHeaderLabels() const
+juce::StringArray Scope::getDistortionHeaderLabels() const
 {
     auto *type = choiceParamForSlot(SlotId{ModuleId::main, 0});
 
@@ -1052,8 +1019,7 @@ juce::StringArray Scope<SampleType>::getDistortionHeaderLabels() const
 }
 
 // every type keeps its own amount parameter on its own range, and matrix has no single one
-template <typename SampleType>
-juce::String Scope<SampleType>::getDistortionAmountLabel() const
+juce::String Scope::getDistortionAmountLabel() const
 {
     auto *type = choiceParamForSlot(SlotId{ModuleId::main, 0});
 
@@ -1076,8 +1042,7 @@ juce::String Scope<SampleType>::getDistortionAmountLabel() const
 }
 
 // only the sizzles and erosion have the full frequency / amount / q set
-template <typename SampleType>
-juce::StringArray Scope<SampleType>::getNoiseHeaderLabels() const
+juce::StringArray Scope::getNoiseHeaderLabels() const
 {
     auto *type = choiceParamForSlot(SlotId{ModuleId::module1, 0});
 
@@ -1107,20 +1072,18 @@ juce::StringArray Scope<SampleType>::getNoiseHeaderLabels() const
 }
 
 // single source of truth for the x axis, everything drawn over the spectrum has to go through this
-template <typename SampleType>
-SampleType Scope<SampleType>::freqToX(double freq, SampleType w) const
+float Scope::freqToX(double freq, float w) const
 {
     const auto clamped = juce::jlimit(scope_constants::minDrawFreq, scope_constants::maxDrawFreq, freq);
 
-    return static_cast<SampleType>(juce::jmap(std::log10(clamped),
+    return static_cast<float>(juce::jmap(std::log10(clamped),
                                               std::log10(scope_constants::minDrawFreq),
                                               std::log10(scope_constants::maxDrawFreq),
                                               0.0,
                                               static_cast<double>(w)));
 }
 
-template <typename SampleType>
-float Scope<SampleType>::getBandResponse(double freq, double centerFreq, double gainDb)
+float Scope::getBandResponse(double freq, double centerFreq, double gainDb)
 {
     if (!std::isfinite(freq) || freq <= 0.0 || !std::isfinite(centerFreq) || centerFreq <= 0.0 || !std::isfinite(gainDb))
         return 0.5;
@@ -1134,8 +1097,7 @@ float Scope<SampleType>::getBandResponse(double freq, double centerFreq, double 
     return juce::jlimit(0.0, 1.0, 0.5 + bell * amplitude * 0.5);
 }
 
-template <typename SampleType>
-void Scope<SampleType>::drawResponseCurve(juce::Graphics &g, const SampleType w, const SampleType centerY, const SampleType maxHeight)
+void Scope::drawResponseCurve(juce::Graphics &g, const float w, const float centerY, const float maxHeight)
 {
     const auto lowFreq = lowFreqParam->get();
     const auto highFreq = highFreqParam->get();
@@ -1194,15 +1156,14 @@ void Scope<SampleType>::drawResponseCurve(juce::Graphics &g, const SampleType w,
         const auto response = juce::jlimit(0.0, 1.0, 0.5 + (getBandResponse(freq, lowFreq, lowGainDb) - 0.5)
                                                         + (getBandResponse(freq, highFreq, highGainDb) - 0.5));
         const auto x = static_cast<float>(freqToX(freq, w));
-        const auto y = static_cast<float>(centerY - static_cast<SampleType>(response) * maxHeight);
+        const auto y = static_cast<float>(centerY - static_cast<float>(response) * maxHeight);
 
         g.fillEllipse(x - dotRadius, y - dotRadius, dotRadius * 2.0f, dotRadius * 2.0f);
     }
 }
 
 
-template <typename SampleType>
-void Scope<SampleType>::timerCallback()
+void Scope::timerCallback()
 {
     auto& queueL = dataCollector.audioBufferQueueL;
     auto& queueR = dataCollector.audioBufferQueueR;
@@ -1258,8 +1219,8 @@ void Scope<SampleType>::timerCallback()
 
             if (fftHistory.size() >= fftSize)
             {
-                std::fill(spectrumData.begin(), spectrumData.end(), SampleType(0));
-                std::fill(spectrumTransformed.begin(), spectrumTransformed.end(), SampleType(0));
+                std::fill(spectrumData.begin(), spectrumData.end(), 0.0f);
+                std::fill(spectrumTransformed.begin(), spectrumTransformed.end(), 0.0f);
 
                 for (int i = 0; i < fftSize; ++i)
                 {
@@ -1270,22 +1231,22 @@ void Scope<SampleType>::timerCallback()
                 windowFun.multiplyWithWindowingTable(spectrumData.data(), fftSize);
                 fft.performFrequencyOnlyForwardTransform(spectrumData.data(), true);
 
-                static constexpr auto mindB = SampleType(-70);
-                static constexpr auto maxdB = SampleType(50);
+                static constexpr auto mindB = -70.0f;
+                static constexpr auto maxdB = 50.0f;
                 const auto binsToRender = juce::jmin<int>((int) spectrumTransformed.size(), fftSize / 2 + 1);
 
                 for (int i = 0; i < binsToRender; ++i)
                 {
-                    const auto magnitude = juce::jlimit(SampleType(1.0e-6), SampleType(1.0e6), spectrumData[i]);
+                    const auto magnitude = juce::jlimit(1.0e-6f, 1.0e6f, spectrumData[i]);
                     const auto db = juce::Decibels::gainToDecibels(magnitude, -70.0f);
                     const auto normalized = juce::jmap(
                         db,
                         mindB,
                         maxdB,
-                        SampleType(0),
-                        SampleType(1));
+                        0.0f,
+                        1.0f);
 
-                    const auto smoothed = averagedSpectrum[i] * scope_constants::spectrumSmoothing + normalized * (SampleType(1) - scope_constants::spectrumSmoothing);
+                    const auto smoothed = averagedSpectrum[i] * scope_constants::spectrumSmoothing + normalized * (1.0f - scope_constants::spectrumSmoothing);
                     averagedSpectrum[i] = smoothed;
                     spectrumTransformed[i] = smoothed;
                 }
@@ -1315,13 +1276,12 @@ void Scope<SampleType>::timerCallback()
 }
 
 
-template <typename SampleType>
-void Scope<SampleType>::plotStraightLine(const SampleType *data,
+void Scope::plotStraightLine(const float *data,
                  size_t numSamples,
                  juce::Graphics &g,
-                 juce::Rectangle<SampleType> rect,
-                 SampleType scaler,
-                 SampleType offset)
+                 juce::Rectangle<float> rect,
+                 float scaler,
+                 float offset)
 {
     auto w = rect.getWidth();
     auto h = rect.getHeight();
@@ -1331,11 +1291,8 @@ void Scope<SampleType>::plotStraightLine(const SampleType *data,
     auto gain = h * scaler;
 
     for (size_t i = 1; i < numSamples; ++i)
-        g.drawLine({juce::jmap(SampleType(i - 1), SampleType(0), SampleType(numSamples - 1), SampleType(right - w), SampleType(right)),
+        g.drawLine({juce::jmap(float(i - 1), 0.0f, float(numSamples - 1), float(right - w), float(right)),
                     center - gain * data[i - 1],
-                    juce::jmap(SampleType(i), SampleType(0), SampleType(numSamples - 1), SampleType(right - w), SampleType(right)),
+                    juce::jmap(float(i), 0.0f, float(numSamples - 1), float(right - w), float(right)),
                     center - gain * data[i]});
 }
-
-
-template class Scope<float>;
