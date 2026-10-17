@@ -27,6 +27,6 @@ struct SlotId
 
     int versionHint() const { return pluginModules[(size_t) module].versionHint; }
 
-    juce::ParameterID type()    const { return { prefix() + "_type",    versionHint() }; }
+    juce::ParameterID type() const { return { prefix() + "_type",    versionHint() }; }
     juce::ParameterID enabled() const { return { prefix() + "_enabled", versionHint() }; }
 };

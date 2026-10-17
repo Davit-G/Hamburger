@@ -4,6 +4,8 @@
 
 #include "../EnvelopeFollower.h"
 #include "../../gui/Modules/ScopeDataCollector.h"
+#include "../SmoothParam.h"
+#include "Compressor.h"
 
  
 

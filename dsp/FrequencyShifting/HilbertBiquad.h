@@ -1,4 +1,7 @@
 #pragma once
+
+#include <cmath>
+#include "juce_dsp/juce_dsp.h"
 // Thank you https://www.katjaas.nl/hilbert/hilbert.html
 
 // this is easy to understand but might be slow ish 

@@ -281,22 +281,6 @@ namespace EffectInfos
         }
     }
 
-    // returns the correct param id when given parameter info
-    inline juce::String paramIdForDescriptor (const ParameterInfo& which, int sub = 0)
-    {
-        for (int m = 0; m < (int) ModuleId::count; ++m)
-        {
-            const auto module = (ModuleId) m;
-
-            for (const auto* layout : layoutsFor (module))
-                for (const auto& descriptor : layout->params)
-                    if (descriptor.id == which.id)
-                        return paramIdFor (SlotId { module, sub }, which).getParamID();
-        }
-
-        return {};
-    }
-
     // // relabels every parameter belonging to a slot. pass an empty prefix to restore original names. 
     // // message thread only. follow with updateHostDisplay (ChangeDetails{}.withParameterInfoChanged (true))
     // inline void setSlotNamePrefix (juce::AudioProcessorValueTreeState& state,

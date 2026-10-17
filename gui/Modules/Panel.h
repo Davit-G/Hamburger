@@ -3,6 +3,7 @@
 #include "../LookAndFeel/Palette.h"
 
 #include "../RectSlider.h"
+#include "../Knob.h"
 
 struct LayoutBounds
 {

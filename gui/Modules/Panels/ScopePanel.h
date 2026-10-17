@@ -2,6 +2,7 @@
 
 #include "../Panel.h"
 #include "../Scope.h"
+#include "../LightButton.h"
 
 class ScopePanel : public Panel
 {

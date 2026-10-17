@@ -2,6 +2,7 @@
  
 #include "../Panel.h"
 #include "../../Knob.h"
+#include "../../SaturationIcons/CentredSVGIcon.h"
 
 class SlewRatePanel : public Panel, private juce::AudioProcessorValueTreeState::Listener
 {

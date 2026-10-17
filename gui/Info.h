@@ -1,6 +1,7 @@
 #pragma once
 
 #include "LookAndFeel/HamburgerLAF.h"
+#include "../PluginProcessor.h"
 
 class LogoLookAndFeel : public juce::LookAndFeel_V4
 {

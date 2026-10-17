@@ -54,6 +54,13 @@ inline juce::String formatDecibels(float db) {
     return juce::String(db > 0.0f ? "+" : "") + juce::String(db, 1) + " dB";
 }
 
+inline juce::String formatFrequency(float freq) {
+    if (freq >= 1000.0f)
+        return juce::String(freq / 1000.0f, 1) + " kHz";
+
+    return juce::String(juce::roundToInt(freq)) + " Hz";
+}
+
 inline juce::String formatPercent(float normalised) {
     return juce::String(juce::roundToInt(normalised * 100.0f)) + "%";
 }

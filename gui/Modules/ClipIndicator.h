@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ScopeDataCollector.h"
+#include "../../PluginProcessor.h"
 
 #include "../../dsp/WaveShapers.h"
 

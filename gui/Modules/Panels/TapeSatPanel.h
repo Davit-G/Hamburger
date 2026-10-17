@@ -2,6 +2,7 @@
  
 #include "../Panel.h"
 #include "../../Knob.h"
+#include "../../SaturationIcons/CentredSVGIcon.h"
 
 class TapeSatPanel : public Panel
 {

@@ -3,6 +3,7 @@
 #include "juce_gui_basics/juce_gui_basics.h"
 
 #include "BurgerAlert.h"
+#include "../service/PresetManager.h"
 
 std::unique_ptr<juce::Drawable> makeIcon(const char *iconString)
 {

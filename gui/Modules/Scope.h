@@ -188,15 +188,43 @@ private:
     size_t hopSize = (size_t) scope_constants::defaultHopSize;
     double preparedSampleRate = 0.0;
 
+    // Scope.cpp
     void updateHopSize();
+    void timerCallback() override;
+
+    // a slot's copy of a parameter, or a fixed parameter by its own id. a slot's parameter always needs its slot
+    float getValue(const ParamIDs::ParameterInfo &paramInfo, SlotId slot) const;
+    float getValue(const ParamIDs::ParameterInfo &paramInfo) const;
+
+    // ScopeStereo.cpp
+    void drawLRView(juce::Graphics &g, juce::Rectangle<int> area);
     void updateTriggerOffset();
     void drawLRScope(juce::Graphics &g, juce::Rectangle<float> scopeRect);
-    void drawInOut(juce::Graphics &g, juce::Rectangle<float> scopeRect);
-    void drawInOutAxes(juce::Graphics &g, juce::Rectangle<float> scopeRect);
+
+    static void plotStraightLine(const float *data,
+                     size_t numSamples,
+                     juce::Graphics &g,
+                     juce::Rectangle<float> rect,
+                     float scaler = 1.0f,
+                     float offset = 0.0f);
+
+    // ScopeDistortion.cpp
+    void drawDistortionView(juce::Graphics &g, juce::Rectangle<int> area, SlotId slot);
     void renderInOutFrame(bool stampNewTrace);
+    void drawInOut(juce::Graphics &g, juce::Rectangle<float> scopeRect);
+    void drawDistortionAmount(juce::Graphics &g, juce::Rectangle<float> scopeRect, SlotId slot);
+    juce::StringArray getDistortionHeaderLabels(SlotId slot) const;
+    juce::String getDistortionAmountLabel(SlotId slot) const;
+
+    // ScopeEmphasis.cpp, with freqToX, getBandResponse and drawResponseCurve above
+    void drawEmphasisView(juce::Graphics &g, juce::Rectangle<int> area);
+    void updateSpectrum();
     void drawSpectrumEmphasis(juce::Graphics &g, juce::Rectangle<float> scopeRect);
-    void drawClipper(juce::Graphics &g, juce::Rectangle<float> scopeRect);
-    // one cell per band of whichever compressor is on screen
+
+    // ScopeClipper.cpp
+    void drawClipperView(juce::Graphics &g, juce::Rectangle<int> area, SlotId slot);
+
+    // ScopeCompressor.cpp. one cell per band of whichever compressor is on screen
     struct CompBand
     {
         float thresholdDb;
@@ -208,45 +236,27 @@ private:
 
     void drawCompBands(juce::Graphics &g, juce::Rectangle<float> scopeRect,
                        const CompBand *bands, int numBands, float ratio);
-    void drawMBComp(juce::Graphics &g, juce::Rectangle<float> scopeRect);
-    void drawMSComp(juce::Graphics &g, juce::Rectangle<float> scopeRect);
-    void drawStereoComp(juce::Graphics &g, juce::Rectangle<float> scopeRect);
-    void drawTypeAComp(juce::Graphics &g, juce::Rectangle<float> scopeRect);
-    void drawTiledContextLabel(juce::Graphics &g, juce::Rectangle<int> area, const juce::String &text);
+    void drawMBComp(juce::Graphics &g, juce::Rectangle<float> scopeRect, SlotId slot);
+    void drawMSComp(juce::Graphics &g, juce::Rectangle<float> scopeRect, SlotId slot);
+    void drawStereoComp(juce::Graphics &g, juce::Rectangle<float> scopeRect, SlotId slot);
+    void drawTypeAComp(juce::Graphics &g, juce::Rectangle<float> scopeRect, SlotId slot);
+    void drawCompressorView(juce::Graphics &g, juce::Rectangle<int> area, SlotId slot);
+    juce::StringArray getCompHeaderLabels(const ParamIDs::ParameterInfo &thresholdParam, bool withTilt, SlotId slot) const;
+
+    // shared by all three compressors, clamped so it can never invert the ratio ladder
+    float compRatio(SlotId slot) const;
+    float bandLevel(LevelMeter &meter) const;
+
+    // ScopeNoise.cpp
+    void drawNoiseView(juce::Graphics &g, juce::Rectangle<int> area, SlotId slot);
+    juce::StringArray getNoiseHeaderLabels(SlotId slot) const;
+
+    // ScopeReadouts.cpp. the strip every view keeps clear at the top for its readouts
+    float headerHeight(juce::Rectangle<float> scopeRect) const;
     void drawParamHeader(juce::Graphics &g, juce::Rectangle<float> scopeRect, const juce::StringArray &labels);
 
-    // strip every view keeps clear at the top for its readouts
-    float headerHeight(juce::Rectangle<float> scopeRect) const;
-
-    // a slot's copy of the parameter where it has one, otherwise the fixed parameter by its own id
-    float paramValue(const ParamIDs::ParameterInfo &paramInfo, SlotId slot) const;
-    float paramValue(const ParamIDs::ParameterInfo &paramInfo) const;
-
-
-    juce::AudioParameterChoice* choiceParam(const ParamIDs::ParameterInfo &id) const;
-    juce::AudioParameterChoice* choiceParamForSlot(SlotId slot) const;
-
-    
     // black tab sized to its text, grown past the top or bottom edge so only the inner corners round
     void drawTabbedLabel(juce::Graphics &g, juce::Rectangle<float> cell, const juce::String &text,
                          juce::Justification justification, bool hangingFromTop);
-    void drawDistortionAmount(juce::Graphics &g, juce::Rectangle<float> scopeRect);
-
-    juce::StringArray getDistortionHeaderLabels() const;
-    juce::String getDistortionAmountLabel() const;
-    juce::StringArray getNoiseHeaderLabels() const;
-    juce::StringArray getCompHeaderLabels(const ParamIDs::ParameterInfo &thresholdParam, bool withTilt) const;
-
-    // shared by all three compressors, clamped so it can never invert the ratio ladder
-    float compRatio() const;
-    float bandLevel(LevelMeter &meter) const;
-
-    void timerCallback() override;
-
-    static void plotStraightLine(const float *data,
-                     size_t numSamples,
-                     juce::Graphics &g,
-                     juce::Rectangle<float> rect,
-                     float scaler = 1.0f,
-                     float offset = 0.0f);
+    void drawTiledContextLabel(juce::Graphics &g, juce::Rectangle<int> area, const juce::String &text);
 };
