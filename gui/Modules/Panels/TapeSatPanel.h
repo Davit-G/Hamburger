@@ -7,7 +7,7 @@
 class TapeSatPanel : public Panel
 {
 public:
-    TapeSatPanel(AudioPluginAudioProcessor &p, SlotId slot = SlotId{ModuleId::main, 0}) : Panel(p, "TAPE"), 
+    TapeSatPanel(AudioPluginAudioProcessor &p, SlotId slot = SlotId{ModuleId::main, 0}) : Panel(p, "TAPE", Palette::colours[7]), 
         drive(p, "DRIVE", slot, ParamIDs::tapeDrive, ValueType::none, ScopeContextType::IN_OUT),
         bias(p, "DC BIAS", slot, ParamIDs::tapeBias, ValueType::none, ScopeContextType::IN_OUT),
         tapeWidth(p, "AGE", slot, ParamIDs::tapeWidth, ValueType::none, ScopeContextType::IN_OUT),

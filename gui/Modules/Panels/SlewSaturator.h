@@ -7,7 +7,7 @@
 class SlewRatePanel : public Panel, private juce::AudioProcessorValueTreeState::Listener
 {
 public:
-    SlewRatePanel(AudioPluginAudioProcessor &p, SlotId slot = SlotId{ModuleId::main, 0}) : apvts(p), Panel(p, "SLEW"), 
+    SlewRatePanel(AudioPluginAudioProcessor &p, SlotId slot = SlotId{ModuleId::main, 0}) : apvts(p), Panel(p, "SLEW", Palette::colours[1]), 
         alpha(p, "ALPHA", slot, ParamIDs::alphaParam, ValueType::none, ScopeContextType::IN_OUT),
         bias(p, "TONE", slot, ParamIDs::slewSpeed, ValueType::none, ScopeContextType::IN_OUT),
         directionality(p, "BEND", slot, ParamIDs::directionality, ValueType::none, ScopeContextType::IN_OUT),

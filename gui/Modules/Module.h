@@ -116,6 +116,19 @@ public:
         }
     };
 
+    // called whenever the type changes, from the menu, automation or a preset
+    std::function<void()> onScreenChanged;
+
+    // the colour of the type that's showing
+    juce::Colour getAccent() const
+    {
+        for (auto &panel : modulePanels)
+            if (panel->isVisible())
+                return panel->findColour(juce::Slider::rotarySliderFillColourId);
+
+        return juce::Colours::white;
+    }
+
     void paint(juce::Graphics &g) override
     {
         juce::Path p;
@@ -258,6 +271,9 @@ private:
                 panel->setVisible(false);
             }
             modulePanels[index]->setVisible(true);
+
+            if (onScreenChanged != nullptr)
+                onScreenChanged();
         }
     }
 

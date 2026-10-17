@@ -11,7 +11,7 @@
 class TubeSatPanel : public Panel
 {
 public:
-    TubeSatPanel(AudioPluginAudioProcessor &p, SlotId slot = SlotId{ModuleId::main, 0}) : Panel(p, "TUBE"), 
+    TubeSatPanel(AudioPluginAudioProcessor &p, SlotId slot = SlotId{ModuleId::main, 0}) : Panel(p, "TUBE", Palette::colours[4]), 
         tubeTone(p, "TUBE TONE", slot, ParamIDs::tubeTone, ValueType::none, ScopeContextType::IN_OUT),
         bias(p, "BIAS", slot, ParamIDs::tubeBias, ValueType::none, ScopeContextType::IN_OUT),
         jeff(p, "JEFF", slot, ParamIDs::jeffAmount, ValueType::none, ScopeContextType::IN_OUT),

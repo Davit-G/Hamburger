@@ -14,6 +14,7 @@
 #include "UtilColumn.h"
 
 #include "PresetPanel.h"
+#include "HeaderTabs.h"
 #include "UpdateChecker.h"
 
 #include "LookAndFeel/HamburgerLAF.h"
@@ -38,7 +39,25 @@ public:
         addAndMakeVisible(saturationColumn);
         addAndMakeVisible(utilColumn);
         addAndMakeVisible(infoPanel);
+        addAndMakeVisible(header);
         addAndMakeVisible(presetPanel);
+
+        header.onTabSelected = [this](HeaderTabs::Tab tab) {
+            const bool settings = tab == HeaderTabs::settings;
+
+            infoPanel.setVisible(settings);
+            leftColumn.setVisible(!settings);
+            saturationColumn.setVisible(!settings);
+            utilColumn.setVisible(!settings);
+
+            if (!settings)
+                saturationColumn.setView(tab);
+        };
+
+        header.typeColour = [this](HeaderTabs::Tab tab) { return saturationColumn.getDistortion(tab).getAccent(); };
+
+        for (auto tab : { HeaderTabs::pre, HeaderTabs::post })
+            saturationColumn.getDistortion(tab).onScreenChanged = [this] { header.repaint(); };
 
         if (audioProcessorRef.getAppProperties().getTooltipType() == AppProperties::TooltipType::window) {
             createTooltipWindow();
@@ -145,13 +164,12 @@ public:
             tooltipWindow->setBounds(bounds);
         }
 
+        header.setBounds(bounds.removeFromTop(HeaderTabs::height));
         infoPanel.setBounds(bounds);
 
-        presetPanel.setBounds(bounds);
-        bounds.removeFromTop(45);
-
-        // this is where I would add a panel for switching between screens
-        
+        presetPanel.barLeft = header.getLeftReserved();
+        presetPanel.barRight = header.getRightReserved();
+        presetPanel.setBounds(getLocalBounds());
 
         auto left = bounds.removeFromLeft(totalWidth);
         auto right = bounds.removeFromRight(totalWidth);
@@ -163,14 +181,8 @@ public:
 
     void handleCommandMessage(int command) override
     {
-        bool show = command == 1;
-
-        infoPanel.setVisible(!show);
-        
-        leftColumn.setVisible(show);
-        saturationColumn.setVisible(show);
-        utilColumn.setVisible(show);
-        presetPanel.setVisible(show);
+        // 0 from the logo opens settings, 1 from clicking the settings page goes back to the distortion tab it was on
+        header.select(command == 1 ? saturationColumn.getView() : HeaderTabs::settings);
     }
 
 private:
@@ -184,6 +196,7 @@ private:
 
     std::unique_ptr<juce::TooltipWindow> tooltipWindow;
 
+    HeaderTabs header;
     PresetPanel presetPanel;
     std::unique_ptr<UpdateChecker> updater;
 

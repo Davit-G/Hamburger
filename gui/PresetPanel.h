@@ -3,6 +3,7 @@
 #include "juce_gui_basics/juce_gui_basics.h"
 
 #include "BurgerAlert.h"
+#include "HeaderTabs.h"
 #include "../service/PresetManager.h"
 
 std::unique_ptr<juce::Drawable> makeIcon(const char *iconString)
@@ -414,8 +415,9 @@ public:
 
 	void resized() override
 	{
-		auto height = 45;
-		auto bounds = getLocalBounds().removeFromTop(height).reduced(4).withTrimmedLeft(4).withTrimmedRight(4);
+		// lined up with the header's bar, between its tabs
+		auto height = HeaderTabs::height - HeaderTabs::pillInset;
+		auto bounds = getLocalBounds().removeFromTop(height).withTrimmedLeft(barLeft).withTrimmedRight(barRight).reduced(4, 0).withTrimmedLeft(4).withTrimmedRight(4);
 
 		saveButton.setBounds(bounds.removeFromLeft(height).reduced(4));
 		deleteButton.setBounds(bounds.removeFromLeft(height).reduced(4));
@@ -429,7 +431,7 @@ public:
 
 		currentPresetLabel.setBounds(bounds.reduced(4));
 
-		auto presetListBounds = getLocalBounds().withTrimmedTop(height);
+		auto presetListBounds = getLocalBounds().withTrimmedTop(HeaderTabs::height);
 
 		presetListBounds.removeFromLeft(getWidth() / 4);
 		presetListBounds.removeFromRight(getWidth() / 4);
@@ -441,20 +443,15 @@ public:
 		DBG(listBox.getX());
 	}
 
+	// the header's tabs either side of the bar
+	int barLeft = 0, barRight = 0;
+
 	void updatePresetLabel(juce::String &text)
 	{
 		currentPresetLabel.setButtonText(text);
 	}
 
 private:
-	void paint(juce::Graphics &g) override
-	{
-		juce::Path p;
-		p.addRoundedRectangle(getLocalBounds().removeFromTop(45).reduced(4).toFloat(), 15.0f);
-		g.setColour(juce::Colour::fromRGB(0, 0, 0));
-		g.fillPath(p);
-	}
-
 	void buttonClicked(juce::Button *button) override
 	{
 		if (button == &saveButton)

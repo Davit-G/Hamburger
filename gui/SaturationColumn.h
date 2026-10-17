@@ -17,6 +17,7 @@
 #include "LookAndFeel/Palette.h"
 
 #include "Modules/ClipIndicator.h"
+#include "HeaderTabs.h"
 
 class SaturationColumn : public juce::Component
 {
@@ -24,38 +25,25 @@ public:
     SaturationColumn(AudioPluginAudioProcessor &p) : scopeContext(p.getScopeContext()), clipDot(p.getScopeDataCollector(), p) {
         setInterceptsMouseClicks(true, true);
 
-        std::vector<std::unique_ptr<Panel>> panels;
-        // ORDERING IS VERY IMPORTANT
-        // code is weird so order of panels compared to order of DSP processing matters
-        // TODO: fix this later
+        // the same distortion box for each tab, only the selected one is shown
+        for (size_t i = 0; i < distortions.size(); ++i) {
+            const auto [module, title] = distortionSlots[i];
+            const SlotId slot { module, 0 };
 
-        // todo: add waveshapey distortion effects for distortion type, rename that to classic
-        // and add rectification to it?
+            // ORDERING IS VERY IMPORTANT, it has to match the order of the slot's type choices
+            std::vector<std::unique_ptr<Panel>> panels;
+            panels.push_back(std::make_unique<ClassicSatPanel>(p, slot));
+            panels.push_back(std::make_unique<TubeSatPanel>(p, slot));
+            panels.push_back(std::make_unique<PhaseDistPanel>(p, slot));
+            panels.push_back(std::make_unique<RubidiumSatPanel>(p, slot));
+            panels.push_back(std::make_unique<TapeSatPanel>(p, slot));
+            panels.push_back(std::make_unique<SlewRatePanel>(p, slot));
 
-        classic = std::make_unique<ClassicSatPanel>(p);
-        panels.push_back(std::move(classic));
+            distortions[i] = std::make_unique<Module>(p, title, slot.enabled().getParamID().toStdString(), slot.type().getParamID().toStdString(), std::move(panels));
+            addChildComponent(distortions[i].get());
+        }
 
-        tube = std::make_unique<TubeSatPanel>(p);
-        panels.push_back(std::move(tube));
-
-        // auto waveshape = std::make_unique<WaveshaperPanel>(p);
-        // waveshape->setLookAndFeel(&tubeSatLAF);
-        // panels.push_back(std::move(waveshape));
-
-        phase = std::make_unique<PhaseDistPanel>(p);
-        panels.push_back(std::move(phase));
-
-        rubidium = std::make_unique<RubidiumSatPanel>(p);
-        panels.push_back(std::move(rubidium));
-
-        tape = std::make_unique<TapeSatPanel>(p);
-        panels.push_back(std::move(tape));
-        
-        slew = std::make_unique<SlewRatePanel>(p);
-        panels.push_back(std::move(slew));
-
-        saturation = std::make_unique<Module>(p, "DISTORTION", SlotId{ModuleId::main, 0}.enabled().getParamID().toStdString(), SlotId{ModuleId::main, 0}.type().getParamID().toStdString(), std::move(panels));
-        addAndMakeVisible(saturation.get());
+        setView(HeaderTabs::main);
 
         std::vector<std::unique_ptr<Panel>> clipPanel;
 
@@ -87,8 +75,21 @@ public:
     //     scopeContext.setType(ScopeContextType::LR_SCOPE);
     // }
 
+    void setView(HeaderTabs::Tab tab) {
+        view = tab;
+        scopeContext.setFocus({ distortionSlots[tab].first, 0 });
+
+        for (size_t i = 0; i < distortions.size(); ++i)
+            distortions[i]->setVisible(i == (size_t) tab);
+    }
+
+    HeaderTabs::Tab getView() const { return view; }
+
+    Module& getDistortion(HeaderTabs::Tab tab) { return *distortions[tab]; }
+
     ~SaturationColumn() {
-        saturation->setLookAndFeel(nullptr);
+        for (auto& distortion : distortions)
+            distortion->setLookAndFeel(nullptr);
         postClip->setLookAndFeel(nullptr);
         noise->setLookAndFeel(nullptr);
     }
@@ -97,7 +98,9 @@ public:
         auto bounds = getLocalBounds();
         auto height = bounds.getHeight();
 
-        saturation->setBounds(bounds.removeFromTop(height * 3/4));
+        const auto top = bounds.removeFromTop(height * 3/4);
+        for (auto& distortion : distortions)
+            distortion->setBounds(top);
         
         auto postClipBounds = bounds.removeFromRight(bounds.getWidth() / 2);
         postClip->setBounds(postClipBounds);
@@ -109,18 +112,19 @@ public:
 private:
     ScopeContext& scopeContext;
 
-    std::unique_ptr<Panel> classic = nullptr;
-    std::unique_ptr<Panel> tube = nullptr;
-    std::unique_ptr<Panel> phase = nullptr;
-    std::unique_ptr<Panel> rubidium = nullptr;
-    std::unique_ptr<Panel> tape = nullptr;
-    std::unique_ptr<Panel> preisach = nullptr;
-    std::unique_ptr<Panel> slew = nullptr;
-    
+    // in the order of HeaderTabs' PRE | MAIN | POST
+    static constexpr std::pair<ModuleId, const char*> distortionSlots[] {
+        { ModuleId::preDistortion, "PRE-DISTORTION" },
+        { ModuleId::main, "DISTORTION" },
+        { ModuleId::postDistortion, "POST-DISTORTION" },
+    };
+
+    std::array<std::unique_ptr<Module>, std::size(distortionSlots)> distortions;
+    HeaderTabs::Tab view = HeaderTabs::main;
+
     std::unique_ptr<Panel> postClipPanel = nullptr;
 
     std::unique_ptr<Module> noise = nullptr;
-    std::unique_ptr<Module> saturation = nullptr;
     std::unique_ptr<Module> postClip = nullptr;
 
     static constexpr int dotSize = 16;
