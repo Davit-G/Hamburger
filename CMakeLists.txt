@@ -108,7 +108,7 @@ add_subdirectory(dsp)
 add_subdirectory(gui)
 add_subdirectory(service)
 
-target_compile_features("${BaseTargetName}" PUBLIC cxx_std_17)
+target_compile_features("${BaseTargetName}" PUBLIC cxx_std_20)
 
 target_compile_options(Hamburger PRIVATE
     $<$<AND:$<CONFIG:Release>,$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>,$<CXX_COMPILER_ID:GNU>>>:
