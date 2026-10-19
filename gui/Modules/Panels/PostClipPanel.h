@@ -6,25 +6,14 @@ class PostClipPanel : public Panel
 {
 public:
     PostClipPanel(AudioPluginAudioProcessor &p, SlotId slot = SlotId{ModuleId::postClip, 0}) : Panel(p, "CLIPPER", Palette::colours[4]),
-    gain(p, "GAIN", slot, ParamIDs::postClipGain, ValueType::db, ScopeContextType::CLIPPER),
-    knee(p, "KNEE", slot, ParamIDs::postClipKnee, ValueType::db, ScopeContextType::CLIPPER) {
-        addAndMakeVisible(gain);
-        addAndMakeVisible(knee);
-
-        Palette::setKnobColoursOfComponent(&gain, Palette::colours[4]);
-        Palette::setKnobColoursOfComponent(&knee, Palette::colours[4]);
-    }
-
-    void resized() override
+        gain(p, "GAIN", slot, ParamIDs::postClipGain, ValueType::db, ScopeContextType::CLIPPER),
+        knee(p, "KNEE", slot, ParamIDs::postClipKnee, ValueType::db, ScopeContextType::CLIPPER)
     {
-        auto bounds = getLocalBounds();
-
-        auto width = bounds.getWidth() / 2;
-        gain.setBounds(bounds.removeFromLeft(width));
-        knee.setBounds(bounds.removeFromLeft(width));
+        addKnobs({&gain, &knee});
     }
+
+    void resized() override { layoutGrid({&gain, &knee}); }
 
 private:
-    ParamKnob gain;
-    ParamKnob knee;
+    ParamKnob gain, knee;
 };

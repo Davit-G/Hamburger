@@ -2,8 +2,6 @@
 
 #include "../Panel.h"
 
-
-
 class AllPassPanel : public Panel
 {
 public:
@@ -12,24 +10,11 @@ public:
         freq(p, "FREQ", slot, ParamIDs::allPassFreq, ValueType::hz),
         q(p, "Q", slot, ParamIDs::allPassQ)
     {
-        addAndMakeVisible(amount);
-        addAndMakeVisible(freq);
-        addAndMakeVisible(q);
-
-        Palette::setKnobColoursOfComponent(&amount, Palette::colours[2]);
-        Palette::setKnobColoursOfComponent(&freq, Palette::colours[2]);
-        Palette::setKnobColoursOfComponent(&q, Palette::colours[2]);
+        addKnobs({&amount, &freq, &q});
     }
 
-    void resized() override {
-        // three, in a row
-        auto bounds = getLocalBounds();
-        amount.setBounds(bounds.removeFromLeft(bounds.getWidth() / 3));
-        freq.setBounds(bounds.removeFromLeft(bounds.getWidth() / 2));
-        q.setBounds(bounds);
-    }
+    void resized() override { layoutGrid({&amount, &freq, &q}); }
 
-    ParamKnob amount;
-    ParamKnob freq;
-    ParamKnob q;
+private:
+    ParamKnob amount, freq, q;
 };

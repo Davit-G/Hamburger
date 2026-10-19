@@ -1,29 +1,20 @@
 #pragma once
- 
+
 #include "../Panel.h"
-#include "../../Knob.h"
 #include "../../SaturationIcons/CentredSVGIcon.h"
 
 class SlewRatePanel : public Panel, private juce::AudioProcessorValueTreeState::Listener
 {
 public:
-    SlewRatePanel(AudioPluginAudioProcessor &p, SlotId slot = SlotId{ModuleId::main, 0}) : apvts(p), Panel(p, "SLEW", Palette::colours[1]), 
+    SlewRatePanel(AudioPluginAudioProcessor &p, SlotId slot = SlotId{ModuleId::main, 0}) : Panel(p, "SLEW", Palette::colours[1]), processor(p),
         alpha(p, "ALPHA", slot, ParamIDs::alphaParam, ValueType::none, ScopeContextType::IN_OUT),
         bias(p, "TONE", slot, ParamIDs::slewSpeed, ValueType::none, ScopeContextType::IN_OUT),
         directionality(p, "BEND", slot, ParamIDs::directionality, ValueType::none, ScopeContextType::IN_OUT),
         type(p, "TYPE", ParamIDs::slewType, ValueType::category, ScopeContextType::IN_OUT),
         slewIcon(BinaryData::Slew_svg, BinaryData::Slew_svgSize, 3)
     {
-        addAndMakeVisible(bias);
-        addAndMakeVisible(alpha);
-        addAndMakeVisible(directionality);
-        addAndMakeVisible(type);
+        addKnobs({&bias, &alpha, &directionality, &type});
         addAndMakeVisible(slewIcon);
-
-        Palette::setKnobColoursOfComponent(&alpha, Palette::colours[1]);
-        Palette::setKnobColoursOfComponent(&bias, Palette::colours[1]);
-        Palette::setKnobColoursOfComponent(&type, Palette::colours[1]);
-        Palette::setKnobColoursOfComponent(&directionality, Palette::colours[1]);
 
         p.treeState.addParameterListener(ParamIDs::slewType.getParamID(), this);
 
@@ -31,20 +22,18 @@ public:
     }
 
     ~SlewRatePanel() override {
-        apvts.treeState.removeParameterListener(ParamIDs::slewType.getParamID(), this);
+        processor.treeState.removeParameterListener(ParamIDs::slewType.getParamID(), this);
     }
 
-    void resized() override
-    {
-        fourKnobLayout(alpha, slewIcon, bias, type, directionality);
-    }
+    void resized() override { layoutSaturation(alpha, slewIcon, {&bias, &type, &directionality}); }
 
-    void parameterChanged(const juce::String& parameterID, float newValue) override
+    void parameterChanged(const juce::String& parameterID, float) override
     {
         if (parameterID == ParamIDs::slewType.getParamID())
             makeBiasKnobTransparent();
     }
 
+    // bend only does something on the first slew type
     void makeBiasKnobTransparent()
     {
         const bool isDisabled = static_cast<int>(type.getValue()) != 0;
@@ -56,12 +45,10 @@ public:
         });
     }
 
-    AudioPluginAudioProcessor &apvts;
+private:
+    AudioPluginAudioProcessor &processor;
 
     ParamKnob alpha;
-    RectSlider bias;
-    RectSlider directionality;
-    RectSlider type;
-
+    RectSlider bias, directionality, type;
     CentredSVGIcon slewIcon;
 };

@@ -2,22 +2,17 @@
 
 #include "../Panel.h"
 
-
 class OtherUtils : public Panel
 {
 public:
     OtherUtils(AudioPluginAudioProcessor &p) : Panel(p, "OTHER?"),
-    quality(p, "OVERSMPL", ParamIDs::oversamplingFactor, ValueType::oversample)
+        quality(p, "OVERSMPL", ParamIDs::oversamplingFactor, ValueType::oversample)
     {
-        addAndMakeVisible(quality);
+        addKnobs({&quality});
     }
 
-    void resized() {
-        auto bounds = getLocalBounds();
+    void resized() override { layoutGrid({&quality}); }
 
-        quality.setBounds(bounds);
-    }
 private:
-    juce::Grid grid;
     ParamKnob quality;
 };
