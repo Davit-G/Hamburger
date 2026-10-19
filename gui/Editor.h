@@ -15,6 +15,7 @@
 
 #include "PresetPanel.h"
 #include "HeaderTabs.h"
+#include "SettingsPage.h"
 #include "UpdateChecker.h"
 
 #include "LookAndFeel/HamburgerLAF.h"
@@ -26,8 +27,8 @@ public:
                                              leftColumn(p),
                                              saturationColumn(p),
                                              utilColumn(p),
-                                             infoPanel(p)
-                                             ,presetPanel(p.getPresetManager())
+                                             settingsPage(p),
+                                             presetPanel(p.getPresetManager())
     {   
         setLookAndFeel(&hamburgerLAF);
         infoPanel.setLookAndFeel(&hamburgerLAF);
@@ -38,26 +39,30 @@ public:
         addAndMakeVisible(leftColumn);
         addAndMakeVisible(saturationColumn);
         addAndMakeVisible(utilColumn);
+        addChildComponent(settingsPage);
         addAndMakeVisible(infoPanel);
         addAndMakeVisible(header);
         addAndMakeVisible(presetPanel);
 
         header.onTabSelected = [this](HeaderTabs::Tab tab) {
-            const bool settings = tab == HeaderTabs::settings;
-
-            infoPanel.setVisible(settings);
-            leftColumn.setVisible(!settings);
-            saturationColumn.setVisible(!settings);
-            utilColumn.setVisible(!settings);
-
-            if (!settings)
+            if (tab != HeaderTabs::settings)
                 saturationColumn.setView(tab);
+
+            showPage();
         };
 
         header.typeColour = [this](HeaderTabs::Tab tab) { return saturationColumn.getDistortion(tab).getAccent(); };
 
         for (auto tab : { HeaderTabs::pre, HeaderTabs::post })
             saturationColumn.getDistortion(tab).onScreenChanged = [this] { header.repaint(); };
+
+        settingsPage.getFxOrder().colourFor = [this](ModuleId id) {
+            for (auto* module : { leftColumn.moduleFor(id), saturationColumn.moduleFor(id), utilColumn.moduleFor(id) })
+                if (module != nullptr)
+                    return module->getAccent();
+
+            return juce::Colours::white;
+        };
 
         if (audioProcessorRef.getAppProperties().getTooltipType() == AppProperties::TooltipType::window) {
             createTooltipWindow();
@@ -164,12 +169,14 @@ public:
             tooltipWindow->setBounds(bounds);
         }
 
-        header.setBounds(bounds.removeFromTop(HeaderTabs::height));
         infoPanel.setBounds(bounds);
+        header.setBounds(bounds.removeFromTop(HeaderTabs::height));
 
         presetPanel.barLeft = header.getLeftReserved();
         presetPanel.barRight = header.getRightReserved();
         presetPanel.setBounds(getLocalBounds());
+
+        settingsPage.setBounds(bounds);
 
         auto left = bounds.removeFromLeft(totalWidth);
         auto right = bounds.removeFromRight(totalWidth);
@@ -179,18 +186,34 @@ public:
         utilColumn.setBounds(right);
     }
 
+    // 0 from clicking the logo opens the info page over everything, 1 from clicking the info page closes it
     void handleCommandMessage(int command) override
     {
-        // 0 from the logo opens settings, 1 from clicking the settings page goes back to the distortion tab it was on
-        header.select(command == 1 ? saturationColumn.getView() : HeaderTabs::settings);
+        infoOpen = command == 0;
+        showPage();
     }
 
 private:
+    void showPage()
+    {
+        const bool settings = header.getSelected() == HeaderTabs::settings;
+
+        infoPanel.setVisible(infoOpen);
+        header.setVisible(!infoOpen);
+        presetPanel.setVisible(!infoOpen);
+        leftColumn.setVisible(!infoOpen && !settings);
+        saturationColumn.setVisible(!infoOpen && !settings);
+        utilColumn.setVisible(!infoOpen && !settings);
+        settingsPage.setVisible(!infoOpen && settings);
+    }
+
     AudioPluginAudioProcessor& audioProcessorRef;
 
     LeftColumn leftColumn;
     SaturationColumn saturationColumn;
     UtilColumn utilColumn;
+
+    SettingsPage settingsPage;
 
     HamburgerLAF hamburgerLAF;
 
@@ -201,6 +224,7 @@ private:
     std::unique_ptr<UpdateChecker> updater;
 
     Info infoPanel;
+    bool infoOpen = false;
 
     juce::Image image = juce::ImageCache::getFromMemory(BinaryData::bg4_jpg, BinaryData::bg4_jpgSize);
 

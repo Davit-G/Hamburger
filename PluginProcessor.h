@@ -32,7 +32,7 @@
 #include "dsp/LevelStage.h"
 
 //==============================================================================
-class AudioPluginAudioProcessor : public juce::AudioProcessor, public clap_juce_extensions::clap_properties
+class AudioPluginAudioProcessor : public juce::AudioProcessor, public clap_juce_extensions::clap_properties, private juce::ValueTree::Listener
 
 {
 public:
@@ -84,6 +84,10 @@ public:
     Preset::PresetManager& getPresetManager() { return *presetManager; }
     AppProperties& getAppProperties() { return appProperties; }
 
+    // the order the modules run in, saved with the preset or project
+    UnpackedOrdering getRoutingOrder() const { return unpackRouting(order.load(std::memory_order_acquire)); }
+    void setRoutingOrder(const UnpackedOrdering& newOrder);
+
 private:
     juce::AudioParameterFloat *inputGainKnob = nullptr;
     juce::AudioParameterFloat *mixKnob = nullptr;
@@ -131,6 +135,13 @@ private:
 
     // effect order related stuff
     std::atomic<PackedOrdering> order { defaultOrdering };
+
+    // same name as the old branch so its presets keep their order
+    static inline const juce::Identifier routingOrderProperty { "routingOrder" };
+    void syncRoutingOrder();
+
+    void valueTreePropertyChanged(juce::ValueTree& tree, const juce::Identifier& property) override;
+    void valueTreeRedirected(juce::ValueTree& tree) override;
 
     static_assert (std::atomic<PackedOrdering>::is_always_lock_free);
 

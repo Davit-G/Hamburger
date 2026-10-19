@@ -76,16 +76,22 @@ public:
     // }
 
     void setView(HeaderTabs::Tab tab) {
-        view = tab;
         scopeContext.setFocus({ distortionSlots[tab].first, 0 });
 
         for (size_t i = 0; i < distortions.size(); ++i)
             distortions[i]->setVisible(i == (size_t) tab);
     }
 
-    HeaderTabs::Tab getView() const { return view; }
-
     Module& getDistortion(HeaderTabs::Tab tab) { return *distortions[tab]; }
+
+    // the box on screen for a module this column holds, nullptr for the rest
+    Module* moduleFor(ModuleId id) {
+        for (size_t i = 0; i < distortions.size(); ++i)
+            if (distortionSlots[i].first == id)
+                return distortions[i].get();
+
+        return id == ModuleId::module1 ? noise.get() : id == ModuleId::postClip ? postClip.get() : nullptr;
+    }
 
     ~SaturationColumn() {
         for (auto& distortion : distortions)
@@ -120,7 +126,6 @@ private:
     };
 
     std::array<std::unique_ptr<Module>, std::size(distortionSlots)> distortions;
-    HeaderTabs::Tab view = HeaderTabs::main;
 
     std::unique_ptr<Panel> postClipPanel = nullptr;
 

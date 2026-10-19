@@ -13,21 +13,23 @@ public:
     static constexpr int pillInset = 4;
     static constexpr int height = 41;
 
-    std::function<void (Tab)> onTabSelected;
+    std::function<void(Tab)> onTabSelected;
 
     // the colour of the distortion type showing on PRE or POST
-    std::function<juce::Colour (Tab)> typeColour;
+    std::function<juce::Colour(Tab)> typeColour;
 
-    HeaderTabs() { setMouseCursor (juce::MouseCursor::PointingHandCursor); }
+    HeaderTabs() { setMouseCursor(juce::MouseCursor::PointingHandCursor); }
 
-    void select (Tab tab)
+    void select(Tab tab)
     {
         selected = tab;
         repaint();
 
         if (onTabSelected != nullptr)
-            onTabSelected (tab);
+            onTabSelected(tab);
     }
+
+    Tab getSelected() const { return selected; }
 
     // what the preset bar keeps clear either side of it
     int getLeftReserved() const { return cells[post].getRight(); }
@@ -35,19 +37,19 @@ public:
 
     void resized() override
     {
-        auto row = getLocalBounds().withTrimmedBottom (pillInset).reduced (pillInset, 0);
-        cells[settings] = row.removeFromRight (iconSize + cellPad * 2);
+        auto row = getLocalBounds().withTrimmedBottom(pillInset).reduced(pillInset, 0);
+        cells[settings] = row.removeFromRight(iconSize + cellPad * 2);
 
-        row.removeFromLeft (edgePad);
+        row.removeFromLeft(edgePad);
 
         for (auto tab : { pre, main, post })
-            cells[tab] = row.removeFromLeft (juce::roundToInt (juce::GlyphArrangement::getStringWidth (font, labels[tab])) + cellPad * 2);
+            cells[tab] = row.removeFromLeft(juce::roundToInt(juce::GlyphArrangement::getStringWidth(font, labels[tab])) + cellPad * 2);
     }
 
-    void paint (juce::Graphics& g) override
+    void paint(juce::Graphics& g) override
     {
         // flush with the top and sides of the window, with the gap under it that the boxes below would otherwise leave
-        const auto bar = getLocalBounds().withTrimmedBottom (pillInset);
+        const auto bar = getLocalBounds().withTrimmedBottom(pillInset);
 
         g.setColour(juce::Colours::black);
         g.fillRect(bar);
@@ -60,11 +62,11 @@ public:
 
             if (tab == selected)
             {
-                g.setColour(tab == main ? juce::Colours::white : tab != settings && typeColour != nullptr ? typeColour(tab) : juce::Colour (0xffffa746));
-                g.fillRoundedRectangle(cell.toFloat().reduced (10.0f, 0.0f).removeFromBottom(5.0f).removeFromTop(2.0f), 1.0f);
+                g.setColour(tab == main ? juce::Colours::white : tab != settings && typeColour != nullptr ? typeColour(tab) : juce::Colour(0xffffa746));
+                g.fillRoundedRectangle(cell.toFloat().reduced(10.0f, 0.0f).removeFromBottom(5.0f).removeFromTop(2.0f), 1.0f);
             }
 
-            g.setColour(juce::Colours::white.withAlpha (tab == selected ? 1.0f : tab == hovered ? 0.67f : 0.43f));
+            g.setColour(juce::Colours::white.withAlpha(tab == selected ? 1.0f : tab == hovered ? 0.67f : 0.43f));
 
             if (tab == settings) {
                 g.fillPath(gear, juce::RectanglePlacement(juce::RectanglePlacement::centred).getTransformToFit({ 0.0f, 0.0f, 24.0f, 24.0f }, cell.toFloat().withSizeKeepingCentre(iconSize, iconSize)));
@@ -74,24 +76,24 @@ public:
         }
 
         // between the tabs on the left, and before the gear
-        g.setColour(juce::Colour (0xff4a4a4a));
+        g.setColour(juce::Colour(0xff4a4a4a));
 
         for (auto x : { cells[pre].getRight(), cells[main].getRight(), cells[settings].getX() })
             g.drawLine((float) x, (float) bar.getY() + dividerInset, (float) x, (float) bar.getBottom() - dividerInset, 1.0f);
     }
 
-    void mouseDown (const juce::MouseEvent& e) override
+    void mouseDown(const juce::MouseEvent& e) override
     {
-        if (auto tab = tabAt (e.getPosition()); tab >= 0)
-            select ((Tab) tab);
+        if (auto tab = tabAt(e.getPosition()); tab >= 0)
+            select((Tab) tab);
     }
 
-    void mouseMove (const juce::MouseEvent& e) override { setHovered (tabAt (e.getPosition())); }
-    void mouseExit (const juce::MouseEvent&) override { setHovered (-1); }
+    void mouseMove(const juce::MouseEvent& e) override { setHovered(tabAt(e.getPosition())); }
+    void mouseExit(const juce::MouseEvent&) override { setHovered(-1); }
 
     juce::String getTooltip() override
     {
-        switch (tabAt (getMouseXYRelative()))
+        switch (tabAt(getMouseXYRelative()))
         {
             case pre: return "Distortion before the main one.";
             case main: return "The main distortion";
@@ -102,16 +104,16 @@ public:
     }
 
 private:
-    int tabAt (juce::Point<int> p) const
+    int tabAt(juce::Point<int> p) const
     {
         for (int tab = 0; tab < (int) cells.size(); ++tab)
-            if (cells[(size_t) tab].contains (p))
+            if (cells[(size_t) tab].contains(p))
                 return tab;
 
         return -1;
     }
 
-    void setHovered (int tab)
+    void setHovered(int tab)
     {
         if (tab == hovered)
             return;
@@ -127,8 +129,8 @@ private:
 
     static constexpr const char* labels[] { "PRE", "MAIN", "POST" };
 
-    const juce::Font font = juce::Font (juce::FontOptions (juce::Typeface::createSystemTypefaceFor (
-        BinaryData::QuestrialRegular_ttf, BinaryData::QuestrialRegular_ttfSize))).withHeight (15.0f);
+    const juce::Font font = juce::Font(juce::FontOptions(juce::Typeface::createSystemTypefaceFor(
+        BinaryData::QuestrialRegular_ttf, BinaryData::QuestrialRegular_ttfSize))).withHeight(15.0f);
 
     static constexpr int edgePad = 12;
     static constexpr int cellPad = 16;
@@ -147,5 +149,5 @@ private:
         return juce::Drawable::createFromSVG (*juce::XmlDocument::parse (svg))->getOutlineAsPath();
     }();
 
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (HeaderTabs)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(HeaderTabs)
 };

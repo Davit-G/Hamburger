@@ -56,6 +56,15 @@ public:
         juce::ignoreUnused(g);
     }
 
+    // the box on screen for a module this column holds, nullptr for the rest
+    Module* moduleFor(ModuleId id) {
+        switch (id) {
+            case ModuleId::dynamics: return compander.get();
+            case ModuleId::module2:  return preDistortion.get();
+            default:                 return nullptr;
+        }
+    }
+
     void resized() override{
         auto bounds = getLocalBounds();
         auto height = bounds.getHeight();

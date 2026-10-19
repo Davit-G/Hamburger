@@ -59,6 +59,9 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor() : AudioProcessor(BusesPro
 
     presetManager = std::make_unique<Preset::PresetManager>(treeState, appProperties);
 
+    // a preset or project load swaps the whole state tree, which is valueTreeRedirected
+    treeState.state.addListener(this);
+
 #if PERFETTO
     // MelatoninPerfetto::get().beginSession(300000);
 #endif
@@ -66,9 +69,56 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor() : AudioProcessor(BusesPro
 
 AudioPluginAudioProcessor::~AudioPluginAudioProcessor()
 {
+    treeState.state.removeListener(this);
+
 #if PERFETTO
     // MelatoninPerfetto::get().endSession();
 #endif
+}
+
+void AudioPluginAudioProcessor::setRoutingOrder(const UnpackedOrdering& newOrder)
+{
+    treeState.state.setProperty(routingOrderProperty, (juce::int64) packRouting(newOrder), nullptr);
+}
+
+// anything that isn't every module exactly once, a state from before reordering existed or a damaged one, is the default
+void AudioPluginAudioProcessor::syncRoutingOrder()
+{
+    const auto stored = treeState.state.getProperty(routingOrderProperty);
+    auto newOrder = defaultOrdering;
+
+    if (stored.isInt64() || stored.isInt())
+    {
+        const auto candidate = (PackedOrdering) (juce::int64) stored;
+
+        std::array<bool, (size_t) ModuleId::count> seen {};
+        auto valid = true;
+
+        for (auto id : unpackRouting(candidate))
+        {
+            valid = valid && (size_t) id < seen.size() && !seen[(size_t) id];
+
+            if (valid)
+                seen[(size_t) id] = true;
+        }
+
+        if (valid)
+            newOrder = candidate;
+    }
+
+    order.store(newOrder, std::memory_order_release);
+}
+
+void AudioPluginAudioProcessor::valueTreePropertyChanged(juce::ValueTree& tree, const juce::Identifier& property)
+{
+    if (tree == treeState.state && property == routingOrderProperty)
+        syncRoutingOrder();
+}
+
+void AudioPluginAudioProcessor::valueTreeRedirected(juce::ValueTree& tree)
+{
+    if (tree == treeState.state)
+        syncRoutingOrder();
 }
 
 juce::AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::createParameterLayout()
