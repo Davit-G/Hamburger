@@ -1,4 +1,12 @@
 
+# a dev tool the plugin doesn't need, left out where there's no curses to build it with, like on windows
+find_package(Curses)
+
+if(NOT CURSES_FOUND)
+    message(STATUS "curses not found, skipping waveshape_features")
+    return()
+endif()
+
 add_executable(waveshape_features EXCLUDE_FROM_ALL 
     features.cpp
 )
@@ -15,7 +23,6 @@ add_executable(waveshape_features EXCLUDE_FROM_ALL
 
 target_compile_features(waveshape_features PRIVATE cxx_std_17)
 
-find_package(Curses REQUIRED)
 target_include_directories(waveshape_features PRIVATE ${CURSES_INCLUDE_DIRS})
 target_link_libraries(waveshape_features PRIVATE ${CURSES_LIBRARIES})
 

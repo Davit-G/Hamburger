@@ -143,17 +143,18 @@ jobs:
       run: |
         cmake -B "${{matrix.folder}}" -G "${{matrix.compiler}}" -DCMAKE_BUILD_TYPE:STRING=${{env.BUILDTYPE}} "-DReleaseType=$RELEASETYPE" "-DBuildName=$BUILDNAME"
 
+    # a bare -j is unlimited jobs with make, and that many -O3 -flto compiles at once starve the linux runner until it's shut down
     - name: build
       id: build
       run: |
-        cmake --build "${{matrix.folder}}" --config ${{env.BUILDTYPE}} --target ${{env.NOSPACE}}_VST3 -j
-        cmake --build "${{matrix.folder}}" --config ${{env.BUILDTYPE}} --target ${{env.NOSPACE}}_CLAP -j
+        cmake --build "${{matrix.folder}}" --config ${{env.BUILDTYPE}} --target ${{env.NOSPACE}}_VST3 -j 4
+        cmake --build "${{matrix.folder}}" --config ${{env.BUILDTYPE}} --target ${{env.NOSPACE}}_CLAP -j 4
 
     - name: (mac) build
       if: startsWith(matrix.os, 'macos')
       id: build_mac
       run: |
-        cmake --build "${{matrix.folder}}" --config ${{env.BUILDTYPE}} --target ${{env.NOSPACE}}_AU -j
+        cmake --build "${{matrix.folder}}" --config ${{env.BUILDTYPE}} --target ${{env.NOSPACE}}_AU -j 4
 
     - name: (windows) package
       if: startsWith(matrix.os, 'windows')
