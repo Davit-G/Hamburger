@@ -1,23 +1,11 @@
 #include "NonlinSlew.h"
-#include "../../WaveShapers.h"
 
 #include <algorithm>
 #include <cmath>
 
-namespace {
-
-float safePow(float value, float exponent) {
-    const float magnitude = std::max(std::fabs(value), 1.0e-6f);
-    return std::pow(magnitude, exponent);
-}
-
-} // namespace
-
 void NonlinSlew::resetState() {
-    for (int i = 0; i < lastSampleBuf.size(); i++) {
-        lastSampleBuf[i] = 0.0f;
-        emaBuf[i] = 0.0f;    
-    }
+    std::fill(lastSampleBuf.begin(), lastSampleBuf.end(), 0.0f);
+    std::fill(emaBuf.begin(), emaBuf.end(), 0.0f);
 }
 
 void NonlinSlew::prepare(juce::dsp::ProcessSpec& spec) {
@@ -27,11 +15,12 @@ void NonlinSlew::prepare(juce::dsp::ProcessSpec& spec) {
     lastMode = -1;
     lastSampleBuf.resize(spec.numChannels);
     emaBuf.resize(spec.numChannels);
+    inPower.assign(spec.numChannels, 0.0f);
+    outPower.assign(spec.numChannels, 0.0f);
+    levelCoefficient = std::exp(-1.0f / (0.15f * (float) spec.sampleRate));
+    sampleRate = (float) spec.sampleRate;
 
     resetState();
-
-    sampleRateMultiplier = spec.sampleRate / 44100.0f;
-    sampleRateMultInv = 44100.0f / spec.sampleRate;
 }
 
 void NonlinSlew::processBlock(juce::dsp::AudioBlock<float> &block) {
@@ -39,102 +28,54 @@ void NonlinSlew::processBlock(juce::dsp::AudioBlock<float> &block) {
     slewSpeed.update();
     directionality.update();
 
-    int mode = type->get();
+    const int mode = juce::roundToInt(type.get());
+
     if (mode != lastMode) {
         resetState();
         lastMode = mode;
     }
-    
-    for (int ch = 0; ch < block.getNumChannels(); ch++) {
+
+    for (int ch = 0; ch < (int) block.getNumChannels(); ch++) {
         float* data = block.getChannelPointer(ch);
-        float& lastSample = lastSampleBuf[ch];
+        float& last = lastSampleBuf[ch];
         float& ema = emaBuf[ch];
 
-        switch (mode) {
-            case 0: { // really basic min max slew
-                for (int i = 0; i < block.getNumSamples(); i++) {
-                    const float in = data[i];
+        for (int i = 0; i < (int) block.getNumSamples(); i++) {
+            const float driveGain = juce::Decibels::decibelsToGain(alphaParam.getNextValue(ch));
+            const float limit = juce::MathConstants<float>::twoPi * slewSpeed.getNextValue(ch) * 0.25f / sampleRate;
+            const float bias = directionality.getNextValue(ch);
 
-                    float delta = in - lastSample;
-            
-                    float alpha = safePow(alphaParam.getNextValue(ch), 3.0f);
+            const float in = data[i];
+            const float delta = in * driveGain - last;
+            const float reach = limit * juce::jmax(0.05f, delta > 0.0f ? 1.0f + bias : 1.0f - bias);
 
-                    float rawSlewSpeed = slewSpeed.getNextValue(ch);
-                    float slewSpeedVal = rawSlewSpeed * rawSlewSpeed * rawSlewSpeed * rawSlewSpeed;
-                    float bend = directionality.getNextValue(ch);
-                    
-                    float jumpDist = juce::jmax(juce::jmin(delta, slewSpeedVal), -slewSpeedVal);
-                    
-                    lastSample = (1.0f - alpha) * in + alpha * (lastSample + jumpDist * sampleRateMultInv);
-                    
-                    if (!std::isfinite(lastSample)) lastSample = 0.0f;
-                    
-                    float gainCompensation = 2.0f - rawSlewSpeed;
-                    data[i] = lastSample * gainCompensation;
-                }
-                break;
+            switch (mode) {
+                case 0: // a hard limit
+                    last += juce::jlimit(-reach, reach, delta);
+                    break;
+
+                case 1: // eased into the limit
+                    last += reach * std::tanh(delta / reach);
+                    break;
+
+                // small steps pass and big ones are held back, saturating as it goes. it cuts off so steeply that its window
+                // is wider, putting the cut in the middle of the tone's range
+                default:
+                    last = std::tanh(last + delta * std::exp(-juce::square((delta + ema * bias) / (reach * 8.0f))));
+                    ema += juce::jmin(1.0f, limit) * (last - ema);
+                    break;
             }
-            case 1: {
-                // tanh based jumps
-                for (int i = 0; i < block.getNumSamples(); i++) {
-                    const float in = data[i];
 
-                    float delta = in - lastSample;
+            if (!std::isfinite(last)) last = 0.0f;
 
-                    int sign = sgn(delta);
+            // how much slewing takes off depends on how fast and loud the audio is, so the output follows the input's level
+            // over 150ms, by at most 12dB either way so a near silent setting isn't brought back up as noise
+            const float out = last / driveGain;
             
-                    float alpha = safePow(alphaParam.getNextValue(ch), 0.3f);
-                    float slewSpeedVal = slewSpeed.getNextValue(ch);
-                    float slewScaled = safePow(std::fabs(slewSpeedVal), 3.0f) * (slewSpeedVal < 0.0f ? -1.0f : 1.0f);
-                    float bend = directionality.getNextValue(ch) * 4.0f;
-            
-                    float jumpDist = (tanh(delta * slewScaled * 50.0f * sampleRateMultiplier + bend * sampleRateMultiplier) - tanh(bend * sampleRateMultiplier)) * slewScaled * sampleRateMultInv;
-            
-                    lastSample = (1.0f - alpha) * in + alpha * std::tanh((lastSample + sign * delta * jumpDist) * sampleRateMultInv) * sampleRateMultiplier;
-                    
-                    if (!std::isfinite(lastSample)) lastSample = 0.0f;
-                    
-                    float gainCompensation = 2.0f - slewSpeedVal;
-                    data[i] = lastSample * gainCompensation;
-                }
-            
-                break;
-            }
-            case 2: {
-                // gaussian / strange attractor?
-                for (int i = 0; i < block.getNumSamples(); i++) {
-                    const float in = data[i];
-            
-                    float delta = in - lastSample;
+            inPower[ch] = in * in + levelCoefficient * (inPower[ch] - in * in);
+            outPower[ch] = out * out + levelCoefficient * (outPower[ch] - out * out);
 
-                    delta *= sampleRateMultiplier;
-                    
-                    float drive = safePow(alphaParam.getNextValue(0), 3.0f);
-                    float alpha = drive * 50.0f;
-                    float ema_a = drive;
-                    float slew_bias = slewSpeed.getNextValue(0);
-                    float bend = directionality.getNextValue(0);
-    
-                    float b = (delta + ema * bend);
-                    float jumpDist = exp(-alpha * b * b) * slew_bias;
-            
-                    lastSample = std::tanh(lastSample + delta * jumpDist * sampleRateMultInv);
-            
-                    if (!std::isfinite(lastSample)) lastSample = 0.0f;
-    
-                    ema = ema_a * lastSample + (1.0f - ema_a) * ema;
-                    if (!std::isfinite(ema)) ema = 0.0f;
-    
-                    float gainCompensation = drive + 1.0f;
-                    data[i] = lastSample * gainCompensation;
-                }
-                
-                break;
-            }
-    
-    
-    
+            data[i] = out * juce::jlimit(0.25f, 4.0f, std::sqrt(inPower[ch] / (outPower[ch] + 1.0e-12f)));
         }
-
     }
 }

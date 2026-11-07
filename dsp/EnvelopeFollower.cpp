@@ -1,7 +1,6 @@
 
 #include "EnvelopeFollower.h"
 #include <cmath> // std::abs
-#include "juce_core/juce_core.h"
 
 float EnvelopeFollower::processSample(float xn)
 {

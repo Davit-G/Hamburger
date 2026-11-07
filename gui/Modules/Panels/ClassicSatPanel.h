@@ -1,44 +1,29 @@
 #pragma once
 
- 
 #include "../Panel.h"
-#include "../../Knob.h"
-#include "../../RectSlider.h"
-
+#include "../../../dsp/EffectInfos.h"
 #include "../../SaturationIcons/CentredSVGIcon.h"
 
 class ClassicSatPanel : public Panel
 {
 public:
-    ClassicSatPanel(AudioPluginAudioProcessor &p) : Panel(p, "GRILL", Palette::colours[0]), 
-        satKnob(p, "SATURATION", ParamIDs::saturationAmount, ParamUnits::percent, ScopeContextType::IN_OUT),
-        biasKnob(p, "DC BIAS", ParamIDs::grillBias, ParamUnits::none, ScopeContextType::IN_OUT),
-        fuzzKnob(p, "DIODE", ParamIDs::diode, ParamUnits::none, ScopeContextType::IN_OUT),
-        cookedKnob(p, "WAVEFOLD", ParamIDs::fold, ParamUnits::none, ScopeContextType::IN_OUT),
-        tube(BinaryData::Grill_svg, BinaryData::Grill_svgSize, -3)
+    ClassicSatPanel(AudioPluginAudioProcessor &p, SlotId slot = SlotId{ModuleId::main, 0}) : Panel(p, "GRILL", &Theme::grill, slot),
+        satKnob(p, "SATURATION", slot, ParamIDs::saturationAmount, ScopeContextType::IN_OUT),
+        biasKnob(p, "DC BIAS", slot, ParamIDs::grillBias, ScopeContextType::IN_OUT),
+        fuzzKnob(p, "DIODE", slot, ParamIDs::diode, ScopeContextType::IN_OUT),
+        cookedKnob(p, "WAVEFOLD", slot, ParamIDs::fold, ScopeContextType::IN_OUT),
+        dcTimingKnob(p, "DC SLEW", slot, ParamIDs::grillDcTiming, ScopeContextType::IN_OUT),
+        tube(BinaryData::Grill_svg, BinaryData::Grill_svgSize, &Theme::grill, -3)
     {
-        addAndMakeVisible(satKnob);
-        addAndMakeVisible(biasKnob);
-        addAndMakeVisible(fuzzKnob);
-        addAndMakeVisible(cookedKnob);
+        addKnobs({&satKnob, &biasKnob, &fuzzKnob, &cookedKnob, &dcTimingKnob});
         addAndMakeVisible(tube);
-
-        Palette::setKnobColoursOfComponent(&satKnob, Palette::colours[0]);
-        Palette::setKnobColoursOfComponent(&biasKnob, Palette::colours[0]);
-        Palette::setKnobColoursOfComponent(&fuzzKnob, Palette::colours[0]);
-        Palette::setKnobColoursOfComponent(&cookedKnob, Palette::colours[0]);
     }
 
-    void resized() override
-    {
-        fourKnobLayout(satKnob, tube, biasKnob, cookedKnob, fuzzKnob);
-    }
+    // the timing sits under the bias it times, wavefold and diode on the other side
+    void resized() override { layoutSaturation(satKnob, tube, {&biasKnob, &dcTimingKnob, &cookedKnob, &fuzzKnob}); }
 
 private:
     ParamKnob satKnob;
-    RectSlider cookedKnob;
-    RectSlider biasKnob;
-    RectSlider fuzzKnob;
-
+    RectSlider biasKnob, fuzzKnob, cookedKnob, dcTimingKnob;
     CentredSVGIcon tube;
 };

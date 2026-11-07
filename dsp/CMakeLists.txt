@@ -11,4 +11,14 @@ target_sources("${BaseTargetName}"
         EnvelopeFollower.cpp
         SVTPTFilter.cpp
         SVTPTFilter.h
+        MacroParam.h
+        ModMatrix.h
+        EffectBase.h
+        EffectInfos.h
+        LevelStage.h
+        MainRouting.h
+        Crossover.h
+        OptoCell.h
+        LinearPhaseSplit.h
+        LinearPrediction.h
         )

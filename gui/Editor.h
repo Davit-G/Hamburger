@@ -12,32 +12,132 @@
 #include "LeftColumn.h"
 #include "SaturationColumn.h"
 #include "UtilColumn.h"
+#include "SettingsPanel.h"
 
 #include "PresetPanel.h"
+#include "PluginHeader.h"
+#include "PluginFooter.h"
+#include "TooltipBar.h"
 #include "UpdateChecker.h"
 
 #include "LookAndFeel/HamburgerLAF.h"
+#include "LookAndFeel/ThemeManager.h"
 
-class EditorV2 : public juce::Component, public juce::ChangeListener
+// the drag container for dragging mod sources onto knobs, see ModSourceButton
+class EditorV2 : public juce::Component, public juce::ChangeListener, public juce::DragAndDropContainer
 {
 public:
+    // every module's size comes from the columns' height. the start page has fewer and simpler boxes, so it's shorter
+    static constexpr int baseWidth = 800;
+    static constexpr int columnsHeight = 500;
+    static constexpr int startColumnsHeight = 300;
+    // the columns take the top three quarters of columnsHeight, and the pre fx, the modulation and the noise the bottom
+    // quarter, each row taller by the in/out strip along its boxes' bottoms
+    static constexpr int columnsRowHeight = columnsHeight * 3 / 4 + Module::footerSpace;
+    static constexpr int bottomRowHeight = columnsHeight / 4 + Module::footerSpace;
+    static constexpr int fullHeight = PluginHeader::totalHeight + columnsRowHeight + bottomRowHeight + PluginFooter::totalHeight;
+    static constexpr int startHeight = PluginHeader::totalHeight + startColumnsHeight + TooltipBar::height + PluginFooter::totalHeight;
+
+    // the start page's scope sits over a row of amounts, as wide as it needs to keep the shape of what it draws in the full view
+    static constexpr int scopeMargin = Panel::boxPadding * 2;
+    static constexpr int startScopeHeight = startColumnsHeight - UtilColumn::startAmountsHeight;
+    static constexpr int startScopeWidth = scopeMargin + (startScopeHeight - scopeMargin) * (baseWidth / 4 - scopeMargin) / (columnsHeight / 4 - scopeMargin);
+    static constexpr int startMiddleWidth = 320;
+    static constexpr int startWidth = startMiddleWidth + startScopeWidth;
+
+    // when a page needs the window a different size
+    std::function<void (int, int)> onSizeChanged;
+
+    // the page picked in the settings, once the window can follow its size
+    void openStartupPage()
+    {
+        const auto page = audioProcessorRef.getAppProperties().getStartupPage();
+        header.selectTab(page == "start" && PluginHeader::hasStartPage ? PluginHeader::Tab::start
+                         : page == "pre" ? PluginHeader::Tab::pre
+                         : page == "post" ? PluginHeader::Tab::post
+                                          : PluginHeader::Tab::main);
+    }
+
     EditorV2(AudioPluginAudioProcessor &p) : audioProcessorRef(p),
                                              leftColumn(p),
                                              saturationColumn(p),
                                              utilColumn(p),
+                                             settingsPanel(p),
                                              infoPanel(p)
-                                             ,presetPanel(p.getPresetManager())
+                                             ,presetPanel(p.getPresetManager()),
+                                             header(p),
+                                             footer(p),
+                                             modulationBox(p)
     {   
+        // the first editor opened picks up the theme from last time, any others share it
+        if (themes->getSelectedId().isEmpty() && ! themes->select(p.getAppProperties().appProperties.getUserSettings()->getValue("theme", ThemeManager::defaultId)))
+            themes->select(ThemeManager::defaultId);
+
+        themes->addChangeListener(this);
+
         setLookAndFeel(&hamburgerLAF);
         infoPanel.setLookAndFeel(&hamburgerLAF);
         leftColumn.setLookAndFeel(&hamburgerLAF);
         saturationColumn.setLookAndFeel(&hamburgerLAF);
         utilColumn.setLookAndFeel(&hamburgerLAF);
+        settingsPanel.setLookAndFeel(&hamburgerLAF);
+        presetPanel.setLookAndFeel(&hamburgerLAF);
+        footer.setLookAndFeel(&hamburgerLAF);
 
         addAndMakeVisible(leftColumn);
         addAndMakeVisible(saturationColumn);
         addAndMakeVisible(utilColumn);
+        addChildComponent(settingsPanel);
         addAndMakeVisible(infoPanel);
+        addAndMakeVisible(header);
+        addAndMakeVisible(footer);
+        addChildComponent(tooltipBar);
+
+        addChildComponent(modulationBox);
+        addChildComponent(leftColumn.getPreFx());
+        addChildComponent(utilColumn.getNoise());
+        header.onTabSelected = [this](PluginHeader::Tab tab)
+        {
+            startPage = tab == PluginHeader::Tab::start;
+            settingsOpen = tab == PluginHeader::Tab::settings;
+            modPage = tab == PluginHeader::Tab::mod;
+
+            // settings takes everything under the header in place of the columns
+            leftColumn.setVisible(! startPage && ! settingsOpen);
+            saturationColumn.setVisible(! settingsOpen);
+            utilColumn.setVisible(! settingsOpen);
+            settingsPanel.setVisible(settingsOpen);
+            tooltipBar.setVisible(startPage);
+            footer.setCompact(startPage);
+            utilColumn.setLayout(startPage ? UtilColumn::Layout::start : modPage ? UtilColumn::Layout::scopeOnly : UtilColumn::Layout::full);
+            leftColumn.setLogoOnly(modPage);
+            saturationColumn.setView(tab);
+            showFullViewRows();
+
+            if (onSizeChanged != nullptr)
+                onSizeChanged(startPage ? startWidth : baseWidth, startPage ? startHeight : fullHeight);
+
+            // settings and the other full size views share a window size, so nothing else would lay them out again
+            resized();
+        };
+
+        // each fx order row is filled with its box's colour
+        header.typeColour = [this](PluginHeader::Tab tab) {
+            const auto id = tab == PluginHeader::Tab::pre ? ModuleId::preDistortion : ModuleId::postDistortion;
+            return (theme().*saturationColumn.moduleFor(id)->getAccent()).main;
+        };
+
+        for (auto id : { ModuleId::preDistortion, ModuleId::postDistortion })
+            saturationColumn.moduleFor(id)->onScreenChanged = [this] { header.repaint(); };
+
+        settingsPanel.getFxOrder().colourFor = [this](ModuleId id) {
+            for (auto* module : { leftColumn.moduleFor(id), saturationColumn.moduleFor(id), utilColumn.moduleFor(id) })
+                if (module != nullptr)
+                    return (theme().*module->getAccent()).main;
+
+            // the clipper lives in the footer rather than a box
+            return id == ModuleId::postClip ? theme().footer.main : theme().plain.main;
+        };
         addAndMakeVisible(presetPanel);
 
         if (audioProcessorRef.getAppProperties().getTooltipType() == AppProperties::TooltipType::window) {
@@ -45,6 +145,9 @@ public:
         }
 
         setOpaque(true);
+
+        // for 1 - 4 quick selection
+        setWantsKeyboardFocus(true);
 
         infoPanel.setVisible(false);
 
@@ -112,14 +215,22 @@ public:
         leftColumn.setLookAndFeel(nullptr);
         saturationColumn.setLookAndFeel(nullptr);
         utilColumn.setLookAndFeel(nullptr);
+        settingsPanel.setLookAndFeel(nullptr);
+        presetPanel.setLookAndFeel(nullptr);
+        footer.setLookAndFeel(nullptr);
         if (tooltipWindow != nullptr) {
             tooltipWindow->setLookAndFeel(nullptr);
         }
 
         audioProcessorRef.getAppProperties().removeChangeListener(this);
+        themes->removeChangeListener(this);
     }
 
-    void changeListenerCallback (juce::ChangeBroadcaster* source) override {
+    void changeListenerCallback(juce::ChangeBroadcaster* source) override {
+        // every component reads its colours from theme() again, and repaints
+        if (source == &themes.get())
+            sendLookAndFeelChange();
+
         if (source == &audioProcessorRef.getAppProperties()) {
             bool displayTooltips = audioProcessorRef.getAppProperties().getTooltipType() == AppProperties::TooltipType::window;
 
@@ -131,15 +242,60 @@ public:
         }
     }
 
+    void lookAndFeelChanged() override
+    {
+        hamburgerLAF.applyTheme();
+
+        // drawing it is the slow part, so only when the themed svg comes out different
+        auto svg = themes->backgroundSvg();
+        applyThemeToSvg(*svg);
+
+        if (const auto themed = svg->toString(); themed != backgroundSvg)
+        {
+            backgroundSvg = themed;
+            background = {};
+        }
+    }
+
+    // the svg is drawn once into an image, and again only when the theme or the scale changes
     void paint(juce::Graphics &g) override
     {
-        g.drawImage(image, getLocalBounds().toFloat(), juce::RectanglePlacement::fillDestination);
+        const auto scale = g.getInternalContext().getPhysicalPixelScaleFactor();
+
+        if (! background.isValid() || ! juce::approximatelyEqual(scale, backgroundScale))
+        {
+            backgroundScale = scale;
+            background = makeBackground(backgroundSvg, juce::roundToInt((float) getWidth() * scale), juce::roundToInt((float) getHeight() * scale));
+        }
+
+        g.drawImage(background, getLocalBounds().toFloat());
+    }
+
+    // pressing 1-4 will switch positions on the main editor if we're in a multiband view or similar
+    bool keyPressed(const juce::KeyPress &key) override
+    {
+        // escape leaves mod edit mode
+        if (key == juce::KeyPress::escapeKey && audioProcessorRef.getModMatrix().getArmedSource() >= 0)
+        {
+            audioProcessorRef.getModMatrix().setArmedSource(-1);
+            return true;
+        }
+
+        const auto character = key.getTextCharacter();
+
+        if (key.getModifiers().isAnyModifierKeyDown() || character < '1' || character > '4')
+            return false;
+
+        saturationColumn.selectPosition((int) (character - '1'));
+        return true;
     }
 
     void resized() override
     {
+        // drawn at the editor's size, which the start page changes
+        background = {};
+
         auto bounds = getLocalBounds();
-        auto totalWidth = bounds.getWidth() / 4;
 
         if (tooltipWindow != nullptr) {
             tooltipWindow->setBounds(bounds);
@@ -147,14 +303,51 @@ public:
 
         infoPanel.setBounds(bounds);
 
-        presetPanel.setBounds(bounds);
-        bounds.removeFromTop(45);
+        header.setBounds(bounds.removeFromTop(PluginHeader::totalHeight));
+        footer.setBounds(bounds.removeFromBottom(PluginFooter::totalHeight));
 
-        // this is where I would add a panel for switching between screens
-        
+        // the start page's tooltips run between the header and the boxes, the whole width
+        if (startPage)
+            tooltipBar.setBounds(bounds.removeFromTop(TooltipBar::height));
 
-        auto left = bounds.removeFromLeft(totalWidth);
-        auto right = bounds.removeFromRight(totalWidth);
+        presetPanel.setBounds(getLocalBounds());
+        presetPanel.setReservedRight(header.getRightReserved());
+
+        if (settingsOpen)
+        {
+            settingsPanel.setBounds(bounds);
+            return;
+        }
+
+        if (! startPage)
+        {
+            auto columns = bounds.removeFromTop(columnsRowHeight);
+            auto bottomRow = bounds.removeFromTop(bottomRowHeight);
+
+            // the logo and the scope where they always are with the modulation box between them, and the mod page
+            // across everything under them
+            if (modPage)
+            {
+                auto page = columns.getUnion(bottomRow);
+                auto top = page.removeFromTop(columnsHeight / 4);
+
+                leftColumn.setBounds(top.removeFromLeft(baseWidth / 4));
+                utilColumn.setBounds(top.removeFromRight(baseWidth / 4));
+                modulationBox.setBounds(top);
+                saturationColumn.setBounds(page);
+                return;
+            }
+
+            // the modulation box between the pre fx and the noise, as wide as the distortion box above it
+            leftColumn.getPreFx().setBounds(bottomRow.removeFromLeft(baseWidth / 4));
+            utilColumn.getNoise().setBounds(bottomRow.removeFromRight(baseWidth / 4));
+            modulationBox.setBounds(bottomRow);
+
+            bounds = columns;
+        }
+
+        auto left = bounds.removeFromLeft(startPage ? 0 : baseWidth / 4);
+        auto right = bounds.removeFromRight(startPage ? startScopeWidth : baseWidth / 4);
 
         leftColumn.setBounds(left);
         saturationColumn.setBounds(bounds);
@@ -167,29 +360,76 @@ public:
 
         infoPanel.setVisible(!show);
         
-        leftColumn.setVisible(show);
-        saturationColumn.setVisible(show);
-        utilColumn.setVisible(show);
+        leftColumn.setVisible(show && ! startPage && ! settingsOpen);
+        saturationColumn.setVisible(show && ! settingsOpen);
+        utilColumn.setVisible(show && ! settingsOpen);
+        settingsPanel.setVisible(show && settingsOpen);
+        header.setVisible(show);
+        footer.setVisible(show);
+        tooltipBar.setVisible(show && startPage);
         presetPanel.setVisible(show);
+
+        if (show)
+            showFullViewRows();
+        else
+            for (auto* row : std::initializer_list<juce::Component*> { &modulationBox, &leftColumn.getPreFx(), &utilColumn.getNoise() })
+                row->setVisible(false);
     }
 
 private:
+    // the rows across the whole width, only on the pages with every box
+    void showFullViewRows()
+    {
+        const auto full = ! startPage && ! settingsOpen;
+
+        modulationBox.setVisible(full);
+        leftColumn.getPreFx().setVisible(full && ! modPage);
+        utilColumn.getNoise().setVisible(full && ! modPage);
+    }
+
+    static juce::Image makeBackground(const juce::String& svg, int width, int height)
+    {
+        auto drawable = juce::Drawable::createFromSVG(*juce::parseXML(svg));
+
+        // shapes can run well past the svg's canvas, so it's the canvas that's fitted rather than the drawing's bounds
+        const auto canvas = dynamic_cast<juce::DrawableComposite&>(*drawable).getContentArea();
+
+        juce::Image image(juce::Image::RGB, width, height, true);
+        juce::Graphics g(image);
+
+        drawable->draw(g, 1.0f, juce::RectanglePlacement(juce::RectanglePlacement::fillDestination).getTransformToFit(canvas, image.getBounds().toFloat()));
+        return image;
+    }
+
     AudioPluginAudioProcessor& audioProcessorRef;
+    juce::SharedResourcePointer<ThemeManager> themes;
 
     LeftColumn leftColumn;
     SaturationColumn saturationColumn;
     UtilColumn utilColumn;
+    SettingsPanel settingsPanel;
 
     HamburgerLAF hamburgerLAF;
 
     std::unique_ptr<juce::TooltipWindow> tooltipWindow;
 
     PresetPanel presetPanel;
+    PluginHeader header;
+    PluginFooter footer;
+    TooltipBar tooltipBar;
+
+    ModulationBox modulationBox;
     std::unique_ptr<UpdateChecker> updater;
 
     Info infoPanel;
 
-    juce::Image image = juce::ImageCache::getFromMemory(BinaryData::bg4_jpg, BinaryData::bg4_jpgSize);
+    bool startPage = false;
+    bool settingsOpen = false;
+    bool modPage = false;
+
+    juce::Image background;
+    float backgroundScale = 0.0f;
+    juce::String backgroundSvg;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(EditorV2)
 };

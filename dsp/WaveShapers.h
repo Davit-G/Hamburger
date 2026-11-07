@@ -2,6 +2,8 @@
 
 #include <cmath>
 
+#include "juce_audio_basics/juce_audio_basics.h"
+
 template <typename T>
 int sgn(T val)
 {
@@ -37,47 +39,59 @@ inline float fuzzExp1WaveShaper(float xn, float saturation, float asymmetry)
 	return sgn(xn) * (1.0f - exp(-fabs(wsGain * xn))) / (1.0f - exp(-wsGain));
 }
 
-inline float softClipperFunc(float x, float threshold, float knee)
+/*	A soft clip at 0db with a knee kneeDb wide centred on it, worked in dB like the compressor's soft knee: straight through
+	below the knee, held at 0db above it, and bending between. A knee of nothing is a hard clip. */
+inline float softClipperFunc(float x, float kneeDb)
 {
-	// this is the soft-clip function from the compressor
-	// https://www.desmos.com/calculator/f8zazgtwpe
+	const float level = std::abs(x);
 
-	float sign = sgn(x); // rectify it so we stay in the positive domain
-	x = sign * x;
+	if (level <= 0.0f)
+		return x;
 
-	float output = 0.0;
+	const float halfKnee = kneeDb * 0.5f;
+	const float db = juce::Decibels::gainToDecibels(level);
 
-	float twoXMinusThreshold = 2 * (x - threshold);
+	if (db <= -halfKnee)
+		return x;
 
-	if (twoXMinusThreshold < -knee)
-	{
-		output = x;
-	}
-	else if (twoXMinusThreshold > knee)
-	{
-		output = threshold;
-	}
-	else
-	{
-		auto temp = (x - threshold + knee * 0.5);
-		output = x - ((temp * temp) / (2.0f * knee));
-	}
+	if (db >= halfKnee)
+		return sgn(x);
 
-	return output * sign; // return it to the original sign afterwards
+	const float over = db + halfKnee;
+	return sgn(x) * juce::Decibels::decibelsToGain(db - over * over / (2.0f * kneeDb));
 }
 
-inline bool isSoftClipperKnee(float x, float threshold, float knee)
+/*  Both folds: an amount taken back off the clipped signal as a share of it, folding through nothing down to the other
+    ceiling and eased into it through the knee, so it never stops dead at the crossing or goes past either ceiling */
+inline float foldBack(float clipped, float amount, float kneeDb)
 {
-	float sign = sgn(x); // rectify it so we stay in the positive domain
-	x = sign * x;
+	return clipped != 0.0f ? clipped * (1.0f - 2.0f * softClipperFunc(juce::jmax(0.0f, amount / clipped) * 0.5f, kneeDb)) : 0.0f;
+}
 
-	float twoXMinusThreshold = 2 * (x - threshold);
+// the first fold takes back everything the clip took off. makeup lifts the half above nothing, where the knee rounds the
+// top off, and both halves still meet there
+inline float foldShape(float x, float kneeDb, float makeup = 1.0f)
+{
+	const float clipped = softClipperFunc(x, kneeDb);
+	const float folded = foldBack(clipped, x - clipped, kneeDb);
+	return folded * clipped > 0.0f ? folded * makeup : folded;
+}
 
-	if (twoXMinusThreshold < -knee || twoXMinusThreshold > knee) {
-		return false;
-	} else {
-		return true;
-	};
+// how high the first fold gets, which a knee rounds off below the ceiling. scanned, so only worth doing when the knee moves
+inline float foldPeak(float kneeDb)
+{
+	float peak = 0.0f;
+
+	for (int i = 1; i <= 600; ++i)
+		peak = juce::jmax(peak, foldShape((float) i * 0.005f, kneeDb));
+
+	return juce::jmax(peak, 1.0e-3f);
+}
+
+inline bool isSoftClipperKnee(float x, float kneeDb)
+{
+	const float db = juce::Decibels::gainToDecibels(std::abs(x));
+	return db > -kneeDb * 0.5f && db < kneeDb * 0.5f;
 }
 
 inline float tanhApprox1(float x)

@@ -6,7 +6,7 @@ Set(FETCHCONTENT_QUIET FALSE)
 set(BUILD_CLAP TRUE)
 
 cmake_minimum_required(VERSION 3.15)
-set(ProjectVersion 0.9)
+set(ProjectVersion 0.10)
 set(PluginName "Hamburger")
 
 set(BaseTargetName Hamburger)
@@ -47,6 +47,28 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(JUCE)
 
+FetchContent_Declare(
+	pffft
+	GIT_REPOSITORY https://github.com/marton78/pffft.git
+	GIT_TAG e1dbebc9fbf74247d12f094accbbc470aaee8715
+	GIT_PROGRESS TRUE
+)
+
+set(PFFFT_USE_TYPE_DOUBLE OFF CACHE BOOL "" FORCE)
+set(INSTALL_PFFFT OFF CACHE BOOL "" FORCE)
+FetchContent_MakeAvailable(pffft)
+
+set_target_properties(PFFFT PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
+
+FetchContent_Declare(
+	simpleini
+	GIT_REPOSITORY https://github.com/brofield/simpleini.git
+	GIT_TAG fd6db69efc40a687bf4ef81486b54066e34992dd
+	GIT_PROGRESS TRUE
+)
+
+FetchContent_MakeAvailable(simpleini)
+
 # set commit hash for use in general idk
 execute_process(
     COMMAND git log -1 --format=%h
@@ -72,11 +94,54 @@ else()
 endif()
 
 
+# A test build gets a name and ids of its own, so a DAW lists it beside the release and a project keeps loading whichever
+# one it was saved with. The same version, type and name keep the same ids, so a project saved on one opens on the next.
+set(ReleaseType "release" CACHE STRING "release, or a test build: beta, alpha or nightly")
+set(BuildName "" CACHE STRING "a test build's own name, put on the end of the product name")
+
+set(ProductName "${PluginName} v${ProjectVersion}")
+set(PluginCode Hmb3)
+set(ClapId "com.AviaryAudio.${PluginName}${ProjectVersion}")
+set(TestBuildArgs "")
+
+if(NOT ReleaseType STREQUAL "release")
+    set(testTypes beta alpha nightly)
+    list(FIND testTypes "${ReleaseType}" typeIndex)
+
+    if(typeIndex LESS 0)
+        message(FATAL_ERROR "ReleaseType is release, beta, alpha or nightly, not ${ReleaseType}")
+    endif()
+
+    # anything a file name can't take is dropped, then it goes on the end as the type and the name, like Hamburger v0.10 Beta formants
+    string(REGEX REPLACE "[^A-Za-z0-9 ._-]" "" cleanName "${BuildName}")
+    string(SUBSTRING "${ReleaseType}" 0 1 typeFirst)
+    string(TOUPPER "${typeFirst}" typeFirst)
+    string(SUBSTRING "${ReleaseType}" 1 -1 typeRest)
+    string(STRIP "${ProductName} ${typeFirst}${typeRest} ${cleanName}" ProductName)
+
+    # the type's upper case letter, then three characters of a hash, which are all lower case or digits
+    string(MD5 hash "${ProjectVersion} ${ReleaseType} ${cleanName}")
+    string(SUBSTRING "BAN" ${typeIndex} 1 typeLetter)
+    string(SUBSTRING "${hash}" 0 3 hashCode)
+    set(PluginCode "${typeLetter}${hashCode}")
+
+    string(SUBSTRING "${hash}" 0 8 hashId)
+    string(APPEND ClapId ".${ReleaseType}.${hashId}")
+    set(TestBuildArgs BUNDLE_ID "com.AviaryAudio.${BaseTargetName}.${ReleaseType}.${hashId}")
+endif()
+
+# the CI names what it packages and its installers after the product
+if(DEFINED ENV{GITHUB_ENV})
+    string(REPLACE " " "" productNoSpace "${ProductName}")
+    file(APPEND "$ENV{GITHUB_ENV}" "PLUG=${ProductName}\nPLUG_NOSPACE=${productNoSpace}\n")
+endif()
+
 juce_add_plugin("${BaseTargetName}"
     VERSION "${ProjectVersion}"                 # Set this if the plugin version is different to the project version
-    PRODUCT_NAME "${PluginName}"                # The name of the final executable, which can differ from the target name
+    PRODUCT_NAME "${ProductName}"               # The name of the final executable, which can differ from the target name
     PLUGIN_MANUFACTURER_CODE Avry               # A four-character manufacturer id with at least one upper-case character
-    PLUGIN_CODE Hmb2                            # A unique four-character plugin id with exactly one upper-case character
+    PLUGIN_CODE ${PluginCode}                   # A unique four-character plugin id with exactly one upper-case character
+    ${TestBuildArgs}                            # its own bundle id, for a test build
     DESCRIPTION "Hamburger is a distortion plugin, capable of both subtle tangy harmonics and absolute annihilation and noise-wall-ification to any sound."
                                                 # GarageBand 10.3 requires the first letter to be upper-case, and the remaining letters to be lower-case
     # ICON_BIG ...                              # ICON_* arguments specify a path to an image file to use as an icon for the Standalone
@@ -85,7 +150,7 @@ juce_add_plugin("${BaseTargetName}"
     COMPANY_WEBSITE "https://aviaryaudio.com"
     COMPANY_EMAIL "dave@aviaryaudio.com"
     IS_SYNTH FALSE                       # Is this a synth or an effect?
-    NEEDS_MIDI_INPUT FALSE               # Does the plugin need midi input?
+    NEEDS_MIDI_INPUT TRUE                # for the keytrack and velocity mod sources
     NEEDS_MIDI_OUTPUT FALSE              # Does the plugin need midi output?
     IS_MIDI_EFFECT FALSE                 # Is this plugin a MIDI effect?
     # EDITOR_WANTS_KEYBOARD_FOCUS TRUE/FALSE    # Does the editor need keyboard focus?
@@ -107,8 +172,10 @@ target_sources("${BaseTargetName}"
 add_subdirectory(dsp)
 add_subdirectory(gui)
 add_subdirectory(service)
+add_subdirectory(waveshape_features)
+add_subdirectory(hotdsp)
 
-target_compile_features("${BaseTargetName}" PUBLIC cxx_std_17)
+target_compile_features("${BaseTargetName}" PUBLIC cxx_std_20)
 
 target_compile_options(Hamburger PRIVATE
     $<$<AND:$<CONFIG:Release>,$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>,$<CXX_COMPILER_ID:GNU>>>:
@@ -144,11 +211,10 @@ target_compile_definitions("${BaseTargetName}" PUBLIC
     GIT_HASH="${GIT_HASH}"
 )
 
+# built in themes, anything dropped in here shows up in the theme list, along with any svg backgrounds they use
+file(GLOB BuiltInThemes CONFIGURE_DEPENDS Assets/Themes/*.ini Assets/Themes/*.svg)
+
 juce_add_binary_data("${BaseTargetName}BinaryData" HEADER_NAME BinaryData.h NAMESPACE BinaryData SOURCES
-    Assets/poweron.png
-    Assets/poweroff.png
-    Assets/lockon.png
-    Assets/lockoff.png
     Assets/HamburgerLogo.png
     Assets/Questrial-Regular.ttf
     Assets/Quicksand-Bold.ttf
@@ -158,13 +224,15 @@ juce_add_binary_data("${BaseTargetName}BinaryData" HEADER_NAME BinaryData.h NAME
     Assets/wompwuzhere.png
     Assets/gplv3-icon.png
     Assets/tick.png
-    Assets/bg4.jpg
+    Assets/hamburger-bg.svg
+    Assets/HamBurgerText.svg
     Assets/Icons/FilmReel.svg
     Assets/Icons/Flask.svg
     Assets/Icons/Grill.svg
     Assets/Icons/Slew.svg
     Assets/Icons/Tube.svg
     Assets/Icons/Waves.svg
+    ${BuiltInThemes}
 )
 set_target_properties("${BaseTargetName}BinaryData" PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
 
@@ -206,7 +274,7 @@ endif()
 
 if (BUILD_CLAP)
     clap_juce_extensions_plugin(TARGET "${BaseTargetName}"
-    CLAP_ID "com.AviaryAudio.${PluginName}"
+    CLAP_ID "${ClapId}"
     CLAP_FEATURES effect "distortion analog compressor" audio-effect)
 endif()
 
@@ -215,6 +283,8 @@ target_link_libraries("${BaseTargetName}"
         juce::juce_dsp
         juce::juce_audio_utils
         "${BaseTargetName}BinaryData"
+        PFFFT::PFFFT
+        SimpleIni::SimpleIni
     PUBLIC
         juce::juce_recommended_config_flags
         juce::juce_recommended_lto_flags

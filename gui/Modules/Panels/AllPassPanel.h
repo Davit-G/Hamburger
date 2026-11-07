@@ -1,35 +1,21 @@
 #pragma once
 
 #include "../Panel.h"
-
-
+#include "../../../dsp/EffectInfos.h"
 
 class AllPassPanel : public Panel
 {
 public:
-    AllPassPanel(AudioPluginAudioProcessor &p) : Panel(p, "ALLPASS", Palette::colours[2]),
-        amount(p, "AMOUNT", ParamIDs::allPassAmount),
-        freq(p, "FREQ", ParamIDs::allPassFreq, ParamUnits::hz),
-        q(p, "Q", ParamIDs::allPassQ)
+    AllPassPanel(AudioPluginAudioProcessor &p, SlotId slot = SlotId{ModuleId::module2, 0}) : Panel(p, "ALLPASS", &Theme::preFx),
+        amount(p, "AMOUNT", slot, ParamIDs::allPassAmount),
+        freq(p, "FREQ", slot, ParamIDs::allPassFreq),
+        q(p, "Q", slot, ParamIDs::allPassQ)
     {
-        addAndMakeVisible(amount);
-        addAndMakeVisible(freq);
-        addAndMakeVisible(q);
-
-        Palette::setKnobColoursOfComponent(&amount, Palette::colours[2]);
-        Palette::setKnobColoursOfComponent(&freq, Palette::colours[2]);
-        Palette::setKnobColoursOfComponent(&q, Palette::colours[2]);
+        addKnobs({&amount, &freq, &q});
     }
 
-    void resized() override {
-        // three, in a row
-        auto bounds = getLocalBounds();
-        amount.setBounds(bounds.removeFromLeft(bounds.getWidth() / 3));
-        freq.setBounds(bounds.removeFromLeft(bounds.getWidth() / 2));
-        q.setBounds(bounds);
-    }
+    void resized() override { layoutGrid({&amount, &freq, &q}); }
 
-    ParamKnob amount;
-    ParamKnob freq;
-    ParamKnob q;
+private:
+    ParamKnob amount, freq, q;
 };

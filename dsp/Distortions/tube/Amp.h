@@ -1,19 +1,20 @@
 
 #include "Valve.h"
-#include "juce_core/juce_core.h"
 #include "juce_dsp/juce_dsp.h"
 #include "juce_audio_processors/juce_audio_processors.h"
 
 #include "../../../utils/Params.h"
 #include "../../SmoothParam.h"
+#include "../../EffectBase.h"
 
-class Amp
+class Amp : public MacroEffect
 {
 public:
-    Amp(juce::AudioProcessorValueTreeState &treeState) : 
-        tubeTone(treeState, ParamIDs::tubeTone),
-        drive(treeState, ParamIDs::tubeAmount),
-        bias(treeState, ParamIDs::tubeBias)
+    Amp(juce::AudioProcessorValueTreeState& treeState, SlotId slot)
+        : MacroEffect(treeState, slot),
+          tubeTone(getParam(ParamIDs::tubeTone)),
+          drive(getParam(ParamIDs::tubeAmount)),
+          bias(getParam(ParamIDs::tubeBias))
         {}
 
     ~Amp() {}

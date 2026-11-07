@@ -5,10 +5,11 @@
 #include "../../../utils/Params.h"
 #include "../../WaveShapers.h"
 
-Preisach::Preisach(juce::AudioProcessorValueTreeState& treeState) :
-    drive(treeState, ParamIDs::tapeDrive),
-    bias(treeState, ParamIDs::tapeBias),
-    remanence(treeState, ParamIDs::tapeWidth) {}
+Preisach::Preisach(juce::AudioProcessorValueTreeState& treeState, SlotId slot)
+    : MacroEffect(treeState, slot),
+      drive(getParam(ParamIDs::tapeDrive)),
+      bias(getParam(ParamIDs::tapeBias)),
+      remanence(getParam(ParamIDs::tapeWidth)) {}
 
 Preisach::~Preisach() {
 }
@@ -195,9 +196,9 @@ void Preisach::processBlock(juce::dsp::AudioBlock<float> &block) {
 
             float finalOutput = (rawOutput - center) / dynamicEMax;
 
-            float invDrive = 1.0f - driveSquared;
-            float gainMult = invDrive * invDrive * 2.0f + 1.0f;
-            finalOutput *= gainMult;
+            
+            const float levelGain = std::tanh(currentDrive * 0.22f) / 0.44f * (1.0f + 0.925f * currentRemanence / (1.9f + currentDrive));
+            finalOutput /= levelGain;
 
             channelData[i] = finalOutput;
             

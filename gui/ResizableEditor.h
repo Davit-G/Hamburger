@@ -15,6 +15,12 @@ class ScaleConstrainer : public juce::ComponentBoundsConstrainer
 public:
     ScaleConstrainer(float baseW, float baseH) : baseWidth(baseW), baseHeight(baseH) {}
 
+    void setBaseSize(float baseW, float baseH)
+    {
+        baseWidth = baseW;
+        baseHeight = baseH;
+    }
+
     static constexpr float scaleStep = 0.01f;
 
     void checkBounds(juce::Rectangle<int> &bounds,
@@ -53,22 +59,34 @@ public:
         addAndMakeVisible (editor);
 
         setResizable(true, true);
-
-        scaleConstrainer.setSizeLimits(juce::roundToInt(baseWidth * minScale), juce::roundToInt(baseHeight * minScale),
-                                       juce::roundToInt(baseWidth * maxScale), juce::roundToInt(baseHeight * maxScale));
-        scaleConstrainer.setFixedAspectRatio(baseWidth / baseHeight);
-
         setConstrainer(&scaleConstrainer);
 
         // load scaling preference from user settings
         propertiesFile = p.getAppProperties().appProperties.getUserSettings();
-        if (propertiesFile != nullptr) {
+        if (propertiesFile != nullptr)
             scaleFactor = propertiesFile->getDoubleValue(scalingKey, 1.0);
-            setSize(baseWidth * scaleFactor, baseHeight * scaleFactor);
-        } else {
-            setSize(baseWidth, baseHeight);
-        }
 
+        setBaseSize(baseWidth, baseHeight);
+        editor.onSizeChanged = [this] (int width, int height) { setBaseSize((float) width, (float) height); };
+        editor.openStartupPage();
+
+        readoutEnabled = true;
+    }
+
+    // the start page is smaller than the rest, so the window changes size at the same scale
+    void setBaseSize(float newWidth, float newHeight)
+    {
+        baseWidth = newWidth;
+        baseHeight = newHeight;
+
+        scaleConstrainer.setBaseSize(baseWidth, baseHeight);
+        scaleConstrainer.setSizeLimits(juce::roundToInt(baseWidth * minScale), juce::roundToInt(baseHeight * minScale),
+                                       juce::roundToInt(baseWidth * maxScale), juce::roundToInt(baseHeight * maxScale));
+        scaleConstrainer.setFixedAspectRatio(baseWidth / baseHeight);
+
+        // changing page isn't a resize, so no scale readout
+        readoutEnabled = false;
+        setSize(juce::roundToInt(baseWidth * scaleFactor), juce::roundToInt(baseHeight * scaleFactor));
         readoutEnabled = true;
     }
 
@@ -122,13 +140,10 @@ public:
                                           readoutFontHeight + readoutPaddingY)
                        .withCentre(getLocalBounds().toFloat().getCentre());
 
-        g.setColour(juce::Colours::black.withAlpha(0.85f));
+        g.setColour(theme().popupBackground);
         g.fillRoundedRectangle(box, 5.0f);
 
-        g.setColour(juce::Colours::white.withAlpha(0.8f));
-        g.drawRoundedRectangle(box.reduced(0.5f), 5.0f, 2.0f);
-
-        g.setColour(juce::Colours::white);
+        g.setColour(theme().popupText);
         g.drawText(text, box, juce::Justification::centred);
     }
 
@@ -139,8 +154,8 @@ private:
 
     juce::PropertiesFile *propertiesFile;
 
-    float baseWidth = 800.f;
-    float baseHeight = 545.f;
+    float baseWidth = (float) EditorV2::baseWidth;
+    float baseHeight = (float) EditorV2::fullHeight;
     float scaleFactor = 1.0f;
 
     float minScale = 0.5f;

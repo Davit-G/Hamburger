@@ -2,9 +2,21 @@ target_sources("${BaseTargetName}"
     PRIVATE
         Scope.cpp
         Scope.h
+        ScopeStereo.cpp
+        ScopeDistortion.cpp
+        ScopeEmphasis.cpp
+        ScopeClipper.cpp
+        ScopeCompressor.cpp
+        ScopeNoise.cpp
+        ScopeReadouts.cpp
+        ScopeModulator.cpp
+        ScopeConstants.h
         ScopeDataCollector.cpp
         ScopeDataCollector.h
         AudioBufferQueue.cpp
         AudioBufferQueue.h
         ClipIndicator.h
+        MultibandView.h
+        SlotLevels.h
+        SpectrumAnalyser.h
         )

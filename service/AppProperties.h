@@ -46,5 +46,37 @@ public:
         return TooltipType::window;
     }
 
+    // the page the plugin opens on: start, pre, main or post
+    juce::String getStartupPage()
+    {
+        auto* userSettings = appProperties.getUserSettings();
+        return userSettings != nullptr ? userSettings->getValue ("startupPage", "pre") : juce::String ("pre");
+    }
+
+    void setStartupPage (const juce::String& page)
+    {
+        if (auto* userSettings = appProperties.getUserSettings())
+        {
+            userSettings->setValue ("startupPage", page);
+            userSettings->saveIfNeeded();
+        }
+    }
+
+    // whether knobs glide to where they're set, off for hosts that already send sample accurate automation
+    bool getParamSmoothing()
+    {
+        auto* userSettings = appProperties.getUserSettings();
+        return userSettings == nullptr || userSettings->getBoolValue ("paramSmoothing", true);
+    }
+
+    void setParamSmoothing (bool shouldSmooth)
+    {
+        if (auto* userSettings = appProperties.getUserSettings())
+        {
+            userSettings->setValue ("paramSmoothing", shouldSmooth);
+            userSettings->saveIfNeeded();
+        }
+    }
+
     juce::ApplicationProperties appProperties;
 };

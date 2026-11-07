@@ -11,6 +11,8 @@ void ScopeDataCollector<SampleType>::prepare(juce::dsp::ProcessSpec& spec)
 
     audioBufferQueuePreDistortion.resize(spec.sampleRate / 30);
     audioBufferQueuePostDistortion.resize(spec.sampleRate / 30);
+    audioBufferQueueSpectrum.resize(spec.sampleRate / 30);
+    audioBufferQueueInputSpectrum.resize(spec.sampleRate / 30);
 
     const int maxScopeSamples = juce::jmax<int>((int) spec.maximumBlockSize, 1) * 16;
     preDistScratchBuffer.setSize(1, maxScopeSamples, false, false);
@@ -25,6 +27,9 @@ void ScopeDataCollector<SampleType>::process(const SampleType *dataL, const Samp
 
     const auto samplesWrittenL = audioBufferQueueL.push(dataL, numSamples);
     const auto samplesWrittenR = audioBufferQueueR.push(dataR, numSamples);
+
+    // unpaired, so a short write here just drops the tail - the view is only ever drawing the newest window
+    audioBufferQueueSpectrum.push(dataL, numSamples);
 
     // same pairing rule as pre/post - if the ui thread drained between the two pushes only
     // one side gets the short write, and l/r would stay offset from then on
@@ -105,10 +110,6 @@ void ScopeDataCollector<SampleType>::capturePreDistortion(const SampleType *data
         const auto decimatedCount = numSamples >> oversamplingFactor;
         samplesReadPre = audioBufferQueuePreDistortion.push(preDistScratchBuffer.getReadPointer(0), decimatedCount);
     }
-
-    // deliberately no resync here - pre and post are two halves of one block, and resetting
-    // between them would leave post exactly one block ahead of pre forever. the paired check
-    // lives at the end of capturePostDistortion, once both sides have been written
 }
 
 template <typename SampleType>

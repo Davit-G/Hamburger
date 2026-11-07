@@ -2,18 +2,20 @@
 
 #include "../Panel.h"
 #include "../Scope.h"
+#include "../LightButton.h"
 
 class ScopePanel : public Panel
 {
 public:
     ScopePanel(AudioPluginAudioProcessor &p) : Panel(p, "SETTINGS"),
-        scope(p.treeState, p.getScopeDataCollector(), p.getScopeContext()),
-        lockOffImage(juce::ImageCache::getFromMemory(BinaryData::lockoff_png, BinaryData::lockoff_pngSize)),
-        lockOnImage(juce::ImageCache::getFromMemory(BinaryData::lockon_png, BinaryData::lockon_pngSize))
+        context(p.getScopeContext()),
+        scope(p.treeState, p.getScopeDataCollector(), p.getScopeContext(), p.getModMatrix())
     {
         addAndMakeVisible(scope);
-        lockedButton = std::make_unique<LightButton>(p, lockOffImage, lockOnImage);
+        lockedButton = std::make_unique<LightButton>(lockGlyph(), &Theme::powerOn, &Theme::powerOff);
         addAndMakeVisible(*lockedButton);
+
+        lockedButton->setTooltip("Locks the scope's view. Right click the scope to pick a view");
 
         lockedButton->onClick = [this, &p]
         {
@@ -58,6 +60,24 @@ public:
         );
     }
 
+    // right clicking anywhere on it locks it, or picks which view it shows
+    void mouseDown(const juce::MouseEvent& e) override
+    {
+        if (! e.mods.isPopupMenu())
+            return;
+
+        juce::PopupMenu views;
+
+        for (int type = 0; type < (int) std::size(scopeContextNames); ++type)
+            views.addItem(scopeContextNames[type], true, context.getType() == type, [this, type] { context.setType((ScopeContextType) type, true); });
+
+        juce::PopupMenu menu;
+        menu.setLookAndFeel(&getLookAndFeel());
+        menu.addItem("Lock", true, context.isLocked(), [this] { lockedButton->triggerClick(); });
+        menu.addSubMenu("Change view", views);
+        menu.showMenuAsync(juce::PopupMenu::Options().withMousePosition());
+    }
+
     void mouseEnter(const juce::MouseEvent&) override
     {
         doHoverAnim(true);
@@ -76,8 +96,7 @@ private:
     float lockNormalAlpha = 0.3f;
     bool wasHovered = false;
 
-    Scope<float> scope;
+    ScopeContext& context;
+    Scope scope;
     std::unique_ptr<LightButton> lockedButton;
-    juce::Image lockOffImage;
-    juce::Image lockOnImage;
 };

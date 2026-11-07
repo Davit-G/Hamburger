@@ -1,57 +1,77 @@
 #pragma once
 
-#include "Distortions/SoftClipper.h"
-#include "Distortions/PattyFuzz.h"
-#include "Distortions/Fuzz.h"
 #include "Distortions/Cooked.h"
 #include "Distortions/DiodeWaveshape.h"
+#include "Distortions/Fuzz.h"
+#include "Distortions/PattyFuzz.h"
 #include "Distortions/PhaseDist.h"
 #include "Distortions/Rubidium.h"
-#include "Distortions/preisach/Preisach.h"
+#include "Distortions/SoftClipper.h"
 #include "Distortions/nonlinslew/NonlinSlew.h"
+#include "Distortions/preisach/Preisach.h"
+#include "Distortions/waveshape/Waveshape.h"
+#include "Distortions/DllDistortion.h"
 
 #include "DCBlockingHighPass.h"
 
-#include "Distortions/MatrixWaveshaper.h"
 #include "./Noise/Jeff.h"
 #include "Distortions/tube/Amp.h"
 
+#include "juce_audio_processors/juce_audio_processors.h"
 #include "juce_core/juce_core.h"
 #include "juce_dsp/juce_dsp.h"
-#include "juce_audio_processors/juce_audio_processors.h"
 
+#include "EffectBase.h"
+#include "EffectInfos.h"
+#include "LevelStage.h"
 
 // #include <melatonin_perfetto/melatonin_perfetto.h>
 
-class PrimaryDistortion
-{
-public:
-    PrimaryDistortion(juce::AudioProcessorValueTreeState &state)
-    {
-        distoType = dynamic_cast<juce::AudioParameterChoice *>(state.getParameter("primaryDistortionType"));
+class PrimaryDistortion : public EffectBase {
+  public:
+    PrimaryDistortion(juce::AudioProcessorValueTreeState &state,
+                      SlotId slot = SlotId{ModuleId::main, 0},
+                      std::shared_ptr<Waveshape::SharedCurve> sharedCurve = nullptr)
+        : slot(slot), levels(state, slot) {
+        distoType = dynamic_cast<juce::AudioParameterChoice *>(
+            state.getParameter(slot.type().getParamID()));
         jassert(distoType);
 
-        distortionEnabled = dynamic_cast<juce::AudioParameterBool *>(state.getParameter("primaryDistortionEnabled"));
-        jassert(distortionEnabled);
+        // GRILL
+        softClipper =
+            std::make_unique<SoftClip>(state, slot);
+        fuzz = std::make_unique<Fuzz>(state, slot);
+        diodeWaveshape =
+            std::make_unique<DiodeWaveshape>(state, slot);
+        fold = std::make_unique<Cooked>(state, slot);
+        patty = std::make_unique<PattyFuzz>(state, slot);
 
-        softClipper = std::make_unique<SoftClip>(state);
-        fold = std::make_unique<Cooked>(state);
-        patty = std::make_unique<PattyFuzz>(state);
-        jeff = std::make_unique<Jeff>(state);
-        fuzz = std::make_unique<Fuzz>(state);
-        tubeAmp = std::make_unique<Amp>(state);
-        phaseDist = std::make_unique<PhaseDist>(state);
-        diodeWaveshape = std::make_unique<DiodeWaveshape>(state);
-        rubidium = std::make_unique<RubidiumDistortion>(state);
-        matrix = std::make_unique<MatrixWaveshaper>(state);
-        preisach = std::make_unique<Preisach>(state);
-        nonlinSlew = std::make_unique<NonlinSlew>(state);
+        // TUBE
+        jeff = std::make_unique<Jeff>(state, slot);
+        tubeAmp = std::make_unique<Amp>(state, slot);
+
+        // one algorithm per type
+        phaseDist =
+            std::make_unique<PhaseDist>(state, slot);
+        rubidium = std::make_unique<RubidiumDistortion>(
+            state, slot);
+        preisach = std::make_unique<Preisach>(state, slot);
+        nonlinSlew =
+            std::make_unique<NonlinSlew>(state, slot);
+        waveshape = std::make_unique<Waveshape>(state, slot, std::move(sharedCurve));
+       #if JUCE_DEBUG
+        dll = std::make_unique<DllDistortion>(state, slot);
+       #endif
     }
+
+    bool isEnabled() const { return levels.isEnabled(); }
+
+    // see LevelStage
+    void setFollowsOwnPower(bool shouldFollow) { levels.setFollowsOwnPower(shouldFollow); }
 
     ~PrimaryDistortion() {}
 
-    void prepare(juce::dsp::ProcessSpec &spec)
-    {
+    void prepare(juce::dsp::ProcessSpec &spec) override {
         softClipper->prepare(spec);
         fold->prepare(spec);
         patty->prepare(spec);
@@ -61,92 +81,105 @@ public:
         jeff->prepare(spec);
         diodeWaveshape->prepare(spec);
         rubidium->prepare(spec);
-        matrix->prepare(spec);
         preisach->prepare(spec);
         nonlinSlew->prepare(spec);
+        waveshape->prepare(spec);
+        if (dll != nullptr)
+            dll->prepare(spec);
 
         setSampleRate(spec.sampleRate);
 
         previousDistType = -1;
 
-        for (int i = 0; i < 3; i++) {
-            dcBlocker[i].prepare(spec);
-        }
+        for (auto& blocker : dcBlocker)
+            blocker.prepare(spec);
 
         emptyBuffer = juce::AudioBuffer<float>(spec.numChannels, 8192);
         emptyBlock = juce::dsp::AudioBlock<float>(emptyBuffer);
 
+        levels.prepare(spec);
+
+        previousDistType = distoType->getIndex();
         fillEmptyWithZeros();
-        processBlock(emptyBlock);
+        distort(previousDistType, emptyBlock);
     }
 
-    void fillEmptyWithZeros() {
-        emptyBlock.fill(0.0f);
-    }
+    void fillEmptyWithZeros() { emptyBlock.fill(0.0f); }
 
-    void processBlock(juce::dsp::AudioBlock<float> &block)
-    {
-        int distoTypeIndex = distoType->getIndex();
+    void processBlock(juce::dsp::AudioBlock<float> &block) override {
+        const int distoTypeIndex = distoType->getIndex();
 
-        if (distortionEnabled->get() == false)
-            return;
-        
-        // declicking attempt
         if (previousDistType != distoTypeIndex) {
             previousDistType = distoTypeIndex;
-            
-            fillEmptyWithZeros();
-            processBlock(emptyBlock);
+
+            // declicking attempt
+            if (isEnabled()) {
+                fillEmptyWithZeros();
+                distort(distoTypeIndex, emptyBlock);
+            }
         }
 
-        switch (distoTypeIndex)
-        {
-        case 0:
-        { // classic
+        levels.process(block, [&] { distort(distoTypeIndex, block); });
+    }
+
+    void setSampleRate(float newSampleRate) { sampleRate = newSampleRate; }
+
+    void setHighpassMode(int mode) {
+        for (auto& blocker : dcBlocker)
+            blocker.setMode(mode);
+
+        waveshape->setHighpassMode(mode);
+    }
+
+  private:
+    void distort(int distoTypeIndex, juce::dsp::AudioBlock<float> &block) {
+        switch (distoTypeIndex) {
+        case 0: { // classic
             // TRACE_EVENT("dsp", "classic");
             fuzz->processBlock(block);
             fold->processBlock(block);
             diodeWaveshape->processBlock(block);
             softClipper->processBlock(block);
-            dcBlocker[0].processBlock(block);
+
+            // the main slots already have one after them in the routing, and two in a row ring on a stack's every stage
+            if (slot.module != ModuleId::main)
+                dcBlocker[0].processBlock(block);
             break;
         }
-        case 1:
-        { // tube
+        case 1: { // tube
             // TRACE_EVENT("dsp", "tube");
             jeff->processBlock(block);
             tubeAmp->processBlock(block);
             break;
         }
-        case 2:
-        { // phase distortion
+        case 2: { // phase distortion
             // TRACE_EVENT("dsp", "phase");
             phaseDist->processBlock(block);
             break;
         }
-        case 3:
-        {// rubidium distortion
+        case 3: { // rubidium distortion
             // TRACE_EVENT("dsp", "rubidium");
             rubidium->processBlock(block);
             break;
         }
-        case 4:
-        {// waveshaping matrix distortion
-            // TRACE_EVENT("dsp", "matrix");
-            matrix->processBlock(block);
-            break;
-        }
-        case 5:
-        {// tape hysteresis
+        case 4: { // tape hysteresis
             // TRACE_EVENT("dsp", "tape");
             preisach->processBlock(block);
             dcBlocker[1].processBlock(block);
             break;
         }
-        case 6:
-        {
+        case 5: {
             nonlinSlew->processBlock(block);
             dcBlocker[2].processBlock(block);
+            break;
+        }
+        case 6: {
+            waveshape->processBlock(block); // dc blocking already included in waveshape
+            break;
+        }
+        case 7: { // DLL, debug only
+            if (dll != nullptr)
+                dll->processBlock(block);
             break;
         }
         default:
@@ -154,19 +187,10 @@ public:
         }
     }
 
-    void setSampleRate(float newSampleRate)
-    {
-        sampleRate = newSampleRate;
-    }
-
-private:
-    // juce::AudioProcessorValueTreeState &treeStateRef;
-
     juce::AudioBuffer<float> emptyBuffer;
     juce::dsp::AudioBlock<float> emptyBlock;
 
     juce::AudioParameterChoice *distoType = nullptr;
-    juce::AudioParameterBool *distortionEnabled;
 
     std::unique_ptr<SoftClip> softClipper = nullptr;
     std::unique_ptr<Cooked> fold = nullptr;
@@ -177,11 +201,15 @@ private:
     std::unique_ptr<Amp> tubeAmp = nullptr;
     std::unique_ptr<PhaseDist> phaseDist = nullptr;
     std::unique_ptr<RubidiumDistortion> rubidium = nullptr;
-    std::unique_ptr<MatrixWaveshaper> matrix = nullptr;
     std::unique_ptr<Preisach> preisach = nullptr;
     std::unique_ptr<NonlinSlew> nonlinSlew = nullptr;
+    std::unique_ptr<Waveshape> waveshape = nullptr;
+    std::unique_ptr<DllDistortion> dll = nullptr; // debug builds only
 
     DCBlockingHighPass dcBlocker[3];
+
+    SlotId slot;
+    LevelStage levels;
 
     int previousDistType = -1;
 

@@ -1,7 +1,9 @@
 #include "Grunge.h"
 
-Grunge::Grunge(juce::AudioProcessorValueTreeState &treeState) : amount(treeState, ParamIDs::grungeAmt),
-                                                                tone(treeState, ParamIDs::grungeTone)
+Grunge::Grunge(juce::AudioProcessorValueTreeState &treeState)
+    : MacroEffect(treeState, SlotId{ModuleId::module2, 0}),
+      amount(getParam(ParamIDs::grungeAmt)),
+      tone(getParam(ParamIDs::grungeTone))
 {
 }
 
@@ -13,12 +15,11 @@ void Grunge::prepare(juce::dsp::ProcessSpec &spec)
     delayLine.prepare(spec);
     delayLine.setMaximumDelayInSamples(1);
     delayLine.setDelay(1);
-    dcBlockerL.prepare(spec);
-    dcBlockerR.prepare(spec);
-    *dcBlockerL.coefficients = juce::dsp::IIR::ArrayCoefficients<float>::makeHighPass(spec.sampleRate, 24.0f);
-    *dcBlockerR.coefficients = juce::dsp::IIR::ArrayCoefficients<float>::makeHighPass(spec.sampleRate, 24.0f);
-
-    this->sampleRate = spec.sampleRate;
+    // the same butterworth highpass the direct form one was
+    dcBlocker.setType(juce::dsp::StateVariableTPTFilterType::highpass);
+    dcBlocker.setResonance(1.0f / juce::MathConstants<float>::sqrt2);
+    dcBlocker.setCutoffFrequency(24.0f);
+    dcBlocker.prepare(spec);
 }
 
 void Grunge::processBlock(juce::dsp::AudioBlock<float> &block)
@@ -26,11 +27,7 @@ void Grunge::processBlock(juce::dsp::AudioBlock<float> &block)
     amount.update();
     tone.update();
 
-    float toneFloat = tone.getRaw(0) * 61.0f + 0.5f;
-    auto dcCoeffs = juce::dsp::IIR::ArrayCoefficients<float>::makeHighPass(sampleRate, toneFloat);
-
-    *dcBlockerL.coefficients = dcCoeffs;
-    *dcBlockerR.coefficients = dcCoeffs;
+    dcBlocker.setCutoffFrequency(tone.getRaw(0) * 61.0f + 0.5f);
 
     for (int i = 0; i < block.getNumSamples(); i++)
     {
@@ -46,8 +43,8 @@ void Grunge::processBlock(juce::dsp::AudioBlock<float> &block)
         float fbSampleL = delaySampleL * fbAmt;
         float fbSampleR = delaySampleR * fbAmt;
 
-        float dcBlockerLRes = dcBlockerL.processSample(sampleL + fbSampleR);
-        float dcBlockerRRes = dcBlockerR.processSample(sampleR + fbSampleL);
+        float dcBlockerLRes = dcBlocker.processSample(0, sampleL + fbSampleR);
+        float dcBlockerRRes = dcBlocker.processSample(1, sampleR + fbSampleL);
 
         delayLine.pushSample(0, dcBlockerLRes);
         delayLine.pushSample(1, dcBlockerRRes);

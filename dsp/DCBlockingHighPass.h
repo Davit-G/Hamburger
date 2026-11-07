@@ -4,10 +4,17 @@
 #include "juce_audio_processors/juce_audio_processors.h"
 #include "juce_dsp/juce_dsp.h"
 
+/*  A highpass at 8Hz, 2nd or 1st order. The 1st order turns the lows less and never overshoots, so a chain of them, like
+    a stack's, settles where a chain of 2nd orders rings. */
 class DCBlockingHighPass {
 public:
     DCBlockingHighPass() {}
     ~DCBlockingHighPass() {}
+
+    // keep in line with the settings' DC filter menu
+    enum Mode { secondOrder, firstOrder };
+
+    void setMode (int newMode) { mode = newMode; }
 
     void prepare(juce::dsp::ProcessSpec &spec)
     {
@@ -15,6 +22,10 @@ public:
         iirFilter.reset();
         *iirFilter.state = juce::dsp::IIR::ArrayCoefficients<double>::makeHighPass(spec.sampleRate, 8.0f);
         iirFilter.prepare(spec);
+
+        firstOrderFilter.reset();
+        *firstOrderFilter.state = juce::dsp::IIR::ArrayCoefficients<double>::makeFirstOrderHighPass(spec.sampleRate, 8.0f);
+        firstOrderFilter.prepare(spec);
 
         const int safeMaxBlockSize = juce::jmax(static_cast<int>(spec.maximumBlockSize), 8192);
 
@@ -46,7 +57,7 @@ public:
         }
         
         auto doubleContext = juce::dsp::ProcessContextReplacing<double>(activeBlockDouble);
-        iirFilter.process(doubleContext);
+        (mode == firstOrder ? firstOrderFilter : iirFilter).process(doubleContext);
         
         for (int channel = 0; channel < numChannels; ++channel)
         {
@@ -61,6 +72,8 @@ public:
     }
 
 private:
+    int mode = secondOrder;
+
     std::unique_ptr<juce::AudioBuffer<double>> bufferDouble;
-    juce::dsp::ProcessorDuplicator<juce::dsp::IIR::Filter<double>, juce::dsp::IIR::Coefficients<double>> iirFilter;
+    juce::dsp::ProcessorDuplicator<juce::dsp::IIR::Filter<double>, juce::dsp::IIR::Coefficients<double>> iirFilter, firstOrderFilter;
 };

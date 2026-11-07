@@ -13,6 +13,22 @@ on:
         - Release
         - MinSizeRel
         - RelWithDebInfo
+      # a test build has its own name and plugin ids, so it installs beside the release and never takes over a project saved on it
+      releaseType:
+        description: 'Release Type'
+        required: true
+        default: 'release'
+        type: choice
+        options:
+        - release
+        - beta
+        - alpha
+        - nightly
+      buildName:
+        description: 'Name (test builds only, put on the end of the plugin name)'
+        required: false
+        default: ''
+        type: string
 
   push:
     paths:
@@ -22,10 +38,12 @@ on:
     paths:
       - '*'
 
+# PLUG, the product name, and PLUG_NOSPACE come from CMake when it configures, see CMakeLists.txt. NOSPACE is the target
 env:
-  PLUG: Hamburger
   NOSPACE: Hamburger
   BUILDTYPE: ${{inputs.buildType || 'Release'}}
+  RELEASETYPE: ${{inputs.releaseType || 'release'}}
+  BUILDNAME: ${{inputs.buildName || ''}}
 
 
 jobs:
@@ -70,15 +88,6 @@ jobs:
       with:
         node-version: 18
 
-    - name: read plugin version
-      id: version
-      shell: bash
-      run: |
-        VERSION=$(sed -n 's/^[[:space:]]*set(ProjectVersion[[:space:]]*\([0-9][0-9.]*\)).*/\1/p' CMakeLists.txt)
-        if [ -z "$VERSION" ]; then echo "could not parse ProjectVersion from CMakeLists.txt" >&2; exit 1; fi
-        echo "VERSION=$VERSION" >> "$GITHUB_ENV"
-        echo "plugin version: $VERSION"
-
     # thanks to https://forum.juce.com/t/juce-8-linux-issue-with-harfbuzz/61970/3 juce 8 linux builds should work nicely
     - name: (linux) install juce dependencies
       if: startsWith(matrix.os, 'ubuntu')
@@ -120,19 +129,19 @@ jobs:
       if: startsWith(matrix.os, 'windows')
       id: configure_windows
       run: |
-        cmake -B "${{matrix.folder}}" -G "${{matrix.compiler}}" -T host=x64 -A x64
+        cmake -B "${{matrix.folder}}" -G "${{matrix.compiler}}" -T host=x64 -A x64 "-DReleaseType=$env:RELEASETYPE" "-DBuildName=$env:BUILDNAME"
 
     - name: (mac) configure
       if: startsWith(matrix.os, 'macos')
       id: configure_mac
       run: |
-        cmake -B "${{matrix.folder}}" -G "${{matrix.compiler}}" -DCMAKE_BUILD_TYPE:STRING=${{env.BUILDTYPE}} -DCMAKE_OSX_ARCHITECTURES=${{matrix.arch}}
+        cmake -B "${{matrix.folder}}" -G "${{matrix.compiler}}" -DCMAKE_BUILD_TYPE:STRING=${{env.BUILDTYPE}} -DCMAKE_OSX_ARCHITECTURES=${{matrix.arch}} "-DReleaseType=$RELEASETYPE" "-DBuildName=$BUILDNAME"
 
     - name: (linux) configure
       if: startsWith(matrix.os, 'ubuntu')
       id: configure_linux
       run: |
-        cmake -B "${{matrix.folder}}" -G "${{matrix.compiler}}" -DCMAKE_BUILD_TYPE:STRING=${{env.BUILDTYPE}}
+        cmake -B "${{matrix.folder}}" -G "${{matrix.compiler}}" -DCMAKE_BUILD_TYPE:STRING=${{env.BUILDTYPE}} "-DReleaseType=$RELEASETYPE" "-DBuildName=$BUILDNAME"
 
     - name: build
       id: build
@@ -232,9 +241,9 @@ jobs:
         cd setup
         chmod +rx "./assets/scripts/postinstall"
         cd ../
-        pkgbuild --install-location "/Library/Audio/Plug-Ins/VST3/AviaryAudio" --identifier "com.aviaryaudio.${{env.NOSPACE}}-vst3.pkg" --version 1.1.1 --component "${{matrix.folder}}/${{env.PLUG}}.vst3" "${{env.NOSPACE}}-vst3.pkg"
-        pkgbuild --install-location "/Library/Audio/Plug-Ins/CLAP/AviaryAudio" --identifier "com.aviaryaudio.${{env.NOSPACE}}-clap.pkg" --version 1.1.1 --component "${{matrix.folder}}/${{env.PLUG}}.clap" "${{env.NOSPACE}}-clap.pkg"
-        pkgbuild --install-location "/Library/Audio/Plug-Ins/Components" --identifier "com.aviaryaudio.${{env.NOSPACE}}-au.pkg" --scripts "./setup/assets/scripts" --version 1.1.1 --component "${{matrix.folder}}/${{env.PLUG}}.component" "${{env.NOSPACE}}-au.pkg"
+        pkgbuild --install-location "/Library/Audio/Plug-Ins/VST3/AviaryAudio" --identifier "com.aviaryaudio.${{env.PLUG_NOSPACE}}-vst3.pkg" --version 1.1.1 --component "${{matrix.folder}}/${{env.PLUG}}.vst3" "${{env.PLUG_NOSPACE}}-vst3.pkg"
+        pkgbuild --install-location "/Library/Audio/Plug-Ins/CLAP/AviaryAudio" --identifier "com.aviaryaudio.${{env.PLUG_NOSPACE}}-clap.pkg" --version 1.1.1 --component "${{matrix.folder}}/${{env.PLUG}}.clap" "${{env.PLUG_NOSPACE}}-clap.pkg"
+        pkgbuild --install-location "/Library/Audio/Plug-Ins/Components" --identifier "com.aviaryaudio.${{env.PLUG_NOSPACE}}-au.pkg" --scripts "./setup/assets/scripts" --version 1.1.1 --component "${{matrix.folder}}/${{env.PLUG}}.component" "${{env.PLUG_NOSPACE}}-au.pkg"
         python3 ./setup/productbuild.py --pluginname "${{env.PLUG}}"
         productbuild --timestamp --sign "${{ secrets.DEVELOPER_ID_INSTALLER }}" --distribution "./${{env.PLUG}}.xml" --resources "./setup/assets/" "${{env.PLUG}} Installer.pkg"
         xcrun notarytool submit "${{env.PLUG}} Installer.pkg" --apple-id ${{ secrets.NOTARIZATION_USERNAME }} --password ${{ secrets.NOTARIZATION_PASSWORD }} --team-id ${{ secrets.TEAM_ID }} --wait
@@ -247,6 +256,6 @@ jobs:
     
     - uses: actions/upload-artifact@v4
       with:
-        name: ${{env.PLUG}} v${{env.VERSION}} ${{ matrix.name }}
+        name: ${{env.PLUG}} ${{ matrix.name }}
         path: "./gh_artifacts"
         

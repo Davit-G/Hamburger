@@ -7,6 +7,8 @@
 #include "dsp/OversamplingStack.h"
 
 #include "dsp/PrimaryDistortion.h"
+#include "dsp/LevelStage.h"
+#include "dsp/MainRouting.h"
 #include "dsp/NoiseDistortions.h"
 #include "dsp/PreDistortions/PreDistortion.h"
 #include "dsp/Dynamics/Dynamics.h"
@@ -27,9 +29,13 @@
 
 #include "clap-juce-extensions/clap-juce-extensions.h"
 
+#include "dsp/EffectBase.h"
+#include "dsp/ModMatrix.h"
+#include "utils/Params.h"
 
 //==============================================================================
-class AudioPluginAudioProcessor : public juce::AudioProcessor, public clap_juce_extensions::clap_properties
+class AudioPluginAudioProcessor : public juce::AudioProcessor, public clap_juce_extensions::clap_properties,
+                                  private juce::ValueTree::Listener, private juce::AsyncUpdater
 
 {
 public:
@@ -75,38 +81,61 @@ public:
 
     juce::StringArray oversamplingFactorChoices = {"1x", "2x", "4x", "8x", "16x"};
 
-    ScopeDataCollector<float>& getScopeDataCollector() {return scopeDataCollector; };
+    ScopeDataCollector<float>& getScopeDataCollector() { return scopeDataCollector; }
 
-    ScopeContext& getScopeContext() { return scopeContext; };
+    RoutingOrder getRoutingOrder() const { return unpackRouting (order.load (std::memory_order_acquire)); }
+
+    // use in message thread
+    void setRoutingOrder (const RoutingOrder& newOrder);
+
+    ScopeContext& getScopeContext() { return scopeContext; }
     Preset::PresetManager& getPresetManager() { return *presetManager; }
     AppProperties& getAppProperties() { return appProperties; }
+    ModMatrix& getModMatrix() { return modMatrix; }
 
 private:
-    juce::AudioParameterFloat *inputGainKnob = nullptr;
-    juce::AudioParameterFloat *mixKnob = nullptr;
-    juce::AudioParameterFloat *outputGainKnob = nullptr;
+    MacroParam *inputGainKnob = nullptr;
+    MacroParam *mixKnob = nullptr;
+    MacroParam *outputGainKnob = nullptr;
+    juce::AudioParameterBool *gainLink = nullptr;
+    juce::AudioParameterBool *clipperEnabled = nullptr;
+    juce::AudioParameterChoice *clipperType = nullptr;
+    std::atomic<float> *clipperKnee = nullptr;
 
-    juce::AudioParameterBool *clipEnabled = nullptr;
     juce::AudioParameterInt *hq = nullptr;
     juce::AudioParameterBool *hamburgerEnabledButton = nullptr;
-    juce::AudioParameterInt *stages = nullptr;
 
     juce::AudioParameterChoice *oversamplingFactor = nullptr;
 
-    PreDistortion preDistortionSelection;
-    
-    std::vector<std::unique_ptr<PrimaryDistortion>> distortionTypeSelection {};
+    EmphasisFilter emphasisFilter; // base effect
 
-    NoiseDistortions noiseDistortionSelection;
+    EmphasisEffectFilter emphasisPreFilter { emphasisFilter, false };
     Dynamics dynamics;
+    PreDistortion preDistortionSelection;
+    NoiseDistortions noiseDistortionSelection;
+    MainRouting distortionTypeSelection;
+    EmphasisEffectFilter emphasisPostFilter { emphasisFilter, true };
     PostClip postClip;
 
-    EmphasisFilter emphasisFilter;
+    PrimaryDistortion preDistortion;
+    PrimaryDistortion postDistortion;
+
 
     juce::dsp::Gain<float> inputGain;
     juce::dsp::Gain<float> outputGain;
 
-    juce::dsp::DryWetMixer<float> dryWetMixer;
+    juce::dsp::DryWetMixer<float> dryWetMixer { 16384 };
+    DryPhase dryPhase;
+    bool linearCrossovers = false;
+    float latencyTotal = 0.0f;
+
+    // everything runs this many samples at a time, with the modulation worked out fresh for each
+    void processChunk(juce::AudioBuffer<float>& buffer, const juce::AudioBuffer<float>& whole, int start, const juce::MidiBuffer& midi);
+
+    ModMatrix modMatrix { treeState };
+
+    void updateLatency();
+    float totalLatency();
 
     OversamplingStack oversamplingStack;
 
@@ -123,6 +152,28 @@ private:
         std::unique_ptr<perfetto::TracingSession> tracingSession;
     #endif
 
+    // packRouting/unpackRouting in Params.h say why this is a uint64 rather than the array
+    std::atomic<juce::uint64> order { packRouting (defaultRouting) };
+    
+    static inline const juce::Identifier routingOrderProperty { "routingOrder" };
+    void syncRoutingOrder();
+    void valueTreePropertyChanged (juce::ValueTree& tree, const juce::Identifier& property) override;
+    void valueTreeRedirected (juce::ValueTree& tree) override;
+
+    // the macros' names from the state onto their parameters, and the host told. on the message thread, whichever
+    // thread the state changed on
+    void handleAsyncUpdate() override;
+
+    // makes sure that routingOrder doesnt get converted into a mutex under the hood
+    static_assert (std::atomic<juce::uint64>::is_always_lock_free);
+
+    std::array<EffectBase*, (size_t) ModuleId::count> slots;
+
+    // in, dry/wet and out around the modules that don't have their own inside them like the distortions do
+    LevelStage dynamicsLevels { treeState, { ModuleId::dynamics, 0 } };
+    LevelStage noiseLevels { treeState, { ModuleId::module1, 0 } };
+    LevelStage preFxLevels { treeState, { ModuleId::module2, 0 } };
+    std::array<LevelStage*, (size_t) ModuleId::count> slotLevels {};
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AudioPluginAudioProcessor)
 };

@@ -2,7 +2,7 @@
 
 #include "juce_gui_basics/juce_gui_basics.h"
 #include "./LookAndFeel/HamburgerLAF.h"
-#include "./LookAndFeel/Palette.h"
+#include "./LookAndFeel/Theme.h"
 
 class BurgerAlert : public juce::AlertWindow
 {
@@ -12,13 +12,13 @@ public:
     {
         setLookAndFeel(&comboBoxLook);
 
-        setColour(juce::AlertWindow::backgroundColourId, juce::Colour::fromRGB(11, 11, 11));
-        setColour(juce::AlertWindow::textColourId, juce::Colours::white);
-        setColour(juce::AlertWindow::outlineColourId, juce::Colour::fromRGB(22, 22, 22));
+        setColour(juce::AlertWindow::backgroundColourId, theme().alertBackground);
+        setColour(juce::AlertWindow::textColourId, theme().alertText);
+        setColour(juce::AlertWindow::outlineColourId, theme().alertOutline);
         
-        setColour(juce::Label::ColourIds::backgroundColourId, juce::Colours::black);
-        setColour(juce::Label::ColourIds::textColourId, juce::Colours::white);
-        setColour(juce::Label::ColourIds::outlineColourId, juce::Colours::white);
+        setColour(juce::Label::ColourIds::backgroundColourId, theme().box);
+        setColour(juce::Label::ColourIds::textColourId, theme().alertText);
+        setColour(juce::Label::ColourIds::outlineColourId, theme().alertText);
 
         // getTopLevelWindow(0)->setDropShadowEnabled(true);
 
@@ -34,11 +34,22 @@ public:
         setLookAndFeel(nullptr);
     }
 
-    void createPresetSaveAlert(juce::String defaultName, juce::String defaultAuthor) {
+    void createPresetSaveAlert(juce::String defaultName, juce::String defaultAuthor, juce::String defaultDescription) {
 
 
         addTextEditor("presetName", defaultName, "Preset Name");
         addTextEditor("author", defaultAuthor, "Author");
+
+        // several lines, so it's its own editor rather than one of the window's single line ones
+        description.setMultiLine(true, true);
+        description.setReturnKeyStartsNewLine(true);
+        description.setText(defaultDescription, false);
+        description.setTextToShowWhenEmpty("Description", theme().textPresetsAuthor);
+        description.setColour(juce::TextEditor::backgroundColourId, theme().settingsButton);
+        description.setColour(juce::TextEditor::textColourId, theme().alertText);
+        description.setColour(juce::TextEditor::outlineColourId, juce::Colours::transparentBlack);
+        description.setSize(300, 90);
+        addCustomComponent(&description);
 
 		addButton("Save", 1, juce::KeyPress(juce::KeyPress::returnKey, 0, 0));
 		addButton("Cancel", 0, juce::KeyPress(juce::KeyPress::escapeKey, 0, 0));
@@ -46,23 +57,41 @@ public:
         auto presetTextEditor = getTextEditor("presetName");
         auto authorTextEditor = getTextEditor("author");
 
-        presetTextEditor->setColour(juce::TextEditor::backgroundColourId, juce::Colour::fromRGB(22, 22, 22));
+        presetTextEditor->setColour(juce::TextEditor::backgroundColourId, theme().settingsButton);
         presetTextEditor->setColour(juce::TextEditor::ColourIds::outlineColourId, juce::Colours::transparentBlack);
         // presetTextEditor->setFont(comboBoxLook.getPopupMenuFont());
-        authorTextEditor->setColour(juce::TextEditor::backgroundColourId, juce::Colour::fromRGB(22, 22, 22));
+        authorTextEditor->setColour(juce::TextEditor::backgroundColourId, theme().settingsButton);
         authorTextEditor->setColour(juce::TextEditor::ColourIds::outlineColourId, juce::Colours::transparentBlack);
         // authorTextEditor->setFont(comboBoxLook.getPopupMenuFont());
 
         auto okButton = getButton(0);
         auto cancelButton = getButton(1);
 
-        okButton->setColour(juce::TextButton::buttonColourId, juce::Colour::fromRGB(22, 22, 22));
-        okButton->setColour(juce::TextButton::textColourOnId, juce::Colours::white);
-        okButton->setColour(juce::TextButton::textColourOffId, juce::Colours::white);
+        okButton->setColour(juce::TextButton::buttonColourId, theme().settingsButton);
+        okButton->setColour(juce::TextButton::textColourOnId, theme().alertText);
+        okButton->setColour(juce::TextButton::textColourOffId, theme().alertText);
 
-        cancelButton->setColour(juce::TextButton::buttonColourId, juce::Colour::fromRGB(22, 22, 22));
-        cancelButton->setColour(juce::TextButton::textColourOnId, juce::Colours::white);
-        cancelButton->setColour(juce::TextButton::textColourOffId, juce::Colours::white);
+        cancelButton->setColour(juce::TextButton::buttonColourId, theme().settingsButton);
+        cancelButton->setColour(juce::TextButton::textColourOnId, theme().alertText);
+        cancelButton->setColour(juce::TextButton::textColourOffId, theme().alertText);
+    }
+
+    juce::String getDescription() const { return description.getText(); }
+
+    void createPresetRenameAlert(juce::String currentName) {
+        addTextEditor("presetName", currentName, "New Name");
+        addButton("Rename", 1, juce::KeyPress(juce::KeyPress::returnKey, 0, 0));
+        addButton("Cancel", 0, juce::KeyPress(juce::KeyPress::escapeKey, 0, 0));
+
+        getTextEditor("presetName")->setColour(juce::TextEditor::backgroundColourId, theme().settingsButton);
+        getTextEditor("presetName")->setColour(juce::TextEditor::ColourIds::outlineColourId, juce::Colours::transparentBlack);
+
+        for (int i = 0; i < 2; ++i)
+        {
+            getButton(i)->setColour(juce::TextButton::buttonColourId, theme().settingsButton);
+            getButton(i)->setColour(juce::TextButton::textColourOnId, theme().alertText);
+            getButton(i)->setColour(juce::TextButton::textColourOffId, theme().alertText);
+        }
     }
 
     void createPresetWarning() {
@@ -72,9 +101,9 @@ public:
 
         // todo: repaint alert window to make this look better in general idk :shrug:
 
-        okButton->setColour(juce::TextButton::buttonColourId, juce::Colour::fromRGB(22, 22, 22));
-        okButton->setColour(juce::TextButton::textColourOnId, juce::Colours::white);
-        okButton->setColour(juce::TextButton::textColourOffId, juce::Colours::white);
+        okButton->setColour(juce::TextButton::buttonColourId, theme().settingsButton);
+        okButton->setColour(juce::TextButton::textColourOnId, theme().alertText);
+        okButton->setColour(juce::TextButton::textColourOffId, theme().alertText);
     }
 
     void createPresetDeleteAlert() {
@@ -86,13 +115,13 @@ public:
 
         // todo: repaint alert window to make this look better in general idk :shrug:
 
-        deleteButton->setColour(juce::TextButton::buttonColourId, Palette::colours[0]);
-        deleteButton->setColour(juce::TextButton::textColourOnId, juce::Colours::black);
-        deleteButton->setColour(juce::TextButton::textColourOffId, juce::Colours::black);
+        deleteButton->setColour(juce::TextButton::buttonColourId, theme().alertAccent);
+        deleteButton->setColour(juce::TextButton::textColourOnId, theme().alertAccentText);
+        deleteButton->setColour(juce::TextButton::textColourOffId, theme().alertAccentText);
 
-        cancelButton->setColour(juce::TextButton::buttonColourId, juce::Colour::fromRGB(22, 22, 22));
-        cancelButton->setColour(juce::TextButton::textColourOnId, juce::Colours::white);
-        cancelButton->setColour(juce::TextButton::textColourOffId, juce::Colours::white);
+        cancelButton->setColour(juce::TextButton::buttonColourId, theme().settingsButton);
+        cancelButton->setColour(juce::TextButton::textColourOnId, theme().alertText);
+        cancelButton->setColour(juce::TextButton::textColourOffId, theme().alertText);
     }
 
     void createUpdateAlert(const juce::String& releaseNotes) {
@@ -104,17 +133,17 @@ public:
         auto cancelButton = getButton(1);
         auto dontShowButton = getButton(2);
 
-        updateButton->setColour(juce::TextButton::buttonColourId, Palette::colours[0]);
-        updateButton->setColour(juce::TextButton::textColourOnId, juce::Colours::black);
-        updateButton->setColour(juce::TextButton::textColourOffId, juce::Colours::black);
+        updateButton->setColour(juce::TextButton::buttonColourId, theme().alertAccent);
+        updateButton->setColour(juce::TextButton::textColourOnId, theme().alertAccentText);
+        updateButton->setColour(juce::TextButton::textColourOffId, theme().alertAccentText);
 
-        cancelButton->setColour(juce::TextButton::buttonColourId, juce::Colour::fromRGB(22, 22, 22));
-        cancelButton->setColour(juce::TextButton::textColourOnId, juce::Colours::white);
-        cancelButton->setColour(juce::TextButton::textColourOffId, juce::Colours::white);
+        cancelButton->setColour(juce::TextButton::buttonColourId, theme().settingsButton);
+        cancelButton->setColour(juce::TextButton::textColourOnId, theme().alertText);
+        cancelButton->setColour(juce::TextButton::textColourOffId, theme().alertText);
 
-        dontShowButton->setColour(juce::TextButton::buttonColourId, juce::Colour::fromRGB(22, 22, 22));
-        dontShowButton->setColour(juce::TextButton::textColourOnId, juce::Colours::white);
-        dontShowButton->setColour(juce::TextButton::textColourOffId, juce::Colours::white);
+        dontShowButton->setColour(juce::TextButton::buttonColourId, theme().settingsButton);
+        dontShowButton->setColour(juce::TextButton::textColourOnId, theme().alertText);
+        dontShowButton->setColour(juce::TextButton::textColourOffId, theme().alertText);
 
         if (releaseNotes.isNotEmpty())
         {
@@ -129,9 +158,9 @@ public:
             scrollBox->setMouseClickGrabsKeyboardFocus(false);
             scrollBox->setWantsKeyboardFocus(false);
 
-            scrollBox->setColour(juce::TextEditor::backgroundColourId, juce::Colour::fromRGB(15, 15, 15));
-            scrollBox->setColour(juce::TextEditor::textColourId, juce::Colours::white);
-            scrollBox->setColour(juce::TextEditor::outlineColourId, juce::Colour::fromRGB(33, 33, 33));
+            scrollBox->setColour(juce::TextEditor::backgroundColourId, theme().settingsButton);
+            scrollBox->setColour(juce::TextEditor::textColourId, theme().alertText);
+            scrollBox->setColour(juce::TextEditor::outlineColourId, theme().alertOutline);
             
             scrollBox->setSize(400, 160); 
             addCustomComponent(scrollBox);
@@ -141,4 +170,5 @@ public:
 private:
 
     HamburgerLAF comboBoxLook;
+    juce::TextEditor description;
 };

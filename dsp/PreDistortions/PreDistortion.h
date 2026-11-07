@@ -2,23 +2,31 @@
 
 #include "SVFAllPassChain.h"
 #include "Grunge.h"
+#include "Harmonic.h"
+#include "FormantShift.h"
 #include "../../utils/Params.h"
 
-class PreDistortion
+#include "../EffectBase.h"
+
+class PreDistortion : public EffectBase
 {
 public:
     PreDistortion(juce::AudioProcessorValueTreeState &state) : treeStateRef(state) {
-        type = dynamic_cast<juce::AudioParameterChoice *>(state.getParameter(ParamIDs::preDistortionType.getParamID())); jassert(type);
-        preDistortionEnabled = dynamic_cast<juce::AudioParameterBool *>(state.getParameter(ParamIDs::preDistortionEnabled.getParamID())); jassert(preDistortionEnabled);
+        type = dynamic_cast<juce::AudioParameterChoice *>(state.getParameter(SlotId{ModuleId::module2, 0}.type().getParamID())); jassert(type);
+        preDistortionEnabled = dynamic_cast<juce::AudioParameterBool *>(state.getParameter(SlotId{ModuleId::module2, 0}.enabled().getParamID())); jassert(preDistortionEnabled);
 
         svfAllPass = std::make_unique<SVFAllPassChain>(state);
         grungeDSP = std::make_unique<Grunge>(state);
+        harmonic = std::make_unique<Harmonic>(state);
+        formantShift = std::make_unique<FormantShift>(state);
     }
     ~PreDistortion() {}
 
-    void processBlock(juce::dsp::AudioBlock<float>& block) {
+
+    void processBlock(juce::dsp::AudioBlock<float>& block) override {
         int typeSetting = type->getIndex();
-        
+
+
         if (preDistortionEnabled->get() == false)
             return;
 
@@ -33,12 +41,24 @@ public:
                 grungeDSP->processBlock(block);
                 break;
             }
+            case 2:
+            {
+                harmonic->processBlock(block);
+                break;
+            }
+            case 3:
+            {
+                formantShift->processBlock(block);
+                break;
+            }
         }
     }
 
-    void prepare(juce::dsp::ProcessSpec& spec) {
+    void prepare(juce::dsp::ProcessSpec& spec) override {
         svfAllPass->prepare(spec);
         grungeDSP->prepare(spec);
+        harmonic->prepare(spec);
+        formantShift->prepare(spec);
     }
 
     void setSampleRate(float newSampleRate) { 
@@ -47,10 +67,13 @@ public:
 
 private:
     juce::AudioProcessorValueTreeState &treeStateRef;
+
     juce::AudioParameterChoice *type = nullptr;
     
     std::unique_ptr<SVFAllPassChain> svfAllPass = nullptr;
     std::unique_ptr<Grunge> grungeDSP = nullptr;
+    std::unique_ptr<Harmonic> harmonic = nullptr;
+    std::unique_ptr<FormantShift> formantShift = nullptr;
 
     juce::AudioParameterBool* preDistortionEnabled = nullptr;
 

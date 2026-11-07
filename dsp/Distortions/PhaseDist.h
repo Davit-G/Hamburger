@@ -5,7 +5,11 @@
 #include "../../utils/Params.h"
 #include "../FrequencyShifting/HilbertBiquad.h"
 
+#include "../EffectBase.h"
 
+inline float weirdRectify(float x, float a) {
+	return a * powf(std::abs(x) * 1.5f, 2.0f) + x * (1.0f - a);
+}
 
 #if PERFETTO
 #include <melatonin_perfetto/melatonin_perfetto.h>
@@ -13,14 +17,14 @@
 //==============================================================================
 /*
  */
-class PhaseDist
+class PhaseDist : public MacroEffect
 {
 public:
-    PhaseDist(juce::AudioProcessorValueTreeState& treeState);
+    PhaseDist(juce::AudioProcessorValueTreeState& treeState, SlotId slot);
     ~PhaseDist() {}
 
-    void processBlock(juce::dsp::AudioBlock<float> &block) noexcept;
-    void prepare(juce::dsp::ProcessSpec& spec) noexcept;
+    void processBlock(juce::dsp::AudioBlock<float> &block) noexcept override;
+    void prepare(juce::dsp::ProcessSpec& spec) noexcept override;
 
 private:
     SmoothParam amount;
@@ -31,6 +35,11 @@ private:
 
     HilbertBiquadShifter hilbertTransformL;
     HilbertBiquadShifter hilbertTransformR;
+
+    // under a downward shift, whatever's below it would fold back off 0 Hz, so it's taken out first
+    static constexpr double minFoldbackHz = 5.0;
+    Butterworth foldbackL, foldbackR;
+    double foldbackCutoff = 0.0;
 
     float sampleRate;
     float sampleRateMult;

@@ -11,21 +11,25 @@
 #endif // PERFETTO
 
 #include "../SmoothParam.h"
+#include "../EffectBase.h"
+#include "../EffectInfos.h"
 //==============================================================================
 /*
  */
-class Erosion
+class Erosion : public MacroEffect
 {
 public:
-    Erosion(juce::AudioProcessorValueTreeState& treeState) : delayLine(200),
-        erosionAmount(treeState, ParamIDs::erosionAmount),
-        erosionFrequency(treeState, ParamIDs::erosionFrequency),
-        erosionQ(treeState, ParamIDs::erosionQ) {}
+    Erosion(juce::AudioProcessorValueTreeState& treeState)
+        : MacroEffect(treeState, SlotId{ModuleId::module1, 0}),
+        delayLine(200),
+        erosionAmount(getParam(ParamIDs::erosionAmount)),
+        erosionFrequency(getParam(ParamIDs::erosionFrequency)),
+        erosionQ(getParam(ParamIDs::erosionQ)) {}
     
     ~Erosion() {}
 
-    void processBlock(juce::dsp::AudioBlock<float>& block);
-    void prepare(juce::dsp::ProcessSpec& spec);
+    void processBlock(juce::dsp::AudioBlock<float>& block) override;
+    void prepare(juce::dsp::ProcessSpec& spec) override;
 
 private:
     SmoothParam erosionAmount;

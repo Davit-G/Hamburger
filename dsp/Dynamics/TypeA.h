@@ -4,35 +4,30 @@
 #include "juce_audio_processors/juce_audio_processors.h"
 
 #include "../SmoothParam.h"
-#include "../../../utils/Params.h"
+#include "../../utils/Params.h"
 #include "../../gui/Modules/ScopeDataCollector.h"
+#include "../EffectBase.h"
+#include "../EffectInfos.h"
 
-/* 
- * Dolby A-type noise reduction processor.
- * 
- * Frequency bands:
- * - Low: below 80 Hz
- * - Mid: 80 Hz to 3 kHz (derived from signal - low - high)
- * - High: above 3 kHz
- * - Extra High: above 9 kHz (stacked with high band for extra reduction)
- * 
- * Each band has a compressor with threshold -40 dB and ratio affected by brightness.
- */
-class TypeAProcessor
+
+class TypeAProcessor : public MacroEffect
 {
 public:
-    TypeAProcessor(juce::AudioProcessorValueTreeState &treeState, ScopeDataCollector<float> &dataCollector) : 
-        speedParam(treeState, ParamIDs::TypeACompSpeed),
-        thresholdParam(treeState, ParamIDs::TypeAThreshold),
-        outParam(treeState, ParamIDs::TypeAOut),
-        tiltParam(treeState, ParamIDs::TypeATilt),
+    TypeAProcessor(juce::AudioProcessorValueTreeState &treeState, ScopeDataCollector<float> &dataCollector)
+        : MacroEffect(treeState, SlotId{ModuleId::dynamics, 0}),
+        speedParam(getParam(ParamIDs::TypeACompSpeed)),
+        thresholdParam(getParam(ParamIDs::TypeAThreshold)),
+        ratioParam(getParam(ParamIDs::TypeARatio)),
+        tiltParam(getParam(ParamIDs::TypeATilt)),
         scopeDataCollector(dataCollector)
     {}
 
-    // every band is set up with this, the TypeARatio parameter is not read anywhere
-    static constexpr float baseRatio = 2.0f;
-
     void prepareToPlay(double sampleRate, int samplesPerBlock, int numChannels);
+
+    void prepare(juce::dsp::ProcessSpec& spec) override
+    {
+        prepareToPlay(spec.sampleRate, (int) spec.maximumBlockSize, (int) spec.numChannels);
+    }
     void processBlock(juce::dsp::AudioBlock<float>& buffer);
 
 private:
@@ -41,7 +36,7 @@ private:
 
     SmoothParam speedParam;
     SmoothParam thresholdParam;
-    SmoothParam outParam;
+    SmoothParam ratioParam;
     SmoothParam tiltParam;
 
     ScopeDataCollector<float> &scopeDataCollector;
@@ -82,6 +77,7 @@ private:
     // static constexpr float threshold = -40.0f;
     static constexpr float attack = 20.0f;   // ms
     static constexpr float release = 100.0f; // ms
+    static constexpr float trimDb = -12.0f; // where the old out knob sat, to keep it as loud as it was
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TypeAProcessor)
 };

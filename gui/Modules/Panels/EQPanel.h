@@ -5,17 +5,14 @@
 class EQPanel : public Panel
 {
 public:
-    EQPanel(AudioPluginAudioProcessor &p) : Panel(p, "EMPHASIS"),
-                                            lowFreq(p, "FREQ", ParamIDs::emphasisLowFreq, ParamUnits::hz, ScopeContextType::SPECTRUM_EMPHASIS),
-                                            highFreq(p, "FREQ", ParamIDs::emphasisHighFreq, ParamUnits::hz, ScopeContextType::SPECTRUM_EMPHASIS),
-                                            lowGain(p, "GAIN", ParamIDs::emphasisLowGain, ParamUnits::db, ScopeContextType::SPECTRUM_EMPHASIS),
-                                            highGain(p, "GAIN", ParamIDs::emphasisHighGain, ParamUnits::db, ScopeContextType::SPECTRUM_EMPHASIS)
+    EQPanel(AudioPluginAudioProcessor &p) : Panel(p, "EMPHASIS", &Theme::emphasis),
+                                            lowFreq(p, "FREQ", ParamIDs::emphasisLowFreq, ScopeContextType::SPECTRUM_EMPHASIS),
+                                            highFreq(p, "FREQ", ParamIDs::emphasisHighFreq, ScopeContextType::SPECTRUM_EMPHASIS),
+                                            lowGain(p, "GAIN", ParamIDs::emphasisLowGain, ScopeContextType::SPECTRUM_EMPHASIS),
+                                            highGain(p, "GAIN", ParamIDs::emphasisHighGain, ScopeContextType::SPECTRUM_EMPHASIS)
     {
 
-        addAndMakeVisible(lowFreq);
-        addAndMakeVisible(highFreq);
-        addAndMakeVisible(lowGain);
-        addAndMakeVisible(highGain);
+        addKnobs({&lowFreq, &highFreq, &lowGain, &highGain});
 
         band1.setText("Low", juce::NotificationType::dontSendNotification);
         band2.setText("High", juce::NotificationType::dontSendNotification);
@@ -25,11 +22,6 @@ public:
 
         addAndMakeVisible(band1);
         addAndMakeVisible(band2);
-
-        Palette::setKnobColoursOfComponent(&lowFreq, Palette::colours[2]);
-        Palette::setKnobColoursOfComponent(&highFreq, Palette::colours[2]);
-        Palette::setKnobColoursOfComponent(&lowGain, Palette::colours[2]);
-        Palette::setKnobColoursOfComponent(&highGain, Palette::colours[2]);
     }
 
     void resized()
@@ -56,11 +48,19 @@ public:
         grid.performLayout(bounds);
     }
 
+    void lookAndFeelChanged() override
+    {
+        Panel::lookAndFeelChanged();
+
+        for (auto* label : { &band1, &band2 })
+            label->setColour(juce::Label::textColourId, theme().labelText);
+    }
+
     void paint(juce::Graphics &g) override
     {
         // draw line down the middle
 
-        g.setColour(juce::Colour::fromRGB(44, 44, 44));
+        g.setColour(theme().divider);
 
         int height = 100;
 

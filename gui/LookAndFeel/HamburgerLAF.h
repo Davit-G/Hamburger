@@ -2,11 +2,15 @@
 
 #include "juce_gui_basics/juce_gui_basics.h"
 #include "BinaryData.h"
+#include "Theme.h"
 
 class HamburgerLAF : public juce::LookAndFeel_V4
 {
 public:
     HamburgerLAF(juce::Colour color = juce::Colour::fromRGB(50, 255, 205));
+
+    // the colours JUCE's own widgets look up, like the dropdown menus
+    void applyTheme();
 
     const juce::Typeface::Ptr questrialTypeface = juce::Typeface::createSystemTypefaceFor(BinaryData::QuestrialRegular_ttf, BinaryData::QuestrialRegular_ttfSize);
     const juce::Typeface::Ptr quicksandTypeface = juce::Typeface::createSystemTypefaceFor(BinaryData::QuicksandBold_ttf, BinaryData::QuicksandBold_ttfSize);
@@ -29,6 +33,17 @@ public:
 
     juce::Font getComboBoxFont(juce::ComboBox &box) override;
 
+    // a hand over everything that can be clicked, unless it's asked for a cursor of its own
+    juce::MouseCursor getMouseCursorFor(juce::Component &component) override
+    {
+        const auto clickable = dynamic_cast<juce::ComboBox *>(&component) != nullptr || dynamic_cast<juce::Button *>(&component) != nullptr;
+
+        if (clickable && component.getMouseCursor() == juce::MouseCursor::NormalCursor)
+            return juce::MouseCursor::PointingHandCursor;
+
+        return LookAndFeel_V4::getMouseCursorFor(component);
+    }
+
     juce::Font getPopupMenuFont() override;
 
     void drawComboBox(juce::Graphics &g, int width, int height, bool,
@@ -43,6 +58,33 @@ public:
     juce::Font getAlertWindowTitleFont() override;
 
     void positionComboBoxText(juce::ComboBox &box, juce::Label &label) override;
+
+    // the menus drawn like the tooltips and the scale readout, rounded
+    void drawPopupMenuBackground(juce::Graphics &g, int width, int height) override
+    {
+        g.setColour(theme().popupBackground);
+        g.fillRoundedRectangle(juce::Rectangle<int>(width, height).toFloat(), 5.0f);
+    }
+
+    // a thin line between a menu's columns, for menus whose box asks for one
+    int getPopupMenuColumnSeparatorWidthWithOptions(const juce::PopupMenu::Options &options) override
+    {
+        const auto *target = options.getTargetComponent();
+        return target != nullptr && target->getProperties()["columnDividers"] ? 9 : 0;
+    }
+
+    // juce draws one between every menu's columns, even with no width given to it
+    void drawPopupMenuColumnSeparatorWithOptions(juce::Graphics &g, const juce::Rectangle<int> &bounds, const juce::PopupMenu::Options &) override
+    {
+        if (bounds.getWidth() <= 0)
+            return;
+
+        g.setColour(theme().divider);
+        g.fillRect(bounds.withSizeKeepingCentre(1, bounds.getHeight() - 12));
+    }
+
+    // keeps the items, and the highlight under the mouse, inside the rounded corners
+    int getPopupMenuBorderSize() override { return 5; }
 
     void drawPopupMenuItem(juce::Graphics &g, const juce::Rectangle<int> &area,
                            const bool isSeparator, const bool isActive,
@@ -62,7 +104,7 @@ public:
 
         juce::AttributedString s;
         s.setJustification(juce::Justification::centred);
-        s.append(text, font, juce::Colours::white);
+        s.append(text, font, theme().popupText);
 
         juce::TextLayout tl;
         tl.createLayout(s, maxTooltipWidth);
@@ -87,13 +129,8 @@ public:
     {
         auto bounds = juce::Rectangle<int>(width, height);
 
-        // bg
-        g.setColour(juce::Colours::black);
+        g.setColour(theme().popupBackground);
         g.fillRoundedRectangle(bounds.toFloat(), 5.0f);
-
-        // outline
-        g.setColour(juce::Colours::white.withAlpha(0.8f));
-        g.drawRoundedRectangle(bounds.toFloat().reduced(0.5f, 0.5f), 5.0f, 2.0f);
 
         auto layout = createTooltipLayout(text);
 

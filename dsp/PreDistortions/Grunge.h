@@ -5,17 +5,19 @@
 #include "juce_audio_processors/juce_audio_processors.h"
 
 #include "../SmoothParam.h"
+#include "../EffectBase.h"
+#include "../EffectInfos.h"
 
 // #include <melatonin_perfetto/melatonin_perfetto.h>
 
-class Grunge
+class Grunge : public MacroEffect
 {
 public:
 	Grunge(juce::AudioProcessorValueTreeState& treeState);
 	~Grunge() {}
 
-	void processBlock(juce::dsp::AudioBlock<float>& block);
-	void prepare(juce::dsp::ProcessSpec& spec);
+	void processBlock(juce::dsp::AudioBlock<float>& block) override;
+	void prepare(juce::dsp::ProcessSpec& spec) override;
 
 private:
 	SmoothParam amount;
@@ -23,10 +25,11 @@ private:
 
     juce::dsp::DelayLine <float, juce::dsp::DelayLineInterpolationTypes::Linear> delayLine;
     
-    juce::dsp::IIR::Filter<float> dcBlockerL;
-    juce::dsp::IIR::Filter<float> dcBlockerR;
+    /*  The tone, a highpass inside the feedback loop. A TPT state variable filter rather than a direct form IIR: swapping a
+        direct form's coefficients under modulation spikes its gain for a moment, and with the loop at up to 0.999 that
+        compounded to inf and took the host down. This one stays stable however fast its cutoff moves. */
+    juce::dsp::StateVariableTPTFilter<float> dcBlocker;
 
-    double sampleRate;
 
 	JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Grunge)
 };

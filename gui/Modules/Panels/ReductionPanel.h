@@ -1,38 +1,20 @@
 #pragma once
 
- 
-
 #include "../Panel.h"
-
-
+#include "../../../dsp/EffectInfos.h"
 
 class ReductionPanel : public Panel
 {
 public:
-    ReductionPanel(AudioPluginAudioProcessor &p) : Panel(p, "BIT", Palette::colours[1]),
-                                                   downSample(p, "RATE", ParamIDs::downsampleFreq, ParamUnits::hz, ScopeContextType::NOISE),
-                                                   bitReduction(p, "BITS", ParamIDs::bitReduction, ParamUnits::none, ScopeContextType::NOISE),
-                                                   downsampleMix(p, "MIX", ParamIDs::downsampleMix, ParamUnits::none, ScopeContextType::NOISE)
+    ReductionPanel(AudioPluginAudioProcessor &p, SlotId slot = SlotId{ModuleId::module1, 0}) : Panel(p, "BIT", &Theme::noise),
+        downSample(p, "RATE", slot, ParamIDs::downsampleFreq, ScopeContextType::NOISE),
+        bitReduction(p, "BITS", slot, ParamIDs::bitReduction, ScopeContextType::NOISE)
     {
-        addAndMakeVisible(downSample);
-        addAndMakeVisible(bitReduction);
-        addAndMakeVisible(downsampleMix);
-
-        Palette::setKnobColoursOfComponent(&downSample, Palette::colours[1]);
-        Palette::setKnobColoursOfComponent(&bitReduction, Palette::colours[1]);
-        Palette::setKnobColoursOfComponent(&downsampleMix, Palette::colours[1]);
-        
+        addKnobs({&downSample, &bitReduction});
     }
 
-    void resized() override {
-        auto bounds = getLocalBounds();
-        auto width = bounds.getWidth() / 3;
-        downSample.setBounds(bounds.removeFromLeft(width));
-        bitReduction.setBounds(bounds.removeFromLeft(width));
-        downsampleMix.setBounds(bounds);
-    }
+    void resized() override { layoutGrid({&downSample, &bitReduction}); }
 
-    ParamKnob downSample;
-    ParamKnob downsampleMix;
-    ParamKnob bitReduction;
+private:
+    ParamKnob downSample, bitReduction;
 };

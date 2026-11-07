@@ -11,20 +11,21 @@
 #endif // PERFETTO
 
 #include "../SmoothParam.h"
+#include "../EffectBase.h"
+#include "../EffectInfos.h"
 
-class Redux
+class Redux : public MacroEffect
 {
 public:
     Redux(juce::AudioProcessorValueTreeState& treeState);
     ~Redux();
 
-    void processBlock(juce::dsp::AudioBlock<float>& block);
-    void prepare(juce::dsp::ProcessSpec& spec);
+    void processBlock(juce::dsp::AudioBlock<float>& block) override;
+    void prepare(juce::dsp::ProcessSpec& spec) override;
     void antiAliasingStep(juce::dsp::AudioBlock<float>& block);
 
 private:
     SmoothParam downsample;
-    SmoothParam downsampleMix;
     SmoothParam bitReduction;
 
     juce::dsp::ProcessorDuplicator<juce::dsp::IIR::Filter<float>, juce::dsp::IIR::Coefficients<float>> antialiasingFilter[4];

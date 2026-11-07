@@ -5,23 +5,7 @@
 
 HamburgerLAF::HamburgerLAF(juce::Colour color) : knobColour(color)
 {
-    setColour(juce::Slider::rotarySliderOutlineColourId, juce::Colours::black);
-    setColour(juce::Slider::rotarySliderFillColourId, juce::Colours::white);
-    setColour(juce::Slider::thumbColourId, juce::Colours::whitesmoke);
-    // setColour(Slider::rotarySliderFillColourId, color);
-
-    setColour(juce::ComboBox::ColourIds::backgroundColourId, juce::Colours::transparentBlack);
-    setColour(juce::ComboBox::ColourIds::buttonColourId, juce::Colours::transparentBlack);
-    setColour(juce::ComboBox::ColourIds::outlineColourId, juce::Colours::transparentBlack);
-    setColour(juce::ComboBox::ColourIds::textColourId, juce::Colours::white);
-    setColour(juce::ComboBox::arrowColourId, juce::Colours::white);
-
-    // setColour(juce::ComboBox::ColourIds::focusedOutlineColourId, juce::Colours::transparentBlack);
-
-    setColour(juce::PopupMenu::ColourIds::backgroundColourId, juce::Colours::black);
-    setColour(juce::PopupMenu::ColourIds::textColourId, juce::Colours::white);
-    setColour(juce::PopupMenu::ColourIds::highlightedBackgroundColourId, juce::Colour::fromHSV(0.0f, 0.0f, 0.2f, 1.0f));
-    setColour(juce::PopupMenu::ColourIds::highlightedTextColourId, juce::Colours::white);
+    applyTheme();
 
     // dont use setsizeandstyle, it will remove the typeface info for windows specifically (weird bug)
 
@@ -42,6 +26,25 @@ HamburgerLAF::HamburgerLAF(juce::Colour color) : knobColour(color)
 #endif
 }
 
+
+void HamburgerLAF::applyTheme()
+{
+    setColour(juce::ComboBox::ColourIds::backgroundColourId, juce::Colours::transparentBlack);
+    setColour(juce::ComboBox::ColourIds::buttonColourId, juce::Colours::transparentBlack);
+    setColour(juce::ComboBox::ColourIds::outlineColourId, juce::Colours::transparentBlack);
+    setColour(juce::ComboBox::ColourIds::textColourId, theme().labelText);
+    setColour(juce::ComboBox::arrowColourId, theme().labelText);
+
+    setColour(juce::TextButton::buttonColourId, theme().settingsButton);
+    setColour(juce::TextButton::textColourOffId, theme().labelText);
+    setColour(juce::TextButton::textColourOnId, theme().labelText);
+
+    // a hair under opaque, so a menu's window lets the corners show through round
+    setColour(juce::PopupMenu::ColourIds::backgroundColourId, theme().popupBackground.withMultipliedAlpha(0.99f));
+    setColour(juce::PopupMenu::ColourIds::textColourId, theme().popupText);
+    setColour(juce::PopupMenu::ColourIds::highlightedBackgroundColourId, theme().popupHighlight);
+    setColour(juce::PopupMenu::ColourIds::highlightedTextColourId, theme().popupText);
+}
 
 void HamburgerLAF::drawComboBox(juce::Graphics &g, int width, int height, bool,
                     int, int, int, int, juce::ComboBox &box)
@@ -142,12 +145,13 @@ void HamburgerLAF::drawPopupMenuItem(juce::Graphics &g, const juce::Rectangle<in
         auto textColour = (textColourToUse == nullptr ? findColour(juce::PopupMenu::textColourId)
                                                         : *textColourToUse);
 
-        auto r = area.reduced(1);
+        // in from the sides as well, the menu only pads its top and bottom, so the highlight stays inside the outline
+        auto r = area.reduced(getPopupMenuBorderSize(), 1);
 
         if (isHighlighted && isActive)
         {
             g.setColour(findColour(juce::PopupMenu::highlightedBackgroundColourId));
-            g.fillRect(r);
+            g.fillRoundedRectangle(r.toFloat(), 3.0f);
 
             g.setColour(findColour(juce::PopupMenu::highlightedTextColourId));
         }

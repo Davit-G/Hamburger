@@ -7,7 +7,16 @@ target_sources("${BaseTargetName}"
         UpdateChecker.cpp
         UpdateChecker.h
         RectSlider.h
+        TextSlider.h
+        BoxToggle.h
         ResizableEditor.h
         Editor.h
         GenericKnob.h
+        PluginHeader.h
+        SettingsPanel.h
+        ThemeCustomiser.h
+        ThemeCustomiserParts.h
+        TooltipBar.h
+        PluginFooter.h
+        ModulationPanels.h
         )

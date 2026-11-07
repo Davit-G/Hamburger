@@ -7,6 +7,9 @@ cmake-build-debug
 .git
 JUCE
 
+# clangd
+.cache
+
 todo.md
 
 *.bat
@@ -18,3 +21,6 @@ build_linux
 
 .env
 env.cmake
+
+hotdsp/cv/
+hotdsp/cv_broke/

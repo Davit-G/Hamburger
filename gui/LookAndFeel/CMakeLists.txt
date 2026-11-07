@@ -1,7 +1,8 @@
 target_sources("${BaseTargetName}"
     PRIVATE
-        Palette.h
-        Palette.cpp
+        Theme.cpp
+        Theme.h
+        ThemeManager.h
         HamburgerLAF.cpp
         HamburgerLAF.h
         )
