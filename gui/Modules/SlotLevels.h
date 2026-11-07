@@ -26,6 +26,7 @@ public:
         out.setGainLink(link, true, level(ParamIDs::slotInGain));
 
         in.setColourByGain(true);
+        wet.setColourByGain(true);
         out.setColourByGain(true);
 
         wet.setJustification(juce::Justification::centred);

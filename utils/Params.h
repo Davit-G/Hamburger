@@ -79,7 +79,7 @@ static constexpr ModuleInfo pluginModules[]{
     {ModuleId::module1, "module1", "FX1", 1, false},
     {ModuleId::module2, "module2", "FX2", 1, false},
     {ModuleId::preDistortion, "preDistortion", "PRE", 1, true},
-    {ModuleId::main, "main", "MAIN", 4, false},
+    {ModuleId::main, "main", "MAIN", 4, true},
     {ModuleId::postDistortion, "postDistortion", "POST", 1, false},
     {ModuleId::postEmphasis, "postEmphasis", "POST-EMPH", 0},
     {ModuleId::postClip, "postClip", "CLIP", 1, true},
@@ -181,7 +181,7 @@ namespace ParamIDs
     static const PanelInfo compTypes { juce::StringArray({"STEREO", "MB", "MS", "TYPE A", "TRANSIENT", "MB TRANSIENT", "OPTO", "MB OPTO"}) };
     static const PanelInfo noiseTypes { juce::StringArray({"SIZZLE", "EROSION", "BIT", "GATE", "FIZZ"}) };
     static const PanelInfo clipTypes { juce::StringArray({"CLIP", "LIMIT", "FOLD1", "FOLD2"}) };
-    static const PanelInfo preFxTypes { juce::StringArray({"ALLPASS", "GRUNGE", "HARMONIC", "FORMANT"}) };
+    static const PanelInfo preFxTypes { juce::StringArray({"ALLPASS", "GRUNGE", "HARMONIC", "FORMANT", "FREQ SHIFT"}) };
     // keep in line with EmphasisFilter::Mode
     static const PanelInfo emphasisTypes { juce::StringArray({"EQ", "TILT"}) };
 
@@ -335,7 +335,7 @@ namespace ParamIDs
     }
 
     // how the main stage arranges its slots, plus the controls the individual routings need
-    inline const ParameterInfo mainEnabled{"mainOn", "Main On", ValueType::none, makeSteppedRange(0.0f, 1.0f), 1.0f,
+    inline const ParameterInfo mainEnabled{"mainOn", "Main On", ValueType::none, makeSteppedRange(0.0f, 1.0f), 0.0f,
                                            "Switches the whole main section off, every slot and the stack or bands around them"};
     inline const ParameterInfo mainRouting{"mainRouting", "Routing", ValueType::category, makeSteppedRange(0.0f, choiceSlots - 1.0f), 0.0f,
                                            "How the distortion slots are arranged"};
@@ -502,6 +502,12 @@ namespace ParamIDs
                                             "Moves the input's formants up or down, in semitones, leaving its pitch where it is"};
     inline const ParameterInfo formantDepth{"formantDepth", "Formant Depth", ValueType::percent, makeRange(0.0f, 200.0f), 100.0f,
                                             "How strongly the formants are put back. 0\\% flattens them out, past 100\\% exaggerates them"};
+    inline const ParameterInfo freqShift{"freqShift", "Freq Shift", ValueType::none, makeRange(-1.0f, 1.0f), 0.0f,
+                                         "Moves every frequency up or down by the same amount, so the harmonics stop lining up. Small values add movement"};
+    inline const ParameterInfo freqShiftFeedback{"freqShiftFeedback", "Freq Shift Feedback", ValueType::percent, makeRange(0.0f, 100.0f), 0.0f,
+                                                 "Feeds the shifted sound back in, so it's shifted again every pass and spirals up or down"};
+    inline const ParameterInfo freqShiftDelay{"freqShiftDelay", "Freq Shift Delay", ValueType::delay, makeSkewedRange(0.0f, 50.0f, 0.4f), 0.0f,
+                                              "How long the shifted sound takes to come back round, from the very next sample up. Longer turns the spiral into echoes"};
     inline const ParameterInfo formantResonance{"formantResonance", "Formant Resonance", ValueType::percent, makeRange(-100.0f, 100.0f), 0.0f,
                                                 "Narrows the formants put back into ringing peaks, or widens them into a smoother body"};
 
@@ -684,7 +690,7 @@ namespace ParamIDs
             if (info.id == noise->id)
                 return &noiseAmount;
 
-        for (const auto* preFx : { &allPassAmount, &grungeAmt, &harmonicAmount, &formantShift })
+        for (const auto* preFx : { &allPassAmount, &grungeAmt, &harmonicAmount, &formantShift, &freqShift })
             if (info.id == preFx->id)
                 return &preFxAmount;
 

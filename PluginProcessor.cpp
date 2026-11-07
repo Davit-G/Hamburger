@@ -203,7 +203,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::c
             collected.push_back(std::make_unique<MacroParam>(ParamIDs::modulatorParam(m, p)));
     }
     
-    collected.push_back(std::make_unique<juce::AudioParameterBool>(ParamIDs::mainEnabled.getParameterID(), ParamIDs::mainEnabled.displayName, true));
+    collected.push_back(std::make_unique<juce::AudioParameterBool>(ParamIDs::mainEnabled.getParameterID(), ParamIDs::mainEnabled.displayName, ParamIDs::mainEnabled.defaultValue > 0.5f));
     collected.push_back(std::make_unique<juce::AudioParameterChoice>(ParamIDs::mainRouting.getParameterID(), "Routing", ParamIDs::withReservedSlots(ParamIDs::routingTypes.categories), 0));
     collected.push_back(std::make_unique<juce::AudioParameterInt>(ParamIDs::bandCount.getParameterID(), ParamIDs::bandCount.displayName,
                                                                   (int) ParamIDs::bandCount.range.start, (int) ParamIDs::bandCount.range.end,

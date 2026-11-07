@@ -31,6 +31,7 @@ public:
         out.setGainLink(link, true, p.treeState.getParameter(ParamIDs::inputGain.getParamID()));
 
         in.setColourByGain(true);
+        wet.setColourByGain(true);
         out.setColourByGain(true);
         clipGain.setColourByGain(true);
 

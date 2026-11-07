@@ -150,6 +150,10 @@ private:
 
     juce::Colour gainColour() const
     {
+        // a dry / wet, from the quiet grey fully dry to the plain text fully wet, so anything short of fully wet shows
+        if (unit == ValueType::percent)
+            return theme().gainTextLow.interpolatedWith(theme().knobText, (float) ((getValue() - getMinimum()) / (getMaximum() - getMinimum())));
+
         const auto db = (float) getValue();
 
         if (db < 0.0f)

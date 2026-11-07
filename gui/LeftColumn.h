@@ -51,6 +51,7 @@ public:
         preDistortionPanels.push_back(std::make_unique<GrungePanel>(p));
         preDistortionPanels.push_back(std::make_unique<HarmonicPanel>(p));
         preDistortionPanels.push_back(std::make_unique<FormantShiftPanel>(p));
+        preDistortionPanels.push_back(std::make_unique<FreqShiftPanel>(p));
         preDistortion = std::make_unique<Module>(p, "", SlotId{ModuleId::module2, 0}.enabled().getParamID().toStdString(), SlotId{ModuleId::module2, 0}.type().getParamID().toStdString(), std::move(preDistortionPanels));
         auto preDistortionLevels = std::make_unique<SlotLevels>(p, SlotId{ModuleId::module2, 0}, ScopeContextType::LR_SCOPE);
         preDistortion->setFooter(std::move(preDistortionLevels), SlotLevels::height);

@@ -156,7 +156,7 @@ static std::vector<ThemeSection> makeSections()
     add("slider_track", "Slider Track", "The empty part of every slider", &Theme::sliderTrack);
     add("power_on", "On", "Power buttons that are on, and the scope and gain link locks while locked", &Theme::powerOn);
     add("power_off", "Off", "Power buttons that are off, and the scope lock while unlocked", &Theme::powerOff);
-    add("gain_text_low", "Gain Readout Quiet", "What the IN and OUT readouts fade to as they turn down", &Theme::gainTextLow);
+    add("gain_text_low", "Gain Readout Quiet", "What the IN and OUT readouts fade to as they turn down, and WET and the stack's MIX as they turn dry", &Theme::gainTextLow);
     add("modulation_highlight", "Modulation", "Anything being modulated, how far each modulation can move it, and where it's moved a band divider to", &Theme::modulationHighlight);
 
     {

@@ -16,7 +16,12 @@
     because a spectrum that's never negative always fits to coefficients under 1, so neither lattice can go unstable.
 
     The colouring coefficients each block went through are kept as segments, one per stretch between hops, for colour()
-    to replay. */
+    to replay.
+
+    The excitation's level comes from how much the fit expects to take off, which only holds while the sound holds still
+    between hops. A tone sweeping faster than the analysis follows leaves far more behind than expected, tens of dB of it
+    once anything but the whitening's own envelope goes back on. So what colour() puts out is held within maxRise of the
+    input's peak, followed with an instant attack and a guardRelease fall. Handed back exactly, it's never above it. */
 class LinearPrediction
 {
 public:
@@ -73,11 +78,13 @@ public:
         }
 
         channels.resize ((size_t) numChannels);
+        guardFall = std::exp (-1.0 / (guardRelease * sampleRate));
 
         for (auto& channel : channels)
         {
             channel = {};
             channel.history.assign ((size_t) windowLength, 0.0);
+            channel.inputPeaks.assign ((size_t) maxBlockSize, 0.0);
             channel.segments.resize ((size_t) (maxBlockSize / hop + 2));
             channel.untilHop = hop;
         }
@@ -115,6 +122,8 @@ public:
                 for (auto n = start; n < start + length; ++n)
                 {
                     const auto x = (double) samples[n];
+                    channel.inputPeak = juce::jmax (std::abs (x), channel.inputPeak * guardFall);
+                    channel.inputPeaks[n] = channel.inputPeak;
                     const auto tilted = x - channel.tilt * channel.emphasis;
                     channel.emphasis = x;
 
@@ -196,7 +205,9 @@ public:
 
                     const auto untilted = forward + segment.tilt * channel.deemphasis;
                     channel.deemphasis = untilted;
-                    samples[n] = (float) untilted;
+                    channel.outputPeak = juce::jmax (std::abs (untilted), channel.outputPeak * guardFall);
+                    const auto ceiling = maxRise * channel.inputPeaks[n];
+                    samples[n] = (float) (channel.outputPeak > ceiling ? untilted * ceiling / channel.outputPeak : untilted);
 
                     for (int stage = 0; stage < stages; ++stage)
                     {
@@ -219,6 +230,8 @@ private:
     static constexpr double maxGain = 1.0e4;     // only a guard: the white noise keeps every fit under about 3000
     static constexpr double maxK = 0.999;
     static constexpr double maxFollowedTilt = 0.98;
+    static constexpr double maxRise = 2.0;        // +6 dB, the most colour() puts out over the input's peak
+    static constexpr double guardRelease = 0.05;  // seconds, how fast the peaks the guard follows fall
     static constexpr int heardPoints = 512, abovePoints = 64;
 
     using Coefficients = std::array<double, maxOrder>;
@@ -253,6 +266,8 @@ private:
         int colouring = 0; // how many colour() last ran
         double emphasis = 0.0, deemphasis = 0.0;
         std::vector<Segment> segments;
+        double inputPeak = 0.0, outputPeak = 0.0;   // see maxRise
+        std::vector<double> inputPeaks;             // the input's at every sample of the block, for colour()
     };
 
     // the excitation's level against the input's, from how much of it every stage left
@@ -301,7 +316,8 @@ private:
                 for (int j = 1; j < i; ++j)
                     acc += a[(size_t) j] * r[(size_t) (i - j)];
 
-                const auto reflection = juce::jlimit (-maxK, maxK, -acc / error);
+                const auto unclamped = -acc / error;
+                const auto reflection = juce::jlimit (-maxK, maxK, unclamped);
                 previous = a;
 
                 for (int j = 1; j < i; ++j)
@@ -310,6 +326,12 @@ private:
                 a[(size_t) i] = reflection;
                 k[(size_t) i - 1] = reflection;
                 error *= 1.0 - reflection * reflection;
+
+                /*  A pure tone fits in a couple of stages, after which the next wants to be 1. Clamped, the polynomial no
+                    longer predicts as well as the error says, so every stage past it comes out over 1 and clamped too, all
+                    of them poles on the unit circle that blow up whatever's put through. It's left at the order it got to. */
+                if (std::abs (unclamped) > maxK)
+                    break;
             }
         }
 
@@ -486,6 +508,7 @@ private:
 
     double sampleRate = 44100.0;
     int windowLength = 16, hop = 1;
+    double guardFall = 0.0;
     std::vector<double> window, windowed;
     std::array<double, maxOrder + 1> lagWindow {};
     std::vector<double> frequencies, weights;

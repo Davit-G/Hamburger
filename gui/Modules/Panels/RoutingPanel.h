@@ -30,6 +30,8 @@ public:
         for (auto* text : stackKnobs())
             addChildComponent(*text);
 
+        stackMix.setColourByGain(true);
+
         // the stack's own settings, its filter's and the extras, a tab each
         for (auto* tab : { &stackTab, &filterTab, &extraTab })
         {

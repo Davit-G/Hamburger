@@ -18,6 +18,7 @@ enum class ValueType {
     degrees,
     beats, // an index into beatDivisions
     ratio, // an index into harmonicRatios
+    delay, // ms on top of a single sample, the bottom read as that sample
 
     numUnits
 };
@@ -42,6 +43,7 @@ inline constexpr ValueFormat valueFormats[] = {
     {"\u00b0", 1}, // degrees
     {"", 0},    // beats
     {"", 0},    // ratio
+    {" ms", 1}, // delay
 };
 
 // tempo synced lengths, longest first so a knob over them sweeps steadily faster. in quarter notes
@@ -128,6 +130,9 @@ inline juce::String floatToValueString(float value, ValueType unit) noexcept {
     if (unit == ValueType::ratio)
         return harmonicRatioName(value);
 
+    if (unit == ValueType::delay && value <= 0.0f)
+        return "1 sample";
+
     return juce::String(value, format.decimalPlaces, false) + getValueTypeuffix(unit);
 }
 
@@ -149,6 +154,9 @@ inline std::optional<float> valueStringToFloat(const juce::String &text, ValueTy
 
         return std::nullopt;
     }
+
+    if (unit == ValueType::delay && text.containsIgnoreCase("sample"))
+        return 0.0f;
 
     auto suffix = getValueTypeuffix(unit);
     auto stripped = juce::String();

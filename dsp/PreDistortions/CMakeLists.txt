@@ -3,4 +3,5 @@ PRIVATE
 Grunge.cpp
 Harmonic.h
 FormantShift.h
+FreqShift.h
 )

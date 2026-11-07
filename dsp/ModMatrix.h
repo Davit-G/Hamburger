@@ -628,7 +628,7 @@ private:
         return type == ParamIDs::lfo || type == ParamIDs::audio || type == ParamIDs::random;
     }
 
-    // keytracking a frequency moves it by octaves: a hz knob directly, the phase distortion's shift through its cube
+    // keytracking a frequency moves it by octaves: a hz knob directly, the frequency shifts, the phase distortion's and the pre fx's, through their cube
     float pitchPowerOf(const juce::String& paramID) const
     {
         auto* param = dynamic_cast<MacroParam*>(state.getParameter(paramID));
@@ -638,7 +638,7 @@ private:
 
         const auto& descriptor = param->getDescriptor();
 
-        if (descriptor.id == ParamIDs::phaseShift.id)
+        if (descriptor.id == ParamIDs::phaseShift.id || descriptor.id == ParamIDs::freqShift.id)
             return 1.0f / 3.0f;
 
         return descriptor.unit == ValueType::hz || descriptor.id == ParamIDs::sizzleFrequency.id ? 1.0f : 0.0f;

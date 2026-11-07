@@ -225,6 +225,14 @@ namespace EffectInfos
         }
     };
 
+    static const ParamIDs::EffectInfo freqShift {
+        {
+            ParamIDs::freqShift,
+            ParamIDs::freqShiftFeedback,
+            ParamIDs::freqShiftDelay
+        }
+    };
+
     // the limiter keeps the gain and swaps the knee for its release time
     static const ParamIDs::EffectInfo limiter {
         {
@@ -267,7 +275,7 @@ namespace EffectInfos
                                                                    };
         static const ParamIDs::EffectInfo* const dynamicsTypes[] { &stereoComp, &mbComp, &msComp, &typeA, &transient, &mbTransient, &optoComp, &mbOptoComp };
         static const ParamIDs::EffectInfo* const noiseTypes[]    { &sizzle, &erosion, &redux, &gate, &sizzle }; // FIZZ reuses sizzle
-        static const ParamIDs::EffectInfo* const preDistTypes[]  { &disperser, &grunge, &harmonic, &formantShift };
+        static const ParamIDs::EffectInfo* const preDistTypes[]  { &disperser, &grunge, &harmonic, &formantShift, &freqShift };
         static const ParamIDs::EffectInfo* const postClipTypes[] { &postClip, &limiter, &postClip, &foldHighpassed }; // FOLD1 reuses the clip
 
         switch (id)

@@ -36,3 +36,20 @@ public:
 private:
     ParamKnob shift, depth, resonance;
 };
+
+class FreqShiftPanel : public Panel
+{
+public:
+    explicit FreqShiftPanel(AudioPluginAudioProcessor &p) : Panel(p, "FREQ SHIFT", &Theme::preFx),
+        shift(p, "SHIFT", SlotId{ModuleId::module2, 0}, ParamIDs::freqShift),
+        feedback(p, "FEEDBACK", SlotId{ModuleId::module2, 0}, ParamIDs::freqShiftFeedback),
+        delay(p, "DELAY", SlotId{ModuleId::module2, 0}, ParamIDs::freqShiftDelay)
+    {
+        addKnobs({&shift, &feedback, &delay});
+    }
+
+    void resized() override { layoutGrid({&shift, &feedback, &delay}); }
+
+private:
+    ParamKnob shift, feedback, delay;
+};

@@ -4,6 +4,7 @@
 #include "Grunge.h"
 #include "Harmonic.h"
 #include "FormantShift.h"
+#include "FreqShift.h"
 #include "../../utils/Params.h"
 
 #include "../EffectBase.h"
@@ -19,6 +20,7 @@ public:
         grungeDSP = std::make_unique<Grunge>(state);
         harmonic = std::make_unique<Harmonic>(state);
         formantShift = std::make_unique<FormantShift>(state);
+        freqShift = std::make_unique<FreqShift>(state);
     }
     ~PreDistortion() {}
 
@@ -51,6 +53,11 @@ public:
                 formantShift->processBlock(block);
                 break;
             }
+            case 4:
+            {
+                freqShift->processBlock(block);
+                break;
+            }
         }
     }
 
@@ -59,6 +66,7 @@ public:
         grungeDSP->prepare(spec);
         harmonic->prepare(spec);
         formantShift->prepare(spec);
+        freqShift->prepare(spec);
     }
 
     void setSampleRate(float newSampleRate) { 
@@ -74,6 +82,7 @@ private:
     std::unique_ptr<Grunge> grungeDSP = nullptr;
     std::unique_ptr<Harmonic> harmonic = nullptr;
     std::unique_ptr<FormantShift> formantShift = nullptr;
+    std::unique_ptr<FreqShift> freqShift = nullptr;
 
     juce::AudioParameterBool* preDistortionEnabled = nullptr;
 
