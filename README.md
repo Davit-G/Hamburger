@@ -9,8 +9,6 @@ Hamburger is a distortion plugin with inbuilt dynamics controls and equalisation
 
 If you need control over your distortion tone, you can carve and refine your sound resulting in extremely unique timbres. Compress and shape the dynamics of your sound before distorting to make your synths and instruments punchy and juicy. You can provide subtle flare, texture and grit to a sound that didn't have one. You can also hit the pedal to the metal, go crazy with the knobs and enter sonic territories that other distortion plugins would be TERRIFIED to enter. 
 
-
-
 # Download
 
 Hamburger is supported for Windows, Linux (x86_64) and both Apple Silicon and Intel MacOS devices, in VST3 / CLAP / AU / LV2 formats.
@@ -28,13 +26,13 @@ Main page
 # Overview
 
 - Several distortion modules:
-    - Grill Saturation (with wavefolding, diode clipping and adjustable bias for asymmetric saturation)
-    - Tube Emulation (my take on Class A tube emulation, with extra parameters such as Jeff (?) and controllable bias)
-    - Phase Distortion (for watery slick tones, adds interesting harmonics in a controllable way)
-    - Rubidium Distortion (dynamic and delicious module that extends the laws of physics of a transformer saturation model)
-    - Matrix Distortion (an entirely random assortment of waveshaping functions for your pleasure)
-    - Tape Distortion (A tape hysteresis model built to emulate the real behaviour of magnetic materials like cassette tapes and transistors)
-    - Slew Distortion (A custom built slew based distortion mode that makes some very unique distortion tones)
+    - Grill (normal saturation with asymmetry and wavefolding)
+    - Tube (class A)
+    - Phase Distortion (for watery tones)
+    - Rubidium Distortion (transformer saturation based on some old ReaJS code)
+    - Matrix Distortion (waveshaping)
+    - Tape Distortion (Preisach tape hysteresis model)
+    - Slew Distortion (Slew based limiting used as distortion)
     - Clipper at the end of the chain to help with controlling unnecessary peaks, and for your own safety :D
 
 - Pre-filtering effects
@@ -56,6 +54,15 @@ Main page
 - 2 Band Emphasis EQ to tone and shape the signal before and after distortion
 - Option to duplicate current distortion layer (stacking up to 8x) for even more powerful and dynamic behaviour
 - Oversampling support to reduce aliasing artifacts
+
+## AI Disclosure ⚠️
+
+Hamburger is not vibe coded (this repository has development history prior to the widespread use of AI). With that being said, there is AI usage. AI has been recently used for cross platform debugging as well as some GUI code. None of the signal processing is AI generated, and any generated code is heavily reviewed and modified / cleaned up or rewritten before version releases. 
+Despite AI usage, this code is still majority written by me.
+
+My end goal with Hamburger is to have something that I can personally rely on in my own music. I cannot be confident that vibe coding can create reliable tools in this way. If I am not happy using my own tools, why should anyone else use it?
+
+Having AI usage here is admittedly embarrassing considering that I hate it with a passion and hate what it's done to the world. My career was affected by it (my previous workplace forced AI driven development to the point where I often burned out), and seeing the massive vibe coded plugin slop tsunami online doesn't raise my spirits. I can only hope that despite this, this plugin speaks for itself and you still find it useful. I understand if you don't want to use my stuff as a result.
 
 ## Building
 
